@@ -4,6 +4,8 @@
 set(KAIRO_CORE_SRCS
     src/input/gesture.cpp
     src/input/i_key_map.cpp
+    src/input/i_touch_driver.cpp
+    src/ui/hit_test.cpp
     src/services/input_service.cpp
     src/runtime.cpp
     src/log/logger.cpp
@@ -28,6 +30,8 @@ set(KAIRO_CORE_SRCS
     src/apps/task_demo_app.cpp
     src/apps/wifi_app.cpp
     src/apps/ticker_app.cpp
+    src/apps/touch_test_app.cpp
+    src/apps/camera_app.cpp
     src/ui/text_input.cpp
     src/ui/virtual_keyboard.cpp
     src/plugins/hello_plugin.cpp
@@ -36,6 +40,7 @@ set(KAIRO_CORE_SRCS
     src/plugins/stopwatch_plugin.cpp
     src/plugins/task_demo_plugin.cpp
     src/plugins/ticker_plugin.cpp
+    src/plugins/camera_plugin.cpp
     src/ui/canvas.cpp
     src/ui/layout.cpp
     src/ui/widgets.cpp
@@ -54,7 +59,12 @@ set(KAIRO_CORE_SRCS
     src/screens/lock_screen.cpp
     src/screens/sleep_settings_screen.cpp
     src/screens/controls_screen.cpp
+    src/screens/touch_settings_screen.cpp
+    src/screens/sounds_settings_screen.cpp
+    src/screens/camera_settings_screen.cpp
     src/services/display_power_manager.cpp
+    src/services/audio_service.cpp
+    src/services/camera_service.cpp
 )
 
 if(ESP_PLATFORM)

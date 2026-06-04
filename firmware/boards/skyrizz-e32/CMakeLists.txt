@@ -4,10 +4,16 @@ idf_component_register(
         "src/xl9535.cpp"
         "src/lcd_driver.cpp"
         "src/e32_key_map.cpp"
+        "src/ft6336_touch.cpp"
+        "src/es7243e_mic.cpp"
+        "src/i2s_speaker.cpp"
+        "src/gc2145_camera.cpp"
     INCLUDE_DIRS "include"
     REQUIRES
         core
         esp32
         espressif__arduino-esp32
         driver
+        esp_driver_cam
+        esp_driver_i2s
 )

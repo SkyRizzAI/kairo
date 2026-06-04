@@ -40,7 +40,7 @@ void Xl9535::start() {
 
     // Read initial input state to seed last_ (avoids spurious events on first tick)
     lastInputs_ = readRaw() ^ 0xFFFF;   // invert: active-HIGH after XOR
-    lastInputs_ &= 0xF0F0;              // mask output bits out
+    lastInputs_ &= 0x7FF0;              // mask output bits out
 
     // Attach INT# ISR — GPIO43, falling edge (XL9535 pulls low on change)
     gpio_config_t cfg = {};
@@ -62,28 +62,37 @@ void Xl9535::stop() {
 }
 
 void Xl9535::tick(uint64_t nowMs) {
-    if (!intFlag_) return;
-    intFlag_ = false;
+    // Re-read inputs on interrupt (instant press/release) OR every 15 ms.
+    // The periodic poll is essential: while a button is HELD steady there is
+    // no edge → no interrupt, so without it long-press could never be detected.
+    bool due = intFlag_ || (nowMs - lastPoll_ >= 15);
+    if (due) {
+        intFlag_  = false;
+        lastPoll_ = nowMs;
 
-    uint16_t raw     = readRaw();
-    uint16_t inputs  = ~raw & 0xF0F0;    // invert active-LOW, mask output bits
-    uint16_t changed = inputs ^ lastInputs_;
-    lastInputs_ = inputs;
+        uint16_t raw     = readRaw();
+        uint16_t inputs  = ~raw & 0x7FF0;    // invert active-LOW, mask output bits
+        uint16_t changed = inputs ^ lastInputs_;
+        lastInputs_ = inputs;
 
-    if (!changed || !keyMap_) return;
-
-    // Dispatch press/release for each button bit
-    auto feedBtn = [&](uint8_t btnId, uint16_t mask) {
-        if (changed & mask) {
-            bool pressed = (inputs & mask) != 0;
-            keyMap_->feedEdge(btnId, pressed, nowMs);
+        if (changed && keyMap_) {
+            auto feedBtn = [&](uint8_t btnId, uint16_t mask) {
+                if (changed & mask) {
+                    bool pressed = (inputs & mask) != 0;
+                    keyMap_->feedEdge(btnId, pressed, nowMs);
+                }
+            };
+            feedBtn(BTN_LEFT,   (uint16_t)(P1_SW1 << 8));   // SW1 = P12 (combined bit 10)
+            feedBtn(BTN_MIDDLE, (uint16_t)P0_SW2);          // SW2 = P04 (combined bit 4)
+            feedBtn(BTN_RIGHT,  (uint16_t)(P1_SW3 << 8));   // SW3 = P11 (combined bit 9)
+            feedBtn(BTN_UP,     (uint16_t)P0_PB2);          // PB2 = P06 (combined bit 6) — top button
+            feedBtn(BTN_DOWN,   (uint16_t)P0_PB1);          // PB1 = P05 (combined bit 5) — bottom button
         }
-    };
-    feedBtn(BTN_LEFT,   (uint16_t)(P1_SW1 << 8));   // Port 1 bit 2 → bit 10 in combined
-    feedBtn(BTN_MIDDLE, (uint16_t)P0_PB1);
-    feedBtn(BTN_RIGHT,  (uint16_t)P0_SW2);
+    }
 
-    keyMap_->tick(nowMs);
+    // ALWAYS advance the gesture engine so long-press / repeat fire while held,
+    // even on ticks where we didn't touch I2C.
+    if (keyMap_) keyMap_->tick(nowMs);
 }
 
 void Xl9535::setKeyMap(input::IKeyMap* km, uint64_t /*nowMs*/) {
@@ -116,7 +125,7 @@ void Xl9535::setSeReset(bool asserted) {
 }
 
 uint16_t Xl9535::readInputs() {
-    return ~readRaw() & 0xF0F0;   // active-HIGH, output bits masked
+    return ~readRaw() & 0x7FF0;   // active-HIGH, output bits masked
 }
 
 void Xl9535::writeOutput(uint8_t port, uint8_t val) {

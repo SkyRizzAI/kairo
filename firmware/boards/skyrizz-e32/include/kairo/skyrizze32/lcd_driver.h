@@ -24,12 +24,20 @@ class LcdDriver : public IDisplayDriver, public IService {
 public:
     void init(Runtime& rt, Xl9535& expander);
 
-    // IDisplayDriver
-    uint16_t width()  const override { return width_;  }
-    uint16_t height() const override { return height_; }
-    void drawPixel(uint16_t x, uint16_t y, bool on)                  override;
-    void fillRect (uint16_t x, uint16_t y, uint16_t w, uint16_t h, bool on) override;
-    void flush()                                                       override;
+    // IDisplayDriver + IDriver
+    uint16_t   width()  const override { return width_;  }
+    uint16_t   height() const override { return height_; }
+    DriverKind kind()   const override { return DriverKind::Display; }
+    void drawPixel  (uint16_t x, uint16_t y, bool on)                         override;
+    void fillRect   (uint16_t x, uint16_t y, uint16_t w, uint16_t h, bool on) override;
+    void invertRect (uint16_t x, uint16_t y, uint16_t w, uint16_t h)         override;
+    void clear(bool on = false)                                              override;
+    void flush()                                                             override;
+    // Direct RGB565 blit — bypasses 1-bit framebuf for camera/color content.
+    // Handles panel inversion (inverts each pixel before SPI write).
+    void blitRgb565(const uint8_t* buf,
+                    uint16_t x, uint16_t y,
+                    uint16_t w, uint16_t h) override;
 
     // IService
     const char* name() const override { return "LcdDriver"; }
@@ -39,17 +47,25 @@ public:
 
     void setBacklight(bool on);  // delegates to expander_
 
+    // RGB565 palette — override before start() if desired.
+    // Defaults: white ink on black background.
+    void setColors(uint16_t fg, uint16_t bg) { fgColor_ = fg; bgColor_ = bg; }
+
 private:
-    void panelInit();            // controller-specific init sequence
+    void panelInit();
+    void setWindow(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1);
     void spiWrite(uint8_t* data, size_t len, bool isData);
 
     Runtime* rt_       = nullptr;
     Xl9535*  expander_ = nullptr;
-    uint16_t width_    = 320;   // default; overridden by config or probe
-    uint16_t height_   = 240;
+    // ILI9341 native portrait orientation on this board (matches Rust reference).
+    uint16_t width_    = 240;
+    uint16_t height_   = 320;
 
     uint8_t* framebuf_ = nullptr;   // 1-bit monochrome: width*height/8 bytes
     void*    spiHandle_ = nullptr;  // spi_device_handle_t (opaque to avoid esp-idf in header)
+    uint16_t fgColor_  = 0xFFFF;   // RGB565 foreground (ink → white)
+    uint16_t bgColor_  = 0x0000;   // RGB565 background (paper → black)
 };
 
 } // namespace kairo::skyrizze32

@@ -3,6 +3,7 @@
 #include <Arduino.h>
 
 #include "kairo/runtime.h"
+#include "kairo/log/logger.h"
 #include "kairo/esp32/esp32_platform.h"
 #include "kairo/skyrizze32/skyrizz_e32.h"
 #include "kairo/service/service_container.h"
@@ -13,6 +14,7 @@
 #include "kairo/plugins/stopwatch_plugin.h"
 #include "kairo/plugins/task_demo_plugin.h"
 #include "kairo/plugins/ticker_plugin.h"
+#include "kairo/plugins/camera_plugin.h"
 #include "kairo/plugin/plugin_manager.h"
 #include "kairo/screens/home_screen.h"
 #include "kairo/ui/view_dispatcher.h"
@@ -28,6 +30,7 @@ kairo::CounterPlugin    counterPlugin;
 kairo::StopwatchPlugin  stopwatchPlugin;
 kairo::TaskDemoPlugin   taskDemoPlugin;
 kairo::TickerPlugin     tickerPlugin;
+kairo::CameraPlugin     cameraPlugin;
 kairo::HomeScreen*      homeScreen = nullptr;
 }
 
@@ -53,12 +56,14 @@ void setup() {
     rt.plugins().load(stopwatchPlugin);
     rt.plugins().load(taskDemoPlugin);
     rt.plugins().load(tickerPlugin);
+    rt.plugins().load(cameraPlugin);
 
     static kairo::HomeScreen hs(rt);
     homeScreen = &hs;
     rt.view().push(*homeScreen);
 
-    Serial.println("[kairo] ready.");
+    // Logger exists now → use rt.log(), not raw Serial (see CLAUDE.md).
+    rt.log().info("Boot", "ready");
 }
 
 void loop() {

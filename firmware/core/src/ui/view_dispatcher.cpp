@@ -46,6 +46,10 @@ void ViewDispatcher::handleCode(input::Code c) {
     if (auto* s = active()) s->onCode(c);
 }
 
+void ViewDispatcher::handlePointer(const input::PointerEvent& e) {
+    if (auto* s = active()) s->onPointer(e);
+}
+
 void ViewDispatcher::handleKey(Key key) {
     // Legacy path — converts to Action and goes through the primary route.
     handleAction(input::defaultAction(input::codeFromKey(key)));

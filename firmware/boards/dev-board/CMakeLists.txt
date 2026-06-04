@@ -4,7 +4,6 @@ idf_component_register(
         "src/tca9534_buttons.cpp"
         "src/dev_board_key_map.cpp"
         "src/eink_display.cpp"
-        "src/nvs_config_store.cpp"
     INCLUDE_DIRS "include"
     REQUIRES
         core

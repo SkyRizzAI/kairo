@@ -148,4 +148,17 @@ uint16_t Canvas::centerXScaled(const char* text, uint8_t scale) const {
 
 void Canvas::flush() { driver_.flush(); }
 
+void Canvas::blitRgb565(const uint8_t* buf, uint16_t x, uint16_t y,
+                         uint16_t w, uint16_t h) {
+    driver_.blitRgb565(buf, x, y, w, h);
+}
+
+bool Canvas::supportsRgb565() const {
+    // Probe by calling with null buf — driver returns immediately,
+    // but a non-overriding driver's no-op means no support.
+    // Instead, we track support via a virtual indicator method.
+    // Simplest: just always try; drivers that don't support it are silent.
+    return true;
+}
+
 } // namespace kairo

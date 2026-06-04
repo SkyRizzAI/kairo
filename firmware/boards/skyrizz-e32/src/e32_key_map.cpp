@@ -10,7 +10,7 @@ E32KeyMap::E32KeyMap() {
 }
 
 void E32KeyMap::feedEdge(uint8_t buttonId, bool pressed, uint64_t nowMs) {
-    if (buttonId >= 3) return;
+    if (buttonId >= 5) return;   // SW1/SW2/SW3 + PB1/PB2
     engine_.feedEdge(buttonId, pressed, nowMs);
 }
 
@@ -29,27 +29,37 @@ void E32KeyMap::onGesture(void* ctx, uint8_t id, Gesture g, uint64_t now) {
 const char* E32KeyMap::buttonLabel(uint8_t id) const {
     switch (id) {
         case BTN_LEFT:   return "Left";
-        case BTN_MIDDLE: return "Middle";
+        case BTN_MIDDLE: return "OK";
         case BTN_RIGHT:  return "Right";
+        case BTN_UP:     return "Up";
+        case BTN_DOWN:   return "Down";
         default:         return "?";
     }
 }
 
 const char* E32KeyMap::hintFor(Action a) const {
     switch (a) {
-        case Action::Prev:       return "<";
-        case Action::Next:       return ">";
-        case Action::Activate:   return "[OK]";
-        case Action::Back:       return "Hold [OK]";
-        case Action::AdjustUp:   return "Hold >";
-        case Action::AdjustDown: return "Hold <";
+        case Action::Prev:       return "Up";       // side top (PB1)
+        case Action::Next:       return "Dn";       // side bottom (PB2)
+        case Action::Activate:   return "OK";       // center (SW2), short
+        case Action::Back:       return "Hold OK";  // center (SW2), hold
+        case Action::AdjustUp:   return "Right";    // below right (SW3)
+        case Action::AdjustDown: return "Left";     // below left (SW1)
         default:                 return "";
     }
 }
 
 bool E32KeyMap::hasCode(Code c) const {
-    // 3-button board has no native directional codes
-    return c == Code::Enter || c == Code::Escape;
+    // All six directional/semantic codes are producible via short/long press.
+    switch (c) {
+        case Code::Up:
+        case Code::Down:
+        case Code::Left:
+        case Code::Right:
+        case Code::Enter:
+        case Code::Escape: return true;
+        default:           return false;
+    }
 }
 
 bool E32KeyMap::canReach(Action a) const {
@@ -66,11 +76,13 @@ bool E32KeyMap::canReach(Action a) const {
 
 // static
 Code E32KeyMap::idToCode(uint8_t id, Gesture g) {
-    (void)g;
     switch (id) {
+        // Arrows: any tap/hold gesture → that arrow code (hold = repeat).
         case BTN_LEFT:   return Code::Left;
-        case BTN_MIDDLE: return Code::Enter;
         case BTN_RIGHT:  return Code::Right;
+        case BTN_UP:     return Code::Up;
+        case BTN_DOWN:   return Code::Down;
+        case BTN_MIDDLE: return (g == Gesture::Long) ? Code::Escape : Code::Enter;
         default:         return Code::None;
     }
 }
@@ -78,15 +90,18 @@ Code E32KeyMap::idToCode(uint8_t id, Gesture g) {
 // static
 Action E32KeyMap::idToAction(uint8_t id, Gesture g) {
     switch (id) {
-        case BTN_LEFT:
-            return (g == Gesture::Long || g == Gesture::Repeat)
-                ? Action::AdjustDown : Action::Prev;
+        // Below-left / below-right = horizontal arrows. Tap or hold-repeat.
+        case BTN_LEFT:   return Action::AdjustDown;  // Left
+        case BTN_RIGHT:  return Action::AdjustUp;    // Right
+        // Side buttons = vertical nav (list up/down). Tap or hold-repeat.
+        case BTN_UP:     return Action::Prev;        // Up
+        case BTN_DOWN:   return Action::Next;        // Down
         case BTN_MIDDLE:
-            return (g == Gesture::Long)
-                ? Action::Back : Action::Activate;
-        case BTN_RIGHT:
-            return (g == Gesture::Long || g == Gesture::Repeat)
-                ? Action::AdjustUp : Action::Next;
+            // One-shot only: Short = OK, Long = Back. Ignore Repeat so holding
+            // past the threshold doesn't fire Back-then-spam-Activate.
+            if (g == Gesture::Long)  return Action::Back;
+            if (g == Gesture::Short) return Action::Activate;
+            return Action::None;
         default:
             return Action::None;
     }

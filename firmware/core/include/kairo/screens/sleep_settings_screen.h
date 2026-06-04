@@ -17,7 +17,7 @@ public:
     void draw(Canvas& c) override;
 
 private:
-    static constexpr int ROWS = 3;   // Sleep, Lock, Scale
+    static constexpr int ROWS = 4;   // Sleep, Lock, Scale, FPS overlay
 
     struct Option { const char* label; uint64_t ms; };
 
@@ -36,7 +36,7 @@ private:
     void applyScale(int idx);
 
     Runtime& rt_;
-    int cursor_    = 0;   // 0 = Sleep, 1 = Lock, 2 = Scale
+    int cursor_    = 0;   // 0 = Sleep, 1 = Lock, 2 = Scale, 3 = FPS
     int sleepIdx_  = 0;
     int lockIdx_   = 0;
     int scaleIdx_  = 0;

@@ -1,6 +1,7 @@
 #pragma once
 #include "kairo/ui/key.h"
 #include "kairo/input/input_action.h"
+#include "kairo/input/pointer.h"
 #include <cstdint>
 
 namespace kairo {
@@ -25,6 +26,10 @@ struct IScreen {
     // Raw code handler — for physical-identity-sensitive cases (games, etc).
     virtual void onCode(input::Code /*c*/) {}
 
+    // Touch/pointer handler (Plan 29). Default no-op; component-based screens
+    // (Plan 30) and AppHost override it. Coordinates are logical canvas px.
+    virtual void onPointer(const input::PointerEvent& /*e*/) {}
+
     // Legacy handler — kept for backward compat. Screens that only override
     // this continue to work via the onAction() default forward above.
     virtual void update(Key /*key*/) {}
@@ -37,6 +42,12 @@ struct IScreen {
     // For Modal mode: size of the floating box (centered by runtime)
     virtual uint16_t modalWidth()  const { return 210; }
     virtual uint16_t modalHeight() const { return 64; }
+
+    // Fullscreen screens that write directly to the display via blitRgb565
+    // can return true to prevent GuiService from flushing the 1-bit canvas
+    // (which would overwrite their color output). The screen is then solely
+    // responsible for what appears on the LCD.
+    virtual bool suppressCanvasFlush() const { return false; }
 };
 
 } // namespace kairo

@@ -11,7 +11,9 @@
 
 namespace kairo {
 
-SettingsScreen::SettingsScreen(Runtime& rt) : rt_(rt), about_(rt), sleepSettings_(rt), controls_(rt) {}
+SettingsScreen::SettingsScreen(Runtime& rt)
+    : rt_(rt), about_(rt), sleepSettings_(rt), controls_(rt), touchSettings_(rt),
+      sounds_(rt), cameraSettings_(rt) {}
 SettingsScreen::~SettingsScreen() = default;
 
 void SettingsScreen::buildMenu() {
@@ -22,6 +24,12 @@ void SettingsScreen::buildMenu() {
     // Always present
     items_.push_back({"Display"});
     items_.push_back({"Controls"});
+    // Touch submenu — only on boards with a touch controller
+    if (rt_.capabilities().has("input.touch")) items_.push_back({"Touch"});
+    if (rt_.capabilities().has("audio.input") || rt_.capabilities().has("audio.output"))
+        items_.push_back({"Sounds"});
+    if (rt_.capabilities().has("camera"))
+        items_.push_back({"Camera"});
     items_.push_back({"About"});
     if (cursor_ >= (int)items_.size()) cursor_ = 0;
 }
@@ -44,6 +52,12 @@ void SettingsScreen::handleSelect() {
         // Launch WiFi as a true app on its own thread.
         wifiHost_ = std::make_unique<AppHost>(rt_, wifiApp_);
         rt_.view().push(*wifiHost_);
+    } else if (std::strcmp(label, "Touch") == 0) {
+        rt_.view().push(touchSettings_);
+    } else if (std::strcmp(label, "Sounds") == 0) {
+        rt_.view().push(sounds_);
+    } else if (std::strcmp(label, "Camera") == 0) {
+        rt_.view().push(cameraSettings_);
     }
 }
 

@@ -21,7 +21,7 @@ public:
     void tick(uint64_t nowMs) override;
 
     const char* boardName()   const override { return "skyrizz-e32"; }
-    int         buttonCount() const override { return 3; }
+    int         buttonCount() const override { return 5; }
     const char* buttonLabel(uint8_t id) const override;
     const char* hintFor(input::Action a) const override;
     bool        hasCode(input::Code c)   const override;

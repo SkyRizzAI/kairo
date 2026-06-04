@@ -26,6 +26,18 @@ public:
     // Full-event post: used by IKeyMap after gesture resolution.
     void post(const InputEvent& e) { queue_.send(e); }
 
+    // Pointer/touch post (Plan 29): same funnel, kind = Pointer. Coordinates
+    // must be LOGICAL (the ITouchDriver transforms raw → logical). type=Press
+    // so the GUI drain (which filters Press/Repeat) lets it through.
+    void postPointer(input::PointerPhase ph, uint16_t x, uint16_t y) {
+        InputEvent e;
+        e.kind   = InputEvent::Kind::Pointer;
+        e.type   = InputEvent::Type::Press;
+        e.pphase = ph;
+        e.px = x; e.py = y;
+        queue_.send(e);
+    }
+
     // ── Drain (main task only) ────────────────────────────────────────────
     bool next(InputEvent& out) { return queue_.tryReceive(out); }
 

@@ -153,6 +153,8 @@ void Runtime::run() {
 AsyncEventPoster& Runtime::asyncPoster() { return asyncPoster_; }
 InputService&     Runtime::input()       { return inputService_; }
 nema::TaskRunner& Runtime::tasks()       { return taskRunner_; }
+AudioService&     Runtime::audio()       { return audioService_; }
+CameraService&    Runtime::camera()      { return cameraService_; }
 
 void Runtime::step() {
     uint64_t now = clock().millis();
@@ -186,6 +188,9 @@ ViewDispatcher&     Runtime::view()          { assert(viewDispatcher_); return *
 Canvas&             Runtime::canvas()        { assert(canvas_); return *canvas_; }
 DisplayPowerManager& Runtime::dpm()          { assert(gui_); return gui_->dpm(); }
 IConfigStore&        Runtime::config()       { auto* c = container_->resolve<IConfigStore>(); assert(c); return *c; }
+uint16_t            Runtime::fps()     const { return gui_ ? gui_->fps() : 0; }
+bool                Runtime::showFps() const { return gui_ ? gui_->showFps() : false; }
+void                Runtime::setShowFps(bool on) { if (gui_) gui_->setShowFps(on); }
 BootPhase           Runtime::phase()   const { return phase_; }
 int                 Runtime::exitCode() const { return exitCode_; }
 

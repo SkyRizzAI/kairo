@@ -3,6 +3,7 @@
 #include "kairo/ui/node.h"
 #include "kairo/ui/widgets.h"
 #include "kairo/ui/key.h"
+#include "kairo/input/pointer.h"
 
 namespace kairo {
 
@@ -32,6 +33,14 @@ protected:
     // Handle a non-navigation key (incl. Cancel). Return true if consumed
     // (triggers re-render); false lets the base act (Cancel → exit).
     virtual bool onKey(Key k, AppContext& ctx) { (void)k; (void)ctx; return false; }
+
+    // Observe raw pointer/touch events (Plan 29). Called for EVERY pointer event
+    // (regardless of capturesInput()/drawRaw()), before the internal hit-test.
+    // Return true to trigger a re-render. Most apps ignore this and rely on
+    // Pressable onPress; touch diagnostics / custom-drawn apps use it directly.
+    virtual bool onPointer(const input::PointerEvent& e, AppContext& ctx) {
+        (void)e; (void)ctx; return false;
+    }
 
     // Periodic wake interval in ms for live apps (clock/stopwatch). 0 = redraw
     // only on input (default — best for e-ink, no needless refreshes).

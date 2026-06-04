@@ -1,6 +1,7 @@
 #pragma once
 #include "kairo/ui/key.h"
 #include "kairo/input/input_action.h"
+#include "kairo/input/pointer.h"
 #include <vector>
 #include <cstdint>
 
@@ -24,6 +25,9 @@ public:
 
     // Raw code dispatch — calls active()->onCode(c).
     void handleCode(input::Code c);
+
+    // Pointer/touch dispatch — calls active()->onPointer(e).
+    void handlePointer(const input::PointerEvent& e);
 
     // Legacy dispatch — kept for backward compat (simulator stdin uses Key).
     void handleKey(Key key);

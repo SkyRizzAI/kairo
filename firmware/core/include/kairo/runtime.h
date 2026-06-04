@@ -2,6 +2,8 @@
 #include "kairo/types.h"
 #include "kairo/event/async_event_poster.h"
 #include "kairo/services/input_service.h"
+#include "kairo/services/audio_service.h"
+#include "kairo/services/camera_service.h"
 #include "kairo/nema/task_runner.h"
 #include <memory>
 
@@ -58,6 +60,13 @@ public:
     DisplayPowerManager& dpm();     // sleep/lock state machine (only after start())
     IConfigStore&        config();  // persistent key-value store
 
+    // GUI render FPS (actual display flushes/sec). Apps: ctx.runtime().fps().
+    uint16_t fps()         const;
+    bool     showFps()     const;
+    void     setShowFps(bool on);
+    AudioService&        audio();
+    CameraService&       camera();
+
     BootPhase phase()    const;
     int       exitCode() const;
 
@@ -86,6 +95,8 @@ private:
     AsyncEventPoster                   asyncPoster_;   // value member — always alive
     InputService                       inputService_;  // value member — always alive
     nema::TaskRunner                   taskRunner_;    // value member — always alive
+    AudioService                       audioService_;  // value member — always alive
+    CameraService                      cameraService_; // value member — always alive
 };
 
 } // namespace kairo

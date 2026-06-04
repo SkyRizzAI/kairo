@@ -4,6 +4,7 @@
 #include <Arduino.h>
 
 #include "kairo/runtime.h"
+#include "kairo/log/logger.h"
 #include "kairo/esp32/esp32_platform.h"
 #include "kairo/devboard/dev_board.h"
 #include "kairo/service/service_container.h"
@@ -62,7 +63,8 @@ void setup() {
     homeScreen = &hs;
     rt.view().push(*homeScreen);
 
-    Serial.println("[kairo] ready.");
+    // Logger exists now → use rt.log(), not raw Serial (see CLAUDE.md).
+    rt.log().info("Boot", "ready");
 }
 
 void loop() {

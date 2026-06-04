@@ -100,9 +100,13 @@ void SleepSettingsScreen::update(Key key) {
             lockIdx_ = (lockIdx_ + dir + kLockCount) % kLockCount;
             rt_.dpm().setLockMs(kLockOpts[lockIdx_].ms);
             rt_.config().setInt("dpm", "lock_ms", (int64_t)kLockOpts[lockIdx_].ms);
-        } else {
+        } else if (cursor_ == 2) {
             scaleIdx_ = (scaleIdx_ + dir + kScaleCount) % kScaleCount;
             applyScale(scaleIdx_);
+        } else {  // cursor_ == 3: FPS overlay toggle (either direction flips)
+            bool on = !rt_.showFps();
+            rt_.setShowFps(on);
+            rt_.config().setInt("debug", "fps", on ? 1 : 0);
         }
     }
     rt_.view().requestRedraw();
@@ -111,10 +115,11 @@ void SleepSettingsScreen::update(Key key) {
 void SleepSettingsScreen::draw(Canvas& c) {
     uint16_t y = ui::drawTitle(c, "DISPLAY");
 
-    const char* rows[ROWS] = {"Sleep", "Lock", "Scale"};
+    const char* rows[ROWS] = {"Sleep", "Lock", "Scale", "FPS"};
     const char* vals[ROWS] = {kSleepOpts[sleepIdx_].label,
                               kLockOpts[lockIdx_].label,
-                              kScaleLabels[scaleIdx_]};
+                              kScaleLabels[scaleIdx_],
+                              rt_.showFps() ? "On" : "Off"};
 
     for (int i = 0; i < ROWS; i++) {
         bool sel = (i == cursor_);

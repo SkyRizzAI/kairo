@@ -5,7 +5,6 @@
 #include "kairo/system/capability_registry.h"
 #include "kairo/service/service_container.h"
 #include "kairo/hal/display.h"
-#include "kairo/config/config_store.h"
 #include "kairo/devboard/board_config.h"
 #include <Wire.h>
 #include <Arduino.h>
@@ -33,11 +32,6 @@ void DevBoard::describeHardware(Runtime& rt) {
     rt.container().registerAs<IDisplayDriver>(&display_); // Canvas binds to wrapper
     rt.hardware().add({"display", DriverKind::Display, "e-ink GDEY027T91 264x176"});
     rt.capabilities().add("display");
-
-    // Config store (NVS — internal flash, no SD required)
-    config_.init(rt.log());
-    rt.container().registerService(&config_);
-    rt.container().registerAs<IConfigStore>(&config_);
 
     // Input keymap — install before buttons so TCA9534 posts enriched events.
     rt.input().setKeyMap(&keyMap_);

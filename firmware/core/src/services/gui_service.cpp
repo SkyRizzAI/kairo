@@ -6,11 +6,13 @@
 #include "kairo/ui/canvas.h"
 #include "kairo/ui/screen.h"
 #include "kairo/ui/status_bar.h"
+#include "kairo/ui/ui_constants.h"
 #include "kairo/ui/view_dispatcher.h"
 #include "kairo/services/input_service.h"
 #include "kairo/system/capability_registry.h"
 #include "kairo/nema/task_runner.h"
 #include <ctime>
+#include <cstdio>
 
 namespace kairo {
 
@@ -22,6 +24,7 @@ void GuiService::start() {
     if (auto* cfg = rt_.container().resolve<IConfigStore>()) {
         sleepMs = (uint64_t)cfg->getIntOr("dpm", "sleep_ms", (int64_t)sleepMs);
         lockMs  = (uint64_t)cfg->getIntOr("dpm", "lock_ms",  (int64_t)lockMs);
+        showFps_ = cfg->getIntOr("debug", "fps", 0) != 0;  // toggle in Settings → Display
     }
 
     dpm_.init(rt_.view(), display_, rt_.clock(), lockScreen_, sleepMs, lockMs);
@@ -54,6 +57,8 @@ void GuiService::refreshStatus(uint64_t now) {
 
 void GuiService::renderOnce(Canvas& c) {
     auto& vd = rt_.view();
+    fpsFrames_++;   // count actual display flushes
+    uint64_t tDraw0 = rt_.clock().millis();
     c.clear();
     if (auto* s = vd.active()) {
         switch (s->mode()) {
@@ -77,8 +82,29 @@ void GuiService::renderOnce(Canvas& c) {
             break;
         }
         s->draw(c);
+
+        // Fullscreen screens that use direct color rendering (blitRgb565) need
+        // to suppress the 1-bit canvas flush — it would overwrite their content.
+        if (s->mode() == ScreenMode::Fullscreen && s->suppressCanvasFlush())
+            return;
     }
+    lastDrawMs_ = (uint16_t)(rt_.clock().millis() - tDraw0);
+
+    // FPS + timing overlay (top-right): "<fps> d<drawMs>/f<flushMs>" so you can
+    // see exactly where a slow frame goes (screen draw vs LCD flush).
+    if (showFps_) {
+        char fb[24];
+        std::snprintf(fb, sizeof(fb), "%u d%u/f%u",
+                      (unsigned)fps_, (unsigned)lastDrawMs_, (unsigned)lastFlushMs_);
+        uint16_t tw = c.textWidth(fb);
+        uint16_t bx = (uint16_t)(c.width() > tw + 4 ? c.width() - tw - 4 : 0);
+        c.fillRect(bx, 0, (uint16_t)(tw + 4), ui::CHAR_H + 1, false);  // clear bg
+        c.drawText((uint16_t)(bx + 2), 1, fb, true);
+    }
+
+    uint64_t tFlush0 = rt_.clock().millis();
     c.flush();
+    lastFlushMs_ = (uint16_t)(rt_.clock().millis() - tFlush0);
 }
 
 void GuiService::loop() {
@@ -87,9 +113,22 @@ void GuiService::loop() {
         uint64_t now = rt_.clock().millis();
         auto& vd = rt_.view();
 
+        // FPS window: snapshot flush count once per second.
+        if (now - fpsLastMs_ >= 1000) {
+            fps_ = (uint16_t)fpsFrames_;
+            fpsFrames_ = 0;
+            fpsLastMs_ = now;
+        }
+
         // 1. Input — DPM intercepts; only forwarded to the screen if not consumed.
         InputEvent ie;
         while (rt_.input().next(ie)) {
+            if (ie.kind == InputEvent::Kind::Pointer) {
+                // Touch: forward to active screen (apps relay to their mailbox).
+                // v1: touch bypasses DPM sleep/lock (TODO: count touch as activity).
+                vd.handlePointer(input::PointerEvent{ie.pphase, ie.px, ie.py});
+                continue;
+            }
             if (ie.type == InputEvent::Type::Press || ie.type == InputEvent::Type::Repeat) {
                 if (!dpm_.deliverKey(ie.key, now)) {
                     vd.handleAction(ie.action);  // primary: Action-based dispatch

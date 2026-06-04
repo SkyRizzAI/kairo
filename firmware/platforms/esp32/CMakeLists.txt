@@ -4,6 +4,7 @@ idf_component_register(
         "src/esp32_wifi_driver.cpp"
         "src/esp32_http_client.cpp"
         "src/esp32_platform.cpp"
+        "src/nvs_config_store.cpp"
     INCLUDE_DIRS "include"
     REQUIRES
         core

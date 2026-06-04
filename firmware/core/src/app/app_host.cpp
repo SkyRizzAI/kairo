@@ -14,11 +14,18 @@
 
 namespace kairo {
 
-static uint8_t* allocBuf(size_t n) {
+// preferInternal: put hot buffers (read every frame during blit) in fast
+// internal SRAM — reading a frame buffer out of PSRAM 76,800×/frame is a major
+// perf trap. Falls back to PSRAM then plain malloc if internal won't fit.
+static uint8_t* allocBuf(size_t n, bool preferInternal = false) {
 #ifdef ESP_PLATFORM
+    if (preferInternal)
+        if (auto* p = (uint8_t*)heap_caps_malloc(n, MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT))
+            return p;
     if (auto* p = (uint8_t*)heap_caps_malloc(n, MALLOC_CAP_SPIRAM)) return p;
     return (uint8_t*)heap_caps_malloc(n, MALLOC_CAP_8BIT);
 #else
+    (void)preferInternal;
     return (uint8_t*)std::malloc(n);
 #endif
 }
@@ -46,8 +53,8 @@ void AppHost::enter() {
     w_    = rt_.canvas().width();
     h_    = rt_.canvas().height();
     size_ = (size_t)w_ * h_;
-    drawBuf_  = allocBuf(size_);
-    readyBuf_ = allocBuf(size_);
+    drawBuf_  = allocBuf(size_);              // written by app thread (PSRAM ok)
+    readyBuf_ = allocBuf(size_, true);        // read every frame by blit → internal SRAM
     std::memset(drawBuf_,  0, size_);
     std::memset(readyBuf_, 0, size_);
     bufDisplay_ = new BufferDisplay(drawBuf_, w_, h_);
@@ -61,7 +68,20 @@ void AppHost::enter() {
 }
 
 void AppHost::update(Key key) {
-    mailbox_.send(InputEvent{key, InputEvent::Type::Press});
+    InputEvent ie;
+    ie.kind = InputEvent::Kind::Key;
+    ie.key  = key;
+    ie.type = InputEvent::Type::Press;
+    mailbox_.send(ie);
+}
+
+void AppHost::onPointer(const input::PointerEvent& e) {
+    InputEvent ie;
+    ie.kind   = InputEvent::Kind::Pointer;
+    ie.type   = InputEvent::Type::Press;
+    ie.pphase = e.phase;
+    ie.px = e.x; ie.py = e.y;
+    mailbox_.send(ie);   // delivered to app thread via waitInput()
 }
 
 ScreenMode AppHost::mode() const {

@@ -49,7 +49,16 @@ void SkyRizzE32::describeHardware(Runtime& rt) {
     rt.capabilities().add("input.activate");
     rt.capabilities().add("input.back");
     rt.capabilities().add("input.adjust");
-    // NOTE: "input.2d" intentionally NOT added — no Up/Down/Left/Right natively.
+    // 5 buttons give 4 distinct arrows (Up/Down on side, Left/Right below) →
+    // full 2D directional input, so the virtual keyboard uses grid mode.
+    rt.capabilities().add("input.2d");
+
+    // Touch (FT6336U capacitive) — pointer HAL (Plan 29)
+    touch_.init(rt, expander_);
+    touch_.attachInput(&rt.input());
+    rt.container().registerService(&touch_);
+    rt.hardware().add({"touch", DriverKind::Other, "FT6336U capacitive @0x38"});
+    rt.capabilities().add("input.touch");
 
     // RGB LEDs
     rt.hardware().add({"rgb", DriverKind::Other, "WS2812 x2 GPIO46"});
@@ -60,6 +69,27 @@ void SkyRizzE32::describeHardware(Runtime& rt) {
     rt.capabilities().add("sensors.environment");
     rt.capabilities().add("sensors.light");
     rt.capabilities().add("sensors.motion");
+
+    // Audio input — ES7243E mic ADC
+    mic_.init(rt, expander_);
+    rt.container().registerService(&mic_);
+    rt.audio().addInput(&mic_, "mic0", "I2S Built-in");
+    rt.hardware().add({"audio.input", DriverKind::Other, "ES7243E @0x11"});
+    rt.capabilities().add("audio.input");
+
+    // Audio output — stub for future I2S DAC
+    speaker_.init(rt, mic_);
+    rt.container().registerService(&speaker_);
+    rt.audio().addOutput(&speaker_, "spk0", "NS4168 I2S Amp");
+    rt.hardware().add({"audio.output", DriverKind::Other, "I2S DAC (stub)"});
+    rt.capabilities().add("audio.output");
+
+    // Camera — GC2145 DVP
+    camera_.init(rt, expander_);
+    rt.container().registerService(&camera_);
+    rt.camera().add(&camera_, "cam0", "GC2145 2MP DVP");
+    rt.hardware().add({"camera", DriverKind::Other, "GC2145 2MP @0x3C"});
+    rt.capabilities().add("camera");
 
     rt.log().info("SkyRizzE32", "hardware described",
         {{"mcu", "ESP32-S3-WROOM-1-N16R8"}, {"flash", "16MB"}, {"psram", "8MB"}});

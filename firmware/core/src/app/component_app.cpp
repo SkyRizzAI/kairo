@@ -4,6 +4,7 @@
 #include "kairo/ui/layout.h"
 #include "kairo/ui/renderer.h"
 #include "kairo/ui/focus.h"
+#include "kairo/ui/hit_test.h"
 #include "kairo/ui/text_style.h"
 #include "kairo/ui/ui_constants.h"
 #include "kairo/nema/input_event.h"
@@ -16,6 +17,12 @@ void ComponentApp::run(AppContext& ctx) {
     ui::UiNode* root = nullptr;
     bool dirty = true;
 
+    // Dual-modal state (Plan 29): focus-ring shows only in Button mode; a touch
+    // flips to Pointer mode (ring hidden). `pressed` tracks the node hit on
+    // Down so a release over the same node fires its onPress (like web click).
+    input::InputModality modality = input::InputModality::Button;
+    ui::UiNode*          pressed  = nullptr;
+
     onStart(ctx);
 
     while (!ctx.shouldExit()) {
@@ -26,6 +33,7 @@ void ComponentApp::run(AppContext& ctx) {
                 root = nullptr;   // custom-drawn frame (e.g. keyboard)
             } else {
                 arena.reset();
+                pressed = nullptr;   // old node pointers are invalid after reset
                 root = build(arena, ctx);
                 if (root) {
                     uint16_t w = c.width();
@@ -35,7 +43,9 @@ void ComponentApp::run(AppContext& ctx) {
                     uint16_t ah = fullscreen() ? h : (uint16_t)(h - ui::CONTENT_Y);
                     ui::layout(*root, w, ah, ui::roleMetrics(), 0, oy);
                     ui::UiNode* foc = ui::focusedNode(*root, fs);
-                    ui::render(*root, c, foc);
+                    // Focus ring only in Button mode (web :focus-visible).
+                    ui::render(*root, c,
+                               modality == input::InputModality::Button ? foc : nullptr);
                 }
             }
             ctx.present();
@@ -47,16 +57,37 @@ void ComponentApp::run(AppContext& ctx) {
 
         InputEvent ev;
         if (ctx.waitInput(ev, timeout)) {
+            // ── Touch path ────────────────────────────────────────────────
+            if (ev.kind == InputEvent::Kind::Pointer) {
+                modality = input::InputModality::Pointer;
+                input::PointerEvent pe{ev.pphase, ev.px, ev.py};
+                if (onPointer(pe, ctx)) dirty = true;   // raw observer hook
+                if (root && !capturesInput()) {
+                    if (ev.pphase == input::PointerPhase::Down) {
+                        pressed = ui::hitTest(*root, (int16_t)ev.px, (int16_t)ev.py);
+                    } else if (ev.pphase == input::PointerPhase::Up) {
+                        ui::UiNode* up = ui::hitTest(*root, (int16_t)ev.px, (int16_t)ev.py);
+                        if (up && up == pressed && up->onPress) {
+                            up->onPress(up->userdata);   // web "click": down+up same node
+                            dirty = true;
+                        }
+                        pressed = nullptr;
+                    }
+                }
+                continue;
+            }
+
+            // ── Button path ───────────────────────────────────────────────
             if (ev.type != InputEvent::Type::Press && ev.type != InputEvent::Type::Repeat)
                 continue;
+            modality = input::InputModality::Button;   // ring returns
             if (capturesInput()) {
-                // Raw mode: every key (incl. arrows/Select/Cancel) goes to onKey.
                 if (onKey(ev.key, ctx)) dirty = true;
             } else if (ev.key == Key::Cancel) {
                 if (onKey(Key::Cancel, ctx)) dirty = true;
                 else                         ctx.requestExit();
             } else if (root && ui::handleFocusKey(*root, fs, ev.key)) {
-                dirty = true;   // focus moved or onPress fired
+                dirty = true;
             } else if (onKey(ev.key, ctx)) {
                 dirty = true;
             }

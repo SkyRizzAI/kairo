@@ -4,8 +4,6 @@
 #include "kairo/devboard/tca9534_buttons.h"
 #include "kairo/devboard/dev_board_key_map.h"
 #include "kairo/devboard/eink_display.h"
-#include "kairo/devboard/nvs_config_store.h"
-
 namespace kairo {
 
 // Kairo Dev Board — ESP32-S3-WROOM-1 + e-ink 264×176 + TCA9534 6-button.
@@ -23,7 +21,6 @@ private:
     TCA9534Buttons     buttons_;
     EinkDisplay        panel_;
     AsyncDisplayDriver display_;
-    NvsConfigStore     config_;
 };
 
 } // namespace kairo

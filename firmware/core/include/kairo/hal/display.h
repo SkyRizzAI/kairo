@@ -18,6 +18,13 @@ struct IDisplayDriver : IDriver {
     virtual void invertRect(uint16_t /*x*/, uint16_t /*y*/,
                             uint16_t /*w*/, uint16_t /*h*/) {}
 
+    // Direct RGB565 blit — bypasses the 1-bit framebuffer for color content
+    // (e.g. camera viewfinder). buf is big-endian RGB565, w*h*2 bytes.
+    // Default: no-op (monochrome drivers ignore this).
+    virtual void blitRgb565(const uint8_t* /*buf*/,
+                             uint16_t /*x*/, uint16_t /*y*/,
+                             uint16_t /*w*/, uint16_t /*h*/) {}
+
     // Raw buffer flush — primary hook for AsyncDisplayDriver's display task.
     // buf: row-major pixel data, 1 byte per pixel (1=ink, 0=bg), w×h bytes.
     // Default: slow-path via drawPixel + flush() — override for efficiency.

@@ -37,6 +37,11 @@ public:
 
     DisplayPowerManager& dpm() { return dpm_; }
 
+    // FPS API — actual display flushes per second (rolling 1s window).
+    uint16_t fps()         const { return fps_; }
+    bool     showFps()     const { return showFps_; }
+    void     setShowFps(bool b)  { showFps_ = b; }
+
 private:
     static void threadEntry(void* self);
     void        loop();
@@ -47,6 +52,15 @@ private:
     nema::Thread          thread_;
     StatusBarData         status_;
     uint64_t              lastStatusMs_ = 0;
+
+    // On-screen FPS overlay — counts actual display flushes/sec, so you can tell
+    // whether lag is GUI render throughput. Enabled via config key "debug/fps".
+    bool                  showFps_   = false;
+    uint32_t              fpsFrames_ = 0;
+    uint64_t              fpsLastMs_ = 0;
+    uint16_t              fps_       = 0;
+    uint16_t              lastDrawMs_  = 0;   // time in active screen draw()
+    uint16_t              lastFlushMs_ = 0;   // time in canvas/LCD flush()
 
     LockScreen            lockScreen_;
     DisplayPowerManager   dpm_;

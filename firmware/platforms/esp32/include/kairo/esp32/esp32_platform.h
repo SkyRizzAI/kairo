@@ -3,6 +3,7 @@
 #include "kairo/esp32/esp32_clock.h"
 #include "kairo/esp32/esp32_wifi_driver.h"
 #include "kairo/esp32/esp32_http_client.h"
+#include "kairo/esp32/nvs_config_store.h"
 
 namespace kairo {
 
@@ -22,6 +23,7 @@ private:
     Esp32Clock       clock_;
     Esp32WifiDriver  wifi_;
     Esp32HttpClient  http_;
+    NvsConfigStore   config_;
 };
 
 } // namespace kairo

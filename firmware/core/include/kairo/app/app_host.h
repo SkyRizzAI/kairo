@@ -35,6 +35,7 @@ public:
     ScreenMode mode() const override;
     void enter()         override;   // spawn app thread
     void update(Key key) override;   // forward key → mailbox
+    void onPointer(const input::PointerEvent& e) override;  // forward touch → mailbox
     void draw(Canvas& c) override;   // blit latest app frame
     void tick(uint64_t nowMs) override;  // pop self when app thread finishes
 

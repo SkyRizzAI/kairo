@@ -48,6 +48,7 @@ private:
     Runtime*        rt_       = nullptr;
     input::IKeyMap* keyMap_   = nullptr;
     volatile bool   intFlag_  = false;
+    uint64_t        lastPoll_   = 0;   // last input re-read (ms) for hold detection
     uint16_t        lastInputs_ = 0;
     uint8_t         out0_     = 0;   // shadow output register port 0
     uint8_t         out1_     = 0;   // shadow output register port 1

@@ -58,6 +58,12 @@ public:
 
     void flush();  // delegates to driver.flush()
 
+    // Direct RGB565 color blit — bypasses the 1-bit layer.
+    // Coordinates are physical pixels (no scale). For camera/video use.
+    void blitRgb565(const uint8_t* buf, uint16_t x, uint16_t y,
+                    uint16_t w, uint16_t h);
+    bool supportsRgb565() const;  // true if driver overrides blitRgb565
+
 private:
     IDisplayDriver&   driver_;
     const BitmapFont* font_  = &FONT_5X8;

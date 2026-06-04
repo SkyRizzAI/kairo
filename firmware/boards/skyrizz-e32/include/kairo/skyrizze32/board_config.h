@@ -58,11 +58,41 @@ constexpr uint8_t P1_EXT_P2  = 1 << 6;   // P16 — external P2
 constexpr uint8_t P1_IND_LED = 1 << 7;   // P17 — indicator LED (output, HIGH=on)
 
 // ── Button IDs for IKeyMap (0-indexed) ────────────────────────────────────
-// Physical layout: Left=SW1, Middle=PB1, Right=SW2
-// Confirmed at bring-up — swap constants if physical order differs.
-constexpr uint8_t BTN_LEFT   = 0;   // SW1  → XL9535 P12 (Port 1, bit 2)
-constexpr uint8_t BTN_MIDDLE = 1;   // PB1  → XL9535 P05 (Port 0, bit 5)
-constexpr uint8_t BTN_RIGHT  = 2;   // SW2  → XL9535 P04 (Port 0, bit 4)
-// BTN_PB2 = 3 (P06), BTN_SW3 = 4 (P11) — available for future use
+// 3 buttons BELOW the LCD:  Left | OK/Back | Right
+constexpr uint8_t BTN_LEFT   = 0;   // SW1 → XL9535 P12 (Port 1, bit 2) — Left arrow
+constexpr uint8_t BTN_MIDDLE = 1;   // SW2 → XL9535 P04 (Port 0, bit 4) — OK / hold = Back
+constexpr uint8_t BTN_RIGHT  = 2;   // SW3 → XL9535 P11 (Port 1, bit 1) — Right arrow
+// 2 buttons on the RIGHT SIDE of the LCD:  Up (top) | Down (bottom)
+// Physically PB2 (P06) is the top button and PB1 (P05) the bottom — wired in
+// xl9535.cpp feedBtn(); swap there if the panel revision differs.
+constexpr uint8_t BTN_UP     = 3;   // top    side button → Up arrow
+constexpr uint8_t BTN_DOWN   = 4;   // bottom side button → Down arrow
+
+
+// ── I2S Audio (ES7243E ADC, FPC2) ─────────────────────────────────────────
+constexpr int PIN_I2S_MCLK = 3;    // Master clock out → ES7243E
+constexpr int PIN_I2S_BCLK = 0;    // Bit clock (shared: ES7243E + NS4168)
+constexpr int PIN_I2S_WS   = 38;   // Word select / LRCK (shared)
+constexpr int PIN_I2S_DIN  = 39;   // Data in  (ES7243E SDO → ESP32)
+constexpr int PIN_I2S_DOUT = 45;   // Data out (ESP32 → NS4168 SDI)
+
+// ── DVP Camera (GC2145, FPC3) ─────────────────────────────────────────────
+constexpr int PIN_CAM_XCLK  = 7;   // Master clock out → GC2145 (20 MHz)
+constexpr int PIN_CAM_PCLK  = 17;  // Pixel clock in ← GC2145
+constexpr int PIN_CAM_VSYNC = 4;   // VSYNC in
+constexpr int PIN_CAM_HREF  = 5;   // HREF / DE in
+constexpr int PIN_CAM_D0    = 8;
+constexpr int PIN_CAM_D1    = 10;
+constexpr int PIN_CAM_D2    = 11;
+constexpr int PIN_CAM_D3    = 9;
+constexpr int PIN_CAM_D4    = 18;
+constexpr int PIN_CAM_D5    = 16;
+constexpr int PIN_CAM_D6    = 15;
+constexpr int PIN_CAM_D7    = 6;
+// Camera reset: P0_CAM_RST (XL9535 P02) — already defined above.
+
+// ── I2C device addresses (media) ──────────────────────────────────────────
+constexpr uint8_t I2C_ADDR_ES7243E = 0x11;   // Audio ADC
+constexpr uint8_t I2C_ADDR_GC2145  = 0x3C;   // Camera SCCB
 
 } // namespace kairo::skyrizze32
