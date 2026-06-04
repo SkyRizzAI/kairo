@@ -1,0 +1,26 @@
+#pragma once
+#include "kairo/hal/http_client.h"
+#include "kairo/service.h"
+
+namespace kairo {
+
+class Runtime;
+class Logger;
+
+// ESP32 HTTP client over esp_http_client (+esp-tls). Blocking; worker-thread only.
+class Esp32HttpClient : public IHttpClient, public IService {
+public:
+    const char* name() const override { return "Esp32HttpClient"; }
+
+    void onRegister(Runtime& rt) override;
+
+    HttpResponse get(const char* url, bool insecure = true) override;
+
+    void start() override {}
+    void stop()  override {}
+
+private:
+    Logger* log_ = nullptr;
+};
+
+} // namespace kairo

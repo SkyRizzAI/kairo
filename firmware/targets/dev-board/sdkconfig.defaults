@@ -1,0 +1,37 @@
+# Kairo Dev Board — sdkconfig defaults (mirrors ref kairo-test-concept firmware).
+# ESP32-S3-WROOM-1-N8R8, 8 MB flash, 8 MB Octal PSRAM.
+
+# Target
+CONFIG_IDF_TARGET="esp32s3"
+
+# Arduino-as-component: auto-run setup()/loop(); Serial on UART0
+CONFIG_AUTOSTART_ARDUINO=y
+CONFIG_FREERTOS_HZ=1000
+
+# 8 MB flash, QIO mode
+CONFIG_ESPTOOLPY_FLASHSIZE_8MB=y
+CONFIG_ESPTOOLPY_FLASHMODE_QIO=y
+
+# Custom partition table (3 MB app — default ~1 MB too small for arduino-esp32)
+CONFIG_PARTITION_TABLE_CUSTOM=y
+CONFIG_PARTITION_TABLE_CUSTOM_FILENAME="partitions.csv"
+
+# Octal PSRAM (N8R8) — large heap for Canvas buffer + future JS engine
+CONFIG_SPIRAM=y
+CONFIG_SPIRAM_MODE_OCT=y
+CONFIG_SPIRAM_SPEED_80M=y
+
+# WiFi
+CONFIG_ESP_WIFI_ENABLED=y
+
+# Logging
+CONFIG_LOG_DEFAULT_LEVEL_INFO=y
+
+# Stack size for Arduino task (needs to be large enough for kairo runtime)
+CONFIG_ARDUINO_LOOP_STACK_SIZE=16384
+
+# C++ features used by Kairo Core:
+#  - RTTI: ServiceContainer uses std::type_index
+#  - Exceptions: ServiceManager uses try/catch around service start
+CONFIG_COMPILER_CXX_EXCEPTIONS=y
+CONFIG_COMPILER_CXX_RTTI=y

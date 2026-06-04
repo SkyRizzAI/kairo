@@ -1,0 +1,45 @@
+# SkyRizz E32 — sdkconfig defaults.
+# ESP32-S3-WROOM-1-N16R8: 16 MB flash, 8 MB Octal PSRAM.
+#
+# GPIO conflict note:
+#   GPIO43 (UART0 TXD default) → used as XL9535 INT#
+#   GPIO44 (UART0 RXD default) → used as SCLK3 (microSD SPI clock)
+# Therefore UART0 console is disabled; log output via USB CDC (GPIO19/20).
+
+# Target
+CONFIG_IDF_TARGET="esp32s3"
+
+# Arduino-as-component: auto-run setup()/loop()
+CONFIG_AUTOSTART_ARDUINO=y
+CONFIG_FREERTOS_HZ=1000
+
+# 16 MB flash, QIO mode
+CONFIG_ESPTOOLPY_FLASHSIZE_16MB=y
+CONFIG_ESPTOOLPY_FLASHMODE_QIO=y
+
+# Custom partition table
+CONFIG_PARTITION_TABLE_CUSTOM=y
+CONFIG_PARTITION_TABLE_CUSTOM_FILENAME="partitions.csv"
+
+# Octal PSRAM (N16R8)
+CONFIG_SPIRAM=y
+CONFIG_SPIRAM_MODE_OCT=y
+CONFIG_SPIRAM_SPEED_80M=y
+
+# WiFi
+CONFIG_ESP_WIFI_ENABLED=y
+
+# Console via USB CDC — avoids GPIO43/44 conflict with XL9535 INT + SPI clock.
+# Use `idf.py -p /dev/ttyACM0 monitor` (CDC port) instead of UART.
+CONFIG_ESP_CONSOLE_USB_CDC=y
+CONFIG_ESP_CONSOLE_UART_NONE=y
+
+# Logging
+CONFIG_LOG_DEFAULT_LEVEL_INFO=y
+
+# Stack size for Arduino task
+CONFIG_ARDUINO_LOOP_STACK_SIZE=16384
+
+# C++ features used by Kairo Core
+CONFIG_COMPILER_CXX_EXCEPTIONS=y
+CONFIG_COMPILER_CXX_RTTI=y

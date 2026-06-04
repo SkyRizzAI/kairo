@@ -1,0 +1,71 @@
+#pragma once
+#include "kairo/ui/screen.h"
+#include "kairo/app/app_context.h"
+#include "kairo/nema/thread.h"
+#include "kairo/nema/message_queue.h"
+#include <cstdint>
+#include <cstddef>
+#include <mutex>
+
+namespace kairo {
+
+class Runtime;
+struct IApp;
+class Canvas;
+class BufferDisplay;
+
+// AppHost — bridges an IApp (running on its own thread) into the ViewDispatcher.
+//
+// To the GUI thread it is just an IScreen (Fullscreen): draw() blits the latest
+// frame the app presented; update() forwards the key into the app's input
+// mailbox; tick() detects when the app thread has exited and pops itself.
+//
+// To the app it is the AppContext: canvas() draws into an in-RAM buffer,
+// present() publishes that buffer, nextInput()/waitInput() read the mailbox.
+//
+// Shared state between the two threads is ONLY the pixel buffer (guarded by
+// frameMtx_) and the input queue (already thread-safe). No shared model → no race.
+class AppHost : public IScreen, public AppContext {
+public:
+    AppHost(Runtime& rt, IApp& app);
+    ~AppHost() override;
+
+    // IScreen (GUI thread). mode follows the app: fullscreen apps take the whole
+    // screen; otherwise Normal so GuiService draws the status bar above the app.
+    ScreenMode mode() const override;
+    void enter()         override;   // spawn app thread
+    void update(Key key) override;   // forward key → mailbox
+    void draw(Canvas& c) override;   // blit latest app frame
+    void tick(uint64_t nowMs) override;  // pop self when app thread finishes
+
+    // AppContext (app thread)
+    Canvas&  canvas()  override;
+    void     present() override;
+    bool     nextInput(InputEvent& out) override;
+    bool     waitInput(InputEvent& out, uint32_t timeoutMs) override;
+    void     requestExit() override;
+    bool     shouldExit() const override;
+    Runtime& runtime() override;
+
+private:
+    static void threadEntry(void* self);
+
+    Runtime& rt_;
+    IApp&    app_;
+
+    uint16_t w_ = 0, h_ = 0;
+    size_t   size_ = 0;
+    uint8_t* drawBuf_  = nullptr;  // app renders here (app thread only)
+    uint8_t* readyBuf_ = nullptr;  // latest presented frame (shared)
+    bool     hasFrame_ = false;
+    std::mutex frameMtx_;
+
+    BufferDisplay*           bufDisplay_ = nullptr;  // wraps drawBuf_
+    Canvas*                  appCanvas_  = nullptr;  // app draws via this
+    nema::MessageQueue<InputEvent> mailbox_{16};
+    nema::Thread             thread_;
+    bool                     started_  = false;
+    bool                     finished_ = false;
+};
+
+} // namespace kairo

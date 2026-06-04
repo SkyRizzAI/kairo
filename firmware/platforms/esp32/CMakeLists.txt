@@ -1,0 +1,18 @@
+idf_component_register(
+    SRCS
+        "src/esp32_clock.cpp"
+        "src/esp32_wifi_driver.cpp"
+        "src/esp32_http_client.cpp"
+        "src/esp32_platform.cpp"
+    INCLUDE_DIRS "include"
+    REQUIRES
+        core
+        espressif__arduino-esp32
+        esp_wifi
+        esp_event
+        nvs_flash
+        esp_netif
+        esp_http_client
+        esp-tls
+        mbedtls
+)

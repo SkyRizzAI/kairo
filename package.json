@@ -1,0 +1,27 @@
+{
+  "name": "kairo",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build:firmware": "bash firmware/tools/build-sim.sh",
+    "sim:cli": "bash firmware/tools/run-sim.sh",
+    "sim:web": "cd packages/simulator && bun run dev",
+    "sim": "bun run build:firmware && bun run sim:web",
+    "build:dev-board": "bash firmware/tools/build-dev-board.sh",
+    "flash:dev-board": "bash firmware/tools/flash-dev-board.sh",
+    "build:skyrizz-e32": "bash firmware/tools/build-skyrizz-e32.sh",
+    "flash:skyrizz-e32": "bash firmware/tools/flash-skyrizz-e32.sh",
+    "build:esp32": "bun run build:dev-board",
+    "flash:esp32": "bun run flash:dev-board"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  }
+}
