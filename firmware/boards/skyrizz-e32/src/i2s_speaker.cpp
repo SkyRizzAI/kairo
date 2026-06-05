@@ -3,8 +3,10 @@
 #include "kairo/runtime.h"
 #include "kairo/log/logger.h"
 #include <driver/i2s_std.h>
+#include <esp_err.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
+#include <cstdio>
 #include <string>
 
 namespace kairo::skyrizze32 {
@@ -45,16 +47,24 @@ static void beepTask(void* arg) {
     }
 
     uint32_t framesWritten = 0;
+    size_t   totalOut = 0;
+    esp_err_t lastErr = ESP_OK;
     while (framesWritten < totalFrames) {
         uint32_t remaining = totalFrames - framesWritten;
         uint32_t chunk     = (remaining < samplesPerCycle) ? remaining : samplesPerCycle;
         size_t   bytesOut  = 0;
-        esp_err_t err = i2s_channel_write(p->tx,
+        lastErr = i2s_channel_write(p->tx,
                              buf, chunk * 2 * sizeof(int32_t),
                              &bytesOut, pdMS_TO_TICKS(200));
-        if (err != ESP_OK) break;
+        totalOut += bytesOut;
+        if (lastErr != ESP_OK) break;
         framesWritten += chunk;
     }
+    // Diagnostic: did the data actually shift out? err=0 + bytesOut full ⇒
+    // software wrote to GPIO45 OK (silence then = NS4168/wiring/format).
+    std::printf("[SPK] i2s_write err=%d (%s) bytesOut=%u/%u tx=%p\n",
+                (int)lastErr, esp_err_to_name(lastErr), (unsigned)totalOut,
+                (unsigned)(totalFrames * 2 * sizeof(int32_t)), (void*)p->tx);
 
     // Write a short silence so NS4168 doesn't end on a DC offset
     int32_t silence[64] = {};
