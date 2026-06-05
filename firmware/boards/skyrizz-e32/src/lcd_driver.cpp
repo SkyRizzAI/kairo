@@ -53,6 +53,12 @@ void LcdDriver::start() {
     }
     std::memset(framebuf_, 0x00, fbSize);  // start black (on=false = background)
 
+    // Previous-frame buffer for partial flush (row diff). PSRAM is fine —
+    // accessed sequentially (memcmp/memcpy), cache-friendly.
+    prevBuf_ = (uint8_t*)heap_caps_malloc((size_t)width_ * height_, MALLOC_CAP_SPIRAM);
+    if (!prevBuf_) prevBuf_ = (uint8_t*)heap_caps_malloc((size_t)width_ * height_, MALLOC_CAP_8BIT);
+    fullFlush_ = true;
+
     // SPI bus
     spi_bus_config_t buscfg = {};
     buscfg.mosi_io_num    = PIN_LCD_MOSI;
@@ -92,6 +98,7 @@ void LcdDriver::start() {
 void LcdDriver::stop() {
     setBacklight(false);
     if (framebuf_) { heap_caps_free(framebuf_); framebuf_ = nullptr; }
+    if (prevBuf_)  { heap_caps_free(prevBuf_);  prevBuf_  = nullptr; }
 }
 
 // ── Panel init ────────────────────────────────────────────────────────────
@@ -193,6 +200,7 @@ void LcdDriver::invertRect(uint16_t x, uint16_t y, uint16_t w, uint16_t h) {
 // ── Flush: expand 1-bit framebuf → RGB565, send in 32-row chunks ─────────
 void LcdDriver::flush() {
     if (!framebuf_ || !spiHandle_) return;
+    fullFlush_ = true;   // this path wrote the panel → invalidate flushBuffer diff
 
     setWindow(0, 0, (uint16_t)(width_ - 1), (uint16_t)(height_ - 1));
 
@@ -210,6 +218,44 @@ void LcdDriver::flush() {
             }
         }
         spiWrite((uint8_t*)chunkbuf_, n * 2, true);   // one transaction per chunk
+    }
+}
+
+// ── Fast mono blit: 1-byte/px buffer → RGB565 → SPI, single pass ─────────
+// AppHost uses this for fullscreen apps to skip 76,800 per-pixel drawPixel
+// calls + the 1-bit framebuffer entirely (the dominant cost: ~128ms → ~50ms).
+void LcdDriver::flushBuffer(const uint8_t* buf, uint16_t w, uint16_t h) {
+    if (!buf || !spiHandle_) return;
+    if (w != width_ || h != height_) return;   // full-screen only for now
+
+    const bool full = fullFlush_ || !prevBuf_;
+    fullFlush_ = false;
+
+    auto rowChanged = [&](uint16_t y) -> bool {
+        if (full || !prevBuf_) return true;
+        const uint8_t* a = buf + (size_t)y * width_;
+        const uint8_t* b = prevBuf_ + (size_t)y * width_;
+        return std::memcmp(a, b, width_) != 0;
+    };
+
+    uint16_t y = 0;
+    while (y < height_) {
+        if (!rowChanged(y)) { y++; continue; }
+
+        // Gather a contiguous run of changed rows, capped at one chunk buffer.
+        uint16_t y0 = y;
+        while (y < height_ && (uint16_t)(y - y0) < CHUNK_ROWS && rowChanged(y)) y++;
+        uint16_t rows = (uint16_t)(y - y0);
+
+        size_t n = 0;
+        for (uint16_t ry = y0; ry < y0 + rows; ry++) {
+            const uint8_t* r = buf + (size_t)ry * width_;
+            for (uint16_t x = 0; x < width_; x++)
+                chunkbuf_[n++] = r[x] ? (uint16_t)~fgColor_ : (uint16_t)~bgColor_;
+            if (prevBuf_) std::memcpy(prevBuf_ + (size_t)ry * width_, r, width_);
+        }
+        setWindow(0, y0, (uint16_t)(width_ - 1), (uint16_t)(y0 + rows - 1));
+        spiWrite((uint8_t*)chunkbuf_, n * 2, true);
     }
 }
 

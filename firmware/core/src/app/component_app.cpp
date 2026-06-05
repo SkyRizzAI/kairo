@@ -55,8 +55,8 @@ void ComponentApp::run(AppContext& ctx) {
         uint32_t tick = tickIntervalMs();
         uint32_t timeout = tick ? tick : 80;
 
-        InputEvent ev;
-        if (ctx.waitInput(ev, timeout)) {
+        // Process one input event (updates dirty/modality/pressed by reference).
+        auto processEvent = [&](const InputEvent& ev) {
             // ── Touch path ────────────────────────────────────────────────
             if (ev.kind == InputEvent::Kind::Pointer) {
                 modality = input::InputModality::Pointer;
@@ -74,12 +74,12 @@ void ComponentApp::run(AppContext& ctx) {
                         pressed = nullptr;
                     }
                 }
-                continue;
+                return;
             }
 
             // ── Button path ───────────────────────────────────────────────
             if (ev.type != InputEvent::Type::Press && ev.type != InputEvent::Type::Repeat)
-                continue;
+                return;
             modality = input::InputModality::Button;   // ring returns
             if (capturesInput()) {
                 if (onKey(ev.key, ctx)) dirty = true;
@@ -91,6 +91,15 @@ void ComponentApp::run(AppContext& ctx) {
             } else if (onKey(ev.key, ctx)) {
                 dirty = true;
             }
+        };
+
+        InputEvent ev;
+        if (ctx.waitInput(ev, timeout)) {
+            // Drain the WHOLE pending burst, then render once. A fast drag
+            // collapses to the latest finger position instead of replaying the
+            // backlog one-frame-at-a-time (which looks smooth but lags ~1s+).
+            processEvent(ev);
+            while (ctx.nextInput(ev)) processEvent(ev);
         } else if (tick) {
             // Periodic wake (no input) — rebuild only if state changed.
             if (onTick(ctx)) dirty = true;

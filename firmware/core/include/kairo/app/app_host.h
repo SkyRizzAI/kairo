@@ -13,6 +13,7 @@ class Runtime;
 struct IApp;
 class Canvas;
 class BufferDisplay;
+struct IDisplayDriver;
 
 // AppHost — bridges an IApp (running on its own thread) into the ViewDispatcher.
 //
@@ -37,6 +38,7 @@ public:
     void update(Key key) override;   // forward key → mailbox
     void onPointer(const input::PointerEvent& e) override;  // forward touch → mailbox
     void draw(Canvas& c) override;   // blit latest app frame
+    bool suppressCanvasFlush() const override;  // fullscreen → we flush directly
     void tick(uint64_t nowMs) override;  // pop self when app thread finishes
 
     // AppContext (app thread)
@@ -63,6 +65,7 @@ private:
 
     BufferDisplay*           bufDisplay_ = nullptr;  // wraps drawBuf_
     Canvas*                  appCanvas_  = nullptr;  // app draws via this
+    IDisplayDriver*          display_    = nullptr;  // for fast fullscreen flushBuffer
     nema::MessageQueue<InputEvent> mailbox_{16};
     nema::Thread             thread_;
     bool                     started_  = false;

@@ -15,6 +15,10 @@
     "flash:dev-board": "bash firmware/tools/flash-dev-board.sh",
     "build:skyrizz-e32": "bash firmware/tools/build-skyrizz-e32.sh",
     "flash:skyrizz-e32": "bash firmware/tools/flash-skyrizz-e32.sh",
+    "build:camtest": "bash firmware/tools/build-skyrizz-camtest.sh",
+    "flash:camtest": "bash firmware/tools/flash-skyrizz-camtest.sh",
+    "build:audiotest": "bash firmware/tools/build-skyrizz-audiotest.sh",
+    "flash:audiotest": "bash firmware/tools/flash-skyrizz-audiotest.sh",
     "build:esp32": "bun run build:dev-board",
     "flash:esp32": "bun run flash:dev-board"
   },

@@ -1,0 +1,357 @@
+// SkyRizz E32 — Camera + Display bring-up test (standalone).
+//
+// Goal: isolate the camera color problem from the full firmware. Direct
+// register access, verbose serial. Answers definitively:
+//   1. LCD color order (RGB vs BGR) + inversion — via color-bar test
+//   2. GC2145 SCCB works — via chip-ID read
+//   3. GC2145 actually switched to RGB565 — via reg 0x84 read-back
+//   4. Actual pixel data format — via raw byte hex dump of first frame
+//
+// Raw Serial is intentional here: no Kairo runtime/logger exists in this target.
+#include <Arduino.h>
+#include <Wire.h>
+#include <driver/spi_master.h>
+#include <driver/gpio.h>
+#include <esp_heap_caps.h>
+#include <esp_cam_ctlr.h>
+#include <esp_cam_ctlr_dvp.h>
+#include <freertos/FreeRTOS.h>
+#include <freertos/semphr.h>
+#include <cstring>
+#include <cstdio>
+
+// ── Pins (from board_config.h) ──────────────────────────────────────────────
+static constexpr int PIN_SDA = 47, PIN_SCL = 48;
+static constexpr int PIN_LCD_SCLK = 12, PIN_LCD_DC = 13, PIN_LCD_CS = 14, PIN_LCD_MOSI = 21;
+static constexpr int PIN_CAM_XCLK = 7, PIN_CAM_PCLK = 17, PIN_CAM_VSYNC = 4, PIN_CAM_HREF = 5;
+static const gpio_num_t CAM_DATA[8] = {
+    (gpio_num_t)8, (gpio_num_t)10, (gpio_num_t)11, (gpio_num_t)9,
+    (gpio_num_t)18, (gpio_num_t)16, (gpio_num_t)15, (gpio_num_t)6};
+
+static constexpr uint8_t XL_ADDR = 0x20;
+static constexpr uint8_t XL_OUT0 = 0x02, XL_CFG0 = 0x06;
+static constexpr uint8_t BL_BIT = 1 << 0, TS_RST = 1 << 1, CAM_RST = 1 << 2, SE_RST = 1 << 3;
+static constexpr uint8_t GC2145_ADDR = 0x3C;
+
+static constexpr uint16_t LCD_W = 240, LCD_H = 320;
+static constexpr uint16_t CAM_W = 320, CAM_H = 240;
+static constexpr size_t   CAM_BYTES = (size_t)CAM_W * CAM_H * 2;
+
+// ── State ───────────────────────────────────────────────────────────────────
+static spi_device_handle_t      lcdSpi_   = nullptr;
+static esp_cam_ctlr_handle_t    camHandle_= nullptr;
+static uint8_t*                 camBuf_   = nullptr;
+static SemaphoreHandle_t        frameSem_ = nullptr;
+static uint16_t                 rowbuf_[LCD_W];
+
+// ── XL9535 ──────────────────────────────────────────────────────────────────
+static void xlWrite(uint8_t reg, uint8_t val) {
+    Wire.beginTransmission(XL_ADDR);
+    Wire.write(reg); Wire.write(val);
+    Wire.endTransmission();
+}
+static uint8_t xlOut0_ = 0;
+static void xlSetOut0(uint8_t bits, bool on) {
+    if (on) xlOut0_ |= bits; else xlOut0_ &= ~bits;
+    xlWrite(XL_OUT0, xlOut0_);
+}
+
+// ── LCD (ILI9341, direct SPI) ────────────────────────────────────────────────
+static void lcdWrite(const uint8_t* data, size_t len, bool isData) {
+    gpio_set_level((gpio_num_t)PIN_LCD_DC, isData ? 1 : 0);
+    spi_transaction_t t = {};
+    t.length = len * 8;
+    t.tx_buffer = data;
+    spi_device_transmit(lcdSpi_, &t);
+}
+static void lcdCmd(uint8_t c) { lcdWrite(&c, 1, false); }
+static void lcdData(std::initializer_list<uint8_t> b) {
+    uint8_t buf[16]; size_t n = 0; for (uint8_t x : b) buf[n++] = x;
+    lcdWrite(buf, n, true);
+}
+static void lcdInit() {
+    spi_bus_config_t bus = {};
+    bus.mosi_io_num = PIN_LCD_MOSI; bus.miso_io_num = -1; bus.sclk_io_num = PIN_LCD_SCLK;
+    bus.quadwp_io_num = -1; bus.quadhd_io_num = -1; bus.max_transfer_sz = LCD_W * 2 * 16;
+    spi_bus_initialize(SPI2_HOST, &bus, SPI_DMA_CH_AUTO);
+    spi_device_interface_config_t dev = {};
+    dev.clock_speed_hz = 8 * 1000 * 1000; dev.mode = 0; dev.spics_io_num = PIN_LCD_CS; dev.queue_size = 1;
+    spi_bus_add_device(SPI2_HOST, &dev, &lcdSpi_);
+    gpio_set_direction((gpio_num_t)PIN_LCD_DC, GPIO_MODE_OUTPUT);
+
+    lcdCmd(0x01); vTaskDelay(pdMS_TO_TICKS(150));
+    lcdCmd(0x11); vTaskDelay(pdMS_TO_TICKS(150));
+    lcdCmd(0xCB); lcdData({0x39, 0x2C, 0x00, 0x34, 0x02});
+    lcdCmd(0xCF); lcdData({0x00, 0xC1, 0x30});
+    lcdCmd(0xE8); lcdData({0x85, 0x00, 0x78});
+    lcdCmd(0xEA); lcdData({0x00, 0x00});
+    lcdCmd(0xED); lcdData({0x64, 0x03, 0x12, 0x81});
+    lcdCmd(0xF7); lcdData({0x20});
+    lcdCmd(0xC0); lcdData({0x23});
+    lcdCmd(0xC1); lcdData({0x10});
+    lcdCmd(0xC5); lcdData({0x3E, 0x28});
+    lcdCmd(0xC7); lcdData({0x86});
+    lcdCmd(0x36); lcdData({0x48});       // MADCTL: MX | BGR
+    lcdCmd(0x3A); lcdData({0x55});       // RGB565
+    lcdCmd(0xB1); lcdData({0x00, 0x1B});
+    lcdCmd(0xB6); lcdData({0x08, 0x82, 0x27});
+    lcdCmd(0xF2); lcdData({0x00});
+    lcdCmd(0x26); lcdData({0x01});
+    lcdCmd(0xE0); lcdData({0x0F, 0x31, 0x2B, 0x0C, 0x0E, 0x08, 0x4E, 0xF1, 0x37, 0x07, 0x10, 0x03, 0x0E, 0x09, 0x00});
+    lcdCmd(0xE1); lcdData({0x00, 0x0E, 0x14, 0x03, 0x11, 0x07, 0x31, 0xC1, 0x48, 0x08, 0x0F, 0x0C, 0x31, 0x36, 0x0F});
+    lcdCmd(0x29); vTaskDelay(pdMS_TO_TICKS(100));
+}
+static void lcdWindow(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1) {
+    uint8_t b[4];
+    b[0] = x0 >> 8; b[1] = x0; b[2] = x1 >> 8; b[3] = x1;
+    lcdCmd(0x2A); lcdWrite(b, 4, true);
+    b[0] = y0 >> 8; b[1] = y0; b[2] = y1 >> 8; b[3] = y1;
+    lcdCmd(0x2B); lcdWrite(b, 4, true);
+    lcdCmd(0x2C);
+}
+// Fill whole screen with a raw RGB565 value. invert=true applies ~ (panel comp).
+static void lcdFill(uint16_t color, bool invert) {
+    if (invert) color = ~color;
+    for (uint16_t i = 0; i < LCD_W; i++) rowbuf_[i] = color;
+    lcdWindow(0, 0, LCD_W - 1, LCD_H - 1);
+    for (uint16_t row = 0; row < LCD_H; row++)
+        lcdWrite((uint8_t*)rowbuf_, LCD_W * 2, true);
+}
+
+// ── GC2145 SCCB ──────────────────────────────────────────────────────────────
+static bool gcWrite(uint8_t reg, uint8_t val) {
+    Wire.beginTransmission(GC2145_ADDR);
+    Wire.write(reg); Wire.write(val);
+    return Wire.endTransmission() == 0;
+}
+static bool gcRead(uint8_t reg, uint8_t& out) {
+    Wire.beginTransmission(GC2145_ADDR);
+    Wire.write(reg);
+    if (Wire.endTransmission(false) != 0) return false;
+    if (Wire.requestFrom((int)GC2145_ADDR, 1) != 1) return false;
+    out = Wire.read();
+    return true;
+}
+
+static constexpr uint8_t REG_DLY = 0xFD, REG_END = 0xEE;
+static const uint8_t GC2145_INIT[][2] = {
+    {0xFE,0xF0},{0xFE,0xF0},{0xFE,0xF0},{0xFC,0x06},{0xF6,0x00},{0xF7,0x1D},{0xF8,0x83},{0xFA,0x00},{0xF9,0xFE},{0xC2,0x00},{0xF2,0x0F},
+    {0xFE,0x00},{0x03,0x04},{0x04,0x62},{0x05,0x01},{0x06,0x3B},{0x09,0x00},{0x0A,0x00},{0x0B,0x00},{0x0C,0x00},{0x0D,0x04},{0x0E,0xC0},
+    {0x0F,0x06},{0x10,0x52},{0x12,0x2E},{0x17,0x14},{0x18,0x22},{0x19,0x0F},{0x1A,0x01},{0x1B,0x4B},{0x1C,0x07},{0x1D,0x10},{0x1E,0x88},
+    {0x1F,0x78},{0x20,0x03},{0x21,0x40},{0x22,0xA0},{0x24,0x1E},{0x25,0x01},{0x26,0x10},{0x2D,0x60},{0x30,0x01},{0x31,0x90},{0x33,0x06},{0x34,0x01},
+    {0x80,0xFF},{0x81,0x24},{0x82,0xFA},{0x83,0x00},{0x84,0x02},{0x86,0x03},{0x88,0x03},{0x89,0x03},{0x85,0x30},{0x8A,0x00},{0x8B,0x00},
+    {0xB0,0x55},{0xC3,0x00},{0xC4,0x80},{0xC5,0x90},{0xC6,0x38},{0xC7,0x40},{0xEC,0x06},{0xED,0x04},{0xEF,0x90},{0xB6,0x01},{0x90,0x01},
+    {0x91,0x00},{0x92,0x00},{0x93,0x00},{0x94,0x00},{0x95,0x04},{0x96,0xB0},{0x97,0x06},{0x98,0x40},
+    {0x18,0x02},{0x40,0x42},{0x41,0x00},{0x43,0x54},{0x5E,0x00},{0x5F,0x00},{0x60,0x00},{0x61,0x00},{0x62,0x00},{0x63,0x00},{0x64,0x00},
+    {0x65,0x00},{0x66,0x20},{0x67,0x20},{0x68,0x20},{0x69,0x20},{0x76,0x00},{0x6A,0x00},{0x6B,0x00},{0x6C,0x3E},{0x6D,0x3E},{0x6F,0x3F},
+    {0x70,0x00},{0x71,0x00},{0x72,0xF0},{0x7E,0x3C},{0x7F,0x00},
+    {0xFE,0x02},{0x48,0x15},{0x49,0x00},{0x4B,0x0B},{0xFE,0x00},
+    {0xFE,0x01},{0x01,0x04},{0x02,0xC0},{0x03,0x04},{0x04,0x90},{0x05,0x30},{0x06,0x90},{0x07,0x20},{0x08,0x70},{0x09,0x00},{0x0A,0xC2},
+    {0x0B,0x11},{0x0C,0x10},{0x13,0x40},{0x17,0x00},{0x1C,0x11},{0x1E,0x61},{0x1F,0x30},{0x20,0x40},{0x22,0x80},{0x23,0x20},
+    {0xFE,0x02},{0x0F,0x04},{0xFE,0x01},{0x12,0x35},{0x15,0x50},{0x10,0x31},{0x3E,0x28},{0x3F,0xE0},{0x40,0x20},{0x41,0x0F},
+    {0xFE,0x02},{0x0F,0x05},{0x90,0x6C},{0x91,0x03},{0x92,0xC8},{0x94,0x66},{0x95,0xB5},{0x97,0x64},{0xA2,0x11},{0xFE,0x00},
+    {0xFE,0x02},{0x80,0xC1},{0x81,0x08},{0x82,0x08},{0x83,0x08},{0x84,0x0A},{0x86,0xF0},{0x87,0x50},{0x88,0x15},{0x89,0x50},{0x8A,0x30},{0x8B,0x10},
+    {0xFE,0x01},{0x21,0x14},{0xFE,0x02},{0xA3,0x40},{0xA4,0x20},{0xA5,0x40},{0xA6,0x80},{0xAB,0x40},{0xAE,0x0C},{0xB3,0x34},{0xB4,0x44},
+    {0xB6,0x38},{0xB7,0x02},{0xB9,0x30},{0x3C,0x08},{0x3D,0x30},{0x4B,0x0D},{0x4C,0x20},{0xFE,0x00},
+    {0xFE,0x02},{0x10,0x10},{0x11,0x15},{0x12,0x1A},{0x13,0x1F},{0x14,0x2C},{0x15,0x39},{0x16,0x45},{0x17,0x54},{0x18,0x69},{0x19,0x7D},
+    {0x1A,0x8F},{0x1B,0x9D},{0x1C,0xA9},{0x1D,0xBD},{0x1E,0xCD},{0x1F,0xD9},{0x20,0xE3},{0x21,0xEA},{0x22,0xEF},{0x23,0xF5},{0x24,0xF9},{0x25,0xFF},
+    {0x26,0x0F},{0x27,0x14},{0x28,0x19},{0x29,0x1E},{0x2A,0x27},{0x2B,0x33},{0x2C,0x3B},{0x2D,0x45},{0x2E,0x59},{0x2F,0x69},{0x30,0x7C},
+    {0x31,0x89},{0x32,0x98},{0x33,0xAE},{0x34,0xC0},{0x35,0xCF},{0x36,0xDA},{0x37,0xE2},{0x38,0xE9},{0x39,0xF3},{0x3A,0xF9},{0x3B,0xFF},
+    {0xD1,0x30},{0xD2,0x30},{0xD3,0x45},{0xDD,0x14},{0xDE,0x86},{0xED,0x01},{0xD8,0xD8},
+    {0xFE,0x01},{0xA1,0x80},{0xA2,0x80},{0xA4,0x00},{0xA5,0x00},{0xA6,0x70},{0xA7,0x00},{0xA8,0x77},{0xA9,0x77},{0xAA,0x1F},{0xAB,0x0D},
+    {0xAC,0x19},{0xAD,0x24},{0xAE,0x0E},{0xAF,0x1D},{0xB0,0x12},{0xB1,0x0C},{0xB2,0x06},{0xB3,0x13},{0xB4,0x10},{0xB5,0x0C},{0xB6,0x6A},
+    {0xB7,0x46},{0xB8,0x40},{0xB9,0x0B},{0xBA,0x04},{0xBB,0x00},{0xBC,0x53},{0xBD,0x37},{0xBE,0x2D},{0xBF,0x0A},{0xC0,0x0A},{0xC1,0x14},
+    {0xC2,0x34},{0xC3,0x22},{0xC4,0x18},{0xC5,0x23},{0xC6,0x0F},{0xC7,0x3C},{0xC8,0x20},{0xC9,0x1F},{0xCA,0x17},{0xCB,0x2D},{0xCC,0x12},
+    {0xCD,0x20},{0xD0,0x61},{0xD1,0x2F},{0xD2,0x39},{0xD3,0x45},{0xD4,0x2C},{0xD5,0x21},{0xD6,0x64},{0xD7,0x2D},{0xD8,0x30},{0xD9,0x42},
+    {0xDA,0x27},{0xDB,0x13},{0xFE,0x00},
+    {0xFE,0x02},{0xC0,0x01},{0xC1,0x50},{0xC2,0xF9},{0xC3,0x00},{0xC4,0xE8},{0xC5,0x48},{0xC6,0xF0},{0xC7,0x50},{0xC8,0xF2},{0xC9,0x00},
+    {0xCA,0xE0},{0xCB,0x45},{0xCC,0xEC},{0xCD,0x45},{0xCE,0xF0},{0xCF,0x00},{0xE3,0xF0},{0xE4,0x45},{0xE5,0xE8},{0xFE,0x00},{0xF2,0x0F},
+    {0xF7,0x1D},{0xF8,0x84},{0xFA,0x00},{0x05,0x01},{0x06,0x3B},{0x07,0x01},{0x08,0x0B},
+    {0xFE,0x01},{0x25,0x01},{0x26,0x32},{0x27,0x03},{0x28,0x96},{0x29,0x03},{0x2A,0x96},{0x2B,0x03},{0x2C,0x96},{0x2D,0x04},{0x2E,0x62},{0x3C,0x00},{0xFE,0x00},
+    {0x18,0x22},{0xFE,0x02},{0x40,0xBF},{0x46,0xCF},{0xFE,0x00},
+    {0xF7,0x1D},{0xF8,0x84},{0xFA,0x10},{0x05,0x01},{0x06,0x18},{0x07,0x00},{0x08,0x2E},
+    {0xFE,0x01},{0x25,0x00},{0x26,0xA2},{0x27,0x01},{0x28,0xE6},{0x29,0x01},{0x2A,0xE6},{0x2B,0x01},{0x2C,0xE6},{0x2D,0x04},{0x2E,0x62},{0x3C,0x00},{0xFE,0x00},
+    {0x09,0x01},{0x0A,0xD0},{0x0B,0x02},{0x0C,0x70},{0x0D,0x01},{0x0E,0x00},{0x0F,0x01},{0x10,0x50},
+    {0x90,0x01},{0x91,0x00},{0x92,0x00},{0x93,0x00},{0x94,0x00},{0x95,0x00},{0x96,0xF0},{0x97,0x01},{0x98,0x40},
+    {REG_END, REG_END},
+};
+static const uint8_t GC2145_RGB565[][2] = {
+    {0xFE,0x00},{0x84,0x06},{0x86,0x02},{REG_END, REG_END},
+};
+static int gcApply(const uint8_t table[][2]) {
+    int fails = 0;
+    for (size_t i = 0; ; i++) {
+        uint8_t r = table[i][0], v = table[i][1];
+        if (r == REG_END && v == REG_END) break;
+        if (r == REG_DLY) { vTaskDelay(pdMS_TO_TICKS(v)); continue; }
+        if (!gcWrite(r, v)) fails++;
+    }
+    return fails;
+}
+
+// ── DVP camera ───────────────────────────────────────────────────────────────
+static bool IRAM_ATTR onGetTrans(esp_cam_ctlr_handle_t, esp_cam_ctlr_trans_t* t, void*) {
+    t->buffer = camBuf_; t->buflen = CAM_BYTES; return false;
+}
+static bool IRAM_ATTR onFinish(esp_cam_ctlr_handle_t, esp_cam_ctlr_trans_t*, void*) {
+    BaseType_t w = pdFALSE; xSemaphoreGiveFromISR(frameSem_, &w); return w == pdTRUE;
+}
+
+static bool camInit() {
+    camBuf_   = (uint8_t*)heap_caps_malloc(CAM_BYTES, MALLOC_CAP_SPIRAM | MALLOC_CAP_DMA);
+    frameSem_ = xSemaphoreCreateBinary();
+    if (!camBuf_) { printf("[CAM] PSRAM alloc FAILED\n"); return false; }
+
+    esp_cam_ctlr_dvp_pin_config_t pins = {};
+    pins.data_width = CAM_CTLR_DATA_WIDTH_8;
+    for (int i = 0; i < 8; i++) pins.data_io[i] = CAM_DATA[i];
+    pins.vsync_io = (gpio_num_t)PIN_CAM_VSYNC;
+    pins.de_io    = (gpio_num_t)PIN_CAM_HREF;
+    pins.pclk_io  = (gpio_num_t)PIN_CAM_PCLK;
+    pins.xclk_io  = (gpio_num_t)PIN_CAM_XCLK;
+
+    esp_cam_ctlr_dvp_config_t cfg = {};
+    cfg.ctlr_id = 0;
+    cfg.clk_src = CAM_CLK_SRC_DEFAULT;
+    cfg.h_res = CAM_W; cfg.v_res = CAM_H;
+    cfg.input_data_color_type = CAM_CTLR_COLOR_RGB565;
+    cfg.cam_data_width = 8;
+    cfg.xclk_freq = 20 * 1000 * 1000;
+    cfg.pin = &pins;
+
+    esp_err_t e = esp_cam_new_dvp_ctlr(&cfg, &camHandle_);
+    if (e != ESP_OK) { printf("[CAM] new_dvp_ctlr FAILED: %d\n", e); return false; }
+
+    esp_cam_ctlr_evt_cbs_t cbs = {};
+    cbs.on_get_new_trans = onGetTrans;
+    cbs.on_trans_finished = onFinish;
+    esp_cam_ctlr_register_event_callbacks(camHandle_, &cbs, nullptr);
+    return true;
+}
+
+// ── Blit one frame to LCD, with current color transform ──────────────────────
+// Try different transforms by editing SWAP_RB / INVERT here.
+static constexpr bool SWAP_RB = true;
+static constexpr bool INVERT  = true;
+static void blitFrame() {
+    const uint16_t dstW = LCD_W;                 // 240
+    const uint16_t cropX = (CAM_W - dstW) / 2;   // 40
+    const uint16_t rows = (CAM_H < LCD_H) ? CAM_H : LCD_H;
+    lcdWindow(0, 40, dstW - 1, 40 + rows - 1);
+    for (uint16_t row = 0; row < rows; row++) {
+        const uint8_t* p = camBuf_ + ((size_t)row * CAM_W + cropX) * 2;
+        for (uint16_t col = 0; col < dstW; col++) {
+            uint16_t px = ((uint16_t)p[col * 2] << 8) | p[col * 2 + 1];
+            if (SWAP_RB) {
+                uint8_t r = (px >> 11) & 0x1F, g = (px >> 5) & 0x3F, b = px & 0x1F;
+                px = ((uint16_t)b << 11) | ((uint16_t)g << 5) | r;
+            }
+            if (INVERT) px = ~px;
+            rowbuf_[col] = px;
+        }
+        lcdWrite((uint8_t*)rowbuf_, dstW * 2, true);
+    }
+}
+
+// ── Setup / loop ─────────────────────────────────────────────────────────────
+void setup() {
+    setvbuf(stdout, nullptr, _IONBF, 0);   // unbuffered → printf appears immediately
+    delay(400);
+    printf("\n\n===== SkyRizz E32 CAMERA bring-up test =====\n");
+
+    Wire.begin(PIN_SDA, PIN_SCL);
+    Wire.setClock(100000);
+
+    // I2C scan
+    printf("[I2C] scan:");
+    for (uint8_t a = 8; a < 0x78; a++) {
+        Wire.beginTransmission(a);
+        if (Wire.endTransmission() == 0) printf(" 0x%02X", a);
+    }
+    printf("\n");
+
+    // XL9535: port0 = outputs (P00..P03), backlight ON, all resets de-asserted (HIGH)
+    xlWrite(XL_CFG0, 0xF0);
+    xlOut0_ = BL_BIT | TS_RST | CAM_RST | SE_RST;
+    xlWrite(XL_OUT0, xlOut0_);
+    printf("[XL] backlight ON, resets HIGH\n");
+
+    // LCD
+    lcdInit();
+    printf("[LCD] ILI9341 init done\n");
+
+    // COLOR-BAR TEST — tells us LCD color order + whether inversion is right.
+    // Expectation if RGB+invert correct: RED, then GREEN, then BLUE full-screen.
+    printf("[LCD] Color test: expect RED, GREEN, BLUE (3s each, inverted)\n");
+    lcdFill(0xF800, true); printf("   -> showing 0xF800 (want RED)\n");   delay(3000);
+    lcdFill(0x07E0, true); printf("   -> showing 0x07E0 (want GREEN)\n"); delay(3000);
+    lcdFill(0x001F, true); printf("   -> showing 0x001F (want BLUE)\n");  delay(3000);
+    lcdFill(0x0000, true); // black
+
+    // Camera DVP controller (starts XCLK)
+    if (!camInit()) { printf("[CAM] init failed, halt\n"); return; }
+    printf("[CAM] DVP controller created, XCLK @20MHz running\n");
+
+    // Camera reset pulse — XCLK must run before SCCB ACKs
+    xlSetOut0(CAM_RST, false); delay(20);
+    xlSetOut0(CAM_RST, true);  delay(50);
+    printf("[CAM] reset pulsed\n");
+
+    // Probe GC2145 chip ID (system page 0xF0, regs 0xF0/0xF1 → expect 0x21 0x45)
+    gcWrite(0xFE, 0xF0);
+    uint8_t idh = 0, idl = 0;
+    bool okh = gcRead(0xF0, idh), okl = gcRead(0xF1, idl);
+    printf("[GC2145] chip ID read ok=%d/%d  id=0x%02X%02X (expect 0x2145)\n",
+                  okh, okl, idh, idl);
+
+    // Run init + RGB565 override
+    int f1 = gcApply(GC2145_INIT);
+    int f2 = gcApply(GC2145_RGB565);
+    printf("[GC2145] init applied (default fails=%d, rgb565 fails=%d)\n", f1, f2);
+
+    // READ BACK reg 0x84 (page 0) to confirm RGB565 took. 0x06=RGB565, 0x02=YUV422
+    gcWrite(0xFE, 0x00);
+    uint8_t fmt = 0xFF;
+    bool okf = gcRead(0x84, fmt);
+    printf("[GC2145] reg 0x84 readback ok=%d val=0x%02X  (0x06=RGB565, 0x02=YUV422)\n",
+                  okf, fmt);
+    delay(200);  // AEC/AWB settle
+
+    esp_cam_ctlr_enable(camHandle_);
+    esp_cam_ctlr_start(camHandle_);
+    printf("[CAM] streaming. Watching frames...\n");
+}
+
+void loop() {
+    static uint32_t frames = 0, lastSec = 0, fps = 0;
+    static bool dumped = false;
+
+    if (!camHandle_) { delay(1000); return; }
+
+    if (xSemaphoreTake(frameSem_, pdMS_TO_TICKS(200)) == pdTRUE) {
+        frames++;
+
+        // First frame: dump raw bytes so we can SEE the actual data format.
+        if (!dumped) {
+            dumped = true;
+            printf("[FRAME] first 24 bytes: ");
+            for (int i = 0; i < 24; i++) printf("%02X ", camBuf_[i]);
+            printf("\n");
+            // Also check if buffer is all-same (sensor not streaming) or varied
+            uint8_t mn = 255, mx = 0;
+            for (size_t i = 0; i < CAM_BYTES; i += 257) {
+                if (camBuf_[i] < mn) mn = camBuf_[i];
+                if (camBuf_[i] > mx) mx = camBuf_[i];
+            }
+            printf("[FRAME] byte range min=%d max=%d (varied=%d)\n", mn, mx, mx > mn + 8);
+        }
+
+        blitFrame();
+    }
+
+    uint32_t now = millis();
+    if (now - lastSec >= 1000) {
+        fps = frames; frames = 0; lastSec = now;
+        printf("[FPS] %lu\n", (unsigned long)fps);
+    }
+}

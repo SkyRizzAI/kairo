@@ -1,5 +1,6 @@
 #include "kairo/apps/touch_test_app.h"
 #include "kairo/app/app_context.h"
+#include "kairo/runtime.h"
 #include "kairo/ui/canvas.h"
 #include <cstdio>
 
@@ -17,17 +18,23 @@ bool TouchTestApp::onPointer(const input::PointerEvent& e, AppContext&) {
     return true;   // redraw every event
 }
 
-bool TouchTestApp::drawRaw(Canvas& c, AppContext&) {
+bool TouchTestApp::drawRaw(Canvas& c, AppContext& ctx) {
     const uint16_t W = c.width();
     const uint16_t H = c.height();
     c.clear(false);
 
-    // Crosshair that follows the live touch point (Down + drag Move + Up).
+    // Small marker that follows the live touch point. Kept SMALL (not a
+    // full-screen crosshair) so the partial-flush row-diff only re-sends the
+    // few rows around it → minimal latency. Box outline + center dot.
     if (x_ >= 0 && y_ >= 0) {
-        c.drawLine(0, (uint16_t)y_, W - 1, (uint16_t)y_, true);
-        c.drawLine((uint16_t)x_, 0, (uint16_t)x_, H - 1, true);
-        c.fillRect((uint16_t)(x_ > 3 ? x_ - 3 : 0),
-                   (uint16_t)(y_ > 3 ? y_ - 3 : 0), 7, 7, true);
+        const int S = 8;
+        int bx = x_ - S; if (bx < 0) bx = 0;
+        int by = y_ - S; if (by < 0) by = 0;
+        int bw = 2 * S + 1; if (bx + bw > (int)W) bw = (int)W - bx;
+        int bh = 2 * S + 1; if (by + bh > (int)H) bh = (int)H - by;
+        c.drawRect((uint16_t)bx, (uint16_t)by, (uint16_t)bw, (uint16_t)bh, true);
+        c.fillRect((uint16_t)(x_ > 2 ? x_ - 2 : 0),
+                   (uint16_t)(y_ > 2 ? y_ - 2 : 0), 5, 5, true);
     }
 
     // Header + live readout
@@ -38,8 +45,8 @@ bool TouchTestApp::drawRaw(Canvas& c, AppContext&) {
                   x_, y_, down_ ? "DOWN" : "up  ");
     c.drawText(4, 14, line, true);
 
-    std::snprintf(line, sizeof(line), "taps=%u  res=%dx%d",
-                  (unsigned)taps_, (int)W, (int)H);
+    std::snprintf(line, sizeof(line), "taps=%u  fps=%u",
+                  (unsigned)taps_, (unsigned)ctx.runtime().fps());
     c.drawText(4, 25, line, true);
 
     // Corner markers so orientation is unmistakable

@@ -5,6 +5,8 @@
 #include "kairo/ui/ui_constants.h"
 #include "kairo/ui/view_dispatcher.h"
 #include "kairo/hal/buffer_display.h"
+#include "kairo/hal/display.h"
+#include "kairo/service/service_container.h"
 #include <cstdlib>
 #include <cstring>
 
@@ -59,6 +61,7 @@ void AppHost::enter() {
     std::memset(readyBuf_, 0, size_);
     bufDisplay_ = new BufferDisplay(drawBuf_, w_, h_);
     appCanvas_  = new Canvas(*bufDisplay_);
+    display_    = rt_.container().resolve<IDisplayDriver>();  // for fast fullscreen path
 
     started_  = true;
     finished_ = false;
@@ -91,12 +94,27 @@ ScreenMode AppHost::mode() const {
 void AppHost::draw(Canvas& c) {
     std::lock_guard<std::mutex> lk(frameMtx_);
     if (!hasFrame_) return;
-    // In Normal mode GuiService has already drawn the status bar in the top
-    // strip; start blitting below it so the app frame never overwrites it.
-    uint16_t top = app_.fullscreen() ? 0 : (uint16_t)(ui::SEP1_Y + 2);
+
+    // Fullscreen fast path: push the whole frame straight to the panel in one
+    // pass (skips 76,800 per-pixel drawPixel calls — the dominant render cost).
+    // GuiService skips its own canvas flush for us (see suppressCanvasFlush()).
+    if (app_.fullscreen() && display_) {
+        display_->flushBuffer(readyBuf_, w_, h_);
+        return;
+    }
+
+    // Normal mode: status bar occupies the top strip (already drawn by
+    // GuiService), so blit the app frame below it via the canvas.
+    uint16_t top = (uint16_t)(ui::SEP1_Y + 2);
     for (uint16_t y = top; y < h_; y++)
         for (uint16_t x = 0; x < w_; x++)
             c.drawPixel(x, y, readyBuf_[(size_t)y * w_ + x] != 0);
+}
+
+bool AppHost::suppressCanvasFlush() const {
+    // Fullscreen apps flush directly in draw() via display_->flushBuffer();
+    // tell GuiService not to also flush the (unused) 1-bit canvas over it.
+    return app_.fullscreen() && display_ != nullptr;
 }
 
 void AppHost::tick(uint64_t) {

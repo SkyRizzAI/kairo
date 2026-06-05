@@ -158,7 +158,7 @@ void GuiService::loop() {
             }
         }
 
-        nema::Thread::sleepMs(15);
+        nema::Thread::sleepMs(5);   // tighter loop → quicker redraw pickup
     }
 }
 

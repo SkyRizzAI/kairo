@@ -39,7 +39,7 @@ void Ft6336Touch::start() {
 }
 
 void Ft6336Touch::tick(uint64_t nowMs) {
-    if (nowMs - lastPoll_ < 15) return;   // ~66 Hz poll
+    if (nowMs - lastPoll_ < 8) return;    // ~125 Hz poll — lower touch latency
     lastPoll_ = nowMs;
 
     uint16_t rx = 0, ry = 0;

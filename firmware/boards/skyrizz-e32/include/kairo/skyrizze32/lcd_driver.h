@@ -39,6 +39,12 @@ public:
                     uint16_t x, uint16_t y,
                     uint16_t w, uint16_t h) override;
 
+    // Fast full-screen blit of a 1-byte-per-pixel mono buffer (1=ink, 0=bg)
+    // straight to the panel in one pass — skips the per-pixel drawPixel loop
+    // AND the 1-bit framebuffer. Used by AppHost for fullscreen apps. Assumes
+    // w==width_, h==height_.
+    void flushBuffer(const uint8_t* buf, uint16_t w, uint16_t h) override;
+
     // IService
     const char* name() const override { return "LcdDriver"; }
     void start() override;
@@ -66,6 +72,13 @@ private:
     void*    spiHandle_ = nullptr;  // spi_device_handle_t (opaque to avoid esp-idf in header)
     uint16_t fgColor_  = 0xFFFF;   // RGB565 foreground (ink → white)
     uint16_t bgColor_  = 0x0000;   // RGB565 background (paper → black)
+
+    // Partial-flush state for flushBuffer(): keep the last pushed mono frame and
+    // only re-send rows that actually changed (a moving small cursor touches
+    // only a few rows → flush drops from ~52ms to a few ms). fullFlush_ forces a
+    // complete send after any other draw path touched the panel.
+    uint8_t* prevBuf_   = nullptr;  // last flushed 1-byte/px frame (w*h)
+    bool     fullFlush_ = true;
 };
 
 } // namespace kairo::skyrizze32
