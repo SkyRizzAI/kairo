@@ -1,8 +1,5 @@
 #include "kairo/screens/logs_screen.h"
 #include "kairo/runtime.h"
-#include "kairo/ui/canvas.h"
-#include "kairo/ui/ui_constants.h"
-#include "kairo/ui/components.h"
 #include "kairo/ui/view_dispatcher.h"
 #include "kairo/plugin/plugin_manager.h"
 #include "kairo/clock.h"
@@ -10,37 +7,50 @@
 
 namespace kairo {
 
-LogsScreen::LogsScreen(Runtime& rt) : rt_(rt) {}
+using namespace ui;
 
-void LogsScreen::enter() { rt_.view().requestRedraw(); }
+LogsScreen::LogsScreen(Runtime& rt) : ComponentScreen(rt, 96) {}
 
-void LogsScreen::update(Key key) {
-    if (key == Key::Cancel) rt_.view().pop();
+void LogsScreen::enter() {
+    scroll_.scrollMain = 0;
     rt_.view().requestRedraw();
 }
 
-void LogsScreen::draw(Canvas& c) {
-    // Normal mode: runtime already cleared canvas + drew the status bar.
-    c.drawText(c.centerX("LOGS"), ui::CONTENT_Y, "LOGS");
-    c.fillRect(0, ui::CONTENT_Y + ui::CHAR_H + 1, c.width(), 1);
+UiNode* LogsScreen::build(NodeArena& a, Runtime& rt) {
+    rows_.clear();
+    char buf[64];
 
-    uint16_t y = ui::CONTENT_Y + ui::CHAR_H + 4;
-    char buf[48];
-
-    // Runtime stats available without MemorySink access
-    uint64_t ms  = rt_.clock().millis();
-    uint32_t s   = (uint32_t)(ms / 1000) % 60;
-    uint32_t m   = (uint32_t)(ms / 60000) % 60;
-    uint32_t h   = (uint32_t)(ms / 3600000);
-    if (h > 0)
-        std::snprintf(buf, sizeof(buf), "Uptime: %uh %um %us", (unsigned)h, (unsigned)m, (unsigned)s);
-    else
-        std::snprintf(buf, sizeof(buf), "Uptime: %um %us", (unsigned)m, (unsigned)s);
-    c.drawText(4, y, buf); y += ui::CHAR_H;
+    uint64_t ms = rt.clock().millis();
+    uint32_t s = (uint32_t)(ms / 1000) % 60, m = (uint32_t)(ms / 60000) % 60,
+             h = (uint32_t)(ms / 3600000);
+    if (h > 0) std::snprintf(buf, sizeof(buf), "Uptime: %uh %um %us",
+                             (unsigned)h, (unsigned)m, (unsigned)s);
+    else       std::snprintf(buf, sizeof(buf), "Uptime: %um %us",
+                             (unsigned)m, (unsigned)s);
+    rows_.push_back(buf);
 
     std::snprintf(buf, sizeof(buf), "Apps:   %d loaded",
-        (int)rt_.plugins().plugins().size());
-    c.drawText(4, y, buf); y += ui::CHAR_H * 2;
+                  (int)rt.plugins().plugins().size());
+    rows_.push_back(buf);
+
+    Style root; root.dir = FlexDir::Col; root.flexGrow = 1; root.padding = 3; root.gap = 1;
+    Style line; line.height = 1; line.background = true;
+    Style sv;   sv.dir = FlexDir::Col; sv.gap = 1;
+
+    UiNode* list = ScrollView(a, scroll_, sv, {});
+    UiNode* prev = nullptr;
+    for (auto& r : rows_) {
+        UiNode* t = Text(a, r.c_str(), TextRole::Body);
+        if (!t) break;
+        if (!prev) list->firstChild = t; else prev->nextSibling = t;
+        prev = t;
+    }
+
+    return View(a, root, {
+        Text(a, "LOGS", TextRole::Title),
+        View(a, line, {}),
+        list,
+    });
 }
 
 } // namespace kairo

@@ -30,7 +30,7 @@ struct IDisplayDriver;
 //   (render skipped while sleeping; one blank frame flushed on sleep entry)
 class GuiService {
 public:
-    explicit GuiService(Runtime& rt) : rt_(rt) {}
+    explicit GuiService(Runtime& rt) : rt_(rt), lockScreen_(rt) {}
 
     void start();   // spawn UI thread
     void stop();    // stop & join

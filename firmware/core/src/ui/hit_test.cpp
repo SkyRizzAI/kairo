@@ -9,7 +9,7 @@ static bool contains(const UiNode* n, int16_t x, int16_t y) {
 
 static UiNode* hit(UiNode* n, int16_t x, int16_t y) {
     UiNode* found = nullptr;
-    if (contains(n, x, y) && n->focusable && n->onPress) found = n;
+    if (contains(n, x, y) && n->focusable && (n->onPress || n->onAdjust)) found = n;
     // Children paint over parent → a child match takes precedence (top-most).
     for (UiNode* k = n->firstChild; k; k = k->nextSibling) {
         if (UiNode* c = hit(k, x, y)) found = c;

@@ -1,5 +1,5 @@
 #pragma once
-#include "kairo/ui/screen.h"
+#include "kairo/ui/component_screen.h"
 #include "kairo/screens/about_screen.h"
 #include "kairo/screens/sleep_settings_screen.h"
 #include "kairo/screens/controls_screen.h"
@@ -15,33 +15,33 @@ namespace kairo {
 class Runtime;
 class AppHost;
 
-class SettingsScreen : public IScreen {
+// Settings — component-migrated (Plan 30). Capability-gated, scrollable, tappable
+// menu. Each row launches a sub-screen or app (WiFi / Scroll Demo run as apps).
+class SettingsScreen : public ComponentScreen {
 public:
     explicit SettingsScreen(Runtime& rt);
     ~SettingsScreen() override;   // out-of-line: AppHost incomplete here
-    void enter()         override;
-    void update(Key key) override;
-    void draw(Canvas& c) override;
+    void        enter() override;
+    ui::UiNode* build(ui::NodeArena& a, Runtime& rt) override;
 
 private:
-    Runtime&            rt_;
-    AboutScreen         about_;
-    SleepSettingsScreen sleepSettings_;
-    ControlsScreen      controls_;
-    int                 cursor_ = 0;
+    enum Kind { WiFi, Display, Controls, Touch, Sounds, Camera, About };
+    struct Item { SettingsScreen* self; Kind kind; const char* label; };
 
-    WifiApp                  wifiApp_;
-    std::unique_ptr<AppHost> wifiHost_;   // launched on WiFi select
+    AboutScreen          about_;
+    SleepSettingsScreen  sleepSettings_;
+    ControlsScreen       controls_;
+    WifiApp              wifiApp_;
+    TouchSettingsScreen  touchSettings_;
+    SoundsSettingsScreen sounds_;
+    CameraSettingsScreen cameraSettings_;
+    std::unique_ptr<AppHost> appHost_;   // hosts WiFi / Scroll Demo
 
-    TouchSettingsScreen      touchSettings_;  // Settings → Touch submenu
-    SoundsSettingsScreen     sounds_;
-    CameraSettingsScreen     cameraSettings_;
-
-    struct Item { const char* label; };
+    ui::ScrollState   scroll_;
     std::vector<Item> items_;
 
-    void buildMenu();
-    void handleSelect();
+    static void onSelect(void* u);
+    void        launch(Kind k);
 };
 
 } // namespace kairo

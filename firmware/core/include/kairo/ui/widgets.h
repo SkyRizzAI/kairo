@@ -37,6 +37,14 @@ UiNode* Text(NodeArena& a, const char* str, TextRole role = TextRole::Body);
 UiNode* Pressable(NodeArena& a, void (*onPress)(void*), void* userdata,
                   Style style, std::initializer_list<UiNode*> children = {});
 
+// ScrollView: a scroll container. Children stack along style.dir (default Col =
+// vertical scroll). The viewport is BOUNDED by the parent flex layout (the node
+// claims leftover space via flexGrow, default 1); content longer than the
+// viewport overflows and scrolls. `st` is caller-owned and persists scroll
+// position across frames. Renderer clips to the viewport + draws a scrollbar.
+UiNode* ScrollView(NodeArena& a, ScrollState& st, Style style,
+                   std::initializer_list<UiNode*> children = {});
+
 // Internal helper: link a list of children onto a parent node.
 void setChildren(UiNode* parent, std::initializer_list<UiNode*> children);
 
@@ -57,6 +65,43 @@ UiNode* Header(NodeArena& a, const char* title);
 
 // Footer: a Caption-role hint line (use at the bottom of a Col).
 UiNode* Footer(NodeArena& a, const char* hint);
+
+// ListRow: a full-width focusable row with a left-aligned label and no border —
+// selection is shown by the focus ring (buttons) or touch. Put rows in a Col or
+// ScrollView with align=Stretch so they fill the width. The list/menu idiom.
+UiNode* ListRow(NodeArena& a, const char* label, void (*onPress)(void*), void* userdata);
+
+// ── Native input controls (Plan 30/31) ────────────────────────────────────
+// All are composed from primitives (except Slider, a native node) so the same
+// shapes map cleanly to a future TSX/JS reconciler.
+
+// Toggle / Switch: a focusable row "label      [ON]/[OFF]". Activate/tap flips
+// (caller's onPress reads/writes its own bool, then the next build() reflects it).
+UiNode* Toggle(NodeArena& a, const char* label, bool on,
+               void (*onToggle)(void*), void* userdata);
+
+// Stepper: "label   - value +". A SINGLE focusable control: Left/Right (or tap
+// the −/+ half) calls onAdjust(dir); Activate advances (+1) as the fallback on
+// boards without horizontal keys. `value` is a caller-formatted string.
+UiNode* Stepper(NodeArena& a, const char* label, const char* value,
+                void (*onAdjust)(void* u, int dir), void* userdata);
+
+// Select / cycle: "label   < value >". Same interaction model as Stepper:
+// Left/Right is the primary adjust; Up/Down only moves focus between rows; tap a
+// half or Activate works when the board has no Left/Right.
+UiNode* Select(NodeArena& a, const char* label, const char* value,
+               void (*onAdjust)(void* u, int dir), void* userdata);
+
+// Slider: a native track/fill/knob bound to a caller-owned int in [min,max].
+// Touch: drag to set. Buttons: focus + Left/Right adjust by `step`. onChange
+// fires on every change. Wrap with a label in a Row/Col as needed.
+UiNode* Slider(NodeArena& a, int* value, int min, int max, int step,
+               void (*onChange)(void*, int), void* userdata);
+
+// TextField: a focusable row "label: <text>" that fires onPress (the caller
+// opens an editor, e.g. the VirtualKeyboard, at app level). Inline display only.
+UiNode* TextField(NodeArena& a, const char* label, const char* text,
+                  void (*onPress)(void*), void* userdata);
 
 // Menu: a Col of Buttons, one per item. Each item carries its own callback +
 // userdata (the C-idiomatic way — encode an index in userdata if you like:

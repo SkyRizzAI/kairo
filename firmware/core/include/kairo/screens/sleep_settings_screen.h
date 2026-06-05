@@ -1,45 +1,46 @@
 #pragma once
-#include "kairo/ui/screen.h"
+#include "kairo/ui/component_screen.h"
 #include <cstdint>
 
 namespace kairo {
 
 class Runtime;
 
-// Display settings: Screen Sleep timeout, Screen Lock timeout, and UI Scale.
-// Left/Right cycles through preset values; changes apply immediately + persist.
-class SleepSettingsScreen : public IScreen {
+// Display settings — component-migrated (Plan 30). Sleep / Lock / UI-Scale as
+// Select controls + an FPS-overlay Toggle. Changes apply immediately + persist.
+class SleepSettingsScreen : public ComponentScreen {
 public:
     explicit SleepSettingsScreen(Runtime& rt);
-
-    void enter()         override;
-    void update(Key key) override;
-    void draw(Canvas& c) override;
+    void        enter() override;
+    ui::UiNode* build(ui::NodeArena& a, Runtime& rt) override;
 
 private:
-    static constexpr int ROWS = 4;   // Sleep, Lock, Scale, FPS overlay
-
     struct Option { const char* label; uint64_t ms; };
-
     static const Option kSleepOpts[];
     static const Option kLockOpts[];
     static constexpr int kSleepCount = 5;
     static constexpr int kLockCount  = 5;
-
     static const char*  kScaleLabels[];
     static const float  kScaleValues[];
     static constexpr int kScaleCount = 8;
 
-    int findSleepIdx() const;
-    int findLockIdx()  const;
-    int findScaleIdx() const;
+    int  findSleepIdx() const;
+    int  findLockIdx()  const;
+    int  findScaleIdx() const;
     void applyScale(int idx);
 
-    Runtime& rt_;
-    int cursor_    = 0;   // 0 = Sleep, 1 = Lock, 2 = Scale, 3 = FPS
-    int sleepIdx_  = 0;
-    int lockIdx_   = 0;
-    int scaleIdx_  = 0;
+    void cycleSleep(int dir);
+    void cycleLock(int dir);
+    void cycleScale(int dir);
+    void toggleFps();
+
+    static void sleepAdj(void* u, int dir);
+    static void lockAdj(void* u, int dir);
+    static void scaleAdj(void* u, int dir);
+    static void onFps(void* u);
+
+    ui::ScrollState scroll_;
+    int sleepIdx_ = 0, lockIdx_ = 0, scaleIdx_ = 0;
 };
 
 } // namespace kairo

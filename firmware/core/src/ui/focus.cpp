@@ -5,7 +5,7 @@ namespace kairo::ui {
 // DFS collect focusable nodes in tree order. Returns count; fills out[] up to max.
 static int collect(UiNode* n, UiNode** out, int max, int idx) {
     if (!n) return idx;
-    if (n->focusable && n->onPress != nullptr) {
+    if (n->focusable) {   // Pressable + Slider builders set this
         if (idx < max) out[idx] = n;
         idx++;
     }

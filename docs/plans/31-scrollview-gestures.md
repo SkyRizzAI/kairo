@@ -1,5 +1,19 @@
 # 31 — ScrollView, Scrollbar & Gestures
 
+> **STATUS (2026-06-05): IMPLEMENTED.** `NodeType::Scroll` + `ScrollState` are
+> first-class in the flex layout: a Scroll node reports a BOUNDED main size to its
+> flex parent (claims the viewport via flexGrow) while measuring children at their
+> natural length — content beyond the viewport overflows and scrolls (the
+> flex⇄overflow contract, like RN `flex:1 + overflow:scroll`). `ScrollView()`
+> builder; `Canvas` gained a clip region; the renderer clips content to the
+> viewport and draws a proportional scrollbar. Gestures live in `ComponentRuntime`:
+> tap-vs-drag discrimination (6px threshold), touch drag-scroll, flick momentum
+> (friction decay), and button-mode auto-scroll keeps the focused row visible.
+> Adopted in AppList, Logs, About, Controls, Settings + the **ScrollDemo** example
+> app (Settings → Scroll Demo). Host layout test covers the bounded-viewport +
+> clamp behaviour. Not done: swipe-to-page, long-press context, virtual-keyboard
+> key Pressables.
+
 > Komponen `ScrollView` dwi-modal: di mode tombol auto-scroll menjaga item
 > ter-focus tetap terlihat; di mode touch bisa di-drag/swipe dengan scrollbar
 > indikator + momentum. Plus gesture recognizer (tap-vs-drag, swipe, long-press)

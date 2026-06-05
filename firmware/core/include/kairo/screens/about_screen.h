@@ -1,19 +1,23 @@
 #pragma once
-#include "kairo/ui/screen.h"
+#include "kairo/ui/component_screen.h"
+#include <vector>
+#include <string>
 
 namespace kairo {
 
 class Runtime;
 
-class AboutScreen : public IScreen {
+// About — component-migrated (Plan 30). Header + a scrollable list of system
+// info / capability rows.
+class AboutScreen : public ComponentScreen {
 public:
     explicit AboutScreen(Runtime& rt);
-    void enter()         override;
-    void update(Key key) override;
-    void draw(Canvas& c) override;
+    void        enter() override;
+    ui::UiNode* build(ui::NodeArena& a, Runtime& rt) override;
 
 private:
-    Runtime& rt_;
+    ui::ScrollState          scroll_;
+    std::vector<std::string> rows_;   // backing storage for Text node strings
 };
 
 } // namespace kairo

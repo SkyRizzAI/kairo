@@ -56,6 +56,13 @@ public:
     uint16_t centerX(const char* text) const;
     uint16_t centerXScaled(const char* text, uint8_t scale) const;
 
+    // Clip region (logical px). Drawing primitives are silently clipped to this
+    // rectangle. Used by the renderer to confine a ScrollView's content to its
+    // viewport. Default = full canvas. Save/restore via getClip()+setClip().
+    void setClip(uint16_t x, uint16_t y, uint16_t w, uint16_t h);
+    void clearClip();
+    void getClip(uint16_t& x, uint16_t& y, uint16_t& w, uint16_t& h) const;
+
     void flush();  // delegates to driver.flush()
 
     // Direct RGB565 color blit — bypasses the 1-bit layer.
@@ -65,9 +72,17 @@ public:
     bool supportsRgb565() const;  // true if driver overrides blitRgb565
 
 private:
+    // True if (x,y) lies within the current clip rectangle.
+    bool inClip(uint16_t x, uint16_t y) const;
+
     IDisplayDriver&   driver_;
     const BitmapFont* font_  = &FONT_5X8;
     float             scale_ = 1.0f;
+
+    // Clip rectangle in LOGICAL px. clipX1_/clipY1_ are exclusive bounds.
+    // Initialised lazily to the full canvas on first use (0,0 means "unset").
+    uint16_t clipX0_ = 0, clipY0_ = 0;
+    uint16_t clipX1_ = 0xFFFF, clipY1_ = 0xFFFF;
 };
 
 } // namespace kairo

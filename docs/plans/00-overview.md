@@ -176,6 +176,14 @@ Kerjakan **berurutan**; tiap dok punya `Depends on`. Centang status di sini saat
 |---|---|---|---|---|
 | — | _(belum ditulis)_ | Skematik PCB, board_config V1, bring-up, validasi | 16–18 | ⏳ future |
 
+### Phase 8 — Board Profile & Ecosystem Foundation (M9)
+
+> Fondasi data model untuk ekosistem tooling (Kairo Forge / Studio). Board mendeskripsikan layout fisik komponen, device render ASCII visualization, JSON export untuk web tooling.
+
+| # | Dokumen | Fitur / Stage | Depends on | Status |
+|---|---|---|---|---|
+| 33 | [`33-board-profile.md`](33-board-profile.md) | BoardProfile data model + AsciiRenderer + About visualization + JSON export | 08,14,27 | ☐ |
+
 ---
 
 ## 5. Konvensi

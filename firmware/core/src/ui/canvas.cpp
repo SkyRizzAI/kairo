@@ -13,8 +13,28 @@ uint16_t Canvas::height() const { return (uint16_t)(driver_.height() / scale_); 
 
 void Canvas::clear(bool on) { driver_.clear(on); }
 
+// ── Clip region (logical px) ───────────────────────────────────────────────
+void Canvas::setClip(uint16_t x, uint16_t y, uint16_t w, uint16_t h) {
+    clipX0_ = x; clipY0_ = y;
+    clipX1_ = (uint16_t)(x + w); clipY1_ = (uint16_t)(y + h);
+}
+void Canvas::clearClip() {
+    clipX0_ = 0; clipY0_ = 0; clipX1_ = 0xFFFF; clipY1_ = 0xFFFF;
+}
+void Canvas::getClip(uint16_t& x, uint16_t& y, uint16_t& w, uint16_t& h) const {
+    uint16_t cx1 = clipX1_ > width()  ? width()  : clipX1_;
+    uint16_t cy1 = clipY1_ > height() ? height() : clipY1_;
+    x = clipX0_; y = clipY0_;
+    w = (uint16_t)(cx1 > clipX0_ ? cx1 - clipX0_ : 0);
+    h = (uint16_t)(cy1 > clipY0_ ? cy1 - clipY0_ : 0);
+}
+bool Canvas::inClip(uint16_t x, uint16_t y) const {
+    return x >= clipX0_ && x < clipX1_ && y >= clipY0_ && y < clipY1_;
+}
+
 void Canvas::drawPixel(uint16_t x, uint16_t y, bool on) {
     if (x >= width() || y >= height()) return;
+    if (!inClip(x, y)) return;
     if (scale_ == 1.0f) { driver_.drawPixel(x, y, on); return; }
     auto px = (uint16_t)roundf(x * scale_);
     auto py = (uint16_t)roundf(y * scale_);
@@ -23,7 +43,22 @@ void Canvas::drawPixel(uint16_t x, uint16_t y, bool on) {
     driver_.fillRect(px, py, ps, ps, on);
 }
 
+// Clamp a logical rect to the current clip; returns false if fully clipped.
+static bool clampToClip(int& x, int& y, int& w, int& h,
+                        uint16_t cx0, uint16_t cy0, uint16_t cx1, uint16_t cy1) {
+    int x1 = x + w, y1 = y + h;
+    if (x < cx0) x = cx0;
+    if (y < cy0) y = cy0;
+    if (x1 > (int)cx1) x1 = cx1;
+    if (y1 > (int)cy1) y1 = cy1;
+    w = x1 - x; h = y1 - y;
+    return w > 0 && h > 0;
+}
+
 void Canvas::fillRect(uint16_t x, uint16_t y, uint16_t w, uint16_t h, bool on) {
+    int ix = x, iy = y, iw = w, ih = h;
+    if (!clampToClip(ix, iy, iw, ih, clipX0_, clipY0_, clipX1_, clipY1_)) return;
+    x = (uint16_t)ix; y = (uint16_t)iy; w = (uint16_t)iw; h = (uint16_t)ih;
     if (scale_ == 1.0f) { driver_.fillRect(x, y, w, h, on); return; }
     auto px = (uint16_t)roundf(x * scale_);
     auto py = (uint16_t)roundf(y * scale_);
@@ -66,6 +101,9 @@ void Canvas::drawBitmap(uint16_t x, uint16_t y, uint16_t w, uint16_t h, const ui
 }
 
 void Canvas::invertRect(uint16_t x, uint16_t y, uint16_t w, uint16_t h) {
+    int ix = x, iy = y, iw = w, ih = h;
+    if (!clampToClip(ix, iy, iw, ih, clipX0_, clipY0_, clipX1_, clipY1_)) return;
+    x = (uint16_t)ix; y = (uint16_t)iy; w = (uint16_t)iw; h = (uint16_t)ih;
     if (scale_ == 1.0f) { driver_.invertRect(x, y, w, h); return; }
     auto px = (uint16_t)roundf(x * scale_);
     auto py = (uint16_t)roundf(y * scale_);

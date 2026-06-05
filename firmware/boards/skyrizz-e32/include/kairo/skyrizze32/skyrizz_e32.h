@@ -1,5 +1,6 @@
 #pragma once
 #include "kairo/board.h"
+#include "kairo/skyrizze32/board_config.h"
 #include "kairo/skyrizze32/xl9535.h"
 #include "kairo/skyrizze32/lcd_driver.h"
 #include "kairo/skyrizze32/e32_key_map.h"
@@ -16,6 +17,7 @@ class SkyRizzE32 : public IBoard {
 public:
     const char* name() const override { return "skyrizz-e32"; }
     void describeHardware(Runtime& rt) override;
+    const BoardProfile& profile() const override { return kE32Profile; }
 
 private:
     Xl9535      expander_;

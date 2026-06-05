@@ -1,25 +1,25 @@
 #pragma once
-#include "kairo/ui/screen.h"
+#include "kairo/ui/component_screen.h"
+#include <vector>
+#include <string>
 
 namespace kairo {
 class Runtime;
 
-class SoundsSettingsScreen : public IScreen {
+// Sounds — component-migrated (Plan 30). Live input/output level meters (text
+// bars, refreshed each tick) + a Test Beep row. Scrollable.
+class SoundsSettingsScreen : public ComponentScreen {
 public:
     explicit SoundsSettingsScreen(Runtime& rt);
-
-    void enter()              override;
-    void tick(uint64_t nowMs) override;
-    void update(Key key)      override;
-    void draw(Canvas& c)      override;
+    void        enter() override;
+    void        tick(uint64_t nowMs) override;   // live meter refresh
+    ui::UiNode* build(ui::NodeArena& a, Runtime& rt) override;
 
 private:
-    // Draw one device row: label + "0 [bar] CUR /100"
-    void drawDeviceRow(Canvas& c, uint16_t y, bool sel,
-                       const char* label, float level) const;
+    ui::ScrollState          scroll_;
+    std::vector<std::string> rows_;
 
-    Runtime& rt_;
-    int      cursor_ = 0;
+    static void onTestBeep(void* u);
 };
 
 } // namespace kairo

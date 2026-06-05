@@ -58,6 +58,21 @@ UiNode* Pressable(NodeArena& a, void (*onPress)(void*), void* userdata,
     return n;
 }
 
+UiNode* ScrollView(NodeArena& a, ScrollState& st, Style style,
+                   std::initializer_list<UiNode*> children) {
+    UiNode* n = a.alloc();
+    if (!n) return nullptr;
+    n->type  = NodeType::Scroll;
+    // Default to filling the available space so the parent flex bounds the
+    // viewport (content overflows & scrolls). Callers can override flexGrow/size.
+    if (style.flexGrow == 0 && style.width == SIZE_AUTO && style.height == SIZE_AUTO)
+        style.flexGrow = 1;
+    n->style  = style;
+    n->scroll = &st;
+    setChildren(n, children);
+    return n;
+}
+
 // ── Mid-level ──────────────────────────────────────────────────────────────
 
 UiNode* Row(NodeArena& a, Style style, std::initializer_list<UiNode*> children) {
@@ -89,6 +104,78 @@ UiNode* Header(NodeArena& a, const char* title) {
 
 UiNode* Footer(NodeArena& a, const char* hint) {
     return Text(a, hint, TextRole::Caption);
+}
+
+UiNode* ListRow(NodeArena& a, const char* label, void (*onPress)(void*), void* userdata) {
+    Style s; s.dir = FlexDir::Row; s.padding = 2; s.align = Align::Center;
+    return Pressable(a, onPress, userdata, s, { Text(a, label, TextRole::Body) });
+}
+
+// ── Native input controls ──────────────────────────────────────────────────
+
+// A label Text that grows to push trailing controls to the right edge.
+static UiNode* labelGrow(NodeArena& a, const char* label) {
+    UiNode* t = Text(a, label, TextRole::Body);
+    if (t) t->style.flexGrow = 1;
+    return t;
+}
+
+UiNode* Toggle(NodeArena& a, const char* label, bool on,
+               void (*onToggle)(void*), void* userdata) {
+    Style s; s.dir = FlexDir::Row; s.padding = 2; s.align = Align::Center;
+    s.justify = Justify::SpaceBetween;
+    return Pressable(a, onToggle, userdata, s,
+                     { Text(a, label, TextRole::Body), Text(a, on ? "[ON]" : "[OFF]", TextRole::Body) });
+}
+
+// A single focusable row whose value is tuned with Left/Right (onAdjust). The
+// glyphs (`lo`/`hi`, e.g. "-"/"+" or "<"/">") are visual affordances; the whole
+// row is one focus/tap target (location-aware tap: left half = −1, right = +1).
+static UiNode* adjustRow(NodeArena& a, const char* label, const char* lo,
+                         const char* value, const char* hi,
+                         void (*onAdjust)(void*, int), void* userdata) {
+    Style row; row.dir = FlexDir::Row; row.padding = 2; row.align = Align::Center; row.gap = 4;
+    UiNode* n = View(a, row, {
+        labelGrow(a, label),
+        Text(a, lo, TextRole::Body),
+        Text(a, value, TextRole::Body),
+        Text(a, hi, TextRole::Body),
+    });
+    if (n) { n->focusable = true; n->onAdjust = onAdjust; n->userdata = userdata; }
+    return n;
+}
+
+UiNode* Stepper(NodeArena& a, const char* label, const char* value,
+                void (*onAdjust)(void* u, int dir), void* userdata) {
+    return adjustRow(a, label, "-", value, "+", onAdjust, userdata);
+}
+
+UiNode* Select(NodeArena& a, const char* label, const char* value,
+               void (*onAdjust)(void* u, int dir), void* userdata) {
+    return adjustRow(a, label, "<", value, ">", onAdjust, userdata);
+}
+
+UiNode* Slider(NodeArena& a, int* value, int min, int max, int step,
+               void (*onChange)(void*, int), void* userdata) {
+    UiNode* n = a.alloc();
+    if (!n) return nullptr;
+    n->type        = NodeType::Slider;
+    n->focusable   = true;
+    n->sliderValue = value;
+    n->sliderMin   = (int16_t)min;
+    n->sliderMax   = (int16_t)max;
+    n->sliderStep  = (int16_t)step;
+    n->onChange    = onChange;
+    n->userdata    = userdata;
+    // Width comes from a Stretch parent (Col) or an explicit flexGrow in a Row.
+    return n;
+}
+
+UiNode* TextField(NodeArena& a, const char* label, const char* text,
+                  void (*onPress)(void*), void* userdata) {
+    Style s; s.dir = FlexDir::Row; s.padding = 2; s.align = Align::Center; s.gap = 4;
+    return Pressable(a, onPress, userdata, s,
+                     { labelGrow(a, label), Text(a, text, TextRole::Body) });
 }
 
 UiNode* Menu(NodeArena& a, const MenuItem* items, int count) {

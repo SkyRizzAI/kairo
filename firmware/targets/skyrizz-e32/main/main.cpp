@@ -15,6 +15,7 @@
 #include "kairo/plugins/task_demo_plugin.h"
 #include "kairo/plugins/ticker_plugin.h"
 #include "kairo/plugins/camera_plugin.h"
+#include "kairo/plugins/ui_showcase_plugin.h"
 #include "kairo/plugin/plugin_manager.h"
 #include "kairo/screens/home_screen.h"
 #include "kairo/ui/view_dispatcher.h"
@@ -31,6 +32,7 @@ kairo::StopwatchPlugin  stopwatchPlugin;
 kairo::TaskDemoPlugin   taskDemoPlugin;
 kairo::TickerPlugin     tickerPlugin;
 kairo::CameraPlugin     cameraPlugin;
+kairo::UiShowcasePlugin uiShowcasePlugin;
 kairo::HomeScreen*      homeScreen = nullptr;
 }
 
@@ -57,6 +59,7 @@ void setup() {
     rt.plugins().load(taskDemoPlugin);
     rt.plugins().load(tickerPlugin);
     rt.plugins().load(cameraPlugin);
+    rt.plugins().load(uiShowcasePlugin);
 
     static kairo::HomeScreen hs(rt);
     homeScreen = &hs;

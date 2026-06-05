@@ -1,5 +1,6 @@
 #pragma once
 #include <cstdint>
+#include "kairo/system/board_profile.h"
 // Kairo Dev Board pin map — verified against refs/oniondao-badge pinout.
 // ESP32-S3-WROOM-1-N8R8. Single source of truth for all board pin constants.
 
@@ -39,5 +40,33 @@ constexpr uint8_t BTN_RIGHT  = 1 << 3;
 constexpr uint8_t BTN_SELECT = 1 << 4;
 constexpr uint8_t BTN_CANCEL = 1 << 5;
 constexpr uint8_t BTN_ALL    = 0x3F;
+
+// ── Board Profile (physical layout) ───────────────────────────────────────
+// Dev Board: e-ink LCD top, D-pad cross below left, Select+Cancel below right.
+//
+// ┌────────────────────────────┐
+// │            LCD             │
+// └────────────────────────────┘
+//      ①                  ⑤
+//   ②    ③               ⑥
+//      ④
+// Up=1 Left=2 Right=3 Down=4 Select=5 Cancel=6
+
+constexpr ComponentDef kDevComponents[] = {
+    // id  label      type               x      y      w      h
+    { 1, "Up",      ComponentType::Button,  0.13f, 0.72f, 0.07f, 0.07f },
+    { 2, "Left",    ComponentType::Button,  0.04f, 0.81f, 0.07f, 0.07f },
+    { 3, "Right",   ComponentType::Button,  0.22f, 0.81f, 0.07f, 0.07f },
+    { 4, "Down",    ComponentType::Button,  0.13f, 0.90f, 0.07f, 0.07f },
+    { 5, "Select",  ComponentType::Button,  0.70f, 0.78f, 0.10f, 0.07f },
+    { 6, "Cancel",  ComponentType::Button,  0.83f, 0.90f, 0.10f, 0.07f },
+    { 7, "LCD",     ComponentType::Display, 0.04f, 0.04f, 0.92f, 0.66f },
+};
+
+constexpr BoardProfile kDevProfile = {
+    "dev-board", "Kairo Dev Board",
+    90.0f, 55.0f,
+    kDevComponents, 7
+};
 
 } // namespace kairo::devboard

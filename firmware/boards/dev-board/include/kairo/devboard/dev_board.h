@@ -1,6 +1,7 @@
 #pragma once
 #include "kairo/board.h"
 #include "kairo/hal/async_display.h"
+#include "kairo/devboard/board_config.h"
 #include "kairo/devboard/tca9534_buttons.h"
 #include "kairo/devboard/dev_board_key_map.h"
 #include "kairo/devboard/eink_display.h"
@@ -12,6 +13,7 @@ class DevBoard : public IBoard {
 public:
     const char* name() const override { return "dev-board"; }
     void describeHardware(Runtime& rt) override;
+    const BoardProfile& profile() const override { return devboard::kDevProfile; }
 
     TCA9534Buttons&     buttons() { return buttons_; }
     AsyncDisplayDriver& display() { return display_; }

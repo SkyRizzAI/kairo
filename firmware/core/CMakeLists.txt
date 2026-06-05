@@ -32,6 +32,7 @@ set(KAIRO_CORE_SRCS
     src/apps/ticker_app.cpp
     src/apps/touch_test_app.cpp
     src/apps/camera_app.cpp
+    src/apps/ui_showcase_app.cpp
     src/ui/text_input.cpp
     src/ui/virtual_keyboard.cpp
     src/plugins/hello_plugin.cpp
@@ -41,16 +42,20 @@ set(KAIRO_CORE_SRCS
     src/plugins/task_demo_plugin.cpp
     src/plugins/ticker_plugin.cpp
     src/plugins/camera_plugin.cpp
+    src/plugins/ui_showcase_plugin.cpp
     src/ui/canvas.cpp
     src/ui/layout.cpp
     src/ui/widgets.cpp
     src/ui/text_style.cpp
     src/ui/renderer.cpp
     src/ui/focus.cpp
+    src/ui/component_runtime.cpp
+    src/ui/component_screen.cpp
     src/ui/font_5x8.cpp
     src/ui/view_dispatcher.cpp
     src/ui/status_bar.cpp
     src/ui/components.cpp
+    src/ui/ascii_board_renderer.cpp
     src/screens/home_screen.cpp
     src/screens/app_list_screen.cpp
     src/screens/logs_screen.cpp

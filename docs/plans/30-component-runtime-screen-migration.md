@@ -1,5 +1,20 @@
 # 30 — Component Runtime & Screen Migration
 
+> **STATUS (2026-06-05): IMPLEMENTED (core + main screens).** `ComponentRuntime`
+> extracted (`ui/component_runtime.{h,cpp}`) — shared build→layout→auto-scroll-to-
+> focus→render + gesture pointer + nav + momentum. `ComponentApp` refactored to use
+> it. New `ComponentScreen` base (`ui/component_screen.{h,cpp}`) wires
+> draw/onAction/onPointer/tick through the runtime; screens implement
+> `build(NodeArena&, Runtime&)`.
+> **Migrated (ALL 11 screens):** Home, Settings, AppList, Logs, About, Controls,
+> TouchSettings, SleepSettings, SoundsSettings, CameraSettings, LockScreen
+> (fullscreen via `ComponentScreen::fullscreen()`). Only CameraApp stays legacy
+> (real-time camera blit). Native input widgets added (Toggle, Stepper, Select,
+> Slider, TextField) + Left/Right `dispatchAdjust`. The ScrollDemo moved out of
+> Settings into a dedicated **UI Showcase** app in the Apps list (a plugin) with
+> internal pages (Menu → Scroll List / Input Controls). Builds green on
+> simulator, skyrizz-e32 and dev-board; host layout tests pass.
+
 > Ekstrak loop component (build → layout → focus → render → input/hit-test) dari
 > `ComponentApp` menjadi **ComponentRuntime bersama**, lalu migrasi SEMUA screen
 > (Home, Settings, AppList, Logs, About, SleepSettings, Lock, Controls) dari

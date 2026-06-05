@@ -44,6 +44,7 @@ public:
     bool isShutdownRequested() const;
 
     IPlatform&          platform();
+    IBoard&             board();
     IClock&             clock();
     Logger&             log();
     EventBus&           events();

@@ -1,27 +1,24 @@
 #pragma once
-#include "kairo/ui/screen.h"
-#include "kairo/input/input_action.h"
+#include "kairo/ui/component_screen.h"
+#include <vector>
+#include <string>
 
 namespace kairo {
 
 class Runtime;
 
 // Read-only introspection of the input system: board name, button count,
-// Action → hint mapping, and gesture timing parameters.
-// Accessed via Settings → Controls.
-class ControlsScreen : public IScreen {
+// Action → hint mapping, and gesture timings. Component-migrated (Plan 30):
+// header + a scrollable list. Accessed via Settings → Controls.
+class ControlsScreen : public ComponentScreen {
 public:
     explicit ControlsScreen(Runtime& rt);
-
-    void enter()                        override;
-    void onAction(input::Action a)      override;
-    void draw(Canvas& c)               override;
+    void        enter() override;
+    ui::UiNode* build(ui::NodeArena& a, Runtime& rt) override;
 
 private:
-    Runtime& rt_;
-    int      scroll_ = 0;
-
-    static constexpr int VISIBLE_ROWS = 4;
+    ui::ScrollState          scroll_;
+    std::vector<std::string> rows_;
 };
 
 } // namespace kairo

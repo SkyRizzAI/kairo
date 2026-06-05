@@ -90,12 +90,52 @@ static void test_text_measure() {
     CHECK(t->y == 0,  "text y == 0");
 }
 
+static void test_scroll_overflow() {
+    std::printf("[scroll: bounded viewport in flex parent, content overflows]\n");
+    NodeArena a(128);
+    ScrollState st;
+    // Parent Col height 100: fixed header(20) + ScrollView(flex:1) holding 10
+    // boxes of height 20 (content 200 > viewport 80).
+    Style header; header.height = 20; header.width = 50;
+    Style svStyle; svStyle.dir = FlexDir::Col;   // flexGrow defaults to 1 in builder
+    UiNode* boxes[10];
+    Style box; box.width = 50; box.height = 20;
+    UiNode* sv = ScrollView(a, st, svStyle, {});
+    UiNode* prev = nullptr;
+    for (int i = 0; i < 10; i++) {
+        boxes[i] = View(a, box, {});
+        if (!prev) sv->firstChild = boxes[i]; else prev->nextSibling = boxes[i];
+        prev = boxes[i];
+    }
+    Style rootS; rootS.dir = FlexDir::Col; rootS.width = 50; rootS.height = 100;
+    UiNode* root = View(a, rootS, { View(a, header, {}), sv });
+    layout(*root, 50, 100, TM);
+
+    CHECK(sv->h == 80, "scrollview viewport h == 100-20 == 80 (flex bounded)");
+    CHECK(st.contentMain == 200, "content natural length == 10*20 == 200");
+    CHECK(st.viewportMain == 80, "viewport recorded == 80");
+    CHECK(st.maxScroll() == 120, "maxScroll == 200-80 == 120");
+    CHECK(boxes[0]->y == 20, "box0 y == header bottom (scrollY 0)");
+
+    // Scroll down by 50 → children shift up by 50.
+    st.scrollMain = 50;
+    layout(*root, 50, 100, TM);
+    CHECK(boxes[0]->y == 20 - 50, "box0 y shifted up by scroll 50 == -30");
+    CHECK(st.scrollMain == 50, "scroll stays 50 (within bounds)");
+
+    // Over-scroll clamps to maxScroll.
+    st.scrollMain = 999;
+    layout(*root, 50, 100, TM);
+    CHECK(st.scrollMain == 120, "over-scroll clamped to maxScroll 120");
+}
+
 int main() {
     std::printf("== Layout engine tests ==\n");
     test_col_grow();
     test_row_spacebetween();
     test_align_center_padding_gap();
     test_text_measure();
+    test_scroll_overflow();
     std::printf("== %s ==\n", g_fail == 0 ? "ALL PASS" : "FAILURES");
     return g_fail == 0 ? 0 : 1;
 }

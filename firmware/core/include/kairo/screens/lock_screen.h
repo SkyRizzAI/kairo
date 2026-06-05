@@ -1,19 +1,25 @@
 #pragma once
-#include "kairo/ui/screen.h"
-#include "kairo/ui/key.h"
+#include "kairo/ui/component_screen.h"
 
 namespace kairo {
 
+class Runtime;
 class DisplayPowerManager;
 
-class LockScreen : public IScreen {
+// Lock screen — component-migrated (Plan 30), fullscreen. Press Activate twice
+// to unlock. Custom onAction (it must not pop on Back like a normal screen).
+class LockScreen : public ComponentScreen {
 public:
+    explicit LockScreen(Runtime& rt);
+
     void setDpm(DisplayPowerManager& dpm) { dpm_ = &dpm; }
 
-    ScreenMode mode() const override { return ScreenMode::Fullscreen; }
-    void enter()  override;
-    void update(Key k) override;
-    void draw(Canvas& canvas) override;
+    void        enter() override;
+    void        onAction(input::Action a) override;
+    ui::UiNode* build(ui::NodeArena& a, Runtime& rt) override;
+
+protected:
+    bool fullscreen() const override { return true; }
 
 private:
     DisplayPowerManager* dpm_         = nullptr;

@@ -1,149 +1,75 @@
 #include "kairo/screens/sounds_settings_screen.h"
 #include "kairo/runtime.h"
-#include "kairo/ui/canvas.h"
-#include "kairo/ui/ui_constants.h"
-#include "kairo/ui/components.h"
 #include "kairo/ui/view_dispatcher.h"
 #include "kairo/services/audio_service.h"
-#include "kairo/input/input_action.h"
 #include <cstdio>
 
 namespace kairo {
 
-SoundsSettingsScreen::SoundsSettingsScreen(Runtime& rt) : rt_(rt) {}
+using namespace ui;
+
+SoundsSettingsScreen::SoundsSettingsScreen(Runtime& rt) : ComponentScreen(rt, 96) {}
 
 void SoundsSettingsScreen::enter() {
-    cursor_ = 0;
+    scroll_.scrollMain = 0;
     rt_.view().requestRedraw();
 }
 
-void SoundsSettingsScreen::tick(uint64_t /*nowMs*/) {
-    rt_.view().requestRedraw();
+void SoundsSettingsScreen::tick(uint64_t) {
+    rt_.view().requestRedraw();   // live level meters
 }
 
-void SoundsSettingsScreen::update(Key key) {
-    int total = rt_.audio().inputCount() + rt_.audio().outputCount();
-    if (rt_.audio().outputCount() > 0) total++;  // +1 for Test row
-
-    switch (key) {
-    case Key::Up:
-        if (cursor_ > 0) cursor_--;
-        break;
-    case Key::Down:
-        if (cursor_ < total - 1) cursor_++;
-        break;
-    case Key::Select: {
-        int testRow = rt_.audio().inputCount() + rt_.audio().outputCount();
-        if (cursor_ == testRow && rt_.audio().outputCount() > 0)
-            rt_.audio().output(0)->playTone(440, 300);
-        break;
-    }
-    case Key::Cancel:
-        rt_.view().pop();
-        return;
-    default:
-        break;
-    }
-    rt_.view().requestRedraw();
+void SoundsSettingsScreen::onTestBeep(void* u) {
+    auto* s = static_cast<SoundsSettingsScreen*>(u);
+    if (s->rt_.audio().outputCount() > 0)
+        s->rt_.audio().output(0)->playTone(440, 300);
 }
 
-// Draw a device level row:
-//
-//   LABEL     0 [████░░░░] 42 /100
-//
-// Layout (240px canvas):
-//   col 5..89  = label (14 chars max)
-//   col 90     = "0"
-//   col 96..175 = bar (80px)
-//   col 177    = current %
-//   col 207    = "/100"
-void SoundsSettingsScreen::drawDeviceRow(Canvas& c, uint16_t y, bool sel,
-                                          const char* label, float level) const {
-    if (level < 0.0f) level = 0.0f;
-    if (level > 1.0f) level = 1.0f;
-    int pct = (int)(level * 100.0f + 0.5f);
-
-    if (sel) c.invertRect(2, (uint16_t)(y - 1),
-                          (uint16_t)(c.width() - 4), (uint16_t)(ui::CHAR_H + 1));
-    bool ink = !sel;
-
-    // Label (truncated to 12 chars)
-    char lbuf[16];
-    std::snprintf(lbuf, sizeof(lbuf), "%-12.12s", label);
-    c.drawText(5, y, lbuf, ink);
-
-    // "0" min label
-    c.drawText(77, y, "0", ink);
-
-    // Level bar (80px wide)
-    constexpr uint16_t BAR_X = 89;
-    constexpr uint16_t BAR_W = 80;
-    uint16_t fill = (uint16_t)(BAR_W * level);
-    if (fill > 0)        c.fillRect(BAR_X,         y, fill,          ui::CHAR_H, ink);
-    if (fill < BAR_W)    c.fillRect(BAR_X + fill,  y, BAR_W - fill,  ui::CHAR_H, !ink);
-
-    // Current value
-    char cur[8];
-    std::snprintf(cur, sizeof(cur), "%3d", pct);
-    c.drawText(174, y, cur, ink);
-
-    // Max label
-    c.drawText(201, y, "/100", ink);
+// "label  [####----] 42%" — 8-segment text meter.
+static void formatBar(std::vector<std::string>& out, const char* label, float level) {
+    if (level < 0) level = 0;
+    if (level > 1) level = 1;
+    char buf[48];
+    char bar[9];
+    int fill = (int)(level * 8 + 0.5f);
+    for (int i = 0; i < 8; i++) bar[i] = i < fill ? '#' : '-';
+    bar[8] = '\0';
+    std::snprintf(buf, sizeof(buf), "%-10.10s [%s] %d%%", label, bar, (int)(level * 100 + 0.5f));
+    out.push_back(buf);
 }
 
-void SoundsSettingsScreen::draw(Canvas& c) {
-    uint16_t y = ui::drawTitle(c, "SOUNDS");
+UiNode* SoundsSettingsScreen::build(NodeArena& a, Runtime& rt) {
+    rows_.clear();
+    auto& audio = rt.audio();
+    rows_.push_back("INPUT");
+    if (audio.inputCount() == 0) rows_.push_back("  (none)");
+    for (int i = 0; i < audio.inputCount(); i++)
+        formatBar(rows_, audio.input(i)->label(), audio.input(i)->peakLevel());
+    rows_.push_back("");
+    rows_.push_back("OUTPUT");
+    if (audio.outputCount() == 0) rows_.push_back("  (none)");
+    for (int i = 0; i < audio.outputCount(); i++)
+        formatBar(rows_, audio.output(i)->label(), audio.output(i)->peakLevel());
 
-    // INPUT section
-    c.drawText(5, y, "INPUT", true);
-    y += ui::CHAR_H + 2;
+    Style root; root.dir = FlexDir::Col; root.flexGrow = 1; root.padding = 3; root.gap = 1;
+    Style line; line.height = 1; line.background = true;
+    Style sv;   sv.dir = FlexDir::Col; sv.align = Align::Stretch; sv.gap = 1;
 
-    if (rt_.audio().inputCount() == 0) {
-        c.drawText(5, y, "No input devices", true);
-        y += ui::CHAR_H + 4;
-    } else {
-        for (int i = 0; i < rt_.audio().inputCount(); i++) {
-            bool sel = (cursor_ == i);
-            auto* dev = rt_.audio().input(i);
-            drawDeviceRow(c, y, sel, dev->label(), dev->peakLevel());
-            y += ui::CHAR_H + 6;
-        }
-    }
+    UiNode* list = ScrollView(a, scroll_, sv, {});
+    UiNode* prev = nullptr;
+    auto append = [&](UiNode* n) {
+        if (!n) return;
+        if (!prev) list->firstChild = n; else prev->nextSibling = n;
+        prev = n;
+    };
+    for (auto& r : rows_) append(Text(a, r.c_str(), TextRole::Body));
+    if (audio.outputCount() > 0) append(ListRow(a, "Test Beep 440Hz", onTestBeep, this));
 
-    y += 2;
-
-    // OUTPUT section
-    c.drawText(5, y, "OUTPUT", true);
-    y += ui::CHAR_H + 2;
-
-    if (rt_.audio().outputCount() == 0) {
-        c.drawText(5, y, "No output devices", true);
-        y += ui::CHAR_H + 4;
-    } else {
-        for (int i = 0; i < rt_.audio().outputCount(); i++) {
-            int row = rt_.audio().inputCount() + i;
-            bool sel = (cursor_ == row);
-            auto* dev = rt_.audio().output(i);
-            drawDeviceRow(c, y, sel, dev->label(), dev->peakLevel());
-            y += ui::CHAR_H + 6;
-        }
-    }
-
-    // Test beep row
-    if (rt_.audio().outputCount() > 0) {
-        y += 2;
-        int testRow = rt_.audio().inputCount() + rt_.audio().outputCount();
-        bool sel = (cursor_ == testRow);
-        if (sel) c.invertRect(2, (uint16_t)(y - 1),
-                              (uint16_t)(c.width() - 4), (uint16_t)(ui::CHAR_H + 1));
-        c.drawText(5, y, "[ Test Beep 440Hz ]", !sel);
-    }
-
-    // Footer
-    char footer[56];
-    std::snprintf(footer, sizeof(footer), "%s back",
-        rt_.input().hintFor(input::Action::Back));
-    c.drawText(4, ui::footerY(c.height()), footer, true);
+    return View(a, root, {
+        Text(a, "SOUNDS", TextRole::Title),
+        View(a, line, {}),
+        list,
+    });
 }
 
 } // namespace kairo

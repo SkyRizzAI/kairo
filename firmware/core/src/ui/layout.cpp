@@ -2,6 +2,8 @@
 
 namespace kairo::ui {
 
+static void arrange(UiNode* n);   // fwd: arrangeScroll recurses into it
+
 static int childCount(const UiNode* n) {
     int c = 0;
     for (UiNode* k = n->firstChild; k; k = k->nextSibling) c++;
@@ -21,7 +23,16 @@ static void measure(UiNode* n, const TextMetrics& tm) {
         return;
     }
 
-    // View / Pressable: measure children first.
+    if (n->type == NodeType::Slider) {
+        // Leaf control: fixed-ish height; width AUTO → 0 so a Stretch parent
+        // gives it the full cross size (it spans the row).
+        constexpr uint16_t SLIDER_H = 11;
+        n->w = (s.width  == SIZE_AUTO) ? 0 : s.width;
+        n->h = (s.height == SIZE_AUTO) ? SLIDER_H : s.height;
+        return;
+    }
+
+    // View / Pressable / Scroll: measure children first.
     int n_children = 0;
     uint32_t sumMain = 0, maxCross = 0;
     const bool isRow = (s.dir == FlexDir::Row);
@@ -35,9 +46,28 @@ static void measure(UiNode* n, const TextMetrics& tm) {
     }
     uint32_t gaps = (n_children > 1) ? (uint32_t)s.gap * (n_children - 1) : 0;
 
-    uint16_t contentMain  = (uint16_t)(sumMain + gaps + pad2);
     uint16_t contentCross = (uint16_t)(maxCross + pad2);
 
+    if (n->type == NodeType::Scroll) {
+        // The natural inner content length (children only, no node padding) is
+        // recorded so arrange() can clamp scroll + the renderer can size the bar.
+        if (n->scroll) n->scroll->contentMain = (uint16_t)(sumMain + gaps);
+        // Report a BOUNDED main size to the parent flex pass: a fixed size if the
+        // style sets one, else 0 so the node claims the viewport via flexGrow
+        // instead of forcing the parent to grow to fit all content. This is the
+        // flex⇄overflow contract — the parent constrains the viewport, content
+        // beyond it scrolls. (RN: <ScrollView style={{flex:1}}/>.)
+        uint16_t mainStyle = isRow ? s.width : s.height;
+        uint16_t mainSize  = (mainStyle == SIZE_AUTO) ? 0 : mainStyle;
+        uint16_t crossSize = (isRow ? s.height : s.width) == SIZE_AUTO
+                                 ? contentCross
+                                 : (isRow ? s.height : s.width);
+        if (isRow) { n->w = mainSize; n->h = crossSize; }
+        else       { n->h = mainSize; n->w = crossSize; }
+        return;
+    }
+
+    uint16_t contentMain  = (uint16_t)(sumMain + gaps + pad2);
     uint16_t cw = isRow ? contentMain : contentCross;
     uint16_t ch = isRow ? contentCross : contentMain;
 
@@ -45,8 +75,58 @@ static void measure(UiNode* n, const TextMetrics& tm) {
     n->h = (s.height == SIZE_AUTO) ? ch : s.height;
 }
 
+// ── Scroll arrange: children at natural main size, shifted by -scrollMain ───
+static void arrangeScroll(UiNode* n) {
+    const Style& s   = n->style;
+    const int    pad = s.padding;
+    const bool   isRow = (s.dir == FlexDir::Row);
+
+    const int innerX = n->x + pad;
+    const int innerY = n->y + pad;
+    const int innerW = (int)n->w - 2 * pad;
+    const int innerH = (int)n->h - 2 * pad;
+    const int viewportMain = isRow ? innerW : innerH;
+    const int crossAvail   = isRow ? innerH : innerW;
+
+    const int contentMain = n->scroll ? (int)n->scroll->contentMain : 0;
+    int maxS = contentMain > viewportMain ? contentMain - viewportMain : 0;
+    int sc = n->scroll ? n->scroll->scrollMain : 0;
+    if (sc < 0) sc = 0;
+    if (sc > maxS) sc = maxS;
+    if (n->scroll) {
+        n->scroll->scrollMain   = (int16_t)sc;
+        n->scroll->viewportMain = (uint16_t)(viewportMain > 0 ? viewportMain : 0);
+    }
+
+    // Lay children stacked at their natural main size, offset by the scroll pos.
+    int cursor = (isRow ? innerX : innerY) - sc;
+    for (UiNode* k = n->firstChild; k; k = k->nextSibling) {
+        if (s.align == Align::Stretch) {
+            if (isRow) k->h = (uint16_t)crossAvail;
+            else       k->w = (uint16_t)crossAvail;
+        }
+        int crossSize = isRow ? k->h : k->w;
+        int crossOff = 0;
+        switch (s.align) {
+            case Align::Start:   crossOff = 0; break;
+            case Align::Center:  crossOff = (crossAvail - crossSize) / 2; break;
+            case Align::End:     crossOff = crossAvail - crossSize; break;
+            case Align::Stretch: crossOff = 0; break;
+        }
+        if (crossOff < 0) crossOff = 0;
+
+        if (isRow) { k->x = (int16_t)cursor;             k->y = (int16_t)(innerY + crossOff); }
+        else       { k->x = (int16_t)(innerX + crossOff); k->y = (int16_t)cursor; }
+
+        cursor += (isRow ? k->w : k->h) + s.gap;
+        arrange(k);
+    }
+}
+
 // ── Pass 2: arrange (top-down); node x/y/w/h already final ─────────────────
 static void arrange(UiNode* n) {
+    if (n->type == NodeType::Scroll) { arrangeScroll(n); return; }
+
     const Style& s = n->style;
     const int pad  = s.padding;
     const bool isRow = (s.dir == FlexDir::Row);

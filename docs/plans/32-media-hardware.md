@@ -952,3 +952,71 @@ firmware/core/src/screens/settings_screen.cpp            (+ Sounds/Camera items)
 firmware/core/include/kairo/screens/settings_screen.h    (+ 2 screen members)
 firmware/targets/skyrizz-e32/main/main.cpp               (+ CameraPlugin)
 ```
+
+---
+
+## ⚠️ KNOWN ISSUE — Speaker (NS4168) produces no sound — PARKED (2026-06-05)
+
+**Status:** software path proven 100% correct; root cause points to **hardware
+(no speaker plugged into the `SP1` connector)**. Deferred — revisit later.
+Mic input (ES7243E) works fine; **only speaker output is affected.**
+
+### Symptom
+`I2sSpeaker::playTone()` / test beep produces no audible sound. Mic detects
+voice/clap normally.
+
+### What was proven (standalone `firmware/targets/skyrizz-audiotest`)
+- All I2S init calls return `ESP_OK`: `i2s_new_channel`,
+  `i2s_channel_init_std_mode` (tx+rx), `i2s_channel_enable` (tx+rx).
+- `i2s_channel_write` succeeds every call with **full byte count** (e.g.
+  `bytesOut=89600/89600`) — DMA accepts and shifts data out.
+- Mic RX works (ES7243E ACKs @0x11, 43 init writes 0 failed, live levels react)
+  → **BCLK/WS/MCLK clocks are running**, so NS4168 is clocked in all cases.
+- Tested: 32-bit & 16-bit slots, full-duplex & TX-only, `auto_clear` true/false,
+  mic→speaker loopback (saturating amplitude), and a continuous 1 kHz tone.
+  **All silent.**
+- **A/B isolation test** (mic/clocks always on, only GPIO45 contents change):
+  - Phase A — I2S-TX drives GPIO45 with a clean 1 kHz @0.5 FS tone → **silent**.
+  - Phase B — GPIO45 floated + GPIO46 (WS2812, adjacent) toggled to induce
+    crosstalk → **also silent**.
+
+### Decisive logic
+GPIO45 and the NS4168 `SDATA` pin are the **same physical net**. A clean
+0.5-full-scale tone is far stronger than ambient floating noise — if Phase A is
+silent, the output stage (NS4168 → speaker) cannot reproduce weaker noise
+either. **Phase A silence alone proves the output path is dead downstream of
+GPIO45**, regardless of Phase B.
+
+### Hardware evidence (from `refs-skyrizz-e32/PCB/`)
+- **`SP1` is a 2-pin JST speaker connector** (see `pcb-prototype-alpha-back.jpeg`,
+  top-middle next to `BATT`). The NS4168 differential outputs `VOP`/`VON`
+  (pins 8/5) route to `SP1`.
+- BOM lists a **`Speaker`** part + **`JST`** connector, but the **Pick-and-Place
+  has no speaker** → the speaker is **external / hand-attached**, not machine-
+  placed. (MIC1/MIC2 ARE soldered onboard → that is why the mic always works.)
+- NS4168 `CTRL` (pin 1) and `VDD` (pin 6) are tied to `3V3` → amp is
+  **always-on by hardware, no firmware enable pin**. No XL9535 pin gates audio
+  (P00=backlight, P01=touch-rst, P02=cam-rst, P04/05/06/11/12=buttons,
+  P17=indicator LED).
+- Reference `examples/display_testing_menu` is **mic-only** (GPIO45 never
+  configured → floating); `no_std_board_self_test.rs` only *declares*
+  `play_test_tone()` with no implementation. **There is no working speaker code
+  in the reference repo** to copy. The "loud sound" previously heard was most
+  likely WS2812 (GPIO46, 800 kHz) crosstalk into the floating GPIO45, amplified
+  by the always-on NS4168 — i.e. noise, not intentional audio.
+
+### Conclusion / next actions when resumed
+1. **Confirm a speaker is physically plugged into `SP1`** (most likely empty).
+   The mic is onboard; the speaker is a separate plug-in part.
+2. Multimeter: NS4168 pin 6 (VDD) = 3.3 V? Continuity `SP1` ↔ speaker?
+   AC signal on `VOP`/`VON` while a tone plays?
+3. Re-flash the exact reference firmware that "made sound" on THIS unit and
+   confirm whether it still makes sound today. If yes → revisit a deep I2S-TX
+   routing investigation (try I2S port 1, `i2s_channel_preload_data`, scope
+   GPIO45). If no → confirmed hardware (speaker disconnected/faulty).
+
+### Diagnostic asset
+`firmware/targets/skyrizz-audiotest/main/main.cpp` currently holds the A/B
+isolation test (Phase A I2S-TX tone / Phase B float+crosstalk). Note: Phase B's
+busy-wait trips the task WDT (warning only, the GPIO toggling still runs).
+Restore to a clean mic+speaker bring-up once the hardware question is settled.

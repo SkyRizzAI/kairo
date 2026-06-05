@@ -176,6 +176,7 @@ bool Runtime::isShutdownRequested() const { return shutdownRequested_; }
 void Runtime::requestRestart()  { exitCode_ = 75; shutdownRequested_ = true; }
 
 IPlatform&          Runtime::platform()      { assert(platform_); return *platform_; }
+IBoard&             Runtime::board()         { assert(board_);    return *board_; }
 IClock&             Runtime::clock()         { assert(platform_); return platform_->clock(); }
 Logger&             Runtime::log()           { assert(logger_);   return *logger_; }
 EventBus&           Runtime::events()        { assert(eventBus_); return *eventBus_; }

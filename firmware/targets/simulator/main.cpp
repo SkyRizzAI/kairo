@@ -9,6 +9,7 @@
 #include "kairo/plugins/stopwatch_plugin.h"
 #include "kairo/plugins/task_demo_plugin.h"
 #include "kairo/plugins/ticker_plugin.h"
+#include "kairo/plugins/ui_showcase_plugin.h"
 #include "kairo/plugin/plugin_manager.h"
 #include "kairo/screens/home_screen.h"
 #include "kairo/ui/view_dispatcher.h"
@@ -36,12 +37,14 @@ int main() {
     kairo::StopwatchPlugin stopwatchPlugin;
     kairo::TaskDemoPlugin  taskDemoPlugin;
     kairo::TickerPlugin    tickerPlugin;
+    kairo::UiShowcasePlugin uiShowcasePlugin;
     rt.plugins().load(helloPlugin);
     rt.plugins().load(clockPlugin);
     rt.plugins().load(counterPlugin);
     rt.plugins().load(stopwatchPlugin);
     rt.plugins().load(taskDemoPlugin);
     rt.plugins().load(tickerPlugin);
+    rt.plugins().load(uiShowcasePlugin);
 
     // Push home screen
     kairo::HomeScreen homeScreen(rt);

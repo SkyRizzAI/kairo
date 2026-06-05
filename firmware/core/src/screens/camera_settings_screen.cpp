@@ -1,62 +1,52 @@
 #include "kairo/screens/camera_settings_screen.h"
 #include "kairo/runtime.h"
-#include "kairo/ui/canvas.h"
-#include "kairo/ui/ui_constants.h"
-#include "kairo/ui/components.h"
 #include "kairo/ui/view_dispatcher.h"
 #include "kairo/services/camera_service.h"
-#include "kairo/input/input_action.h"
 #include <cstdio>
 
 namespace kairo {
 
-CameraSettingsScreen::CameraSettingsScreen(Runtime& rt) : rt_(rt) {}
+using namespace ui;
+
+CameraSettingsScreen::CameraSettingsScreen(Runtime& rt) : ComponentScreen(rt, 64) {}
 
 void CameraSettingsScreen::enter() {
-    cursor_ = 0;
+    scroll_.scrollMain = 0;
     rt_.view().requestRedraw();
 }
 
-void CameraSettingsScreen::update(Key key) {
-    switch (key) {
-    case Key::Up:
-        if (cursor_ > 0) cursor_--;
-        break;
-    case Key::Down:
-        if (cursor_ < rt_.camera().count() - 1) cursor_++;
-        break;
-    case Key::Cancel:
-        rt_.view().pop();
-        return;
-    default:
-        break;
-    }
-    rt_.view().requestRedraw();
-}
-
-void CameraSettingsScreen::draw(Canvas& c) {
-    uint16_t y = ui::drawTitle(c, "CAMERA");
-
-    if (rt_.camera().count() == 0) {
-        c.drawText(5, y, "No camera hardware", true);
+UiNode* CameraSettingsScreen::build(NodeArena& a, Runtime& rt) {
+    rows_.clear();
+    char buf[48];
+    if (rt.camera().count() == 0) {
+        rows_.push_back("No camera hardware");
     } else {
-        for (int i = 0; i < rt_.camera().count(); i++) {
-            bool sel = (cursor_ == i);
-            auto* cam = rt_.camera().get(i);
-            char line[40];
-            std::snprintf(line, sizeof(line), "%s  %dx%d",
-                rt_.camera().desc(i),
-                (int)cam->frameWidth(), (int)cam->frameHeight());
-            if (sel) c.invertRect(2, (uint16_t)(y - 1), (uint16_t)(c.width() - 4), (uint16_t)(ui::CHAR_H + 1));
-            c.drawText(5, y, line, !sel);
-            y += ui::CHAR_H + 4;
+        for (int i = 0; i < rt.camera().count(); i++) {
+            auto* cam = rt.camera().get(i);
+            std::snprintf(buf, sizeof(buf), "%s  %dx%d", rt.camera().desc(i),
+                          (int)cam->frameWidth(), (int)cam->frameHeight());
+            rows_.push_back(buf);
         }
     }
 
-    char footer[56];
-    std::snprintf(footer, sizeof(footer), "%s back",
-        rt_.input().hintFor(input::Action::Back));
-    c.drawText(4, ui::footerY(c.height()), footer, true);
+    Style root; root.dir = FlexDir::Col; root.flexGrow = 1; root.padding = 3; root.gap = 1;
+    Style line; line.height = 1; line.background = true;
+    Style sv;   sv.dir = FlexDir::Col; sv.gap = 2;
+
+    UiNode* list = ScrollView(a, scroll_, sv, {});
+    UiNode* prev = nullptr;
+    for (auto& r : rows_) {
+        UiNode* t = Text(a, r.c_str(), TextRole::Body);
+        if (!t) break;
+        if (!prev) list->firstChild = t; else prev->nextSibling = t;
+        prev = t;
+    }
+
+    return View(a, root, {
+        Text(a, "CAMERA", TextRole::Title),
+        View(a, line, {}),
+        list,
+    });
 }
 
 } // namespace kairo

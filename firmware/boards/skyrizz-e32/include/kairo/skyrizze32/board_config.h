@@ -1,5 +1,6 @@
 #pragma once
 #include <cstdint>
+#include "kairo/system/board_profile.h"
 
 // SkyRizz E32 pin map — single source of truth.
 // Reference: dev-board-1-pin_map.md + dev-board-1-pin_cap.md
@@ -94,5 +95,33 @@ constexpr int PIN_CAM_D7    = 6;
 // ── I2C device addresses (media) ──────────────────────────────────────────
 constexpr uint8_t I2C_ADDR_ES7243E = 0x11;   // Audio ADC
 constexpr uint8_t I2C_ADDR_GC2145  = 0x3C;   // Camera SCCB
+
+// ── Board Profile (physical layout) ───────────────────────────────────────
+// SkyRizz E32: TFT LCD center, 3 buttons below, 2 buttons on right side.
+//
+// ┌────────────────────────┐
+// │                        │
+// │                        │ 4
+// │         LCD            │
+// │                        │ 5
+// │                        │
+// └────────────────────────┘
+//  1          2          3
+
+constexpr ComponentDef kE32Components[] = {
+    // id  label      type               x      y      w      h
+    { 1, "Left",    ComponentType::Button,  0.10f, 0.82f, 0.18f, 0.12f },
+    { 2, "OK",      ComponentType::Button,  0.41f, 0.82f, 0.18f, 0.12f },
+    { 3, "Right",   ComponentType::Button,  0.72f, 0.82f, 0.18f, 0.12f },
+    { 4, "Up",      ComponentType::Button,  0.90f, 0.22f, 0.08f, 0.14f },
+    { 5, "Down",    ComponentType::Button,  0.90f, 0.52f, 0.08f, 0.14f },
+    { 6, "LCD",     ComponentType::Display, 0.04f, 0.04f, 0.82f, 0.72f },
+};
+
+constexpr BoardProfile kE32Profile = {
+    "skyrizz-e32", "SkyRizz E32",
+    80.0f, 55.0f,
+    kE32Components, 6
+};
 
 } // namespace kairo::skyrizze32

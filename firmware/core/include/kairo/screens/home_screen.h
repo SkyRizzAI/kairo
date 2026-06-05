@@ -1,36 +1,29 @@
 #pragma once
-#include "kairo/ui/screen.h"
+#include "kairo/ui/component_screen.h"
 #include "kairo/screens/app_list_screen.h"
 #include "kairo/screens/logs_screen.h"
 #include "kairo/screens/settings_screen.h"
-#include <cstdint>
 
 namespace kairo {
 
 class Runtime;
 
-class HomeScreen : public IScreen {
+// Home — component-migrated (Plan 30). KAIRO title + a tappable menu
+// (Apps / Logs / Settings). Sub-screens are owned here and reused per visit.
+class HomeScreen : public ComponentScreen {
 public:
     explicit HomeScreen(Runtime& rt);
-
-    void enter() override;
-    void update(Key key) override;
-    void draw(Canvas& c) override;
-    void tick(uint64_t nowMs) override;
+    void        enter() override;
+    ui::UiNode* build(ui::NodeArena& a, Runtime& rt) override;
 
 private:
-    Runtime& rt_;
-    int      cursor_ = 0;
-
-    // Sub-screens owned here — constructed once, reused on each visit
     AppListScreen  appList_;
     LogsScreen     logs_;
     SettingsScreen settings_;
 
-    static constexpr int MENU_SIZE = 3;
-    static const char*   MENU_LABELS[MENU_SIZE];
-
-    void drawMenu(Canvas& c);
+    static void onApps(void* u);
+    static void onLogs(void* u);
+    static void onSettings(void* u);
 };
 
 } // namespace kairo

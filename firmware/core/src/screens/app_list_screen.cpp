@@ -1,70 +1,53 @@
 #include "kairo/screens/app_list_screen.h"
 #include "kairo/runtime.h"
+#include "kairo/ui/view_dispatcher.h"
 #include "kairo/plugin/plugin_manager.h"
 #include "kairo/plugin/plugin.h"
-#include "kairo/ui/canvas.h"
-#include "kairo/ui/ui_constants.h"
-#include "kairo/ui/view_dispatcher.h"
-#include <cstdio>
 
 namespace kairo {
 
-AppListScreen::AppListScreen(Runtime& rt) : rt_(rt) {}
+using namespace ui;
 
-void AppListScreen::buildList() {
-    apps_.clear();
-    for (auto* p : rt_.plugins().plugins())
-        apps_.push_back({p->name(), p->id()});
-    if (apps_.empty()) apps_.push_back({"No apps", ""});
-    if (cursor_ >= (int)apps_.size()) cursor_ = (int)apps_.size() - 1;
-}
+AppListScreen::AppListScreen(Runtime& rt) : ComponentScreen(rt, 160) {}
 
 void AppListScreen::enter() {
-    buildList();
+    scroll_.scrollMain = 0;
+    state_.focus.focused = 0;
     rt_.view().requestRedraw();
 }
 
-void AppListScreen::update(Key key) {
-    int sz = (int)apps_.size();
-    switch (key) {
-        case Key::Up:
-            if (cursor_ > 0) { cursor_--; if (cursor_ < scroll_) scroll_--; }
-            break;
-        case Key::Down:
-            if (cursor_ < sz - 1) { cursor_++; if (cursor_ >= scroll_ + VISIBLE_ROWS) scroll_++; }
-            break;
-        case Key::Select:
-            if (!apps_[cursor_].id.empty())
-                rt_.plugins().selectPlugin(apps_[cursor_].id.c_str());
-            return;
-        case Key::Cancel:
-            rt_.view().pop();
-            return;
-        default: break;
-    }
-    rt_.view().requestRedraw();
+void AppListScreen::onLaunch(void* u) {
+    auto* r = static_cast<Row*>(u);
+    auto& ids = r->self->ids_;
+    if (r->index >= 0 && r->index < (int)ids.size() && !ids[r->index].empty())
+        r->self->rt_.plugins().selectPlugin(ids[r->index].c_str());
 }
 
-void AppListScreen::drawList(Canvas& c) {
-    uint16_t y = ui::CONTENT_Y + 2;
-    for (int i = scroll_; i < (int)apps_.size() && i < scroll_ + VISIBLE_ROWS; i++) {
-        bool sel = (i == cursor_);
-        uint16_t row_y = y + (uint16_t)((i - scroll_) * ui::CHAR_H);
-        char line[48];
-        std::snprintf(line, sizeof(line), "> %s", apps_[i].name.c_str());
-        if (sel) {
-            uint16_t hw = c.textWidth(line) + 6;
-            c.invertRect(2, row_y - 1, hw, ui::CHAR_H + 1);
-        } else {
-            std::snprintf(line, sizeof(line), "  %s", apps_[i].name.c_str());
-        }
-        c.drawText(5, row_y, line, !sel);
-    }
-}
+UiNode* AppListScreen::build(NodeArena& a, Runtime& rt) {
+    names_.clear(); ids_.clear(); rows_.clear();
+    for (auto* p : rt.plugins().plugins()) { names_.push_back(p->name()); ids_.push_back(p->id()); }
+    if (names_.empty()) { names_.push_back("No apps"); ids_.push_back(""); }
+    rows_.resize(names_.size());
 
-void AppListScreen::draw(Canvas& c) {
-    // Status bar drawn by runtime (Normal mode)
-    drawList(c);
+    Style root; root.dir = FlexDir::Col; root.flexGrow = 1; root.padding = 3; root.gap = 1;
+    Style line; line.height = 1; line.background = true;
+    Style sv;   sv.dir = FlexDir::Col; sv.align = Align::Stretch; sv.gap = 1;
+
+    UiNode* list = ScrollView(a, scroll_, sv, {});
+    UiNode* prev = nullptr;
+    for (size_t i = 0; i < names_.size(); i++) {
+        rows_[i] = {this, (int)i};
+        UiNode* row = ListRow(a, names_[i].c_str(), onLaunch, &rows_[i]);
+        if (!row) break;
+        if (!prev) list->firstChild = row; else prev->nextSibling = row;
+        prev = row;
+    }
+
+    return View(a, root, {
+        Text(a, "APPS", TextRole::Title),
+        View(a, line, {}),
+        list,
+    });
 }
 
 } // namespace kairo

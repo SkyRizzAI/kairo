@@ -1,110 +1,81 @@
 #include "kairo/screens/controls_screen.h"
 #include "kairo/runtime.h"
-#include "kairo/ui/canvas.h"
-#include "kairo/ui/ui_constants.h"
-#include "kairo/ui/components.h"
 #include "kairo/ui/view_dispatcher.h"
 #include "kairo/services/input_service.h"
 #include "kairo/input/i_key_map.h"
+#include "kairo/input/input_action.h"
 #include "kairo/service/service_container.h"
 #include "kairo/config/config_store.h"
 #include <cstdio>
 
 namespace kairo {
 
-ControlsScreen::ControlsScreen(Runtime& rt) : rt_(rt) {}
+using namespace ui;
+
+ControlsScreen::ControlsScreen(Runtime& rt) : ComponentScreen(rt, 96) {}
 
 void ControlsScreen::enter() {
-    scroll_ = 0;
+    scroll_.scrollMain = 0;
     rt_.view().requestRedraw();
 }
 
-void ControlsScreen::onAction(input::Action a) {
-    switch (a) {
-        case input::Action::Prev:
-            if (scroll_ > 0) scroll_--;
-            break;
-        case input::Action::Next:
-            scroll_++;
-            break;
-        case input::Action::Back:
-            rt_.view().pop();
-            return;
-        default: break;
-    }
-    rt_.view().requestRedraw();
-}
-
-void ControlsScreen::draw(Canvas& c) {
-    uint16_t y = ui::drawTitle(c, "CONTROLS");
-
-    auto& input = rt_.input();
+UiNode* ControlsScreen::build(NodeArena& a, Runtime& rt) {
+    rows_.clear();
+    auto& input = rt.input();
     auto* km    = input.keyMap();
+    char buf[64];
 
-    // Board info
-    char line[48];
-    std::snprintf(line, sizeof(line), "Board: %s", km ? km->boardName() : "simulator");
-    c.drawText(4, y, line, true); y += ui::CHAR_H + 2;
-
+    std::snprintf(buf, sizeof(buf), "Board: %s", km ? km->boardName() : "simulator");
+    rows_.push_back(buf);
     if (km) {
-        std::snprintf(line, sizeof(line), "Buttons: %d", km->buttonCount());
-        c.drawText(4, y, line, true); y += ui::CHAR_H + 2;
+        std::snprintf(buf, sizeof(buf), "Buttons: %d", km->buttonCount());
+        rows_.push_back(buf);
     }
-
-    c.fillRect(4, y, c.width() - 8, 1, true); y += 3;
-
-    // Action → hint table
-    c.drawText(4, y, "ACTIONS", true); y += ui::CHAR_H + 1;
+    rows_.push_back("");
+    rows_.push_back("ACTIONS");
 
     static const input::Action kActions[] = {
-        input::Action::Prev, input::Action::Next,
-        input::Action::Activate, input::Action::Back,
-        input::Action::AdjustUp, input::Action::AdjustDown,
+        input::Action::Prev, input::Action::Next, input::Action::Activate,
+        input::Action::Back, input::Action::AdjustUp, input::Action::AdjustDown,
         input::Action::Menu,
     };
-    static constexpr int kActionCount = 7;
-
-    int startRow = scroll_;
-    int row = 0;
-    for (int i = 0; i < kActionCount; i++) {
-        if (row < startRow) { row++; continue; }
-        if (y + ui::CHAR_H > ui::sep2Y(c.height())) break;
-        input::Action a = kActions[i];
-        const char* hint = input.hintFor(a);
-        bool reachable   = input.canReach(a);
-        std::snprintf(line, sizeof(line), "  %-10s %s%s",
-            input::actionName(a),
-            hint[0] ? hint : "-",
-            reachable ? "" : " (N/A)");
-        c.drawText(4, y, line, true);
-        y += ui::CHAR_H + 1;
-        row++;
+    for (input::Action act : kActions) {
+        const char* hint = input.hintFor(act);
+        bool reachable   = input.canReach(act);
+        std::snprintf(buf, sizeof(buf), "  %-10s %s%s", input::actionName(act),
+                      hint[0] ? hint : "-", reachable ? "" : " (N/A)");
+        rows_.push_back(buf);
     }
 
-    // Gesture timing
-    if (y + ui::CHAR_H + 2 < ui::sep2Y(c.height())) {
-        c.fillRect(4, y, c.width() - 8, 1, true); y += 3;
-        c.drawText(4, y, "GESTURES", true); y += ui::CHAR_H + 1;
+    rows_.push_back("");
+    rows_.push_back("GESTURES");
+    uint32_t longMs = 500, chordMs = 80;
+    if (auto* cfg = rt.container().resolve<IConfigStore>()) {
+        longMs  = (uint32_t)cfg->getIntOr("input", "long_ms",  (int64_t)longMs);
+        chordMs = (uint32_t)cfg->getIntOr("input", "chord_ms", (int64_t)chordMs);
+    }
+    std::snprintf(buf, sizeof(buf), "  Long  >= %ums", (unsigned)longMs);  rows_.push_back(buf);
+    std::snprintf(buf, sizeof(buf), "  Short <  %ums", (unsigned)longMs);  rows_.push_back(buf);
+    std::snprintf(buf, sizeof(buf), "  Chord <= %ums", (unsigned)chordMs); rows_.push_back(buf);
 
-        uint32_t longMs   = 500;
-        uint32_t chordMs  = 80;
-        if (auto* cfg = rt_.container().resolve<IConfigStore>()) {
-            longMs  = (uint32_t)cfg->getIntOr("input", "long_ms",  (int64_t)longMs);
-            chordMs = (uint32_t)cfg->getIntOr("input", "chord_ms", (int64_t)chordMs);
-        }
-        std::snprintf(line, sizeof(line), "  Long  >= %ums", (unsigned)longMs);
-        c.drawText(4, y, line, true); y += ui::CHAR_H + 1;
-        std::snprintf(line, sizeof(line), "  Short <  %ums", (unsigned)longMs);
-        c.drawText(4, y, line, true);
+    Style root; root.dir = FlexDir::Col; root.flexGrow = 1; root.padding = 3; root.gap = 1;
+    Style line; line.height = 1; line.background = true;
+    Style sv;   sv.dir = FlexDir::Col; sv.gap = 1;
+
+    UiNode* list = ScrollView(a, scroll_, sv, {});
+    UiNode* prev = nullptr;
+    for (auto& r : rows_) {
+        UiNode* t = Text(a, r.c_str(), TextRole::Body);
+        if (!t) break;
+        if (!prev) list->firstChild = t; else prev->nextSibling = t;
+        prev = t;
     }
 
-    // Footer
-    char footer[48];
-    std::snprintf(footer, sizeof(footer), "%s/%s scroll  %s back",
-        rt_.input().hintFor(input::Action::Prev),
-        rt_.input().hintFor(input::Action::Next),
-        rt_.input().hintFor(input::Action::Back));
-    c.drawText(4, ui::footerY(c.height()), footer, true);
+    return View(a, root, {
+        Text(a, "CONTROLS", TextRole::Title),
+        View(a, line, {}),
+        list,
+    });
 }
 
 } // namespace kairo
