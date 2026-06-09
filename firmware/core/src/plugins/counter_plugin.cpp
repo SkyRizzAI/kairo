@@ -1,6 +1,7 @@
 #include "kairo/plugins/counter_plugin.h"
 #include "kairo/plugin/plugin_context.h"
-#include "kairo/app/app_host.h"
+#include "kairo/app/app_host_manager.h"
+#include "kairo/runtime.h"
 #include "kairo/log/logger.h"
 
 namespace kairo {
@@ -16,8 +17,7 @@ void CounterPlugin::onLoad(PluginContext& ctx) {
 void CounterPlugin::onSelect(PluginContext& ctx) {
     // Build a fresh AppHost wrapping the app and push it. AppHost::enter()
     // spawns the app thread; AppHost::tick() pops itself when the app exits.
-    host_ = std::make_unique<AppHost>(ctx.runtime(), app_);
-    ctx.pushScreen(*host_);
+    ctx.runtime().apps().launch(app_);
 }
 
 } // namespace kairo

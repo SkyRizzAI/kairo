@@ -5,7 +5,6 @@
 
 namespace kairo {
 
-class AppHost;
 
 // CounterPlugin — now launches Counter as a true app on its own thread.
 // onSelect builds an AppHost wrapping CounterApp and pushes it onto the view
@@ -25,7 +24,6 @@ public:
 
 private:
     CounterApp               app_;
-    std::unique_ptr<AppHost> host_;   // recreated per launch
 };
 
 } // namespace kairo

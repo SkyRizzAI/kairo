@@ -49,9 +49,10 @@ no consistent format. That fragments the system's observability.
 1. **Pre-runtime boot banner** in `targets/*/main.cpp`: before `rt.initCore()`
    the Logger does not exist yet, so a single raw `Serial.println("booting...")`
    is allowed. **After `initCore()`, switch to `rt.log()`.**
-2. **`platforms/simulator/.../telemetry_bridge.cpp`**: raw `stdout` IS the
-   stdio-bridge transport protocol, not logging.
-3. **`firmware/tests/`**: test harnesses print pass/fail to stdout directly.
+2. **`firmware/tests/`**: test harnesses print pass/fail to stdout directly.
+
+(The old native simulator's stdio telemetry bridge was removed — the simulator
+is now WASM, which speaks KLP over a virtual cable, not raw stdout.)
 
 Anywhere else, raw stdio for logging is a bug.
 

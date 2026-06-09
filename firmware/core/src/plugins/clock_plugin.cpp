@@ -1,6 +1,7 @@
 #include "kairo/plugins/clock_plugin.h"
 #include "kairo/plugin/plugin_context.h"
-#include "kairo/app/app_host.h"
+#include "kairo/app/app_host_manager.h"
+#include "kairo/runtime.h"
 #include "kairo/log/logger.h"
 
 namespace kairo {
@@ -13,8 +14,7 @@ void ClockPlugin::onLoad(PluginContext& ctx) {
 }
 
 void ClockPlugin::onSelect(PluginContext& ctx) {
-    host_ = std::make_unique<AppHost>(ctx.runtime(), app_);
-    ctx.pushScreen(*host_);
+    ctx.runtime().apps().launch(app_);
 }
 
 } // namespace kairo

@@ -6,6 +6,7 @@
 #include <cstdint>
 #include <cstddef>
 #include <mutex>
+#include <atomic>
 
 namespace kairo {
 
@@ -34,7 +35,13 @@ public:
     // IScreen (GUI thread). mode follows the app: fullscreen apps take the whole
     // screen; otherwise Normal so GuiService draws the status bar above the app.
     ScreenMode mode() const override;
-    void enter()         override;   // spawn app thread
+    void enter()         override;   // spawn app thread (or resume if already running)
+
+    // Pause/resume (Plan 22). Paused: the app thread parks inside waitInput()
+    // (CPU ~0, stack+state preserved); resume = enter() again (re-push) clears it.
+    void        setPaused(bool v) { paused_.store(v, std::memory_order_release); }
+    bool        isPaused() const  { return paused_.load(std::memory_order_acquire); }
+    const char* appName() const;
     void update(Key key) override;   // forward key → mailbox
     void onPointer(const input::PointerEvent& e) override;  // forward touch → mailbox
     void draw(Canvas& c) override;   // blit latest app frame
@@ -70,6 +77,7 @@ private:
     nema::Thread             thread_;
     bool                     started_  = false;
     bool                     finished_ = false;
+    std::atomic<bool>        paused_{false};   // Plan 22: app thread parked
 };
 
 } // namespace kairo

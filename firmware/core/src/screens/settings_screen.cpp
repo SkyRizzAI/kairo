@@ -1,7 +1,7 @@
 #include "kairo/screens/settings_screen.h"
 #include "kairo/runtime.h"
 #include "kairo/ui/view_dispatcher.h"
-#include "kairo/app/app_host.h"
+#include "kairo/app/app_host_manager.h"
 #include "kairo/system/capability_registry.h"
 
 namespace kairo {
@@ -11,7 +11,6 @@ using namespace ui;
 SettingsScreen::SettingsScreen(Runtime& rt)
     : ComponentScreen(rt, 160), about_(rt), sleepSettings_(rt), controls_(rt),
       touchSettings_(rt), sounds_(rt), cameraSettings_(rt) {}
-SettingsScreen::~SettingsScreen() = default;
 
 void SettingsScreen::enter() {
     scroll_.scrollMain = 0;
@@ -32,17 +31,16 @@ void SettingsScreen::launch(Kind k) {
         case Touch:      rt_.view().push(touchSettings_);  break;
         case Sounds:     rt_.view().push(sounds_);         break;
         case Camera:     rt_.view().push(cameraSettings_); break;
-        case WiFi:
-            appHost_ = std::make_unique<AppHost>(rt_, wifiApp_);
-            rt_.view().push(*appHost_);
-            break;
+        case WiFi:       rt_.apps().launch(wifiApp_);      break;
+        case Bluetooth:  rt_.apps().launch(bluetoothApp_); break;
     }
 }
 
 UiNode* SettingsScreen::build(NodeArena& a, Runtime& rt) {
     items_.clear();
     auto& caps = rt.capabilities();
-    if (caps.has("wifi"))                                items_.push_back({this, WiFi,     "WiFi"});
+    if (caps.has("wifi"))                                items_.push_back({this, WiFi,      "WiFi"});
+    if (caps.has("bluetooth"))                           items_.push_back({this, Bluetooth, "Bluetooth"});
     items_.push_back({this, Display,  "Display"});
     items_.push_back({this, Controls, "Controls"});
     if (caps.has("input.touch"))                         items_.push_back({this, Touch,    "Touch"});

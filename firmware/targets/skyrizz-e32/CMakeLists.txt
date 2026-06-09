@@ -7,6 +7,7 @@ set(EXTRA_COMPONENT_DIRS
     "${CMAKE_CURRENT_LIST_DIR}/../../core"               # → core
     "${CMAKE_CURRENT_LIST_DIR}/../../platforms/esp32"    # → esp32
     "${CMAKE_CURRENT_LIST_DIR}/../../boards/skyrizz-e32" # → skyrizz-e32
+    "${CMAKE_CURRENT_LIST_DIR}/../../vendor/quickjs"     # → quickjs (Plan 37)
 )
 
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)

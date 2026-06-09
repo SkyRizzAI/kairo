@@ -21,6 +21,7 @@ class HardwareRegistry;
 class CapabilityRegistry;
 struct SystemInfo;
 class PluginManager;
+class AppHostManager;
 class ViewDispatcher;
 class Canvas;
 class GuiService;
@@ -56,6 +57,7 @@ public:
     InputService&       input();        // single input funnel (any thread → main)
     nema::TaskRunner&   tasks();        // offload blocking work off the UI thread
     PluginManager&      plugins();
+    AppHostManager&     apps();       // app launch + pause/resume (Plan 22)
     ViewDispatcher&     view();
     Canvas&             canvas();   // only valid if "display" capability present
     DisplayPowerManager& dpm();     // sleep/lock state machine (only after start())
@@ -90,6 +92,7 @@ private:
     std::unique_ptr<CapabilityRegistry> capabilities_;
     std::unique_ptr<SystemInfo>        systemInfo_;
     std::unique_ptr<PluginManager>     pluginManager_;
+    std::unique_ptr<AppHostManager>    appHosts_;
     std::unique_ptr<ViewDispatcher>    viewDispatcher_;
     std::unique_ptr<Canvas>            canvas_;
     std::unique_ptr<GuiService>        gui_;           // UI thread (owns render)

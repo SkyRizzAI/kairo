@@ -3,6 +3,8 @@ idf_component_register(
         "src/esp32_clock.cpp"
         "src/esp32_wifi_driver.cpp"
         "src/esp32_http_client.cpp"
+        "src/esp32_ble.cpp"
+        "src/esp32_usb_cdc.cpp"
         "src/esp32_platform.cpp"
         "src/nvs_config_store.cpp"
     INCLUDE_DIRS "include"
@@ -16,4 +18,5 @@ idf_component_register(
         esp_http_client
         esp-tls
         mbedtls
+        bt
 )

@@ -139,9 +139,12 @@ bun install
 
 ### Run in the simulator (no hardware needed)
 
+The simulator is the firmware compiled to **WebAssembly**, running fully in the
+browser via Kairo Forge (no native binary, no server).
+
 ```bash
-bun sim          # build the firmware + launch the web simulator
-bun sim:cli      # or run the CLI simulator
+bun run forge:wasm   # build firmware → WASM + launch Forge (open /simulator)
+bun run test         # host unit tests (layout / KLP / link) via ctest
 ```
 
 ### Build / flash a real board

@@ -16,6 +16,7 @@
 #include "kairo/plugins/ticker_plugin.h"
 #include "kairo/plugins/camera_plugin.h"
 #include "kairo/plugins/ui_showcase_plugin.h"
+#include "kairo/plugins/js_app_store.h"
 #include "kairo/plugin/plugin_manager.h"
 #include "kairo/screens/home_screen.h"
 #include "kairo/ui/view_dispatcher.h"
@@ -60,6 +61,7 @@ void setup() {
     rt.plugins().load(tickerPlugin);
     rt.plugins().load(cameraPlugin);
     rt.plugins().load(uiShowcasePlugin);
+    kairo::loadEmbeddedJsApps(rt);   // built-in JS apps (Plan 37)
 
     static kairo::HomeScreen hs(rt);
     homeScreen = &hs;

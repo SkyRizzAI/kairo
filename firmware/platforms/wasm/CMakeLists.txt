@@ -1,0 +1,13 @@
+add_library(kairo_platform_wasm STATIC
+    src/wasm_platform.cpp
+    src/wasm_cable_transport.cpp
+    # Virtual WiFi router (pure C++, no stdio): the browser device gets a working
+    # WiFi app + the Forge WiFi panel can inject networks. Moved here from the old
+    # native sim platform, which was removed — the simulator is WASM now.
+    src/sim_wifi_driver.cpp
+)
+
+target_include_directories(kairo_platform_wasm PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+target_link_libraries(kairo_platform_wasm PUBLIC kairo_core)

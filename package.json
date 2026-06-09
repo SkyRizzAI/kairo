@@ -7,10 +7,11 @@
     "packages/*"
   ],
   "scripts": {
-    "build:firmware": "bash firmware/tools/build-sim.sh",
-    "sim:cli": "bash firmware/tools/run-sim.sh",
-    "sim:web": "cd packages/simulator && bun run dev",
-    "sim": "bun run build:firmware && bun run sim:web",
+    "test": "cmake -S firmware -B firmware/build -G \"Unix Makefiles\" && cmake --build firmware/build -j && ctest --test-dir firmware/build --output-on-failure",
+    "forge": "cd packages/forge && bun run dev",
+    "forge:build": "cd packages/forge && bun run build",
+    "build:wasm": "bash firmware/tools/build-wasm.sh",
+    "forge:wasm": "source ~/emsdk/emsdk_env.sh && bun run build:wasm && bun run forge",
     "build:dev-board": "bash firmware/tools/build-dev-board.sh",
     "flash:dev-board": "bash firmware/tools/flash-dev-board.sh",
     "build:skyrizz-e32": "bash firmware/tools/build-skyrizz-e32.sh",

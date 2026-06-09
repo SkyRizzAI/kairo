@@ -4,7 +4,15 @@
 > utuh (thread tetap hidup, local var terjaga). Launcher menampilkan **"Continue: \<nama app\>"**
 > di baris teratas. Pilih → resume persis dari titik yang ditinggalkan.
 
-- Status: ☐ Not started
+- Status: ✅ IMPLEMENTED (2026-06-07) — adapted to the AppHost architecture (the
+  plan's `AppLoader` became `AppHostManager`, owned by Runtime as `rt.apps()`).
+  Build green on host + skyrizz-e32 + dev-board; host tests pass. Trigger:
+  `Action::Pause` from a long-hold (skyrizz: middle two-stage tap=OK/hold=Back/
+  long-hold=Pause via new `Gesture::Hold`; dev-board: hold Cancel ≥800ms). Pause
+  parks the app thread inside `AppHost::waitInput()` (CPU ~0, state preserved);
+  Home shows "Continue: <app>"; resume re-pushes (enter() clears pause). Single
+  slot enforced via `AppHostManager::launch()` → `CloseAndOpenModal` when busy.
+  Physical hardware feel pending user verification.
 - Milestone: M7 (UX Core)
 - Depends on: **19.6 Fase C** (IApp + AppLoader + AppContext fully wired), 15 (HomeScreen)
 - Blocks: —

@@ -1,0 +1,12 @@
+{
+	"InstallScripts" : 
+	[
+		"/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/cmake_install.cmake",
+		"/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/vendor/quickjs/cmake_install.cmake",
+		"/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/core/cmake_install.cmake",
+		"/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/boards/simulator/cmake_install.cmake",
+		"/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/platforms/wasm/cmake_install.cmake",
+		"/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/targets/wasm/cmake_install.cmake"
+	],
+	"Parallel" : false
+}

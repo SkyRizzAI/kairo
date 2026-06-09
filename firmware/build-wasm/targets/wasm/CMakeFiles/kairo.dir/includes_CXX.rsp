@@ -1,0 +1,1 @@
+-I/Users/solpochi/Projects/oss/kairo/firmware/core/include -I/Users/solpochi/Projects/oss/kairo/firmware/vendor/quickjs -I/Users/solpochi/Projects/oss/kairo/firmware/platforms/wasm/include -I/Users/solpochi/Projects/oss/kairo/firmware/boards/simulator/include

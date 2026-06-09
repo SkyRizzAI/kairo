@@ -1,0 +1,2 @@
+/Users/solpochi/emsdk/upstream/emscripten/emar qc libquickjs.a CMakeFiles/quickjs.dir/quickjs.c.o CMakeFiles/quickjs.dir/dtoa.c.o CMakeFiles/quickjs.dir/libregexp.c.o CMakeFiles/quickjs.dir/libunicode.c.o
+/Users/solpochi/emsdk/upstream/emscripten/emranlib libquickjs.a

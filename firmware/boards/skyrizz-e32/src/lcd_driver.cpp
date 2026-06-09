@@ -133,7 +133,8 @@ void LcdDriver::panelInit() {
 
     cmd(CMD_MADCTL); data({0x48});       // MX | BGR → portrait 240×320
     cmd(CMD_COLMOD); data({0x55});       // 16-bit RGB565
-
+    cmd(0x21);                           // INVON — invert display at hardware level
+                                        // (eliminates vignette at panel edges)
     cmd(0xB1); data({0x00, 0x1B});       // frame rate ~70 Hz
     cmd(0xB6); data({0x08, 0x82, 0x27});
 
@@ -212,9 +213,7 @@ void LcdDriver::flush() {
             for (uint16_t x = 0; x < width_; x++) {
                 size_t idx = (size_t)y * width_ + x;
                 bool   on  = (framebuf_[idx / 8] >> (7 - (idx % 8))) & 1;
-                // Panel is hardware-inverted: invert colors before sending so
-                // fgColor_/bgColor_ are the actual on-screen colors.
-                chunkbuf_[n++] = on ? (uint16_t)~fgColor_ : (uint16_t)~bgColor_;
+                chunkbuf_[n++] = on ? fgColor_ : bgColor_;
             }
         }
         spiWrite((uint8_t*)chunkbuf_, n * 2, true);   // one transaction per chunk
@@ -251,7 +250,7 @@ void LcdDriver::flushBuffer(const uint8_t* buf, uint16_t w, uint16_t h) {
         for (uint16_t ry = y0; ry < y0 + rows; ry++) {
             const uint8_t* r = buf + (size_t)ry * width_;
             for (uint16_t x = 0; x < width_; x++)
-                chunkbuf_[n++] = r[x] ? (uint16_t)~fgColor_ : (uint16_t)~bgColor_;
+                chunkbuf_[n++] = r[x] ? fgColor_ : bgColor_;
             if (prevBuf_) std::memcpy(prevBuf_ + (size_t)ry * width_, r, width_);
         }
         setWindow(0, y0, (uint16_t)(width_ - 1), (uint16_t)(y0 + rows - 1));
@@ -261,7 +260,7 @@ void LcdDriver::flushBuffer(const uint8_t* buf, uint16_t w, uint16_t h) {
 
 // ── Direct RGB565 blit (camera viewfinder) ───────────────────────────────
 // GC2145 outputs standard RGB565. ILI9341 is in BGR mode (MADCTL=0x48, D3=1),
-// so R and B must be swapped. Panel is also hardware-inverted, so invert (~).
+// so R and B must be swapped. Panel inversion is handled by INVON (0x21).
 void LcdDriver::blitRgb565(const uint8_t* buf,
                              uint16_t x, uint16_t y,
                              uint16_t w, uint16_t h) {
@@ -283,8 +282,7 @@ void LcdDriver::blitRgb565(const uint8_t* buf,
             uint8_t  g   = (rgb >>  5) & 0x3F;
             uint8_t  b   =  rgb         & 0x1F;
             uint16_t bgr = ((uint16_t)b << 11) | ((uint16_t)g << 5) | r;
-            // Invert for panel hardware inversion
-            chunkbuf_[i] = (uint16_t)~bgr;
+            chunkbuf_[i] = bgr;
         }
         spiWrite((uint8_t*)chunkbuf_, pixels * 2, true);
         row = (uint16_t)(row + batch);

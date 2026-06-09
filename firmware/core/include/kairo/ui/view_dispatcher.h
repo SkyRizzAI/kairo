@@ -13,6 +13,7 @@ class ViewDispatcher {
 public:
     void push(IScreen& screen);   // push onto stack + calls screen.enter()
     void pop();                   // pop and call enter() on revealed screen
+    void popToRoot();             // pop down to the base screen (Home) — Plan 22 pause
     IScreen* active()   const;
     IScreen* previous() const;   // second-from-top (for Modal backdrop)
     bool empty() const;

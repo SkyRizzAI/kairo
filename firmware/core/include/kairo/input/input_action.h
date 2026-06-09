@@ -28,6 +28,7 @@ enum class Action : uint8_t {
     AdjustUp   = 11,  // increment value  (Right / long-right)
     AdjustDown = 12,  // decrement value  (Left  / long-left)
     Menu       = 13,  // context menu
+    Pause      = 14,  // pause foreground app → home (long-hold Back/OK; Plan 22)
 };
 
 inline const char* actionName(Action a) {
@@ -39,6 +40,7 @@ inline const char* actionName(Action a) {
         case Action::AdjustUp:   return "AdjustUp";
         case Action::AdjustDown: return "AdjustDown";
         case Action::Menu:       return "Menu";
+        case Action::Pause:      return "Pause";
         default:                 return "None";
     }
 }

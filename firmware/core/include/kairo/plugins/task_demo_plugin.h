@@ -5,7 +5,6 @@
 
 namespace kairo {
 
-class AppHost;
 
 // TaskDemoPlugin — launches the TaskDemo app on its own thread.
 class TaskDemoPlugin : public IPlugin {
@@ -23,7 +22,6 @@ public:
 
 private:
     TaskDemoApp              app_;
-    std::unique_ptr<AppHost> host_;
 };
 
 } // namespace kairo

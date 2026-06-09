@@ -83,10 +83,10 @@ Home (Apps / Logs / Settings)
 ## Cara build & run
 
 ```bash
-# Simulator (web UI)
+# Simulator (web UI) — firmware compiled to WASM, runs in the browser
 bun install
-bun run sim            # build core C++ → web → klik Boot
-bun run sim:cli        # CLI human-readable
+bun run forge:wasm     # build core C++ → WASM → Forge (/simulator)
+bun run test           # host unit tests (layout/KLP/link) via ctest
 
 # Kairo Dev Board (ESP32-S3) — ESP-IDF v5.5 di ~/esp/esp-idf
 bun run build:esp32    # → build/kairo-dev-board.bin (~1.3 MB, 59% free)
@@ -107,9 +107,9 @@ firmware/core/include/kairo/
   hal/         http_client.h, async_display.h, buffer_display.h, wifi.h
   ui/          virtual_keyboard.h, text_input.h, components.h (drawTitle/drawConfirm)
 firmware/core/src/nema/  thread_esp32.cpp | thread_host.cpp  (conditional per build)
-platforms/simulator/     sim_http_client (curl, wifi-gated), sim_wifi_driver ("router")
+platforms/wasm/          wasm_platform, wasm_cable_transport (KLP), sim_wifi_driver ("router")
 platforms/esp32/         esp32_http_client (esp_http_client+TLS), esp32_wifi_driver (scan/NVS)
-packages/simulator/components/ControlsPanel.tsx  # interactive WiFi "router" UI
+packages/forge/          SvelteKit web client: /simulator (WASM), /remote, /flash
 ```
 
 ---

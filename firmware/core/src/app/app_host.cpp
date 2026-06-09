@@ -51,7 +51,13 @@ AppHost::~AppHost() {
 // ── GUI thread ────────────────────────────────────────────────────────────
 
 void AppHost::enter() {
-    if (started_) return;          // re-enter (revealed by pop) — already running
+    if (started_) {
+        // Re-enter. Either revealed by a child screen pop (no-op), or resumed
+        // from pause (Plan 22) — clear the pause flag so the parked app thread
+        // wakes from waitInput() and repaints.
+        if (paused_.load()) { paused_.store(false); rt_.view().requestRedraw(); }
+        return;
+    }
     w_    = rt_.canvas().width();
     h_    = rt_.canvas().height();
     size_ = (size_t)w_ * h_;
@@ -143,12 +149,22 @@ void AppHost::present() {
     rt_.view().requestRedraw();   // ask GUI thread to re-blit
 }
 
-bool AppHost::nextInput(InputEvent& out) { return mailbox_.tryReceive(out); }
+bool AppHost::nextInput(InputEvent& out) {
+    if (paused_.load()) return false;   // swallow input while paused
+    return mailbox_.tryReceive(out);
+}
 bool AppHost::waitInput(InputEvent& out, uint32_t timeoutMs) {
+    // While paused (Plan 22), park here at ~0 CPU — stack/state preserved — until
+    // resumed (enter() clears the flag) or killed (requestExit()).
+    while (paused_.load() && !shouldExit())
+        nema::Thread::sleepMs(20);
+    if (shouldExit()) return false;
     return mailbox_.receive(out, timeoutMs);
 }
 
-void AppHost::requestExit()      { thread_.requestStop(); }
+const char* AppHost::appName() const { return app_.name(); }
+
+void AppHost::requestExit()      { thread_.requestStop(); paused_.store(false); }
 bool AppHost::shouldExit() const { return thread_.shouldStop(); }
 Runtime& AppHost::runtime()      { return rt_; }
 

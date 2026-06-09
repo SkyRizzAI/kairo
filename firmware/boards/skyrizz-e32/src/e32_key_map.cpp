@@ -7,6 +7,10 @@ using namespace input;
 
 E32KeyMap::E32KeyMap() {
     engine_.setCallback(&E32KeyMap::onGesture, this);
+    // Middle button = tap/double/hold → OK / Back / Pause (board-defined gesture
+    // profile, Plan 22/37). Single click = OK, double click = Back, long-hold =
+    // app pause. No repeat on the middle button.
+    engine_.setDoubleHold(BTN_MIDDLE);
 }
 
 void E32KeyMap::feedEdge(uint8_t buttonId, bool pressed, uint64_t nowMs) {
@@ -41,8 +45,9 @@ const char* E32KeyMap::hintFor(Action a) const {
     switch (a) {
         case Action::Prev:       return "Up";       // side top (PB1)
         case Action::Next:       return "Dn";       // side bottom (PB2)
-        case Action::Activate:   return "OK";       // center (SW2), short
-        case Action::Back:       return "Hold OK";  // center (SW2), hold
+        case Action::Activate:   return "OK";       // center (SW2), single tap
+        case Action::Back:       return "2x OK";    // center (SW2), double tap
+        case Action::Pause:      return "Hold OK";  // center (SW2), long-hold
         case Action::AdjustUp:   return "Right";    // below right (SW3)
         case Action::AdjustDown: return "Left";     // below left (SW1)
         default:                 return "";
@@ -82,7 +87,10 @@ Code E32KeyMap::idToCode(uint8_t id, Gesture g) {
         case BTN_RIGHT:  return Code::Right;
         case BTN_UP:     return Code::Up;
         case BTN_DOWN:   return Code::Down;
-        case BTN_MIDDLE: return (g == Gesture::Long) ? Code::Escape : Code::Enter;
+        case BTN_MIDDLE:
+            if (g == Gesture::Hold)   return Code::None;     // pause — no code
+            if (g == Gesture::Double) return Code::Escape;   // back
+            return Code::Enter;                              // tap = OK
         default:         return Code::None;
     }
 }
@@ -97,10 +105,10 @@ Action E32KeyMap::idToAction(uint8_t id, Gesture g) {
         case BTN_UP:     return Action::Prev;        // Up
         case BTN_DOWN:   return Action::Next;        // Down
         case BTN_MIDDLE:
-            // One-shot only: Short = OK, Long = Back. Ignore Repeat so holding
-            // past the threshold doesn't fire Back-then-spam-Activate.
-            if (g == Gesture::Long)  return Action::Back;
-            if (g == Gesture::Short) return Action::Activate;
+            // Board gesture profile: tap = OK, double = Back, long-hold = Pause.
+            if (g == Gesture::Hold)   return Action::Pause;
+            if (g == Gesture::Double) return Action::Back;
+            if (g == Gesture::Short)  return Action::Activate;
             return Action::None;
         default:
             return Action::None;

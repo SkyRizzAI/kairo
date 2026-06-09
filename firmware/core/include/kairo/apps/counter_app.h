@@ -13,14 +13,19 @@ public:
 
 protected:
     ui::UiNode* build(ui::NodeArena& a, AppContext& ctx) override;
+    ui::UiNode* buildModal(ui::NodeArena& a, AppContext& ctx) override;
+    bool        onKey(Key k, AppContext& ctx) override;
 
 private:
     int  count_ = 0;
     char buf_[16] = "0";
+    bool confirmReset_ = false;   // shows the Yes/No reset modal
 
     static void onDec(void* u);
     static void onInc(void* u);
-    static void onReset(void* u);
+    static void onReset(void* u);   // opens the confirm modal
+    static void onYes(void* u);     // modal: confirm reset
+    static void onNo(void* u);      // modal: dismiss
 };
 
 } // namespace kairo

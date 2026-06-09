@@ -1,0 +1,40 @@
+#pragma once
+#include "kairo/platform.h"
+#include "kairo/wasm/wasm_clock.h"
+#include "kairo/wasm/wasm_config.h"
+#include "kairo/wasm/null_display.h"
+#include "kairo/wasm/wasm_cable_transport.h"
+#include "kairo/link/link_service.h"
+#include "kairo/hal/remote_screen_tap.h"
+#include "kairo/services/remote_service.h"
+#include "kairo/sim/sim_wifi_driver.h"
+
+namespace kairo {
+
+// WASM platform — the firmware's environment in the browser. No glass, no stdio:
+// the display is a RemoteScreenTap streaming over the virtual cable, input comes
+// from the cable, logs go out on the cable. The device IS a KLP endpoint.
+class WasmPlatform : public IPlatform {
+public:
+    const char* name() const override { return "wasm"; }
+    IClock& clock() override { return clock_; }
+    void registerDrivers(Runtime& rt) override;
+    void idle() override {}
+
+private:
+    static void powerThunk(void* user, uint8_t op);
+    static void readyThunk(void* user);
+    static void controlThunk(void* user, uint8_t op, const uint8_t* data, size_t len);
+
+    WasmClock          clock_;
+    WasmConfig         config_;
+    NullDisplay        display_;
+    WasmCableTransport cable_;
+    LinkService        link_;
+    RemoteScreenTap    tap_;
+    RemoteService      remote_;
+    SimWifiDriver      wifi_;
+    Runtime*           rt_ = nullptr;
+};
+
+} // namespace kairo

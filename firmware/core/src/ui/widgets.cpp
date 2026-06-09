@@ -192,4 +192,12 @@ UiNode* Menu(NodeArena& a, const MenuItem* items, int count) {
     return menu;
 }
 
+UiNode* Modal(NodeArena& a, std::initializer_list<UiNode*> children) {
+    // No background/border here — ComponentApp paints the white backdrop + border
+    // and centers this box. Just lay the content out inside with breathing room.
+    Style s; s.dir = FlexDir::Col; s.padding = 6; s.gap = 6;
+    s.align = Align::Stretch; s.justify = Justify::Center;
+    return View(a, s, children);
+}
+
 } // namespace kairo::ui

@@ -17,10 +17,15 @@ void LockScreen::enter() {
 
 void LockScreen::onAction(input::Action a) {
     hintVisible_ = true;
-    if (a == input::Action::Activate) {
+    // Unlock on a fast double-tap (= Back on boards where double-tap maps to Back,
+    // e.g. skyrizz middle) OR two single Activates (slow taps / other boards). This
+    // avoids the trap where a quick double-OK is swallowed as one Back.
+    if (a == input::Action::Back) {
+        if (dpm_) dpm_->unlock();
+    } else if (a == input::Action::Activate) {
         if (++selectCount_ >= 2 && dpm_) dpm_->unlock();
     } else {
-        selectCount_ = 0;   // any other press resets the unlock sequence
+        selectCount_ = 0;   // any other press resets the slow-tap sequence
     }
     rt_.view().requestRedraw();
 }
@@ -30,7 +35,7 @@ UiNode* LockScreen::build(NodeArena& a, Runtime&) {
     root.align = Align::Center; root.justify = Justify::Center; root.gap = 8;
     return View(a, root, {
         Text(a, "LOCKED", TextRole::Title),
-        hintVisible_ ? Text(a, "Activate x2 to unlock", TextRole::Caption) : nullptr,
+        hintVisible_ ? Text(a, "Double-tap OK to unlock", TextRole::Caption) : nullptr,
     });
 }
 

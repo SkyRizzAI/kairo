@@ -1,0 +1,2 @@
+/Users/solpochi/emsdk/upstream/emscripten/emar qc libkairo_board_sim.a CMakeFiles/kairo_board_sim.dir/src/simulator_board.cpp.o
+/Users/solpochi/emsdk/upstream/emscripten/emranlib libkairo_board_sim.a

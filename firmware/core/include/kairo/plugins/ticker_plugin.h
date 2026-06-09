@@ -5,7 +5,6 @@
 
 namespace kairo {
 
-class AppHost;
 
 // TickerPlugin — launches the BTC/USD Ticker as a true app on its own thread.
 class TickerPlugin : public IPlugin {
@@ -23,7 +22,6 @@ public:
 
 private:
     TickerApp                app_;
-    std::unique_ptr<AppHost> host_;
 };
 
 } // namespace kairo

@@ -5,7 +5,6 @@
 
 namespace kairo {
 
-class AppHost;
 
 // UiShowcasePlugin — exposes the UI Showcase / component test-bench in the Apps
 // list. Launches it as a true app on its own thread.
@@ -24,7 +23,6 @@ public:
 
 private:
     UiShowcaseApp            app_;
-    std::unique_ptr<AppHost> host_;
 };
 
 } // namespace kairo

@@ -13,6 +13,7 @@
 #include "kairo/system/hardware_registry.h"
 #include "kairo/system/capability_registry.h"
 #include "kairo/plugin/plugin_manager.h"
+#include "kairo/app/app_host_manager.h"
 #include "kairo/plugin/plugin_context.h"
 #include "kairo/ui/view_dispatcher.h"
 #include "kairo/ui/screen.h"
@@ -72,6 +73,7 @@ void Runtime::initCore() {
     systemInfo_->boardName       = board_->name();
 
     pluginManager_  = std::make_unique<PluginManager>(*this);
+    appHosts_       = std::make_unique<AppHostManager>(*this);
     viewDispatcher_ = std::make_unique<ViewDispatcher>();
 
     logger_->info("Runtime", "Core ready",
@@ -86,6 +88,9 @@ void Runtime::registerServices() {
 
     platform_->registerDrivers(*this);
     board_->describeHardware(*this);
+    // Let the platform decorate board-provided drivers (e.g. wrap the display
+    // with the remote screen-tap) before the Canvas binds to them below.
+    platform_->postRegister(*this);
 
     // Build service manager now that container is populated
     serviceManager_ = std::make_unique<ServiceManager>(*container_, *logger_, *eventBus_, clock());
@@ -185,6 +190,7 @@ HardwareRegistry&   Runtime::hardware()      { assert(hardware_);  return *hardw
 CapabilityRegistry& Runtime::capabilities()  { assert(capabilities_); return *capabilities_; }
 const SystemInfo&   Runtime::info()    const { assert(systemInfo_);  return *systemInfo_; }
 PluginManager&      Runtime::plugins()       { assert(pluginManager_); return *pluginManager_; }
+AppHostManager&     Runtime::apps()          { assert(appHosts_); return *appHosts_; }
 ViewDispatcher&     Runtime::view()          { assert(viewDispatcher_); return *viewDispatcher_; }
 Canvas&             Runtime::canvas()        { assert(canvas_); return *canvas_; }
 DisplayPowerManager& Runtime::dpm()          { assert(gui_); return gui_->dpm(); }

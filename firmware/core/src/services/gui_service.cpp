@@ -9,6 +9,8 @@
 #include "kairo/ui/ui_constants.h"
 #include "kairo/ui/view_dispatcher.h"
 #include "kairo/services/input_service.h"
+#include "kairo/app/app_host_manager.h"
+#include "kairo/input/input_action.h"
 #include "kairo/system/capability_registry.h"
 #include "kairo/nema/task_runner.h"
 #include <ctime>
@@ -130,6 +132,12 @@ void GuiService::loop() {
                 continue;
             }
             if (ie.type == InputEvent::Type::Press || ie.type == InputEvent::Type::Repeat) {
+                // Plan 22: long-hold → pause the foreground app (back to home).
+                // Intercepted here so the app never sees it.
+                if (ie.action == input::Action::Pause) {
+                    rt_.apps().pauseForeground();
+                    continue;
+                }
                 if (!dpm_.deliverKey(ie.key, now)) {
                     vd.handleAction(ie.action);  // primary: Action-based dispatch
                     vd.handleCode(ie.code);       // secondary: raw code

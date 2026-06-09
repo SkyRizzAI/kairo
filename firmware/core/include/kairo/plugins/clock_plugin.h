@@ -5,7 +5,6 @@
 
 namespace kairo {
 
-class AppHost;
 
 // ClockPlugin — launches Clock as a true app on its own thread.
 class ClockPlugin : public IPlugin {
@@ -23,7 +22,6 @@ public:
 
 private:
     ClockApp                 app_;
-    std::unique_ptr<AppHost> host_;
 };
 
 } // namespace kairo

@@ -15,6 +15,10 @@ struct IPlatform {
     // Register platform-specific drivers/services into the runtime.
     // Called during Runtime::registerServices(), after initCore().
     virtual void registerDrivers(Runtime& rt) = 0;
+    // Called after the board has registered its hardware (describeHardware) but
+    // before the Canvas binds to the display driver. Use this to decorate
+    // board-provided drivers — e.g. wrap the display with a remote screen-tap.
+    virtual void postRegister(Runtime& rt) { (void)rt; }
     // Called each loop iteration — platform I/O, stdin poll, etc.
     virtual void idle() {}
 };

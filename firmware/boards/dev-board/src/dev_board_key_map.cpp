@@ -5,7 +5,15 @@ namespace kairo {
 using namespace input;
 
 void DevBoardKeyMap::feedEdge(uint8_t id, bool pressed, uint64_t nowMs) {
-    if (!pressed) return;  // dev board only cares about press (rising edge)
+    // Cancel: decide on RELEASE so a long hold can mean Pause (Plan 22).
+    if (id == BTN_CANCEL) {
+        if (pressed) { cancelPressMs_ = nowMs; return; }
+        uint64_t held = nowMs - cancelPressMs_;
+        if (held >= HOLD_MS) emitEvent(Code::None,   Action::Pause, Gesture::Hold,  nowMs);
+        else                 emitEvent(Code::Escape, Action::Back,  Gesture::Short, nowMs);
+        return;
+    }
+    if (!pressed) return;  // other buttons: act on press (rising edge)
     Code   c = idToCode(id);
     Action a = idToAction(id);
     if (c != Code::None) emitEvent(c, a, Gesture::Short, nowMs);

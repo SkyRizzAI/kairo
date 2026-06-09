@@ -36,6 +36,12 @@ public:
 private:
     static input::Code   idToCode(uint8_t id);
     static input::Action idToAction(uint8_t id);
+
+    // Cancel is the one button with hold detection: hold >= 800ms → Pause
+    // (Plan 22), else short → Back. Tracked via press timestamp (both edges
+    // are delivered by the TCA9534 driver).
+    uint64_t cancelPressMs_ = 0;
+    static constexpr uint64_t HOLD_MS = 800;
 };
 
 } // namespace kairo

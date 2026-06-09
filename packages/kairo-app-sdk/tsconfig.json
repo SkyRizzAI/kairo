@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "skipLibCheck": true,
+    "jsx": "react-jsx",
+    "jsxImportSource": "kairo",
+    "types": [],
+    "baseUrl": ".",
+    "paths": {
+      "kairo": ["./src/index.ts"],
+      "kairo/jsx-runtime": ["./src/jsx-runtime.ts"],
+      "kairo/jsx-dev-runtime": ["./src/jsx-runtime.ts"]
+    }
+  },
+  "include": ["src", "templates", "bin", "scripts"]
+}

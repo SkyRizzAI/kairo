@@ -1,0 +1,1 @@
+ ../../core/libkairo_core.a ../../platforms/wasm/libkairo_platform_wasm.a ../../boards/simulator/libkairo_board_sim.a ../../core/libkairo_core.a ../../vendor/quickjs/libquickjs.a 

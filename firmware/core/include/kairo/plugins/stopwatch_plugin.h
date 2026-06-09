@@ -5,7 +5,6 @@
 
 namespace kairo {
 
-class AppHost;
 
 // StopwatchPlugin — launches Stopwatch as a true app on its own thread.
 class StopwatchPlugin : public IPlugin {
@@ -23,7 +22,6 @@ public:
 
 private:
     StopwatchApp             app_;
-    std::unique_ptr<AppHost> host_;
 };
 
 } // namespace kairo

@@ -24,6 +24,9 @@ private:
     static void onApps(void* u);
     static void onLogs(void* u);
     static void onSettings(void* u);
+    static void onContinue(void* u);   // Plan 22: resume paused app
+
+    char continueLabel_[40] = "";      // "Continue: <app>" (stable for Text node)
 };
 
 } // namespace kairo

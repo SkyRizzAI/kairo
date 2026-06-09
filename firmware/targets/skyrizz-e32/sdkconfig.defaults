@@ -29,6 +29,10 @@ CONFIG_SPIRAM_SPEED_80M=y
 # WiFi
 CONFIG_ESP_WIFI_ENABLED=y
 
+# Bluetooth — NimBLE host (BLE-only; ESP32-S3 has no Classic BT). Plan 34.
+CONFIG_BT_ENABLED=y
+CONFIG_BT_NIMBLE_ENABLED=y
+
 # Console + USB transport.
 # GPIO43/44 (UART0) are taken by XL9535 INT + SPI clock, so UART console is out.
 # Use the hardware USB-Serial-JTAG — the SAME interface the ROM bootloader and

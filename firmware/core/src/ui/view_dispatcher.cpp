@@ -20,6 +20,13 @@ void ViewDispatcher::pop() {
     }
 }
 
+void ViewDispatcher::popToRoot() {
+    if (stack_.size() <= 1) return;
+    stack_.resize(1);            // drop everything above the base (Home)
+    stack_.back()->enter();
+    requestRedraw();
+}
+
 IScreen* ViewDispatcher::active() const {
     return stack_.empty() ? nullptr : stack_.back();
 }

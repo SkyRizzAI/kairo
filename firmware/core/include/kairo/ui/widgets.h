@@ -113,4 +113,11 @@ struct MenuItem {
 };
 UiNode* Menu(NodeArena& a, const MenuItem* items, int count);
 
+// Modal: the content box for a centered overlay dialog. Return this from
+// ComponentApp::buildModal() — the runtime centers it, draws a white backdrop +
+// border behind it, and routes focus/input to it (the base freezes). Lay out a
+// prompt + a Row of Buttons inside. Size defaults to ~¾×½ of the screen; set
+// style.width/height on the result to override. Padding/gap/Stretch preset.
+UiNode* Modal(NodeArena& a, std::initializer_list<UiNode*> children = {});
+
 } // namespace kairo::ui

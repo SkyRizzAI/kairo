@@ -30,6 +30,16 @@ protected:
     // Build the tree for the current state. Called every render; use the arena.
     virtual ui::UiNode* build(ui::NodeArena& arena, AppContext& ctx) = 0;
 
+    // Build an optional modal overlay drawn ON TOP of the base tree, centered,
+    // over a dimmed-but-visible background. Return nullptr (default) for no modal.
+    // While a modal is present it CAPTURES focus + input: nav/Select/pointer go to
+    // the modal's widgets; the base is frozen behind it. Use ui::Modal(...) to
+    // build the centered box. Dismiss by mutating state so this returns nullptr
+    // (e.g. a Yes/No button's onPress), or handle Cancel in onKey().
+    virtual ui::UiNode* buildModal(ui::NodeArena& arena, AppContext& ctx) {
+        (void)arena; (void)ctx; return nullptr;
+    }
+
     // Handle a non-navigation key (incl. Cancel). Return true if consumed
     // (triggers re-render); false lets the base act (Cancel → exit).
     virtual bool onKey(Key k, AppContext& ctx) { (void)k; (void)ctx; return false; }

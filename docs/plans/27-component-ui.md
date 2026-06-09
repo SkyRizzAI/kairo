@@ -21,6 +21,13 @@
 > `tickIntervalMs()`+`onTick()` (live apps, redraw hanya saat berubah → no e-ink regresi),
 > `capturesInput()`+`drawRaw()` (escape hatch untuk layar custom seperti keyboard).
 >
+> **Modal / overlay layer (terverifikasi live).** `buildModal()` hook + widget `ui::Modal()`:
+> dialog terpusat digambar DI ATAS base tree, dengan white backdrop + border, dan
+> **focus + input di-capture** oleh modal (base beku, pakai ComponentState terpisah). Cancel
+> saat modal terbuka tidak keluar app (di-handle `onKey`). Counter mendemonstrasikan ini —
+> Reset memunculkan konfirmasi Yes/No (mengembalikan dialog konfirmasi yang sebelumnya ada di
+> immediate-mode `drawConfirm`). Ini "top-level overlay layer" yang dijanjikan §0.
+>
 > **Catatan jujur soal verifikasi live:** Counter terverifikasi live (tree+focus+onPress+state).
 > Re-verifikasi live tiap app lain terhalang fitur sleep/lock (Plan 21) yang mengunci device
 > lebih cepat dari cadence tool-call navigasi otomatis — bukan bug app. Semua 6 app compile di

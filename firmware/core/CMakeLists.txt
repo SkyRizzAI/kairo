@@ -2,7 +2,11 @@
 # Dual-build: host (plain CMake, for simulator) and ESP-IDF (idf_component_register).
 
 set(KAIRO_CORE_SRCS
-    src/input/gesture.cpp
+    src/link/klp_codec.cpp
+src/link/link_service.cpp
+src/services/remote_service.cpp
+src/hal/remote_screen_tap.cpp
+src/input/gesture.cpp
     src/input/i_key_map.cpp
     src/input/i_touch_driver.cpp
     src/ui/hit_test.cpp
@@ -23,16 +27,19 @@ set(KAIRO_CORE_SRCS
     src/plugin/plugin_context.cpp
     src/plugin/plugin_manager.cpp
     src/app/app_host.cpp
+    src/app/app_host_manager.cpp
     src/app/component_app.cpp
     src/apps/counter_app.cpp
     src/apps/clock_app.cpp
     src/apps/stopwatch_app.cpp
     src/apps/task_demo_app.cpp
     src/apps/wifi_app.cpp
+    src/apps/bluetooth_app.cpp
     src/apps/ticker_app.cpp
     src/apps/touch_test_app.cpp
     src/apps/camera_app.cpp
     src/apps/ui_showcase_app.cpp
+    src/apps/js_app.cpp
     src/ui/text_input.cpp
     src/ui/virtual_keyboard.cpp
     src/plugins/hello_plugin.cpp
@@ -43,6 +50,8 @@ set(KAIRO_CORE_SRCS
     src/plugins/ticker_plugin.cpp
     src/plugins/camera_plugin.cpp
     src/plugins/ui_showcase_plugin.cpp
+    src/plugins/js_app_plugin.cpp
+    src/plugins/js_app_store.cpp
     src/ui/canvas.cpp
     src/ui/layout.cpp
     src/ui/widgets.cpp
@@ -62,6 +71,7 @@ set(KAIRO_CORE_SRCS
     src/screens/settings_screen.cpp
     src/screens/about_screen.cpp
     src/screens/lock_screen.cpp
+    src/screens/close_and_open_modal.cpp
     src/screens/sleep_settings_screen.cpp
     src/screens/controls_screen.cpp
     src/screens/touch_settings_screen.cpp
@@ -70,6 +80,8 @@ set(KAIRO_CORE_SRCS
     src/services/display_power_manager.cpp
     src/services/audio_service.cpp
     src/services/camera_service.cpp
+    src/js/js_engine.cpp
+    src/js/js_api.cpp
 )
 
 if(ESP_PLATFORM)
@@ -78,6 +90,7 @@ if(ESP_PLATFORM)
     idf_component_register(
         SRCS ${KAIRO_CORE_SRCS}
         INCLUDE_DIRS "include"
+        REQUIRES quickjs
     )
 else()
     # --- Host build (simulator) ---
@@ -86,5 +99,5 @@ else()
     target_include_directories(kairo_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
     target_compile_features(kairo_core PUBLIC cxx_std_17)
     find_package(Threads REQUIRED)
-    target_link_libraries(kairo_core PUBLIC Threads::Threads)
+    target_link_libraries(kairo_core PUBLIC Threads::Threads quickjs)
 endif()
