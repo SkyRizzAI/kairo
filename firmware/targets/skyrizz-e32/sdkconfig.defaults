@@ -38,10 +38,11 @@ CONFIG_BT_NIMBLE_ENABLED=y
 # Use the hardware USB-Serial-JTAG — the SAME interface the ROM bootloader and
 # esptool use. This makes flashing auto-reset reliable and keeps the serial port
 # stable across resets (no flaky "No serial data received").
-# ARDUINO_USB_MODE=1 → Arduino Serial = HWCDC (USB-Serial-JTAG), not TinyUSB.
+# NOTE: ARDUINO_USB_MODE / ARDUINO_USB_CDC_ON_BOOT are Arduino-IDE build flags,
+# NOT IDF Kconfig symbols — setting them here does nothing, so Arduino `Serial`
+# stays mapped to UART0. Code must use HWCDCSerial explicitly for the USB port
+# (see esp32_usb_cdc.cpp and main.cpp).
 CONFIG_ESP_CONSOLE_USB_SERIAL_JTAG=y
-CONFIG_ARDUINO_USB_MODE=1
-CONFIG_ARDUINO_USB_CDC_ON_BOOT=1
 
 # Logging
 CONFIG_LOG_DEFAULT_LEVEL_INFO=y

@@ -38,10 +38,13 @@ kairo::HomeScreen*      homeScreen = nullptr;
 }
 
 void setup() {
-    // USB CDC console (UART0 GPIO43/44 occupied by XL9535 INT + SPI clock)
-    Serial.begin(115200);
+    // Boot banner on the USB-Serial-JTAG console. NOT `Serial`: under
+    // arduino-as-component that is UART0 (GPIO43/44 — taken by XL9535 INT + SD
+    // clock), and begin() would install a UART driver on those pins. The native
+    // USB port is Kairo's shared HWCDC instance (see esp32_usb_cdc.h).
+    kairo::usbSerialJtag().begin();
     delay(200);
-    Serial.println("\n[kairo] booting skyrizz-e32...");
+    kairo::usbSerialJtag().println("\n[kairo] booting skyrizz-e32...");
 
     rt.loadPlatform(platform);
     rt.loadBoard(board);
