@@ -54,8 +54,13 @@ void RemoteService::dispatch(const klp::Frame& f) {
         case klp::Channel::System:
             if (f.payload.empty()) break;
             if (f.payload[0] == SysOp::GetInfo) {
-                link_->send(klp::Channel::System,
-                            (const uint8_t*)info_, std::strlen(info_));
+                // Reply [opcode][board-profile json] so the host can multiplex
+                // future SYSTEM replies by the first byte.
+                std::vector<uint8_t> p;
+                p.reserve(1 + info_.size());
+                p.push_back(SysOp::GetInfo);
+                p.insert(p.end(), info_.begin(), info_.end());
+                link_->send(klp::Channel::System, p.data(), p.size());
             } else if (f.payload[0] >= SysOp::Restart && powerFn_) {
                 powerFn_(powerUser_, f.payload[0]);
             }

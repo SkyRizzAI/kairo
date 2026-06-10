@@ -125,6 +125,8 @@ file(REMOVE_RECURSE
   "CMakeFiles/kairo_core.dir/src/services/input_service.cpp.o.d"
   "CMakeFiles/kairo_core.dir/src/services/remote_service.cpp.o"
   "CMakeFiles/kairo_core.dir/src/services/remote_service.cpp.o.d"
+  "CMakeFiles/kairo_core.dir/src/system/board_profile.cpp.o"
+  "CMakeFiles/kairo_core.dir/src/system/board_profile.cpp.o.d"
   "CMakeFiles/kairo_core.dir/src/system/capability_registry.cpp.o"
   "CMakeFiles/kairo_core.dir/src/system/capability_registry.cpp.o.d"
   "CMakeFiles/kairo_core.dir/src/system/hardware_registry.cpp.o"

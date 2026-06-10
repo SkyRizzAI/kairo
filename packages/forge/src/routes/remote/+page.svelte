@@ -1,12 +1,15 @@
 <script lang="ts">
 	import { RemoteSession } from '$lib/RemoteSession';
 	import { wasmSession } from '$lib/wasmSim';
+	import { activeRemote, setRemote, clearRemote } from '$lib/remoteLink';
 	import SessionView from '$lib/components/SessionView.svelte';
 	import { Button } from '$lib/components/ui/button';
-	import { Cpu, Bluetooth, Usb, ChevronLeft } from '@lucide/svelte';
+	import { Cpu, Bluetooth, Usb, Unplug } from '@lucide/svelte';
 
-	let session = $state<RemoteSession | null>(null);
-	let label = $state('');
+	// Resume the surviving session when navigating back to this page — the cable
+	// (Web Serial port / BLE link) stays open across navigation (see remoteLink).
+	let session = $state<RemoteSession | null>(activeRemote()?.session ?? null);
+	let label = $state(activeRemote()?.label ?? '');
 	let error = $state('');
 	let busy = $state('');
 
@@ -15,6 +18,7 @@
 		label = 'Simulator (WASM)';
 		const s = wasmSession();
 		void s.boot(); // power on the live sim if it isn't already running
+		setRemote(s, label, false); // shared singleton — never closed from here
 		session = s;
 	}
 
@@ -27,7 +31,9 @@
 			const t = new BleTransport();
 			await t.connect(); // opens the browser device chooser
 			label = 'Bluetooth (BLE)';
-			session = new RemoteSession(t);
+			const s = new RemoteSession(t);
+			setRemote(s, label);
+			session = s;
 		} catch (e) {
 			error = (e as Error).message || 'Bluetooth connection cancelled';
 		} finally {
@@ -44,7 +50,9 @@
 			const t = new SerialTransport();
 			await t.connect();
 			label = 'USB (Serial)';
-			session = new RemoteSession(t);
+			const s = new RemoteSession(t);
+			setRemote(s, label);
+			session = s;
 		} catch (e) {
 			error = (e as Error).message || 'USB connection cancelled';
 		} finally {
@@ -52,7 +60,8 @@
 		}
 	}
 
-	function back() {
+	function disconnect() {
+		clearRemote(); // closes the cable for owned (BLE/USB) sessions
 		session = null;
 	}
 
@@ -90,8 +99,8 @@
 {#if session}
 	<div class="flex h-full flex-col">
 		<div class="border-border flex items-center gap-2 border-b px-2 py-1.5">
-			<Button variant="ghost" size="sm" onclick={back}>
-				<ChevronLeft class="size-4" /> Discovery
+			<Button variant="ghost" size="sm" onclick={disconnect}>
+				<Unplug class="size-4" /> Disconnect
 			</Button>
 		</div>
 		<div class="flex-1 overflow-hidden">

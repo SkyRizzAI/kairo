@@ -41,7 +41,7 @@ void WasmPlatform::registerDrivers(Runtime& rt) {
     remote_.attachEvents(rt.events());                // stream events → EVENT channel
     remote_.onPower(&WasmPlatform::powerThunk, this);
     remote_.onControl(&WasmPlatform::controlThunk, this);
-    remote_.setInfo(rt.board().name());
+    remote_.setProfile(rt.board().profile());
     link_.onReady(&WasmPlatform::readyThunk, this);   // push current screen on connect
 
     rt.hardware().add({"display", DriverKind::Display, "wasm 1-bit (remote)"});

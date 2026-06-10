@@ -109,12 +109,12 @@ constexpr uint8_t I2C_ADDR_GC2145  = 0x3C;   // Camera SCCB
 //  1          2          3
 
 constexpr ComponentDef kE32Components[] = {
-    // id  label      type               x      y      w      h
-    { 1, "Left",    ComponentType::Button,  0.10f, 0.82f, 0.18f, 0.12f },
-    { 2, "OK",      ComponentType::Button,  0.41f, 0.82f, 0.18f, 0.12f },
-    { 3, "Right",   ComponentType::Button,  0.72f, 0.82f, 0.18f, 0.12f },
-    { 4, "Up",      ComponentType::Button,  0.90f, 0.22f, 0.08f, 0.14f },
-    { 5, "Down",    ComponentType::Button,  0.90f, 0.52f, 0.08f, 0.14f },
+    // id  label      type               x      y      w      h      remote key
+    { 1, "Left",    ComponentType::Button,  0.10f, 0.82f, 0.18f, 0.12f, Key::Left   },
+    { 2, "OK",      ComponentType::Button,  0.41f, 0.82f, 0.18f, 0.12f, Key::Select },
+    { 3, "Right",   ComponentType::Button,  0.72f, 0.82f, 0.18f, 0.12f, Key::Right  },
+    { 4, "Up",      ComponentType::Button,  0.90f, 0.22f, 0.08f, 0.14f, Key::Up     },
+    { 5, "Down",    ComponentType::Button,  0.90f, 0.52f, 0.08f, 0.14f, Key::Down   },
     { 6, "LCD",     ComponentType::Display, 0.04f, 0.04f, 0.82f, 0.72f },
 };
 

@@ -11,6 +11,8 @@ export class SerialTransport implements ILinkTransport {
 	#connected = false;
 	#port?: SerialPort;
 	#writer?: WritableStreamDefaultWriter<Uint8Array>;
+	#reader?: ReadableStreamDefaultReader<Uint8Array>;
+	#readDone?: Promise<void>;
 
 	static available() {
 		return typeof navigator !== 'undefined' && !!navigator.serial;
@@ -23,11 +25,12 @@ export class SerialTransport implements ILinkTransport {
 		this.#writer = port.writable!.getWriter();
 		this.#connected = true;
 		this.#state?.(true);
-		this.#readLoop(port);
+		this.#readDone = this.#readLoop(port);
 	}
 
 	async #readLoop(port: SerialPort) {
 		const reader = port.readable!.getReader();
+		this.#reader = reader;
 		try {
 			for (;;) {
 				const { value, done } = await reader.read();
@@ -56,9 +59,27 @@ export class SerialTransport implements ILinkTransport {
 	isConnected() {
 		return this.#connected;
 	}
-	close() {
-		this.#writer?.releaseLock();
-		this.#port?.close().catch(() => {});
+	// Fully release the port: cancel the reader (unblocks + ends the read loop),
+	// wait for it to drop its stream lock, then close. Skipping any of these
+	// leaves the OS port held → the next connect fails with "port already open".
+	async close() {
 		this.#connected = false;
+		try {
+			await this.#reader?.cancel();
+		} catch {
+			/* already closed */
+		}
+		await this.#readDone?.catch(() => {});
+		try {
+			this.#writer?.releaseLock();
+		} catch {
+			/* lock already released */
+		}
+		try {
+			await this.#port?.close();
+		} catch {
+			/* port already closed/lost */
+		}
+		this.#port = undefined;
 	}
 }

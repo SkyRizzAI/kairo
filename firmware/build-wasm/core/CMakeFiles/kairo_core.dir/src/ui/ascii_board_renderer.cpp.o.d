@@ -13,15 +13,13 @@ core/CMakeFiles/kairo_core.dir/src/ui/ascii_board_renderer.cpp.o: \
   /Users/solpochi/emsdk/upstream/lib/clang/23/include/stdint.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/stdint.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/bits/alltypes.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/vector \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__vector/comparison.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/equal.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/string \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/max.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/comp.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/desugars_to.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_integral.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/integral_constant.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/remove_cv.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/min.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/comp_ref_type.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__assert \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__assertion_handler \
@@ -29,12 +27,7 @@ core/CMakeFiles/kairo_core.dir/src/ui/ascii_board_renderer.cpp.o: \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__verbose_abort \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__verbose_trap \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__utility/declval.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/min_element.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__functional/identity.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__fwd/functional.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__utility/forward.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_reference.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/remove_reference.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/max_element.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/iterator_traits.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__concepts/arithmetic.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_floating_point.h \
@@ -48,6 +41,7 @@ core/CMakeFiles/kairo_core.dir/src/ui/ascii_board_renderer.cpp.o: \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__cstddef/size_t.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_destructible.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_function.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_reference.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/remove_all_extents.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_constructible.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/add_reference.h \
@@ -61,6 +55,7 @@ core/CMakeFiles/kairo_core.dir/src/ui/ascii_board_renderer.cpp.o: \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_referenceable.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/void_t.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_void.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/remove_reference.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/common_type.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/conditional.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/decay.h \
@@ -70,6 +65,7 @@ core/CMakeFiles/kairo_core.dir/src/ui/ascii_board_renderer.cpp.o: \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/copy_cv.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/copy_cvref.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/make_const_lvalue_ref.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__utility/forward.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__concepts/movable.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__concepts/swappable.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__concepts/class_or_enum.h \
@@ -106,11 +102,6 @@ core/CMakeFiles/kairo_core.dir/src/ui/ascii_board_renderer.cpp.o: \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/disjunction.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/nat.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/remove_const.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/invoke.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_base_of.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_core_convertible.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_member_pointer.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_reference_wrapper.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_callable.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/initializer_list \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/version \
@@ -130,51 +121,24 @@ core/CMakeFiles/kairo_core.dir/src/ui/ascii_board_renderer.cpp.o: \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__fwd/byte.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__cstddef/max_align_t.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__cstddef/nullptr_t.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/min.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/min_element.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__functional/identity.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__fwd/functional.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/invoke.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_base_of.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_core_convertible.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_member_pointer.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_reference_wrapper.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/remove.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/find.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/find_segment_if.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/segmented_iterator.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/unwrap_iter.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__memory/pointer_traits.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__memory/addressof.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/conjunction.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__fwd/bit_reference.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/distance.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/concepts.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__concepts/derived_from.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__concepts/invocable.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__functional/invoke.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__concepts/predicate.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__concepts/regular.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__concepts/semiregular.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__concepts/relation.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/iter_move.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_pointer.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__ranges/access.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__ranges/enable_borrowed_range.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__utility/auto_cast.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__ranges/concepts.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__ranges/data.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/remove_pointer.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__ranges/enable_view.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__ranges/size.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/make_unsigned.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_unsigned.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__string/constexpr_c_functions.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__memory/construct_at.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__new/placement_new_delete.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/datasizeof.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_always_bitcastable.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_trivially_copyable.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_assignable.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_constant_evaluated.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_equality_comparable.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_trivially_lexicographically_comparable.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__utility/element_count.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__utility/is_pointer_in_range.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__utility/is_valid_range.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_volatile.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/lexicographical_compare.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/mismatch.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/simd_utils.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__bit/bit_cast.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__bit/countl.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__bit/countr.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/integer_traits.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/limits \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/type_traits \
@@ -184,6 +148,7 @@ core/CMakeFiles/kairo_core.dir/src/ui/ascii_board_renderer.cpp.o: \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/alignment_of.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/has_virtual_destructor.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_abstract.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_assignable.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_compound.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_fundamental.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_null_pointer.h \
@@ -191,14 +156,20 @@ core/CMakeFiles/kairo_core.dir/src/ui/ascii_board_renderer.cpp.o: \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_empty.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_literal_type.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_pod.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_pointer.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_polymorphic.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_scalar.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_standard_layout.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_trivial.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_trivially_assignable.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_trivially_constructible.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_trivially_copyable.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_trivially_destructible.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_unsigned.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_volatile.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/make_unsigned.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/rank.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/remove_pointer.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/remove_volatile.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/result_of.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/underlying_type.h \
@@ -207,8 +178,37 @@ core/CMakeFiles/kairo_core.dir/src/ui/ascii_board_renderer.cpp.o: \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_aggregate.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_swappable.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/negation.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__bit/countr.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/aliasing_iterator.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__bit/invert_if.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__fwd/bit_reference.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__string/constexpr_c_functions.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__memory/construct_at.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__new/placement_new_delete.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/datasizeof.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_always_bitcastable.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_constant_evaluated.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_equality_comparable.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_trivially_lexicographically_comparable.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__utility/element_count.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__utility/is_pointer_in_range.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__utility/is_valid_range.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/cwchar \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/cwctype \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/cctype \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/ctype.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/ctype.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/features.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/wctype.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/wctype.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/wchar.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/wchar.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__mbstate_t.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/find_if.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/remove_if.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__debug_utils/sanitizers.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__format/enable_insertable.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__functional/hash.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__functional/unary_function.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_unqualified.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__utility/pair.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__compare/common_comparison_category.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__compare/ordering.h \
@@ -224,66 +224,50 @@ core/CMakeFiles/kairo_core.dir/src/ui/ascii_board_renderer.cpp.o: \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_trivially_relocatable.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/unwrap_ref.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__utility/piecewise_construct.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/cwchar \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/cwctype \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/cctype \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/ctype.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/ctype.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/features.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/wctype.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/wctype.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/wchar.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/wchar.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__mbstate_t.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/lexicographical_compare_three_way.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/three_way_comp_ref_type.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__compare/compare_three_way.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__fwd/vector.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__utility/swap.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/cstring \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/compat/string.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/string.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/string.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/strings.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__fwd/string.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__fwd/memory.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__vector/swap.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__vector/vector.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/copy.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/copy_move_common.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/unwrap_range.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/next.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__fwd/memory_resource.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__ios/fpos.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__fwd/ios.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/bounded_iter.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/distance.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/concepts.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__concepts/derived_from.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__concepts/invocable.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__functional/invoke.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__concepts/predicate.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__concepts/regular.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__concepts/semiregular.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__concepts/relation.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/iter_move.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__ranges/access.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__ranges/enable_borrowed_range.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__utility/auto_cast.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__ranges/concepts.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__ranges/data.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__ranges/enable_view.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__ranges/size.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/reverse_iterator.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__compare/compare_three_way_result.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/advance.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__utility/convert_to_integral.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__utility/unreachable.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/for_each_segment.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/segmented_iterator.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/copy_n.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/fill_n.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/max.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/max_element.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/move.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/iterator_operations.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/iter_swap.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__utility/swap.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/ranges_iterator_concept.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/iter_swap.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/prev.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/move_backward.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/copy_backward.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/ranges_copy_n.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/in_out_result.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/ranges_copy.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__ranges/dangling.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/unreachable_sentinel.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/wrap_iter.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/rotate.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/swap_ranges.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__debug_utils/sanitizers.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__format/enable_insertable.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/bounded_iter.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/move_iterator.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__compare/compare_three_way_result.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/move_sentinel.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/reverse_iterator.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/iterator.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/next.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/prev.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__ranges/subrange.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__fwd/subrange.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__ranges/dangling.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__ranges/view_interface.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__ranges/empty.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/wrap_iter.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__memory/allocate_at_least.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__memory/allocator_traits.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__memory/allocator.h \
@@ -296,54 +280,9 @@ core/CMakeFiles/kairo_core.dir/src/ui/ascii_board_renderer.cpp.o: \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__memory/compressed_pair.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__memory/noexcept_move_assign_container.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__memory/swap_allocator.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__memory/temp_value.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__memory/uninitialized_algorithms.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__memory/destroy.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_unbounded_array.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__utility/exception_guard.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__ranges/container_compatible_range.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__ranges/from_range.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__split_buffer \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_allocator.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/stdexcept \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__fwd/string.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__fwd/memory_resource.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/cstdlib \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/compat/stdlib.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/stdlib.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/stdlib.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/alloca.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__math/abs.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/exception \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__exception/exception_ptr.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__exception/operations.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/typeinfo \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__exception/nested_exception.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__exception/terminate.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/new \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__new/new_handler.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__new/interference_size.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__new/launder.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/iosfwd \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__fwd/fstream.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__fwd/ios.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__fwd/istream.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__fwd/ostream.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__fwd/sstream.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__fwd/streambuf.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__std_mbstate_t.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__vector/container_traits.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/container_traits.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__vector/vector_bool.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__bit_reference \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/climits \
-  /Users/solpochi/emsdk/upstream/lib/clang/23/include/limits.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/limits.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/bits/limits.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__functional/unary_function.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__vector/pmr.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__memory_resource/polymorphic_allocator.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__memory_resource/memory_resource.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__utility/exception_guard.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/tuple \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__memory/allocator_arg_t.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__memory/uses_allocator.h \
@@ -358,6 +297,7 @@ core/CMakeFiles/kairo_core.dir/src/ui/ascii_board_renderer.cpp.o: \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/compare \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/cmath \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__math/hypot.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__math/abs.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__math/exponential_functions.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/promote.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__math/min_max.h \
@@ -380,22 +320,60 @@ core/CMakeFiles/kairo_core.dir/src/ui/ascii_board_renderer.cpp.o: \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__math/remainder.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__math/rounding_functions.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__math/trigonometric_functions.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/exception \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__exception/exception_ptr.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__exception/operations.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/cstdlib \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/compat/stdlib.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/stdlib.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/stdlib.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/alloca.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/typeinfo \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__exception/nested_exception.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__exception/terminate.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/new \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__new/new_handler.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__new/interference_size.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__new/launder.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/iosfwd \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__fwd/fstream.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__fwd/istream.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__fwd/ostream.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__fwd/sstream.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__fwd/streambuf.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__std_mbstate_t.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/utility \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__utility/rel_ops.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__utility/as_const.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__utility/in_place.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__ranges/container_compatible_range.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__ranges/from_range.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__string/char_traits.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/fill_n.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/find_end.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/iterator_operations.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/iter_swap.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/ranges_iterator_concept.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/find_first_of.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/cstdio \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/stdio.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/stdio.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/wasi/api.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__string/extern_template_lists.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_allocator.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__utility/scope_guard.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/climits \
+  /Users/solpochi/emsdk/upstream/lib/clang/23/include/limits.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/limits.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/bits/limits.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/stdexcept \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/string_view \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__fwd/string_view.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/access.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/data.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/empty.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/reverse_access.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/size.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__functional/hash.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_unqualified.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/cstring \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/compat/string.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/string.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/string.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/strings.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/algorithm \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/adjacent_find.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/all_of.h \
@@ -403,33 +381,40 @@ core/CMakeFiles/kairo_core.dir/src/ui/ascii_board_renderer.cpp.o: \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/binary_search.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/lower_bound.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/half_positive.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/copy.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/copy_move_common.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/unwrap_range.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/for_each_segment.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/copy_backward.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/copy_n.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/copy_if.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/count.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__bit/invert_if.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__bit/popcount.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/count_if.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/equal.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/equal_range.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/upper_bound.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/fill.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/find.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/find_segment_if.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/find_end.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/find_first_of.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/find_if.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/find_if_not.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/for_each.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/generate.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/generate_n.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/includes.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/inplace_merge.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/move.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/rotate.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/move_backward.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/swap_ranges.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__memory/destruct_n.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__memory/unique_ptr.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__compare/compare_three_way.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__functional/operations.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__functional/binary_function.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__memory/array_cookie.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__memory/auto_ptr.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/dependent_type.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_bounded_array.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_unbounded_array.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__utility/private_constructor_tag.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__memory/unique_temporary_buffer.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/is_heap.h \
@@ -438,6 +423,12 @@ core/CMakeFiles/kairo_core.dir/src/ui/ascii_board_renderer.cpp.o: \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/is_permutation.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/is_sorted.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/is_sorted_until.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/lexicographical_compare.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/mismatch.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/simd_utils.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__bit/bit_cast.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__bit/countl.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/aliasing_iterator.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/make_heap.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/sift_down.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/merge.h \
@@ -463,10 +454,8 @@ core/CMakeFiles/kairo_core.dir/src/ui/ascii_board_renderer.cpp.o: \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/partition_copy.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/partition_point.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/prev_permutation.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/remove.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/remove_copy.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/remove_copy_if.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/remove_if.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/replace.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/replace_copy.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/replace_copy_if.h \
@@ -486,6 +475,8 @@ core/CMakeFiles/kairo_core.dir/src/ui/ascii_board_renderer.cpp.o: \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/stable_partition.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/stable_sort.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/radix_sort.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/move_iterator.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/move_sentinel.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__numeric/partial_sum.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/transform.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/unique.h \
@@ -524,7 +515,6 @@ core/CMakeFiles/kairo_core.dir/src/ui/ascii_board_renderer.cpp.o: \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/errno.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/errno.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/bits/errno.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/wasi/api.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/pthread.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/sched.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__atomic/atomic_init.h \
@@ -539,10 +529,6 @@ core/CMakeFiles/kairo_core.dir/src/ui/ascii_board_renderer.cpp.o: \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/istream_iterator.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/default_sentinel.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/istreambuf_iterator.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__string/char_traits.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/cstdio \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/stdio.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/stdio.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/ostream_iterator.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/ostreambuf_iterator.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/variant \
@@ -558,12 +544,33 @@ core/CMakeFiles/kairo_core.dir/src/ui/ascii_board_renderer.cpp.o: \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_specialization.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__memory/allocation_guard.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__memory/allocator_destructor.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__memory/destroy.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__memory/shared_count.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__memory/uninitialized_algorithms.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__memory/is_sufficiently_aligned.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__memory/out_ptr.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__memory/raw_storage_iterator.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__memory/temporary_buffer.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/optional \
+  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/ui/key.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/vector \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__vector/comparison.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/lexicographical_compare_three_way.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/three_way_comp_ref_type.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__fwd/vector.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__vector/swap.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__vector/vector.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/ranges_copy_n.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/in_out_result.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/ranges_copy.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/unreachable_sentinel.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__memory/temp_value.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__split_buffer \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__vector/container_traits.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/container_traits.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__vector/vector_bool.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__bit_reference \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__vector/pmr.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/array \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/static_bounded_iter.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/cerrno \
@@ -585,12 +592,6 @@ core/CMakeFiles/kairo_core.dir/src/ui/ascii_board_renderer.cpp.o: \
   /Users/solpochi/emsdk/upstream/lib/clang/23/include/__stdarg_va_copy.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__mutex/once_flag.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__utility/no_destroy.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/string \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__ios/fpos.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__string/extern_template_lists.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__utility/scope_guard.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/string_view \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__fwd/string_view.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__locale_dir/messages.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__locale_dir/money.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__locale_dir/check_grouping.h \

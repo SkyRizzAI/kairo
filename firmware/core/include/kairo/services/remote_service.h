@@ -1,7 +1,9 @@
 #pragma once
 #include "kairo/link/link_service.h"
 #include "kairo/log/log_sink.h"
+#include "kairo/system/board_profile.h"
 #include <cstdint>
+#include <string>
 
 // RemoteService — device-side orchestrator for the KLP remote layer (Plan 35).
 // Routes inbound channels (INPUT → InputService, SYSTEM → power callback) and
@@ -39,7 +41,9 @@ public:
     void attachEvents(EventBus& bus);            // stream EventBus → EVENT channel
     void onPower(PowerFn fn, void* user) { powerFn_ = fn; powerUser_ = user; }
     void onControl(ControlFn fn, void* user) { controlFn_ = fn; controlUser_ = user; }
-    void setInfo(const char* info) { info_ = info; }   // replied on GetInfo
+    // Board profile (name, LCD, buttons) serialized to JSON and replied on
+    // GetInfo as [SysOp::GetInfo][json] — the host matches its virtual board.
+    void setProfile(const BoardProfile& p) { info_ = serializeBoardProfile(p); }
 
 private:
     // LOG channel sink: serialize [level:1][component\0][message\0].
@@ -59,7 +63,7 @@ private:
     void*         powerUser_ = nullptr;
     ControlFn     controlFn_ = nullptr;
     void*         controlUser_ = nullptr;
-    const char*   info_   = "kairo";
+    std::string   info_   = "{\"id\":\"kairo\",\"name\":\"kairo\",\"components\":[]}";
     LinkLogSink   logSink_;
 };
 

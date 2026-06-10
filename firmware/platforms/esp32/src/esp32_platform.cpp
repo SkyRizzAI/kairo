@@ -51,7 +51,7 @@ void Esp32Platform::postRegister(Runtime& rt) {
     remote_.attachEvents(rt.events());                  // stream events on EVENT channel
     remote_.onPower(&Esp32Platform::powerThunk, this);
     remote_.onControl(&Esp32Platform::controlThunk, this);   // OTA app-install (Plan 37)
-    remote_.setInfo(rt.board().name());
+    remote_.setProfile(rt.board().profile());
     link_.onReady(&Esp32Platform::readyThunk, this);    // push screen on connect
 
     remoteWired_ = true;

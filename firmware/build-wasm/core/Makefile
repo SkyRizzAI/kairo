@@ -1652,6 +1652,30 @@ src/services/remote_service.cpp.s:
 	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm && $(MAKE) $(MAKESILENT) -f core/CMakeFiles/kairo_core.dir/build.make core/CMakeFiles/kairo_core.dir/src/services/remote_service.cpp.s
 .PHONY : src/services/remote_service.cpp.s
 
+src/system/board_profile.o: src/system/board_profile.cpp.o
+.PHONY : src/system/board_profile.o
+
+# target to build an object file
+src/system/board_profile.cpp.o:
+	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm && $(MAKE) $(MAKESILENT) -f core/CMakeFiles/kairo_core.dir/build.make core/CMakeFiles/kairo_core.dir/src/system/board_profile.cpp.o
+.PHONY : src/system/board_profile.cpp.o
+
+src/system/board_profile.i: src/system/board_profile.cpp.i
+.PHONY : src/system/board_profile.i
+
+# target to preprocess a source file
+src/system/board_profile.cpp.i:
+	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm && $(MAKE) $(MAKESILENT) -f core/CMakeFiles/kairo_core.dir/build.make core/CMakeFiles/kairo_core.dir/src/system/board_profile.cpp.i
+.PHONY : src/system/board_profile.cpp.i
+
+src/system/board_profile.s: src/system/board_profile.cpp.s
+.PHONY : src/system/board_profile.s
+
+# target to generate assembly for a file
+src/system/board_profile.cpp.s:
+	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm && $(MAKE) $(MAKESILENT) -f core/CMakeFiles/kairo_core.dir/build.make core/CMakeFiles/kairo_core.dir/src/system/board_profile.cpp.s
+.PHONY : src/system/board_profile.cpp.s
+
 src/system/capability_registry.o: src/system/capability_registry.cpp.o
 .PHONY : src/system/capability_registry.o
 
@@ -2283,6 +2307,9 @@ help:
 	@echo "... src/services/remote_service.o"
 	@echo "... src/services/remote_service.i"
 	@echo "... src/services/remote_service.s"
+	@echo "... src/system/board_profile.o"
+	@echo "... src/system/board_profile.i"
+	@echo "... src/system/board_profile.s"
 	@echo "... src/system/capability_registry.o"
 	@echo "... src/system/capability_registry.i"
 	@echo "... src/system/capability_registry.s"

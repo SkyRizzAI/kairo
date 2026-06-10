@@ -681,6 +681,8 @@ platforms/wasm/CMakeFiles/kairo_platform_wasm.dir/src/wasm_platform.cpp.o: \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/log/log_sink.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/log/log_entry.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/types.h \
+  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/system/board_profile.h \
+  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/ui/key.h \
   /Users/solpochi/Projects/oss/kairo/firmware/platforms/wasm/include/kairo/sim/sim_wifi_driver.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/hal/wifi.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/runtime.h \
@@ -701,7 +703,6 @@ platforms/wasm/CMakeFiles/kairo_platform_wasm.dir/src/wasm_platform.cpp.o: \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/forward_list \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/services/input_service.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/nema/input_event.h \
-  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/ui/key.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/input/input_code.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/input/input_action.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/input/gesture.h \
@@ -720,7 +721,6 @@ platforms/wasm/CMakeFiles/kairo_platform_wasm.dir/src/wasm_platform.cpp.o: \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/system/hardware_registry.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/system/capability_registry.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/board.h \
-  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/system/board_profile.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/event/event_bus.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/plugins/js_app_store.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/plugins/js_app_plugin.h \

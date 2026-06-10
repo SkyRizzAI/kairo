@@ -22,6 +22,7 @@ src/input/gesture.cpp
     src/service/service_manager.cpp
     src/system/hardware_registry.cpp
     src/system/capability_registry.cpp
+    src/system/board_profile.cpp
     src/services/clock_service.cpp
     src/services/gui_service.cpp
     src/plugin/plugin_context.cpp

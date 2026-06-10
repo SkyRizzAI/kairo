@@ -372,11 +372,26 @@ core/CMakeFiles/kairo_core.dir/src/system/capability_registry.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/kairo_core.dir/src/system/capability_registry.cpp.s"
 	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm/core && /Users/solpochi/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/solpochi/Projects/oss/kairo/firmware/core/src/system/capability_registry.cpp -o CMakeFiles/kairo_core.dir/src/system/capability_registry.cpp.s
 
+core/CMakeFiles/kairo_core.dir/src/system/board_profile.cpp.o: core/CMakeFiles/kairo_core.dir/flags.make
+core/CMakeFiles/kairo_core.dir/src/system/board_profile.cpp.o: core/CMakeFiles/kairo_core.dir/includes_CXX.rsp
+core/CMakeFiles/kairo_core.dir/src/system/board_profile.cpp.o: /Users/solpochi/Projects/oss/kairo/firmware/core/src/system/board_profile.cpp
+core/CMakeFiles/kairo_core.dir/src/system/board_profile.cpp.o: core/CMakeFiles/kairo_core.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_21) "Building CXX object core/CMakeFiles/kairo_core.dir/src/system/board_profile.cpp.o"
+	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm/core && /Users/solpochi/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT core/CMakeFiles/kairo_core.dir/src/system/board_profile.cpp.o -MF CMakeFiles/kairo_core.dir/src/system/board_profile.cpp.o.d -o CMakeFiles/kairo_core.dir/src/system/board_profile.cpp.o -c /Users/solpochi/Projects/oss/kairo/firmware/core/src/system/board_profile.cpp
+
+core/CMakeFiles/kairo_core.dir/src/system/board_profile.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/kairo_core.dir/src/system/board_profile.cpp.i"
+	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm/core && /Users/solpochi/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/solpochi/Projects/oss/kairo/firmware/core/src/system/board_profile.cpp > CMakeFiles/kairo_core.dir/src/system/board_profile.cpp.i
+
+core/CMakeFiles/kairo_core.dir/src/system/board_profile.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/kairo_core.dir/src/system/board_profile.cpp.s"
+	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm/core && /Users/solpochi/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/solpochi/Projects/oss/kairo/firmware/core/src/system/board_profile.cpp -o CMakeFiles/kairo_core.dir/src/system/board_profile.cpp.s
+
 core/CMakeFiles/kairo_core.dir/src/services/clock_service.cpp.o: core/CMakeFiles/kairo_core.dir/flags.make
 core/CMakeFiles/kairo_core.dir/src/services/clock_service.cpp.o: core/CMakeFiles/kairo_core.dir/includes_CXX.rsp
 core/CMakeFiles/kairo_core.dir/src/services/clock_service.cpp.o: /Users/solpochi/Projects/oss/kairo/firmware/core/src/services/clock_service.cpp
 core/CMakeFiles/kairo_core.dir/src/services/clock_service.cpp.o: core/CMakeFiles/kairo_core.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_21) "Building CXX object core/CMakeFiles/kairo_core.dir/src/services/clock_service.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_22) "Building CXX object core/CMakeFiles/kairo_core.dir/src/services/clock_service.cpp.o"
 	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm/core && /Users/solpochi/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT core/CMakeFiles/kairo_core.dir/src/services/clock_service.cpp.o -MF CMakeFiles/kairo_core.dir/src/services/clock_service.cpp.o.d -o CMakeFiles/kairo_core.dir/src/services/clock_service.cpp.o -c /Users/solpochi/Projects/oss/kairo/firmware/core/src/services/clock_service.cpp
 
 core/CMakeFiles/kairo_core.dir/src/services/clock_service.cpp.i: cmake_force
@@ -391,7 +406,7 @@ core/CMakeFiles/kairo_core.dir/src/services/gui_service.cpp.o: core/CMakeFiles/k
 core/CMakeFiles/kairo_core.dir/src/services/gui_service.cpp.o: core/CMakeFiles/kairo_core.dir/includes_CXX.rsp
 core/CMakeFiles/kairo_core.dir/src/services/gui_service.cpp.o: /Users/solpochi/Projects/oss/kairo/firmware/core/src/services/gui_service.cpp
 core/CMakeFiles/kairo_core.dir/src/services/gui_service.cpp.o: core/CMakeFiles/kairo_core.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_22) "Building CXX object core/CMakeFiles/kairo_core.dir/src/services/gui_service.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_23) "Building CXX object core/CMakeFiles/kairo_core.dir/src/services/gui_service.cpp.o"
 	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm/core && /Users/solpochi/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT core/CMakeFiles/kairo_core.dir/src/services/gui_service.cpp.o -MF CMakeFiles/kairo_core.dir/src/services/gui_service.cpp.o.d -o CMakeFiles/kairo_core.dir/src/services/gui_service.cpp.o -c /Users/solpochi/Projects/oss/kairo/firmware/core/src/services/gui_service.cpp
 
 core/CMakeFiles/kairo_core.dir/src/services/gui_service.cpp.i: cmake_force
@@ -406,7 +421,7 @@ core/CMakeFiles/kairo_core.dir/src/plugin/plugin_context.cpp.o: core/CMakeFiles/
 core/CMakeFiles/kairo_core.dir/src/plugin/plugin_context.cpp.o: core/CMakeFiles/kairo_core.dir/includes_CXX.rsp
 core/CMakeFiles/kairo_core.dir/src/plugin/plugin_context.cpp.o: /Users/solpochi/Projects/oss/kairo/firmware/core/src/plugin/plugin_context.cpp
 core/CMakeFiles/kairo_core.dir/src/plugin/plugin_context.cpp.o: core/CMakeFiles/kairo_core.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_23) "Building CXX object core/CMakeFiles/kairo_core.dir/src/plugin/plugin_context.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_24) "Building CXX object core/CMakeFiles/kairo_core.dir/src/plugin/plugin_context.cpp.o"
 	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm/core && /Users/solpochi/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT core/CMakeFiles/kairo_core.dir/src/plugin/plugin_context.cpp.o -MF CMakeFiles/kairo_core.dir/src/plugin/plugin_context.cpp.o.d -o CMakeFiles/kairo_core.dir/src/plugin/plugin_context.cpp.o -c /Users/solpochi/Projects/oss/kairo/firmware/core/src/plugin/plugin_context.cpp
 
 core/CMakeFiles/kairo_core.dir/src/plugin/plugin_context.cpp.i: cmake_force
@@ -421,7 +436,7 @@ core/CMakeFiles/kairo_core.dir/src/plugin/plugin_manager.cpp.o: core/CMakeFiles/
 core/CMakeFiles/kairo_core.dir/src/plugin/plugin_manager.cpp.o: core/CMakeFiles/kairo_core.dir/includes_CXX.rsp
 core/CMakeFiles/kairo_core.dir/src/plugin/plugin_manager.cpp.o: /Users/solpochi/Projects/oss/kairo/firmware/core/src/plugin/plugin_manager.cpp
 core/CMakeFiles/kairo_core.dir/src/plugin/plugin_manager.cpp.o: core/CMakeFiles/kairo_core.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_24) "Building CXX object core/CMakeFiles/kairo_core.dir/src/plugin/plugin_manager.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_25) "Building CXX object core/CMakeFiles/kairo_core.dir/src/plugin/plugin_manager.cpp.o"
 	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm/core && /Users/solpochi/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT core/CMakeFiles/kairo_core.dir/src/plugin/plugin_manager.cpp.o -MF CMakeFiles/kairo_core.dir/src/plugin/plugin_manager.cpp.o.d -o CMakeFiles/kairo_core.dir/src/plugin/plugin_manager.cpp.o -c /Users/solpochi/Projects/oss/kairo/firmware/core/src/plugin/plugin_manager.cpp
 
 core/CMakeFiles/kairo_core.dir/src/plugin/plugin_manager.cpp.i: cmake_force
@@ -436,7 +451,7 @@ core/CMakeFiles/kairo_core.dir/src/app/app_host.cpp.o: core/CMakeFiles/kairo_cor
 core/CMakeFiles/kairo_core.dir/src/app/app_host.cpp.o: core/CMakeFiles/kairo_core.dir/includes_CXX.rsp
 core/CMakeFiles/kairo_core.dir/src/app/app_host.cpp.o: /Users/solpochi/Projects/oss/kairo/firmware/core/src/app/app_host.cpp
 core/CMakeFiles/kairo_core.dir/src/app/app_host.cpp.o: core/CMakeFiles/kairo_core.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_25) "Building CXX object core/CMakeFiles/kairo_core.dir/src/app/app_host.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_26) "Building CXX object core/CMakeFiles/kairo_core.dir/src/app/app_host.cpp.o"
 	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm/core && /Users/solpochi/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT core/CMakeFiles/kairo_core.dir/src/app/app_host.cpp.o -MF CMakeFiles/kairo_core.dir/src/app/app_host.cpp.o.d -o CMakeFiles/kairo_core.dir/src/app/app_host.cpp.o -c /Users/solpochi/Projects/oss/kairo/firmware/core/src/app/app_host.cpp
 
 core/CMakeFiles/kairo_core.dir/src/app/app_host.cpp.i: cmake_force
@@ -451,7 +466,7 @@ core/CMakeFiles/kairo_core.dir/src/app/app_host_manager.cpp.o: core/CMakeFiles/k
 core/CMakeFiles/kairo_core.dir/src/app/app_host_manager.cpp.o: core/CMakeFiles/kairo_core.dir/includes_CXX.rsp
 core/CMakeFiles/kairo_core.dir/src/app/app_host_manager.cpp.o: /Users/solpochi/Projects/oss/kairo/firmware/core/src/app/app_host_manager.cpp
 core/CMakeFiles/kairo_core.dir/src/app/app_host_manager.cpp.o: core/CMakeFiles/kairo_core.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_26) "Building CXX object core/CMakeFiles/kairo_core.dir/src/app/app_host_manager.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_27) "Building CXX object core/CMakeFiles/kairo_core.dir/src/app/app_host_manager.cpp.o"
 	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm/core && /Users/solpochi/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT core/CMakeFiles/kairo_core.dir/src/app/app_host_manager.cpp.o -MF CMakeFiles/kairo_core.dir/src/app/app_host_manager.cpp.o.d -o CMakeFiles/kairo_core.dir/src/app/app_host_manager.cpp.o -c /Users/solpochi/Projects/oss/kairo/firmware/core/src/app/app_host_manager.cpp
 
 core/CMakeFiles/kairo_core.dir/src/app/app_host_manager.cpp.i: cmake_force
@@ -466,7 +481,7 @@ core/CMakeFiles/kairo_core.dir/src/app/component_app.cpp.o: core/CMakeFiles/kair
 core/CMakeFiles/kairo_core.dir/src/app/component_app.cpp.o: core/CMakeFiles/kairo_core.dir/includes_CXX.rsp
 core/CMakeFiles/kairo_core.dir/src/app/component_app.cpp.o: /Users/solpochi/Projects/oss/kairo/firmware/core/src/app/component_app.cpp
 core/CMakeFiles/kairo_core.dir/src/app/component_app.cpp.o: core/CMakeFiles/kairo_core.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_27) "Building CXX object core/CMakeFiles/kairo_core.dir/src/app/component_app.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_28) "Building CXX object core/CMakeFiles/kairo_core.dir/src/app/component_app.cpp.o"
 	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm/core && /Users/solpochi/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT core/CMakeFiles/kairo_core.dir/src/app/component_app.cpp.o -MF CMakeFiles/kairo_core.dir/src/app/component_app.cpp.o.d -o CMakeFiles/kairo_core.dir/src/app/component_app.cpp.o -c /Users/solpochi/Projects/oss/kairo/firmware/core/src/app/component_app.cpp
 
 core/CMakeFiles/kairo_core.dir/src/app/component_app.cpp.i: cmake_force
@@ -481,7 +496,7 @@ core/CMakeFiles/kairo_core.dir/src/apps/counter_app.cpp.o: core/CMakeFiles/kairo
 core/CMakeFiles/kairo_core.dir/src/apps/counter_app.cpp.o: core/CMakeFiles/kairo_core.dir/includes_CXX.rsp
 core/CMakeFiles/kairo_core.dir/src/apps/counter_app.cpp.o: /Users/solpochi/Projects/oss/kairo/firmware/core/src/apps/counter_app.cpp
 core/CMakeFiles/kairo_core.dir/src/apps/counter_app.cpp.o: core/CMakeFiles/kairo_core.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_28) "Building CXX object core/CMakeFiles/kairo_core.dir/src/apps/counter_app.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_29) "Building CXX object core/CMakeFiles/kairo_core.dir/src/apps/counter_app.cpp.o"
 	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm/core && /Users/solpochi/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT core/CMakeFiles/kairo_core.dir/src/apps/counter_app.cpp.o -MF CMakeFiles/kairo_core.dir/src/apps/counter_app.cpp.o.d -o CMakeFiles/kairo_core.dir/src/apps/counter_app.cpp.o -c /Users/solpochi/Projects/oss/kairo/firmware/core/src/apps/counter_app.cpp
 
 core/CMakeFiles/kairo_core.dir/src/apps/counter_app.cpp.i: cmake_force
@@ -496,7 +511,7 @@ core/CMakeFiles/kairo_core.dir/src/apps/clock_app.cpp.o: core/CMakeFiles/kairo_c
 core/CMakeFiles/kairo_core.dir/src/apps/clock_app.cpp.o: core/CMakeFiles/kairo_core.dir/includes_CXX.rsp
 core/CMakeFiles/kairo_core.dir/src/apps/clock_app.cpp.o: /Users/solpochi/Projects/oss/kairo/firmware/core/src/apps/clock_app.cpp
 core/CMakeFiles/kairo_core.dir/src/apps/clock_app.cpp.o: core/CMakeFiles/kairo_core.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_29) "Building CXX object core/CMakeFiles/kairo_core.dir/src/apps/clock_app.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_30) "Building CXX object core/CMakeFiles/kairo_core.dir/src/apps/clock_app.cpp.o"
 	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm/core && /Users/solpochi/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT core/CMakeFiles/kairo_core.dir/src/apps/clock_app.cpp.o -MF CMakeFiles/kairo_core.dir/src/apps/clock_app.cpp.o.d -o CMakeFiles/kairo_core.dir/src/apps/clock_app.cpp.o -c /Users/solpochi/Projects/oss/kairo/firmware/core/src/apps/clock_app.cpp
 
 core/CMakeFiles/kairo_core.dir/src/apps/clock_app.cpp.i: cmake_force
@@ -511,7 +526,7 @@ core/CMakeFiles/kairo_core.dir/src/apps/stopwatch_app.cpp.o: core/CMakeFiles/kai
 core/CMakeFiles/kairo_core.dir/src/apps/stopwatch_app.cpp.o: core/CMakeFiles/kairo_core.dir/includes_CXX.rsp
 core/CMakeFiles/kairo_core.dir/src/apps/stopwatch_app.cpp.o: /Users/solpochi/Projects/oss/kairo/firmware/core/src/apps/stopwatch_app.cpp
 core/CMakeFiles/kairo_core.dir/src/apps/stopwatch_app.cpp.o: core/CMakeFiles/kairo_core.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_30) "Building CXX object core/CMakeFiles/kairo_core.dir/src/apps/stopwatch_app.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_31) "Building CXX object core/CMakeFiles/kairo_core.dir/src/apps/stopwatch_app.cpp.o"
 	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm/core && /Users/solpochi/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT core/CMakeFiles/kairo_core.dir/src/apps/stopwatch_app.cpp.o -MF CMakeFiles/kairo_core.dir/src/apps/stopwatch_app.cpp.o.d -o CMakeFiles/kairo_core.dir/src/apps/stopwatch_app.cpp.o -c /Users/solpochi/Projects/oss/kairo/firmware/core/src/apps/stopwatch_app.cpp
 
 core/CMakeFiles/kairo_core.dir/src/apps/stopwatch_app.cpp.i: cmake_force
@@ -526,7 +541,7 @@ core/CMakeFiles/kairo_core.dir/src/apps/task_demo_app.cpp.o: core/CMakeFiles/kai
 core/CMakeFiles/kairo_core.dir/src/apps/task_demo_app.cpp.o: core/CMakeFiles/kairo_core.dir/includes_CXX.rsp
 core/CMakeFiles/kairo_core.dir/src/apps/task_demo_app.cpp.o: /Users/solpochi/Projects/oss/kairo/firmware/core/src/apps/task_demo_app.cpp
 core/CMakeFiles/kairo_core.dir/src/apps/task_demo_app.cpp.o: core/CMakeFiles/kairo_core.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_31) "Building CXX object core/CMakeFiles/kairo_core.dir/src/apps/task_demo_app.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_32) "Building CXX object core/CMakeFiles/kairo_core.dir/src/apps/task_demo_app.cpp.o"
 	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm/core && /Users/solpochi/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT core/CMakeFiles/kairo_core.dir/src/apps/task_demo_app.cpp.o -MF CMakeFiles/kairo_core.dir/src/apps/task_demo_app.cpp.o.d -o CMakeFiles/kairo_core.dir/src/apps/task_demo_app.cpp.o -c /Users/solpochi/Projects/oss/kairo/firmware/core/src/apps/task_demo_app.cpp
 
 core/CMakeFiles/kairo_core.dir/src/apps/task_demo_app.cpp.i: cmake_force
@@ -541,7 +556,7 @@ core/CMakeFiles/kairo_core.dir/src/apps/wifi_app.cpp.o: core/CMakeFiles/kairo_co
 core/CMakeFiles/kairo_core.dir/src/apps/wifi_app.cpp.o: core/CMakeFiles/kairo_core.dir/includes_CXX.rsp
 core/CMakeFiles/kairo_core.dir/src/apps/wifi_app.cpp.o: /Users/solpochi/Projects/oss/kairo/firmware/core/src/apps/wifi_app.cpp
 core/CMakeFiles/kairo_core.dir/src/apps/wifi_app.cpp.o: core/CMakeFiles/kairo_core.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_32) "Building CXX object core/CMakeFiles/kairo_core.dir/src/apps/wifi_app.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_33) "Building CXX object core/CMakeFiles/kairo_core.dir/src/apps/wifi_app.cpp.o"
 	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm/core && /Users/solpochi/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT core/CMakeFiles/kairo_core.dir/src/apps/wifi_app.cpp.o -MF CMakeFiles/kairo_core.dir/src/apps/wifi_app.cpp.o.d -o CMakeFiles/kairo_core.dir/src/apps/wifi_app.cpp.o -c /Users/solpochi/Projects/oss/kairo/firmware/core/src/apps/wifi_app.cpp
 
 core/CMakeFiles/kairo_core.dir/src/apps/wifi_app.cpp.i: cmake_force
@@ -556,7 +571,7 @@ core/CMakeFiles/kairo_core.dir/src/apps/bluetooth_app.cpp.o: core/CMakeFiles/kai
 core/CMakeFiles/kairo_core.dir/src/apps/bluetooth_app.cpp.o: core/CMakeFiles/kairo_core.dir/includes_CXX.rsp
 core/CMakeFiles/kairo_core.dir/src/apps/bluetooth_app.cpp.o: /Users/solpochi/Projects/oss/kairo/firmware/core/src/apps/bluetooth_app.cpp
 core/CMakeFiles/kairo_core.dir/src/apps/bluetooth_app.cpp.o: core/CMakeFiles/kairo_core.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_33) "Building CXX object core/CMakeFiles/kairo_core.dir/src/apps/bluetooth_app.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_34) "Building CXX object core/CMakeFiles/kairo_core.dir/src/apps/bluetooth_app.cpp.o"
 	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm/core && /Users/solpochi/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT core/CMakeFiles/kairo_core.dir/src/apps/bluetooth_app.cpp.o -MF CMakeFiles/kairo_core.dir/src/apps/bluetooth_app.cpp.o.d -o CMakeFiles/kairo_core.dir/src/apps/bluetooth_app.cpp.o -c /Users/solpochi/Projects/oss/kairo/firmware/core/src/apps/bluetooth_app.cpp
 
 core/CMakeFiles/kairo_core.dir/src/apps/bluetooth_app.cpp.i: cmake_force
@@ -571,7 +586,7 @@ core/CMakeFiles/kairo_core.dir/src/apps/ticker_app.cpp.o: core/CMakeFiles/kairo_
 core/CMakeFiles/kairo_core.dir/src/apps/ticker_app.cpp.o: core/CMakeFiles/kairo_core.dir/includes_CXX.rsp
 core/CMakeFiles/kairo_core.dir/src/apps/ticker_app.cpp.o: /Users/solpochi/Projects/oss/kairo/firmware/core/src/apps/ticker_app.cpp
 core/CMakeFiles/kairo_core.dir/src/apps/ticker_app.cpp.o: core/CMakeFiles/kairo_core.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_34) "Building CXX object core/CMakeFiles/kairo_core.dir/src/apps/ticker_app.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_35) "Building CXX object core/CMakeFiles/kairo_core.dir/src/apps/ticker_app.cpp.o"
 	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm/core && /Users/solpochi/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT core/CMakeFiles/kairo_core.dir/src/apps/ticker_app.cpp.o -MF CMakeFiles/kairo_core.dir/src/apps/ticker_app.cpp.o.d -o CMakeFiles/kairo_core.dir/src/apps/ticker_app.cpp.o -c /Users/solpochi/Projects/oss/kairo/firmware/core/src/apps/ticker_app.cpp
 
 core/CMakeFiles/kairo_core.dir/src/apps/ticker_app.cpp.i: cmake_force
@@ -586,7 +601,7 @@ core/CMakeFiles/kairo_core.dir/src/apps/touch_test_app.cpp.o: core/CMakeFiles/ka
 core/CMakeFiles/kairo_core.dir/src/apps/touch_test_app.cpp.o: core/CMakeFiles/kairo_core.dir/includes_CXX.rsp
 core/CMakeFiles/kairo_core.dir/src/apps/touch_test_app.cpp.o: /Users/solpochi/Projects/oss/kairo/firmware/core/src/apps/touch_test_app.cpp
 core/CMakeFiles/kairo_core.dir/src/apps/touch_test_app.cpp.o: core/CMakeFiles/kairo_core.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_35) "Building CXX object core/CMakeFiles/kairo_core.dir/src/apps/touch_test_app.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_36) "Building CXX object core/CMakeFiles/kairo_core.dir/src/apps/touch_test_app.cpp.o"
 	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm/core && /Users/solpochi/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT core/CMakeFiles/kairo_core.dir/src/apps/touch_test_app.cpp.o -MF CMakeFiles/kairo_core.dir/src/apps/touch_test_app.cpp.o.d -o CMakeFiles/kairo_core.dir/src/apps/touch_test_app.cpp.o -c /Users/solpochi/Projects/oss/kairo/firmware/core/src/apps/touch_test_app.cpp
 
 core/CMakeFiles/kairo_core.dir/src/apps/touch_test_app.cpp.i: cmake_force
@@ -601,7 +616,7 @@ core/CMakeFiles/kairo_core.dir/src/apps/camera_app.cpp.o: core/CMakeFiles/kairo_
 core/CMakeFiles/kairo_core.dir/src/apps/camera_app.cpp.o: core/CMakeFiles/kairo_core.dir/includes_CXX.rsp
 core/CMakeFiles/kairo_core.dir/src/apps/camera_app.cpp.o: /Users/solpochi/Projects/oss/kairo/firmware/core/src/apps/camera_app.cpp
 core/CMakeFiles/kairo_core.dir/src/apps/camera_app.cpp.o: core/CMakeFiles/kairo_core.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_36) "Building CXX object core/CMakeFiles/kairo_core.dir/src/apps/camera_app.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_37) "Building CXX object core/CMakeFiles/kairo_core.dir/src/apps/camera_app.cpp.o"
 	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm/core && /Users/solpochi/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT core/CMakeFiles/kairo_core.dir/src/apps/camera_app.cpp.o -MF CMakeFiles/kairo_core.dir/src/apps/camera_app.cpp.o.d -o CMakeFiles/kairo_core.dir/src/apps/camera_app.cpp.o -c /Users/solpochi/Projects/oss/kairo/firmware/core/src/apps/camera_app.cpp
 
 core/CMakeFiles/kairo_core.dir/src/apps/camera_app.cpp.i: cmake_force
@@ -616,7 +631,7 @@ core/CMakeFiles/kairo_core.dir/src/apps/ui_showcase_app.cpp.o: core/CMakeFiles/k
 core/CMakeFiles/kairo_core.dir/src/apps/ui_showcase_app.cpp.o: core/CMakeFiles/kairo_core.dir/includes_CXX.rsp
 core/CMakeFiles/kairo_core.dir/src/apps/ui_showcase_app.cpp.o: /Users/solpochi/Projects/oss/kairo/firmware/core/src/apps/ui_showcase_app.cpp
 core/CMakeFiles/kairo_core.dir/src/apps/ui_showcase_app.cpp.o: core/CMakeFiles/kairo_core.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_37) "Building CXX object core/CMakeFiles/kairo_core.dir/src/apps/ui_showcase_app.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_38) "Building CXX object core/CMakeFiles/kairo_core.dir/src/apps/ui_showcase_app.cpp.o"
 	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm/core && /Users/solpochi/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT core/CMakeFiles/kairo_core.dir/src/apps/ui_showcase_app.cpp.o -MF CMakeFiles/kairo_core.dir/src/apps/ui_showcase_app.cpp.o.d -o CMakeFiles/kairo_core.dir/src/apps/ui_showcase_app.cpp.o -c /Users/solpochi/Projects/oss/kairo/firmware/core/src/apps/ui_showcase_app.cpp
 
 core/CMakeFiles/kairo_core.dir/src/apps/ui_showcase_app.cpp.i: cmake_force
@@ -631,7 +646,7 @@ core/CMakeFiles/kairo_core.dir/src/apps/js_app.cpp.o: core/CMakeFiles/kairo_core
 core/CMakeFiles/kairo_core.dir/src/apps/js_app.cpp.o: core/CMakeFiles/kairo_core.dir/includes_CXX.rsp
 core/CMakeFiles/kairo_core.dir/src/apps/js_app.cpp.o: /Users/solpochi/Projects/oss/kairo/firmware/core/src/apps/js_app.cpp
 core/CMakeFiles/kairo_core.dir/src/apps/js_app.cpp.o: core/CMakeFiles/kairo_core.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_38) "Building CXX object core/CMakeFiles/kairo_core.dir/src/apps/js_app.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_39) "Building CXX object core/CMakeFiles/kairo_core.dir/src/apps/js_app.cpp.o"
 	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm/core && /Users/solpochi/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT core/CMakeFiles/kairo_core.dir/src/apps/js_app.cpp.o -MF CMakeFiles/kairo_core.dir/src/apps/js_app.cpp.o.d -o CMakeFiles/kairo_core.dir/src/apps/js_app.cpp.o -c /Users/solpochi/Projects/oss/kairo/firmware/core/src/apps/js_app.cpp
 
 core/CMakeFiles/kairo_core.dir/src/apps/js_app.cpp.i: cmake_force
@@ -646,7 +661,7 @@ core/CMakeFiles/kairo_core.dir/src/ui/text_input.cpp.o: core/CMakeFiles/kairo_co
 core/CMakeFiles/kairo_core.dir/src/ui/text_input.cpp.o: core/CMakeFiles/kairo_core.dir/includes_CXX.rsp
 core/CMakeFiles/kairo_core.dir/src/ui/text_input.cpp.o: /Users/solpochi/Projects/oss/kairo/firmware/core/src/ui/text_input.cpp
 core/CMakeFiles/kairo_core.dir/src/ui/text_input.cpp.o: core/CMakeFiles/kairo_core.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_39) "Building CXX object core/CMakeFiles/kairo_core.dir/src/ui/text_input.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_40) "Building CXX object core/CMakeFiles/kairo_core.dir/src/ui/text_input.cpp.o"
 	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm/core && /Users/solpochi/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT core/CMakeFiles/kairo_core.dir/src/ui/text_input.cpp.o -MF CMakeFiles/kairo_core.dir/src/ui/text_input.cpp.o.d -o CMakeFiles/kairo_core.dir/src/ui/text_input.cpp.o -c /Users/solpochi/Projects/oss/kairo/firmware/core/src/ui/text_input.cpp
 
 core/CMakeFiles/kairo_core.dir/src/ui/text_input.cpp.i: cmake_force
@@ -661,7 +676,7 @@ core/CMakeFiles/kairo_core.dir/src/ui/virtual_keyboard.cpp.o: core/CMakeFiles/ka
 core/CMakeFiles/kairo_core.dir/src/ui/virtual_keyboard.cpp.o: core/CMakeFiles/kairo_core.dir/includes_CXX.rsp
 core/CMakeFiles/kairo_core.dir/src/ui/virtual_keyboard.cpp.o: /Users/solpochi/Projects/oss/kairo/firmware/core/src/ui/virtual_keyboard.cpp
 core/CMakeFiles/kairo_core.dir/src/ui/virtual_keyboard.cpp.o: core/CMakeFiles/kairo_core.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_40) "Building CXX object core/CMakeFiles/kairo_core.dir/src/ui/virtual_keyboard.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_41) "Building CXX object core/CMakeFiles/kairo_core.dir/src/ui/virtual_keyboard.cpp.o"
 	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm/core && /Users/solpochi/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT core/CMakeFiles/kairo_core.dir/src/ui/virtual_keyboard.cpp.o -MF CMakeFiles/kairo_core.dir/src/ui/virtual_keyboard.cpp.o.d -o CMakeFiles/kairo_core.dir/src/ui/virtual_keyboard.cpp.o -c /Users/solpochi/Projects/oss/kairo/firmware/core/src/ui/virtual_keyboard.cpp
 
 core/CMakeFiles/kairo_core.dir/src/ui/virtual_keyboard.cpp.i: cmake_force
@@ -676,7 +691,7 @@ core/CMakeFiles/kairo_core.dir/src/plugins/hello_plugin.cpp.o: core/CMakeFiles/k
 core/CMakeFiles/kairo_core.dir/src/plugins/hello_plugin.cpp.o: core/CMakeFiles/kairo_core.dir/includes_CXX.rsp
 core/CMakeFiles/kairo_core.dir/src/plugins/hello_plugin.cpp.o: /Users/solpochi/Projects/oss/kairo/firmware/core/src/plugins/hello_plugin.cpp
 core/CMakeFiles/kairo_core.dir/src/plugins/hello_plugin.cpp.o: core/CMakeFiles/kairo_core.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_41) "Building CXX object core/CMakeFiles/kairo_core.dir/src/plugins/hello_plugin.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_42) "Building CXX object core/CMakeFiles/kairo_core.dir/src/plugins/hello_plugin.cpp.o"
 	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm/core && /Users/solpochi/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT core/CMakeFiles/kairo_core.dir/src/plugins/hello_plugin.cpp.o -MF CMakeFiles/kairo_core.dir/src/plugins/hello_plugin.cpp.o.d -o CMakeFiles/kairo_core.dir/src/plugins/hello_plugin.cpp.o -c /Users/solpochi/Projects/oss/kairo/firmware/core/src/plugins/hello_plugin.cpp
 
 core/CMakeFiles/kairo_core.dir/src/plugins/hello_plugin.cpp.i: cmake_force
@@ -691,7 +706,7 @@ core/CMakeFiles/kairo_core.dir/src/plugins/clock_plugin.cpp.o: core/CMakeFiles/k
 core/CMakeFiles/kairo_core.dir/src/plugins/clock_plugin.cpp.o: core/CMakeFiles/kairo_core.dir/includes_CXX.rsp
 core/CMakeFiles/kairo_core.dir/src/plugins/clock_plugin.cpp.o: /Users/solpochi/Projects/oss/kairo/firmware/core/src/plugins/clock_plugin.cpp
 core/CMakeFiles/kairo_core.dir/src/plugins/clock_plugin.cpp.o: core/CMakeFiles/kairo_core.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_42) "Building CXX object core/CMakeFiles/kairo_core.dir/src/plugins/clock_plugin.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_43) "Building CXX object core/CMakeFiles/kairo_core.dir/src/plugins/clock_plugin.cpp.o"
 	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm/core && /Users/solpochi/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT core/CMakeFiles/kairo_core.dir/src/plugins/clock_plugin.cpp.o -MF CMakeFiles/kairo_core.dir/src/plugins/clock_plugin.cpp.o.d -o CMakeFiles/kairo_core.dir/src/plugins/clock_plugin.cpp.o -c /Users/solpochi/Projects/oss/kairo/firmware/core/src/plugins/clock_plugin.cpp
 
 core/CMakeFiles/kairo_core.dir/src/plugins/clock_plugin.cpp.i: cmake_force
@@ -706,7 +721,7 @@ core/CMakeFiles/kairo_core.dir/src/plugins/counter_plugin.cpp.o: core/CMakeFiles
 core/CMakeFiles/kairo_core.dir/src/plugins/counter_plugin.cpp.o: core/CMakeFiles/kairo_core.dir/includes_CXX.rsp
 core/CMakeFiles/kairo_core.dir/src/plugins/counter_plugin.cpp.o: /Users/solpochi/Projects/oss/kairo/firmware/core/src/plugins/counter_plugin.cpp
 core/CMakeFiles/kairo_core.dir/src/plugins/counter_plugin.cpp.o: core/CMakeFiles/kairo_core.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_43) "Building CXX object core/CMakeFiles/kairo_core.dir/src/plugins/counter_plugin.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_44) "Building CXX object core/CMakeFiles/kairo_core.dir/src/plugins/counter_plugin.cpp.o"
 	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm/core && /Users/solpochi/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT core/CMakeFiles/kairo_core.dir/src/plugins/counter_plugin.cpp.o -MF CMakeFiles/kairo_core.dir/src/plugins/counter_plugin.cpp.o.d -o CMakeFiles/kairo_core.dir/src/plugins/counter_plugin.cpp.o -c /Users/solpochi/Projects/oss/kairo/firmware/core/src/plugins/counter_plugin.cpp
 
 core/CMakeFiles/kairo_core.dir/src/plugins/counter_plugin.cpp.i: cmake_force
@@ -721,7 +736,7 @@ core/CMakeFiles/kairo_core.dir/src/plugins/stopwatch_plugin.cpp.o: core/CMakeFil
 core/CMakeFiles/kairo_core.dir/src/plugins/stopwatch_plugin.cpp.o: core/CMakeFiles/kairo_core.dir/includes_CXX.rsp
 core/CMakeFiles/kairo_core.dir/src/plugins/stopwatch_plugin.cpp.o: /Users/solpochi/Projects/oss/kairo/firmware/core/src/plugins/stopwatch_plugin.cpp
 core/CMakeFiles/kairo_core.dir/src/plugins/stopwatch_plugin.cpp.o: core/CMakeFiles/kairo_core.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_44) "Building CXX object core/CMakeFiles/kairo_core.dir/src/plugins/stopwatch_plugin.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_45) "Building CXX object core/CMakeFiles/kairo_core.dir/src/plugins/stopwatch_plugin.cpp.o"
 	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm/core && /Users/solpochi/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT core/CMakeFiles/kairo_core.dir/src/plugins/stopwatch_plugin.cpp.o -MF CMakeFiles/kairo_core.dir/src/plugins/stopwatch_plugin.cpp.o.d -o CMakeFiles/kairo_core.dir/src/plugins/stopwatch_plugin.cpp.o -c /Users/solpochi/Projects/oss/kairo/firmware/core/src/plugins/stopwatch_plugin.cpp
 
 core/CMakeFiles/kairo_core.dir/src/plugins/stopwatch_plugin.cpp.i: cmake_force
@@ -736,7 +751,7 @@ core/CMakeFiles/kairo_core.dir/src/plugins/task_demo_plugin.cpp.o: core/CMakeFil
 core/CMakeFiles/kairo_core.dir/src/plugins/task_demo_plugin.cpp.o: core/CMakeFiles/kairo_core.dir/includes_CXX.rsp
 core/CMakeFiles/kairo_core.dir/src/plugins/task_demo_plugin.cpp.o: /Users/solpochi/Projects/oss/kairo/firmware/core/src/plugins/task_demo_plugin.cpp
 core/CMakeFiles/kairo_core.dir/src/plugins/task_demo_plugin.cpp.o: core/CMakeFiles/kairo_core.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_45) "Building CXX object core/CMakeFiles/kairo_core.dir/src/plugins/task_demo_plugin.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_46) "Building CXX object core/CMakeFiles/kairo_core.dir/src/plugins/task_demo_plugin.cpp.o"
 	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm/core && /Users/solpochi/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT core/CMakeFiles/kairo_core.dir/src/plugins/task_demo_plugin.cpp.o -MF CMakeFiles/kairo_core.dir/src/plugins/task_demo_plugin.cpp.o.d -o CMakeFiles/kairo_core.dir/src/plugins/task_demo_plugin.cpp.o -c /Users/solpochi/Projects/oss/kairo/firmware/core/src/plugins/task_demo_plugin.cpp
 
 core/CMakeFiles/kairo_core.dir/src/plugins/task_demo_plugin.cpp.i: cmake_force
@@ -751,7 +766,7 @@ core/CMakeFiles/kairo_core.dir/src/plugins/ticker_plugin.cpp.o: core/CMakeFiles/
 core/CMakeFiles/kairo_core.dir/src/plugins/ticker_plugin.cpp.o: core/CMakeFiles/kairo_core.dir/includes_CXX.rsp
 core/CMakeFiles/kairo_core.dir/src/plugins/ticker_plugin.cpp.o: /Users/solpochi/Projects/oss/kairo/firmware/core/src/plugins/ticker_plugin.cpp
 core/CMakeFiles/kairo_core.dir/src/plugins/ticker_plugin.cpp.o: core/CMakeFiles/kairo_core.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_46) "Building CXX object core/CMakeFiles/kairo_core.dir/src/plugins/ticker_plugin.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_47) "Building CXX object core/CMakeFiles/kairo_core.dir/src/plugins/ticker_plugin.cpp.o"
 	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm/core && /Users/solpochi/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT core/CMakeFiles/kairo_core.dir/src/plugins/ticker_plugin.cpp.o -MF CMakeFiles/kairo_core.dir/src/plugins/ticker_plugin.cpp.o.d -o CMakeFiles/kairo_core.dir/src/plugins/ticker_plugin.cpp.o -c /Users/solpochi/Projects/oss/kairo/firmware/core/src/plugins/ticker_plugin.cpp
 
 core/CMakeFiles/kairo_core.dir/src/plugins/ticker_plugin.cpp.i: cmake_force
@@ -766,7 +781,7 @@ core/CMakeFiles/kairo_core.dir/src/plugins/camera_plugin.cpp.o: core/CMakeFiles/
 core/CMakeFiles/kairo_core.dir/src/plugins/camera_plugin.cpp.o: core/CMakeFiles/kairo_core.dir/includes_CXX.rsp
 core/CMakeFiles/kairo_core.dir/src/plugins/camera_plugin.cpp.o: /Users/solpochi/Projects/oss/kairo/firmware/core/src/plugins/camera_plugin.cpp
 core/CMakeFiles/kairo_core.dir/src/plugins/camera_plugin.cpp.o: core/CMakeFiles/kairo_core.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_47) "Building CXX object core/CMakeFiles/kairo_core.dir/src/plugins/camera_plugin.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_48) "Building CXX object core/CMakeFiles/kairo_core.dir/src/plugins/camera_plugin.cpp.o"
 	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm/core && /Users/solpochi/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT core/CMakeFiles/kairo_core.dir/src/plugins/camera_plugin.cpp.o -MF CMakeFiles/kairo_core.dir/src/plugins/camera_plugin.cpp.o.d -o CMakeFiles/kairo_core.dir/src/plugins/camera_plugin.cpp.o -c /Users/solpochi/Projects/oss/kairo/firmware/core/src/plugins/camera_plugin.cpp
 
 core/CMakeFiles/kairo_core.dir/src/plugins/camera_plugin.cpp.i: cmake_force
@@ -781,7 +796,7 @@ core/CMakeFiles/kairo_core.dir/src/plugins/ui_showcase_plugin.cpp.o: core/CMakeF
 core/CMakeFiles/kairo_core.dir/src/plugins/ui_showcase_plugin.cpp.o: core/CMakeFiles/kairo_core.dir/includes_CXX.rsp
 core/CMakeFiles/kairo_core.dir/src/plugins/ui_showcase_plugin.cpp.o: /Users/solpochi/Projects/oss/kairo/firmware/core/src/plugins/ui_showcase_plugin.cpp
 core/CMakeFiles/kairo_core.dir/src/plugins/ui_showcase_plugin.cpp.o: core/CMakeFiles/kairo_core.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_48) "Building CXX object core/CMakeFiles/kairo_core.dir/src/plugins/ui_showcase_plugin.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_49) "Building CXX object core/CMakeFiles/kairo_core.dir/src/plugins/ui_showcase_plugin.cpp.o"
 	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm/core && /Users/solpochi/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT core/CMakeFiles/kairo_core.dir/src/plugins/ui_showcase_plugin.cpp.o -MF CMakeFiles/kairo_core.dir/src/plugins/ui_showcase_plugin.cpp.o.d -o CMakeFiles/kairo_core.dir/src/plugins/ui_showcase_plugin.cpp.o -c /Users/solpochi/Projects/oss/kairo/firmware/core/src/plugins/ui_showcase_plugin.cpp
 
 core/CMakeFiles/kairo_core.dir/src/plugins/ui_showcase_plugin.cpp.i: cmake_force
@@ -796,7 +811,7 @@ core/CMakeFiles/kairo_core.dir/src/plugins/js_app_plugin.cpp.o: core/CMakeFiles/
 core/CMakeFiles/kairo_core.dir/src/plugins/js_app_plugin.cpp.o: core/CMakeFiles/kairo_core.dir/includes_CXX.rsp
 core/CMakeFiles/kairo_core.dir/src/plugins/js_app_plugin.cpp.o: /Users/solpochi/Projects/oss/kairo/firmware/core/src/plugins/js_app_plugin.cpp
 core/CMakeFiles/kairo_core.dir/src/plugins/js_app_plugin.cpp.o: core/CMakeFiles/kairo_core.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_49) "Building CXX object core/CMakeFiles/kairo_core.dir/src/plugins/js_app_plugin.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_50) "Building CXX object core/CMakeFiles/kairo_core.dir/src/plugins/js_app_plugin.cpp.o"
 	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm/core && /Users/solpochi/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT core/CMakeFiles/kairo_core.dir/src/plugins/js_app_plugin.cpp.o -MF CMakeFiles/kairo_core.dir/src/plugins/js_app_plugin.cpp.o.d -o CMakeFiles/kairo_core.dir/src/plugins/js_app_plugin.cpp.o -c /Users/solpochi/Projects/oss/kairo/firmware/core/src/plugins/js_app_plugin.cpp
 
 core/CMakeFiles/kairo_core.dir/src/plugins/js_app_plugin.cpp.i: cmake_force
@@ -811,7 +826,7 @@ core/CMakeFiles/kairo_core.dir/src/plugins/js_app_store.cpp.o: core/CMakeFiles/k
 core/CMakeFiles/kairo_core.dir/src/plugins/js_app_store.cpp.o: core/CMakeFiles/kairo_core.dir/includes_CXX.rsp
 core/CMakeFiles/kairo_core.dir/src/plugins/js_app_store.cpp.o: /Users/solpochi/Projects/oss/kairo/firmware/core/src/plugins/js_app_store.cpp
 core/CMakeFiles/kairo_core.dir/src/plugins/js_app_store.cpp.o: core/CMakeFiles/kairo_core.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_50) "Building CXX object core/CMakeFiles/kairo_core.dir/src/plugins/js_app_store.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_51) "Building CXX object core/CMakeFiles/kairo_core.dir/src/plugins/js_app_store.cpp.o"
 	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm/core && /Users/solpochi/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT core/CMakeFiles/kairo_core.dir/src/plugins/js_app_store.cpp.o -MF CMakeFiles/kairo_core.dir/src/plugins/js_app_store.cpp.o.d -o CMakeFiles/kairo_core.dir/src/plugins/js_app_store.cpp.o -c /Users/solpochi/Projects/oss/kairo/firmware/core/src/plugins/js_app_store.cpp
 
 core/CMakeFiles/kairo_core.dir/src/plugins/js_app_store.cpp.i: cmake_force
@@ -826,7 +841,7 @@ core/CMakeFiles/kairo_core.dir/src/ui/canvas.cpp.o: core/CMakeFiles/kairo_core.d
 core/CMakeFiles/kairo_core.dir/src/ui/canvas.cpp.o: core/CMakeFiles/kairo_core.dir/includes_CXX.rsp
 core/CMakeFiles/kairo_core.dir/src/ui/canvas.cpp.o: /Users/solpochi/Projects/oss/kairo/firmware/core/src/ui/canvas.cpp
 core/CMakeFiles/kairo_core.dir/src/ui/canvas.cpp.o: core/CMakeFiles/kairo_core.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_51) "Building CXX object core/CMakeFiles/kairo_core.dir/src/ui/canvas.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_52) "Building CXX object core/CMakeFiles/kairo_core.dir/src/ui/canvas.cpp.o"
 	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm/core && /Users/solpochi/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT core/CMakeFiles/kairo_core.dir/src/ui/canvas.cpp.o -MF CMakeFiles/kairo_core.dir/src/ui/canvas.cpp.o.d -o CMakeFiles/kairo_core.dir/src/ui/canvas.cpp.o -c /Users/solpochi/Projects/oss/kairo/firmware/core/src/ui/canvas.cpp
 
 core/CMakeFiles/kairo_core.dir/src/ui/canvas.cpp.i: cmake_force
@@ -841,7 +856,7 @@ core/CMakeFiles/kairo_core.dir/src/ui/layout.cpp.o: core/CMakeFiles/kairo_core.d
 core/CMakeFiles/kairo_core.dir/src/ui/layout.cpp.o: core/CMakeFiles/kairo_core.dir/includes_CXX.rsp
 core/CMakeFiles/kairo_core.dir/src/ui/layout.cpp.o: /Users/solpochi/Projects/oss/kairo/firmware/core/src/ui/layout.cpp
 core/CMakeFiles/kairo_core.dir/src/ui/layout.cpp.o: core/CMakeFiles/kairo_core.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_52) "Building CXX object core/CMakeFiles/kairo_core.dir/src/ui/layout.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_53) "Building CXX object core/CMakeFiles/kairo_core.dir/src/ui/layout.cpp.o"
 	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm/core && /Users/solpochi/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT core/CMakeFiles/kairo_core.dir/src/ui/layout.cpp.o -MF CMakeFiles/kairo_core.dir/src/ui/layout.cpp.o.d -o CMakeFiles/kairo_core.dir/src/ui/layout.cpp.o -c /Users/solpochi/Projects/oss/kairo/firmware/core/src/ui/layout.cpp
 
 core/CMakeFiles/kairo_core.dir/src/ui/layout.cpp.i: cmake_force
@@ -856,7 +871,7 @@ core/CMakeFiles/kairo_core.dir/src/ui/widgets.cpp.o: core/CMakeFiles/kairo_core.
 core/CMakeFiles/kairo_core.dir/src/ui/widgets.cpp.o: core/CMakeFiles/kairo_core.dir/includes_CXX.rsp
 core/CMakeFiles/kairo_core.dir/src/ui/widgets.cpp.o: /Users/solpochi/Projects/oss/kairo/firmware/core/src/ui/widgets.cpp
 core/CMakeFiles/kairo_core.dir/src/ui/widgets.cpp.o: core/CMakeFiles/kairo_core.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_53) "Building CXX object core/CMakeFiles/kairo_core.dir/src/ui/widgets.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_54) "Building CXX object core/CMakeFiles/kairo_core.dir/src/ui/widgets.cpp.o"
 	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm/core && /Users/solpochi/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT core/CMakeFiles/kairo_core.dir/src/ui/widgets.cpp.o -MF CMakeFiles/kairo_core.dir/src/ui/widgets.cpp.o.d -o CMakeFiles/kairo_core.dir/src/ui/widgets.cpp.o -c /Users/solpochi/Projects/oss/kairo/firmware/core/src/ui/widgets.cpp
 
 core/CMakeFiles/kairo_core.dir/src/ui/widgets.cpp.i: cmake_force
@@ -871,7 +886,7 @@ core/CMakeFiles/kairo_core.dir/src/ui/text_style.cpp.o: core/CMakeFiles/kairo_co
 core/CMakeFiles/kairo_core.dir/src/ui/text_style.cpp.o: core/CMakeFiles/kairo_core.dir/includes_CXX.rsp
 core/CMakeFiles/kairo_core.dir/src/ui/text_style.cpp.o: /Users/solpochi/Projects/oss/kairo/firmware/core/src/ui/text_style.cpp
 core/CMakeFiles/kairo_core.dir/src/ui/text_style.cpp.o: core/CMakeFiles/kairo_core.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_54) "Building CXX object core/CMakeFiles/kairo_core.dir/src/ui/text_style.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_55) "Building CXX object core/CMakeFiles/kairo_core.dir/src/ui/text_style.cpp.o"
 	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm/core && /Users/solpochi/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT core/CMakeFiles/kairo_core.dir/src/ui/text_style.cpp.o -MF CMakeFiles/kairo_core.dir/src/ui/text_style.cpp.o.d -o CMakeFiles/kairo_core.dir/src/ui/text_style.cpp.o -c /Users/solpochi/Projects/oss/kairo/firmware/core/src/ui/text_style.cpp
 
 core/CMakeFiles/kairo_core.dir/src/ui/text_style.cpp.i: cmake_force
@@ -886,7 +901,7 @@ core/CMakeFiles/kairo_core.dir/src/ui/renderer.cpp.o: core/CMakeFiles/kairo_core
 core/CMakeFiles/kairo_core.dir/src/ui/renderer.cpp.o: core/CMakeFiles/kairo_core.dir/includes_CXX.rsp
 core/CMakeFiles/kairo_core.dir/src/ui/renderer.cpp.o: /Users/solpochi/Projects/oss/kairo/firmware/core/src/ui/renderer.cpp
 core/CMakeFiles/kairo_core.dir/src/ui/renderer.cpp.o: core/CMakeFiles/kairo_core.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_55) "Building CXX object core/CMakeFiles/kairo_core.dir/src/ui/renderer.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_56) "Building CXX object core/CMakeFiles/kairo_core.dir/src/ui/renderer.cpp.o"
 	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm/core && /Users/solpochi/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT core/CMakeFiles/kairo_core.dir/src/ui/renderer.cpp.o -MF CMakeFiles/kairo_core.dir/src/ui/renderer.cpp.o.d -o CMakeFiles/kairo_core.dir/src/ui/renderer.cpp.o -c /Users/solpochi/Projects/oss/kairo/firmware/core/src/ui/renderer.cpp
 
 core/CMakeFiles/kairo_core.dir/src/ui/renderer.cpp.i: cmake_force
@@ -901,7 +916,7 @@ core/CMakeFiles/kairo_core.dir/src/ui/focus.cpp.o: core/CMakeFiles/kairo_core.di
 core/CMakeFiles/kairo_core.dir/src/ui/focus.cpp.o: core/CMakeFiles/kairo_core.dir/includes_CXX.rsp
 core/CMakeFiles/kairo_core.dir/src/ui/focus.cpp.o: /Users/solpochi/Projects/oss/kairo/firmware/core/src/ui/focus.cpp
 core/CMakeFiles/kairo_core.dir/src/ui/focus.cpp.o: core/CMakeFiles/kairo_core.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_56) "Building CXX object core/CMakeFiles/kairo_core.dir/src/ui/focus.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_57) "Building CXX object core/CMakeFiles/kairo_core.dir/src/ui/focus.cpp.o"
 	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm/core && /Users/solpochi/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT core/CMakeFiles/kairo_core.dir/src/ui/focus.cpp.o -MF CMakeFiles/kairo_core.dir/src/ui/focus.cpp.o.d -o CMakeFiles/kairo_core.dir/src/ui/focus.cpp.o -c /Users/solpochi/Projects/oss/kairo/firmware/core/src/ui/focus.cpp
 
 core/CMakeFiles/kairo_core.dir/src/ui/focus.cpp.i: cmake_force
@@ -916,7 +931,7 @@ core/CMakeFiles/kairo_core.dir/src/ui/component_runtime.cpp.o: core/CMakeFiles/k
 core/CMakeFiles/kairo_core.dir/src/ui/component_runtime.cpp.o: core/CMakeFiles/kairo_core.dir/includes_CXX.rsp
 core/CMakeFiles/kairo_core.dir/src/ui/component_runtime.cpp.o: /Users/solpochi/Projects/oss/kairo/firmware/core/src/ui/component_runtime.cpp
 core/CMakeFiles/kairo_core.dir/src/ui/component_runtime.cpp.o: core/CMakeFiles/kairo_core.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_57) "Building CXX object core/CMakeFiles/kairo_core.dir/src/ui/component_runtime.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_58) "Building CXX object core/CMakeFiles/kairo_core.dir/src/ui/component_runtime.cpp.o"
 	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm/core && /Users/solpochi/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT core/CMakeFiles/kairo_core.dir/src/ui/component_runtime.cpp.o -MF CMakeFiles/kairo_core.dir/src/ui/component_runtime.cpp.o.d -o CMakeFiles/kairo_core.dir/src/ui/component_runtime.cpp.o -c /Users/solpochi/Projects/oss/kairo/firmware/core/src/ui/component_runtime.cpp
 
 core/CMakeFiles/kairo_core.dir/src/ui/component_runtime.cpp.i: cmake_force
@@ -931,7 +946,7 @@ core/CMakeFiles/kairo_core.dir/src/ui/component_screen.cpp.o: core/CMakeFiles/ka
 core/CMakeFiles/kairo_core.dir/src/ui/component_screen.cpp.o: core/CMakeFiles/kairo_core.dir/includes_CXX.rsp
 core/CMakeFiles/kairo_core.dir/src/ui/component_screen.cpp.o: /Users/solpochi/Projects/oss/kairo/firmware/core/src/ui/component_screen.cpp
 core/CMakeFiles/kairo_core.dir/src/ui/component_screen.cpp.o: core/CMakeFiles/kairo_core.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_58) "Building CXX object core/CMakeFiles/kairo_core.dir/src/ui/component_screen.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_59) "Building CXX object core/CMakeFiles/kairo_core.dir/src/ui/component_screen.cpp.o"
 	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm/core && /Users/solpochi/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT core/CMakeFiles/kairo_core.dir/src/ui/component_screen.cpp.o -MF CMakeFiles/kairo_core.dir/src/ui/component_screen.cpp.o.d -o CMakeFiles/kairo_core.dir/src/ui/component_screen.cpp.o -c /Users/solpochi/Projects/oss/kairo/firmware/core/src/ui/component_screen.cpp
 
 core/CMakeFiles/kairo_core.dir/src/ui/component_screen.cpp.i: cmake_force
@@ -946,7 +961,7 @@ core/CMakeFiles/kairo_core.dir/src/ui/font_5x8.cpp.o: core/CMakeFiles/kairo_core
 core/CMakeFiles/kairo_core.dir/src/ui/font_5x8.cpp.o: core/CMakeFiles/kairo_core.dir/includes_CXX.rsp
 core/CMakeFiles/kairo_core.dir/src/ui/font_5x8.cpp.o: /Users/solpochi/Projects/oss/kairo/firmware/core/src/ui/font_5x8.cpp
 core/CMakeFiles/kairo_core.dir/src/ui/font_5x8.cpp.o: core/CMakeFiles/kairo_core.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_59) "Building CXX object core/CMakeFiles/kairo_core.dir/src/ui/font_5x8.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_60) "Building CXX object core/CMakeFiles/kairo_core.dir/src/ui/font_5x8.cpp.o"
 	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm/core && /Users/solpochi/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT core/CMakeFiles/kairo_core.dir/src/ui/font_5x8.cpp.o -MF CMakeFiles/kairo_core.dir/src/ui/font_5x8.cpp.o.d -o CMakeFiles/kairo_core.dir/src/ui/font_5x8.cpp.o -c /Users/solpochi/Projects/oss/kairo/firmware/core/src/ui/font_5x8.cpp
 
 core/CMakeFiles/kairo_core.dir/src/ui/font_5x8.cpp.i: cmake_force
@@ -961,7 +976,7 @@ core/CMakeFiles/kairo_core.dir/src/ui/view_dispatcher.cpp.o: core/CMakeFiles/kai
 core/CMakeFiles/kairo_core.dir/src/ui/view_dispatcher.cpp.o: core/CMakeFiles/kairo_core.dir/includes_CXX.rsp
 core/CMakeFiles/kairo_core.dir/src/ui/view_dispatcher.cpp.o: /Users/solpochi/Projects/oss/kairo/firmware/core/src/ui/view_dispatcher.cpp
 core/CMakeFiles/kairo_core.dir/src/ui/view_dispatcher.cpp.o: core/CMakeFiles/kairo_core.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_60) "Building CXX object core/CMakeFiles/kairo_core.dir/src/ui/view_dispatcher.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_61) "Building CXX object core/CMakeFiles/kairo_core.dir/src/ui/view_dispatcher.cpp.o"
 	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm/core && /Users/solpochi/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT core/CMakeFiles/kairo_core.dir/src/ui/view_dispatcher.cpp.o -MF CMakeFiles/kairo_core.dir/src/ui/view_dispatcher.cpp.o.d -o CMakeFiles/kairo_core.dir/src/ui/view_dispatcher.cpp.o -c /Users/solpochi/Projects/oss/kairo/firmware/core/src/ui/view_dispatcher.cpp
 
 core/CMakeFiles/kairo_core.dir/src/ui/view_dispatcher.cpp.i: cmake_force
@@ -976,7 +991,7 @@ core/CMakeFiles/kairo_core.dir/src/ui/status_bar.cpp.o: core/CMakeFiles/kairo_co
 core/CMakeFiles/kairo_core.dir/src/ui/status_bar.cpp.o: core/CMakeFiles/kairo_core.dir/includes_CXX.rsp
 core/CMakeFiles/kairo_core.dir/src/ui/status_bar.cpp.o: /Users/solpochi/Projects/oss/kairo/firmware/core/src/ui/status_bar.cpp
 core/CMakeFiles/kairo_core.dir/src/ui/status_bar.cpp.o: core/CMakeFiles/kairo_core.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_61) "Building CXX object core/CMakeFiles/kairo_core.dir/src/ui/status_bar.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_62) "Building CXX object core/CMakeFiles/kairo_core.dir/src/ui/status_bar.cpp.o"
 	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm/core && /Users/solpochi/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT core/CMakeFiles/kairo_core.dir/src/ui/status_bar.cpp.o -MF CMakeFiles/kairo_core.dir/src/ui/status_bar.cpp.o.d -o CMakeFiles/kairo_core.dir/src/ui/status_bar.cpp.o -c /Users/solpochi/Projects/oss/kairo/firmware/core/src/ui/status_bar.cpp
 
 core/CMakeFiles/kairo_core.dir/src/ui/status_bar.cpp.i: cmake_force
@@ -991,7 +1006,7 @@ core/CMakeFiles/kairo_core.dir/src/ui/components.cpp.o: core/CMakeFiles/kairo_co
 core/CMakeFiles/kairo_core.dir/src/ui/components.cpp.o: core/CMakeFiles/kairo_core.dir/includes_CXX.rsp
 core/CMakeFiles/kairo_core.dir/src/ui/components.cpp.o: /Users/solpochi/Projects/oss/kairo/firmware/core/src/ui/components.cpp
 core/CMakeFiles/kairo_core.dir/src/ui/components.cpp.o: core/CMakeFiles/kairo_core.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_62) "Building CXX object core/CMakeFiles/kairo_core.dir/src/ui/components.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_63) "Building CXX object core/CMakeFiles/kairo_core.dir/src/ui/components.cpp.o"
 	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm/core && /Users/solpochi/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT core/CMakeFiles/kairo_core.dir/src/ui/components.cpp.o -MF CMakeFiles/kairo_core.dir/src/ui/components.cpp.o.d -o CMakeFiles/kairo_core.dir/src/ui/components.cpp.o -c /Users/solpochi/Projects/oss/kairo/firmware/core/src/ui/components.cpp
 
 core/CMakeFiles/kairo_core.dir/src/ui/components.cpp.i: cmake_force
@@ -1006,7 +1021,7 @@ core/CMakeFiles/kairo_core.dir/src/ui/ascii_board_renderer.cpp.o: core/CMakeFile
 core/CMakeFiles/kairo_core.dir/src/ui/ascii_board_renderer.cpp.o: core/CMakeFiles/kairo_core.dir/includes_CXX.rsp
 core/CMakeFiles/kairo_core.dir/src/ui/ascii_board_renderer.cpp.o: /Users/solpochi/Projects/oss/kairo/firmware/core/src/ui/ascii_board_renderer.cpp
 core/CMakeFiles/kairo_core.dir/src/ui/ascii_board_renderer.cpp.o: core/CMakeFiles/kairo_core.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_63) "Building CXX object core/CMakeFiles/kairo_core.dir/src/ui/ascii_board_renderer.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_64) "Building CXX object core/CMakeFiles/kairo_core.dir/src/ui/ascii_board_renderer.cpp.o"
 	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm/core && /Users/solpochi/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT core/CMakeFiles/kairo_core.dir/src/ui/ascii_board_renderer.cpp.o -MF CMakeFiles/kairo_core.dir/src/ui/ascii_board_renderer.cpp.o.d -o CMakeFiles/kairo_core.dir/src/ui/ascii_board_renderer.cpp.o -c /Users/solpochi/Projects/oss/kairo/firmware/core/src/ui/ascii_board_renderer.cpp
 
 core/CMakeFiles/kairo_core.dir/src/ui/ascii_board_renderer.cpp.i: cmake_force
@@ -1021,7 +1036,7 @@ core/CMakeFiles/kairo_core.dir/src/screens/home_screen.cpp.o: core/CMakeFiles/ka
 core/CMakeFiles/kairo_core.dir/src/screens/home_screen.cpp.o: core/CMakeFiles/kairo_core.dir/includes_CXX.rsp
 core/CMakeFiles/kairo_core.dir/src/screens/home_screen.cpp.o: /Users/solpochi/Projects/oss/kairo/firmware/core/src/screens/home_screen.cpp
 core/CMakeFiles/kairo_core.dir/src/screens/home_screen.cpp.o: core/CMakeFiles/kairo_core.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_64) "Building CXX object core/CMakeFiles/kairo_core.dir/src/screens/home_screen.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_65) "Building CXX object core/CMakeFiles/kairo_core.dir/src/screens/home_screen.cpp.o"
 	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm/core && /Users/solpochi/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT core/CMakeFiles/kairo_core.dir/src/screens/home_screen.cpp.o -MF CMakeFiles/kairo_core.dir/src/screens/home_screen.cpp.o.d -o CMakeFiles/kairo_core.dir/src/screens/home_screen.cpp.o -c /Users/solpochi/Projects/oss/kairo/firmware/core/src/screens/home_screen.cpp
 
 core/CMakeFiles/kairo_core.dir/src/screens/home_screen.cpp.i: cmake_force
@@ -1036,7 +1051,7 @@ core/CMakeFiles/kairo_core.dir/src/screens/app_list_screen.cpp.o: core/CMakeFile
 core/CMakeFiles/kairo_core.dir/src/screens/app_list_screen.cpp.o: core/CMakeFiles/kairo_core.dir/includes_CXX.rsp
 core/CMakeFiles/kairo_core.dir/src/screens/app_list_screen.cpp.o: /Users/solpochi/Projects/oss/kairo/firmware/core/src/screens/app_list_screen.cpp
 core/CMakeFiles/kairo_core.dir/src/screens/app_list_screen.cpp.o: core/CMakeFiles/kairo_core.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_65) "Building CXX object core/CMakeFiles/kairo_core.dir/src/screens/app_list_screen.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_66) "Building CXX object core/CMakeFiles/kairo_core.dir/src/screens/app_list_screen.cpp.o"
 	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm/core && /Users/solpochi/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT core/CMakeFiles/kairo_core.dir/src/screens/app_list_screen.cpp.o -MF CMakeFiles/kairo_core.dir/src/screens/app_list_screen.cpp.o.d -o CMakeFiles/kairo_core.dir/src/screens/app_list_screen.cpp.o -c /Users/solpochi/Projects/oss/kairo/firmware/core/src/screens/app_list_screen.cpp
 
 core/CMakeFiles/kairo_core.dir/src/screens/app_list_screen.cpp.i: cmake_force
@@ -1051,7 +1066,7 @@ core/CMakeFiles/kairo_core.dir/src/screens/logs_screen.cpp.o: core/CMakeFiles/ka
 core/CMakeFiles/kairo_core.dir/src/screens/logs_screen.cpp.o: core/CMakeFiles/kairo_core.dir/includes_CXX.rsp
 core/CMakeFiles/kairo_core.dir/src/screens/logs_screen.cpp.o: /Users/solpochi/Projects/oss/kairo/firmware/core/src/screens/logs_screen.cpp
 core/CMakeFiles/kairo_core.dir/src/screens/logs_screen.cpp.o: core/CMakeFiles/kairo_core.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_66) "Building CXX object core/CMakeFiles/kairo_core.dir/src/screens/logs_screen.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_67) "Building CXX object core/CMakeFiles/kairo_core.dir/src/screens/logs_screen.cpp.o"
 	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm/core && /Users/solpochi/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT core/CMakeFiles/kairo_core.dir/src/screens/logs_screen.cpp.o -MF CMakeFiles/kairo_core.dir/src/screens/logs_screen.cpp.o.d -o CMakeFiles/kairo_core.dir/src/screens/logs_screen.cpp.o -c /Users/solpochi/Projects/oss/kairo/firmware/core/src/screens/logs_screen.cpp
 
 core/CMakeFiles/kairo_core.dir/src/screens/logs_screen.cpp.i: cmake_force
@@ -1066,7 +1081,7 @@ core/CMakeFiles/kairo_core.dir/src/screens/settings_screen.cpp.o: core/CMakeFile
 core/CMakeFiles/kairo_core.dir/src/screens/settings_screen.cpp.o: core/CMakeFiles/kairo_core.dir/includes_CXX.rsp
 core/CMakeFiles/kairo_core.dir/src/screens/settings_screen.cpp.o: /Users/solpochi/Projects/oss/kairo/firmware/core/src/screens/settings_screen.cpp
 core/CMakeFiles/kairo_core.dir/src/screens/settings_screen.cpp.o: core/CMakeFiles/kairo_core.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_67) "Building CXX object core/CMakeFiles/kairo_core.dir/src/screens/settings_screen.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_68) "Building CXX object core/CMakeFiles/kairo_core.dir/src/screens/settings_screen.cpp.o"
 	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm/core && /Users/solpochi/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT core/CMakeFiles/kairo_core.dir/src/screens/settings_screen.cpp.o -MF CMakeFiles/kairo_core.dir/src/screens/settings_screen.cpp.o.d -o CMakeFiles/kairo_core.dir/src/screens/settings_screen.cpp.o -c /Users/solpochi/Projects/oss/kairo/firmware/core/src/screens/settings_screen.cpp
 
 core/CMakeFiles/kairo_core.dir/src/screens/settings_screen.cpp.i: cmake_force
@@ -1081,7 +1096,7 @@ core/CMakeFiles/kairo_core.dir/src/screens/about_screen.cpp.o: core/CMakeFiles/k
 core/CMakeFiles/kairo_core.dir/src/screens/about_screen.cpp.o: core/CMakeFiles/kairo_core.dir/includes_CXX.rsp
 core/CMakeFiles/kairo_core.dir/src/screens/about_screen.cpp.o: /Users/solpochi/Projects/oss/kairo/firmware/core/src/screens/about_screen.cpp
 core/CMakeFiles/kairo_core.dir/src/screens/about_screen.cpp.o: core/CMakeFiles/kairo_core.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_68) "Building CXX object core/CMakeFiles/kairo_core.dir/src/screens/about_screen.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_69) "Building CXX object core/CMakeFiles/kairo_core.dir/src/screens/about_screen.cpp.o"
 	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm/core && /Users/solpochi/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT core/CMakeFiles/kairo_core.dir/src/screens/about_screen.cpp.o -MF CMakeFiles/kairo_core.dir/src/screens/about_screen.cpp.o.d -o CMakeFiles/kairo_core.dir/src/screens/about_screen.cpp.o -c /Users/solpochi/Projects/oss/kairo/firmware/core/src/screens/about_screen.cpp
 
 core/CMakeFiles/kairo_core.dir/src/screens/about_screen.cpp.i: cmake_force
@@ -1096,7 +1111,7 @@ core/CMakeFiles/kairo_core.dir/src/screens/lock_screen.cpp.o: core/CMakeFiles/ka
 core/CMakeFiles/kairo_core.dir/src/screens/lock_screen.cpp.o: core/CMakeFiles/kairo_core.dir/includes_CXX.rsp
 core/CMakeFiles/kairo_core.dir/src/screens/lock_screen.cpp.o: /Users/solpochi/Projects/oss/kairo/firmware/core/src/screens/lock_screen.cpp
 core/CMakeFiles/kairo_core.dir/src/screens/lock_screen.cpp.o: core/CMakeFiles/kairo_core.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_69) "Building CXX object core/CMakeFiles/kairo_core.dir/src/screens/lock_screen.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_70) "Building CXX object core/CMakeFiles/kairo_core.dir/src/screens/lock_screen.cpp.o"
 	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm/core && /Users/solpochi/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT core/CMakeFiles/kairo_core.dir/src/screens/lock_screen.cpp.o -MF CMakeFiles/kairo_core.dir/src/screens/lock_screen.cpp.o.d -o CMakeFiles/kairo_core.dir/src/screens/lock_screen.cpp.o -c /Users/solpochi/Projects/oss/kairo/firmware/core/src/screens/lock_screen.cpp
 
 core/CMakeFiles/kairo_core.dir/src/screens/lock_screen.cpp.i: cmake_force
@@ -1111,7 +1126,7 @@ core/CMakeFiles/kairo_core.dir/src/screens/close_and_open_modal.cpp.o: core/CMak
 core/CMakeFiles/kairo_core.dir/src/screens/close_and_open_modal.cpp.o: core/CMakeFiles/kairo_core.dir/includes_CXX.rsp
 core/CMakeFiles/kairo_core.dir/src/screens/close_and_open_modal.cpp.o: /Users/solpochi/Projects/oss/kairo/firmware/core/src/screens/close_and_open_modal.cpp
 core/CMakeFiles/kairo_core.dir/src/screens/close_and_open_modal.cpp.o: core/CMakeFiles/kairo_core.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_70) "Building CXX object core/CMakeFiles/kairo_core.dir/src/screens/close_and_open_modal.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_71) "Building CXX object core/CMakeFiles/kairo_core.dir/src/screens/close_and_open_modal.cpp.o"
 	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm/core && /Users/solpochi/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT core/CMakeFiles/kairo_core.dir/src/screens/close_and_open_modal.cpp.o -MF CMakeFiles/kairo_core.dir/src/screens/close_and_open_modal.cpp.o.d -o CMakeFiles/kairo_core.dir/src/screens/close_and_open_modal.cpp.o -c /Users/solpochi/Projects/oss/kairo/firmware/core/src/screens/close_and_open_modal.cpp
 
 core/CMakeFiles/kairo_core.dir/src/screens/close_and_open_modal.cpp.i: cmake_force
@@ -1126,7 +1141,7 @@ core/CMakeFiles/kairo_core.dir/src/screens/sleep_settings_screen.cpp.o: core/CMa
 core/CMakeFiles/kairo_core.dir/src/screens/sleep_settings_screen.cpp.o: core/CMakeFiles/kairo_core.dir/includes_CXX.rsp
 core/CMakeFiles/kairo_core.dir/src/screens/sleep_settings_screen.cpp.o: /Users/solpochi/Projects/oss/kairo/firmware/core/src/screens/sleep_settings_screen.cpp
 core/CMakeFiles/kairo_core.dir/src/screens/sleep_settings_screen.cpp.o: core/CMakeFiles/kairo_core.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_71) "Building CXX object core/CMakeFiles/kairo_core.dir/src/screens/sleep_settings_screen.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_72) "Building CXX object core/CMakeFiles/kairo_core.dir/src/screens/sleep_settings_screen.cpp.o"
 	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm/core && /Users/solpochi/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT core/CMakeFiles/kairo_core.dir/src/screens/sleep_settings_screen.cpp.o -MF CMakeFiles/kairo_core.dir/src/screens/sleep_settings_screen.cpp.o.d -o CMakeFiles/kairo_core.dir/src/screens/sleep_settings_screen.cpp.o -c /Users/solpochi/Projects/oss/kairo/firmware/core/src/screens/sleep_settings_screen.cpp
 
 core/CMakeFiles/kairo_core.dir/src/screens/sleep_settings_screen.cpp.i: cmake_force
@@ -1141,7 +1156,7 @@ core/CMakeFiles/kairo_core.dir/src/screens/controls_screen.cpp.o: core/CMakeFile
 core/CMakeFiles/kairo_core.dir/src/screens/controls_screen.cpp.o: core/CMakeFiles/kairo_core.dir/includes_CXX.rsp
 core/CMakeFiles/kairo_core.dir/src/screens/controls_screen.cpp.o: /Users/solpochi/Projects/oss/kairo/firmware/core/src/screens/controls_screen.cpp
 core/CMakeFiles/kairo_core.dir/src/screens/controls_screen.cpp.o: core/CMakeFiles/kairo_core.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_72) "Building CXX object core/CMakeFiles/kairo_core.dir/src/screens/controls_screen.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_73) "Building CXX object core/CMakeFiles/kairo_core.dir/src/screens/controls_screen.cpp.o"
 	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm/core && /Users/solpochi/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT core/CMakeFiles/kairo_core.dir/src/screens/controls_screen.cpp.o -MF CMakeFiles/kairo_core.dir/src/screens/controls_screen.cpp.o.d -o CMakeFiles/kairo_core.dir/src/screens/controls_screen.cpp.o -c /Users/solpochi/Projects/oss/kairo/firmware/core/src/screens/controls_screen.cpp
 
 core/CMakeFiles/kairo_core.dir/src/screens/controls_screen.cpp.i: cmake_force
@@ -1156,7 +1171,7 @@ core/CMakeFiles/kairo_core.dir/src/screens/touch_settings_screen.cpp.o: core/CMa
 core/CMakeFiles/kairo_core.dir/src/screens/touch_settings_screen.cpp.o: core/CMakeFiles/kairo_core.dir/includes_CXX.rsp
 core/CMakeFiles/kairo_core.dir/src/screens/touch_settings_screen.cpp.o: /Users/solpochi/Projects/oss/kairo/firmware/core/src/screens/touch_settings_screen.cpp
 core/CMakeFiles/kairo_core.dir/src/screens/touch_settings_screen.cpp.o: core/CMakeFiles/kairo_core.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_73) "Building CXX object core/CMakeFiles/kairo_core.dir/src/screens/touch_settings_screen.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_74) "Building CXX object core/CMakeFiles/kairo_core.dir/src/screens/touch_settings_screen.cpp.o"
 	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm/core && /Users/solpochi/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT core/CMakeFiles/kairo_core.dir/src/screens/touch_settings_screen.cpp.o -MF CMakeFiles/kairo_core.dir/src/screens/touch_settings_screen.cpp.o.d -o CMakeFiles/kairo_core.dir/src/screens/touch_settings_screen.cpp.o -c /Users/solpochi/Projects/oss/kairo/firmware/core/src/screens/touch_settings_screen.cpp
 
 core/CMakeFiles/kairo_core.dir/src/screens/touch_settings_screen.cpp.i: cmake_force
@@ -1171,7 +1186,7 @@ core/CMakeFiles/kairo_core.dir/src/screens/sounds_settings_screen.cpp.o: core/CM
 core/CMakeFiles/kairo_core.dir/src/screens/sounds_settings_screen.cpp.o: core/CMakeFiles/kairo_core.dir/includes_CXX.rsp
 core/CMakeFiles/kairo_core.dir/src/screens/sounds_settings_screen.cpp.o: /Users/solpochi/Projects/oss/kairo/firmware/core/src/screens/sounds_settings_screen.cpp
 core/CMakeFiles/kairo_core.dir/src/screens/sounds_settings_screen.cpp.o: core/CMakeFiles/kairo_core.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_74) "Building CXX object core/CMakeFiles/kairo_core.dir/src/screens/sounds_settings_screen.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_75) "Building CXX object core/CMakeFiles/kairo_core.dir/src/screens/sounds_settings_screen.cpp.o"
 	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm/core && /Users/solpochi/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT core/CMakeFiles/kairo_core.dir/src/screens/sounds_settings_screen.cpp.o -MF CMakeFiles/kairo_core.dir/src/screens/sounds_settings_screen.cpp.o.d -o CMakeFiles/kairo_core.dir/src/screens/sounds_settings_screen.cpp.o -c /Users/solpochi/Projects/oss/kairo/firmware/core/src/screens/sounds_settings_screen.cpp
 
 core/CMakeFiles/kairo_core.dir/src/screens/sounds_settings_screen.cpp.i: cmake_force
@@ -1186,7 +1201,7 @@ core/CMakeFiles/kairo_core.dir/src/screens/camera_settings_screen.cpp.o: core/CM
 core/CMakeFiles/kairo_core.dir/src/screens/camera_settings_screen.cpp.o: core/CMakeFiles/kairo_core.dir/includes_CXX.rsp
 core/CMakeFiles/kairo_core.dir/src/screens/camera_settings_screen.cpp.o: /Users/solpochi/Projects/oss/kairo/firmware/core/src/screens/camera_settings_screen.cpp
 core/CMakeFiles/kairo_core.dir/src/screens/camera_settings_screen.cpp.o: core/CMakeFiles/kairo_core.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_75) "Building CXX object core/CMakeFiles/kairo_core.dir/src/screens/camera_settings_screen.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_76) "Building CXX object core/CMakeFiles/kairo_core.dir/src/screens/camera_settings_screen.cpp.o"
 	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm/core && /Users/solpochi/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT core/CMakeFiles/kairo_core.dir/src/screens/camera_settings_screen.cpp.o -MF CMakeFiles/kairo_core.dir/src/screens/camera_settings_screen.cpp.o.d -o CMakeFiles/kairo_core.dir/src/screens/camera_settings_screen.cpp.o -c /Users/solpochi/Projects/oss/kairo/firmware/core/src/screens/camera_settings_screen.cpp
 
 core/CMakeFiles/kairo_core.dir/src/screens/camera_settings_screen.cpp.i: cmake_force
@@ -1201,7 +1216,7 @@ core/CMakeFiles/kairo_core.dir/src/services/display_power_manager.cpp.o: core/CM
 core/CMakeFiles/kairo_core.dir/src/services/display_power_manager.cpp.o: core/CMakeFiles/kairo_core.dir/includes_CXX.rsp
 core/CMakeFiles/kairo_core.dir/src/services/display_power_manager.cpp.o: /Users/solpochi/Projects/oss/kairo/firmware/core/src/services/display_power_manager.cpp
 core/CMakeFiles/kairo_core.dir/src/services/display_power_manager.cpp.o: core/CMakeFiles/kairo_core.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_76) "Building CXX object core/CMakeFiles/kairo_core.dir/src/services/display_power_manager.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_77) "Building CXX object core/CMakeFiles/kairo_core.dir/src/services/display_power_manager.cpp.o"
 	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm/core && /Users/solpochi/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT core/CMakeFiles/kairo_core.dir/src/services/display_power_manager.cpp.o -MF CMakeFiles/kairo_core.dir/src/services/display_power_manager.cpp.o.d -o CMakeFiles/kairo_core.dir/src/services/display_power_manager.cpp.o -c /Users/solpochi/Projects/oss/kairo/firmware/core/src/services/display_power_manager.cpp
 
 core/CMakeFiles/kairo_core.dir/src/services/display_power_manager.cpp.i: cmake_force
@@ -1216,7 +1231,7 @@ core/CMakeFiles/kairo_core.dir/src/services/audio_service.cpp.o: core/CMakeFiles
 core/CMakeFiles/kairo_core.dir/src/services/audio_service.cpp.o: core/CMakeFiles/kairo_core.dir/includes_CXX.rsp
 core/CMakeFiles/kairo_core.dir/src/services/audio_service.cpp.o: /Users/solpochi/Projects/oss/kairo/firmware/core/src/services/audio_service.cpp
 core/CMakeFiles/kairo_core.dir/src/services/audio_service.cpp.o: core/CMakeFiles/kairo_core.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_77) "Building CXX object core/CMakeFiles/kairo_core.dir/src/services/audio_service.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_78) "Building CXX object core/CMakeFiles/kairo_core.dir/src/services/audio_service.cpp.o"
 	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm/core && /Users/solpochi/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT core/CMakeFiles/kairo_core.dir/src/services/audio_service.cpp.o -MF CMakeFiles/kairo_core.dir/src/services/audio_service.cpp.o.d -o CMakeFiles/kairo_core.dir/src/services/audio_service.cpp.o -c /Users/solpochi/Projects/oss/kairo/firmware/core/src/services/audio_service.cpp
 
 core/CMakeFiles/kairo_core.dir/src/services/audio_service.cpp.i: cmake_force
@@ -1231,7 +1246,7 @@ core/CMakeFiles/kairo_core.dir/src/services/camera_service.cpp.o: core/CMakeFile
 core/CMakeFiles/kairo_core.dir/src/services/camera_service.cpp.o: core/CMakeFiles/kairo_core.dir/includes_CXX.rsp
 core/CMakeFiles/kairo_core.dir/src/services/camera_service.cpp.o: /Users/solpochi/Projects/oss/kairo/firmware/core/src/services/camera_service.cpp
 core/CMakeFiles/kairo_core.dir/src/services/camera_service.cpp.o: core/CMakeFiles/kairo_core.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_78) "Building CXX object core/CMakeFiles/kairo_core.dir/src/services/camera_service.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_79) "Building CXX object core/CMakeFiles/kairo_core.dir/src/services/camera_service.cpp.o"
 	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm/core && /Users/solpochi/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT core/CMakeFiles/kairo_core.dir/src/services/camera_service.cpp.o -MF CMakeFiles/kairo_core.dir/src/services/camera_service.cpp.o.d -o CMakeFiles/kairo_core.dir/src/services/camera_service.cpp.o -c /Users/solpochi/Projects/oss/kairo/firmware/core/src/services/camera_service.cpp
 
 core/CMakeFiles/kairo_core.dir/src/services/camera_service.cpp.i: cmake_force
@@ -1246,7 +1261,7 @@ core/CMakeFiles/kairo_core.dir/src/js/js_engine.cpp.o: core/CMakeFiles/kairo_cor
 core/CMakeFiles/kairo_core.dir/src/js/js_engine.cpp.o: core/CMakeFiles/kairo_core.dir/includes_CXX.rsp
 core/CMakeFiles/kairo_core.dir/src/js/js_engine.cpp.o: /Users/solpochi/Projects/oss/kairo/firmware/core/src/js/js_engine.cpp
 core/CMakeFiles/kairo_core.dir/src/js/js_engine.cpp.o: core/CMakeFiles/kairo_core.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_79) "Building CXX object core/CMakeFiles/kairo_core.dir/src/js/js_engine.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_80) "Building CXX object core/CMakeFiles/kairo_core.dir/src/js/js_engine.cpp.o"
 	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm/core && /Users/solpochi/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT core/CMakeFiles/kairo_core.dir/src/js/js_engine.cpp.o -MF CMakeFiles/kairo_core.dir/src/js/js_engine.cpp.o.d -o CMakeFiles/kairo_core.dir/src/js/js_engine.cpp.o -c /Users/solpochi/Projects/oss/kairo/firmware/core/src/js/js_engine.cpp
 
 core/CMakeFiles/kairo_core.dir/src/js/js_engine.cpp.i: cmake_force
@@ -1261,7 +1276,7 @@ core/CMakeFiles/kairo_core.dir/src/js/js_api.cpp.o: core/CMakeFiles/kairo_core.d
 core/CMakeFiles/kairo_core.dir/src/js/js_api.cpp.o: core/CMakeFiles/kairo_core.dir/includes_CXX.rsp
 core/CMakeFiles/kairo_core.dir/src/js/js_api.cpp.o: /Users/solpochi/Projects/oss/kairo/firmware/core/src/js/js_api.cpp
 core/CMakeFiles/kairo_core.dir/src/js/js_api.cpp.o: core/CMakeFiles/kairo_core.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_80) "Building CXX object core/CMakeFiles/kairo_core.dir/src/js/js_api.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_81) "Building CXX object core/CMakeFiles/kairo_core.dir/src/js/js_api.cpp.o"
 	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm/core && /Users/solpochi/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT core/CMakeFiles/kairo_core.dir/src/js/js_api.cpp.o -MF CMakeFiles/kairo_core.dir/src/js/js_api.cpp.o.d -o CMakeFiles/kairo_core.dir/src/js/js_api.cpp.o -c /Users/solpochi/Projects/oss/kairo/firmware/core/src/js/js_api.cpp
 
 core/CMakeFiles/kairo_core.dir/src/js/js_api.cpp.i: cmake_force
@@ -1276,7 +1291,7 @@ core/CMakeFiles/kairo_core.dir/src/nema/thread_host.cpp.o: core/CMakeFiles/kairo
 core/CMakeFiles/kairo_core.dir/src/nema/thread_host.cpp.o: core/CMakeFiles/kairo_core.dir/includes_CXX.rsp
 core/CMakeFiles/kairo_core.dir/src/nema/thread_host.cpp.o: /Users/solpochi/Projects/oss/kairo/firmware/core/src/nema/thread_host.cpp
 core/CMakeFiles/kairo_core.dir/src/nema/thread_host.cpp.o: core/CMakeFiles/kairo_core.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_81) "Building CXX object core/CMakeFiles/kairo_core.dir/src/nema/thread_host.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_82) "Building CXX object core/CMakeFiles/kairo_core.dir/src/nema/thread_host.cpp.o"
 	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm/core && /Users/solpochi/emsdk/upstream/emscripten/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT core/CMakeFiles/kairo_core.dir/src/nema/thread_host.cpp.o -MF CMakeFiles/kairo_core.dir/src/nema/thread_host.cpp.o.d -o CMakeFiles/kairo_core.dir/src/nema/thread_host.cpp.o -c /Users/solpochi/Projects/oss/kairo/firmware/core/src/nema/thread_host.cpp
 
 core/CMakeFiles/kairo_core.dir/src/nema/thread_host.cpp.i: cmake_force
@@ -1309,6 +1324,7 @@ kairo_core_OBJECTS = \
 "CMakeFiles/kairo_core.dir/src/service/service_manager.cpp.o" \
 "CMakeFiles/kairo_core.dir/src/system/hardware_registry.cpp.o" \
 "CMakeFiles/kairo_core.dir/src/system/capability_registry.cpp.o" \
+"CMakeFiles/kairo_core.dir/src/system/board_profile.cpp.o" \
 "CMakeFiles/kairo_core.dir/src/services/clock_service.cpp.o" \
 "CMakeFiles/kairo_core.dir/src/services/gui_service.cpp.o" \
 "CMakeFiles/kairo_core.dir/src/plugin/plugin_context.cpp.o" \
@@ -1394,6 +1410,7 @@ core/libkairo_core.a: core/CMakeFiles/kairo_core.dir/src/hal/async_display.cpp.o
 core/libkairo_core.a: core/CMakeFiles/kairo_core.dir/src/service/service_manager.cpp.o
 core/libkairo_core.a: core/CMakeFiles/kairo_core.dir/src/system/hardware_registry.cpp.o
 core/libkairo_core.a: core/CMakeFiles/kairo_core.dir/src/system/capability_registry.cpp.o
+core/libkairo_core.a: core/CMakeFiles/kairo_core.dir/src/system/board_profile.cpp.o
 core/libkairo_core.a: core/CMakeFiles/kairo_core.dir/src/services/clock_service.cpp.o
 core/libkairo_core.a: core/CMakeFiles/kairo_core.dir/src/services/gui_service.cpp.o
 core/libkairo_core.a: core/CMakeFiles/kairo_core.dir/src/plugin/plugin_context.cpp.o
@@ -1457,7 +1474,7 @@ core/libkairo_core.a: core/CMakeFiles/kairo_core.dir/src/js/js_api.cpp.o
 core/libkairo_core.a: core/CMakeFiles/kairo_core.dir/src/nema/thread_host.cpp.o
 core/libkairo_core.a: core/CMakeFiles/kairo_core.dir/build.make
 core/libkairo_core.a: core/CMakeFiles/kairo_core.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_82) "Linking CXX static library libkairo_core.a"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/Users/solpochi/Projects/oss/kairo/firmware/build-wasm/CMakeFiles --progress-num=$(CMAKE_PROGRESS_83) "Linking CXX static library libkairo_core.a"
 	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm/core && $(CMAKE_COMMAND) -P CMakeFiles/kairo_core.dir/cmake_clean_target.cmake
 	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm/core && $(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/kairo_core.dir/link.txt --verbose=$(VERBOSE)
 

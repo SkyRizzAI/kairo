@@ -712,11 +712,11 @@ targets/wasm/CMakeFiles/kairo.dir/main.cpp.o: \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/link/klp_codec.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/hal/remote_screen_tap.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/services/remote_service.h \
+  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/system/board_profile.h \
   /Users/solpochi/Projects/oss/kairo/firmware/platforms/wasm/include/kairo/sim/sim_wifi_driver.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/hal/wifi.h \
   /Users/solpochi/Projects/oss/kairo/firmware/boards/simulator/include/kairo/sim/simulator_board.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/board.h \
-  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/system/board_profile.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/service/service_container.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/typeindex \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/cassert \

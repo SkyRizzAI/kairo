@@ -629,9 +629,10 @@ core/CMakeFiles/kairo_core.dir/src/services/remote_service.cpp.o: \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/log/log_sink.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/log/log_entry.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/types.h \
+  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/system/board_profile.h \
+  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/ui/key.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/services/input_service.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/nema/input_event.h \
-  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/ui/key.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/input/input_code.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/input/input_action.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/input/gesture.h \

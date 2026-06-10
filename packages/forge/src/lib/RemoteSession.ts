@@ -16,8 +16,30 @@ export interface EventEntry {
 	fields: Record<string, string>;
 }
 
+// Board profile — the device's physical layout (SYSTEM GetInfo reply, Plan 33).
+// Mirrors firmware BoardProfile/ComponentDef; coordinates are normalized 0–1
+// over the board rect, `w`/`h` on the profile are the physical aspect (mm).
+export interface BoardComponent {
+	id: number;
+	label: string;
+	type: 'display' | 'button' | 'led' | 'sensor' | 'speaker' | 'mic' | 'camera' | 'port' | 'other';
+	key?: number; // input Key to send when this (button) is pressed remotely
+	x: number;
+	y: number;
+	w: number;
+	h: number;
+}
+export interface BoardProfile {
+	id: string;
+	name: string;
+	w: number;
+	h: number;
+	components: BoardComponent[];
+}
+
 const HELLO = 0x01;
 const ACK = 0x02;
+const GET_INFO = 0x01; // SYSTEM channel opcode
 
 export const Power = { Restart: 0x10, Sleep: 0x11, Shutdown: 0x12 } as const;
 export const Key = { Up: 1, Down: 2, Left: 3, Right: 4, Select: 5, Cancel: 6 } as const;
@@ -28,6 +50,7 @@ type Listeners = {
 	log: Set<(l: LogEntry) => void>;
 	event: Set<(e: EventEntry) => void>;
 	ready: Set<() => void>;
+	profile: Set<(p: BoardProfile) => void>;
 };
 
 // RemoteSession — transport-agnostic client of a Kairo device (WASM sim or real
@@ -37,8 +60,15 @@ export class RemoteSession {
 	#t: ILinkTransport;
 	#parser = new FrameParser();
 	#ready = false;
+	#profile: BoardProfile | null = null;
 	#helloTimer: ReturnType<typeof setInterval> | null = null;
-	#l: Listeners = { screen: new Set(), log: new Set(), event: new Set(), ready: new Set() };
+	#l: Listeners = {
+		screen: new Set(),
+		log: new Set(),
+		event: new Set(),
+		ready: new Set(),
+		profile: new Set()
+	};
 
 	constructor(t: ILinkTransport) {
 		this.#t = t;
@@ -53,10 +83,26 @@ export class RemoteSession {
 		return this.#ready;
 	}
 
+	// Last board profile received from the device (null until GetInfo answered).
+	get profile() {
+		return this.#profile;
+	}
+
 	// Power on the cable (load/boot the WASM firmware, or open BLE/USB). The
 	// onState callback drives the handshake once the transport reports connected.
 	boot(): void | Promise<void> {
 		return this.#t.boot?.();
+	}
+
+	// Tear the session down: stop the handshake retry and close the cable so the
+	// transport's resources (e.g. the Web Serial port) are actually released.
+	close() {
+		if (this.#helloTimer) {
+			clearInterval(this.#helloTimer);
+			this.#helloTimer = null;
+		}
+		this.#ready = false;
+		this.#t.close();
 	}
 
 	on<K extends keyof Listeners>(kind: K, fn: Listeners[K] extends Set<infer F> ? F : never) {
@@ -95,6 +141,22 @@ export class RemoteSession {
 			if (f.payload[0] === ACK) {
 				this.#ready = true;
 				this.#emit('ready');
+				// Handshake done → ask for the board profile (SYSTEM GetInfo).
+				this.#t.send(encodeFrame(Channel.System, new Uint8Array([GET_INFO])));
+			}
+			return;
+		}
+		if (f.channel === Channel.System) {
+			// [GET_INFO][board-profile json] — see RemoteService::dispatch.
+			if (f.payload[0] !== GET_INFO) return;
+			try {
+				const json = new TextDecoder().decode(f.payload.subarray(1));
+				const p = JSON.parse(json) as BoardProfile;
+				p.components ??= [];
+				this.#profile = p;
+				this.#emit('profile', p);
+			} catch {
+				/* malformed profile — ignore, UI keeps the generic layout */
 			}
 			return;
 		}

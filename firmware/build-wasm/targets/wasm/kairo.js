@@ -3100,7 +3100,7 @@ function checkIncomingModuleAPI() {
   ignoredModuleProp('onSbrkGrow');
 }
 var ASM_CONSTS = {
-  201580: ($0, $1) => { if (Module && Module.kairoKlpOut) Module.kairoKlpOut(HEAPU8.slice($0, $0 + $1)); }
+  201772: ($0, $1) => { if (Module && Module.kairoKlpOut) Module.kairoKlpOut(HEAPU8.slice($0, $0 + $1)); }
 };
 
 // Imports from the Wasm binary.

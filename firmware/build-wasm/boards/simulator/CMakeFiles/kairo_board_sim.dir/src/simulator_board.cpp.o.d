@@ -14,8 +14,6 @@ boards/simulator/CMakeFiles/kairo_board_sim.dir/src/simulator_board.cpp.o: \
   /Users/solpochi/emsdk/upstream/lib/clang/23/include/stdint.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/stdint.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/bits/alltypes.h \
-  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/runtime.h \
-  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/types.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/string \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/max.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/comp.h \
@@ -555,6 +553,9 @@ boards/simulator/CMakeFiles/kairo_board_sim.dir/src/simulator_board.cpp.o: \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__memory/raw_storage_iterator.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__memory/temporary_buffer.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/optional \
+  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/ui/key.h \
+  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/runtime.h \
+  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/types.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/event/async_event_poster.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/event/event.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/vector \
@@ -668,7 +669,6 @@ boards/simulator/CMakeFiles/kairo_board_sim.dir/src/simulator_board.cpp.o: \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/forward_list \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/services/input_service.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/nema/input_event.h \
-  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/ui/key.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/input/input_code.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/input/input_action.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/input/gesture.h \
