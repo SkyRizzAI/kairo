@@ -23,9 +23,10 @@ public:
     void stop()  override;
     void tick(uint64_t nowMs) override;
 
-    // TX handle exposed for I2sSpeaker (NS4168 shares same I2S bus).
-    // Valid only after start(). Opaque void* to avoid ESP-IDF in header.
-    void* txHandle() const { return i2sTxHandle_; }
+    // I2S readiness for I2sSpeaker. Mic owns the shared legacy I2S0 driver
+    // (TX→NS4168 + RX←ES7243E installed together); the speaker writes to the
+    // same port (I2S_NUM_0). True only after start() installs the driver.
+    bool i2sReady() const { return i2sInstalled_; }
 
 private:
     void i2sInit();
@@ -33,8 +34,7 @@ private:
 
     kairo::Runtime* rt_         = nullptr;
     Xl9535*         expander_   = nullptr;
-    void*           i2sRxHandle_ = nullptr;  // i2s_chan_handle_t — mic RX
-    void*           i2sTxHandle_ = nullptr;  // i2s_chan_handle_t — speaker TX (NS4168)
+    bool            i2sInstalled_ = false;  // legacy I2S0 driver installed
     float           peak_        = 0.0f;
     bool            capturing_   = false;
 };

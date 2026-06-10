@@ -2,7 +2,7 @@
 #include "kairo/skyrizze32/board_config.h"
 #include "kairo/runtime.h"
 #include "kairo/log/logger.h"
-#include <driver/i2s_std.h>
+#include <driver/i2s.h>   // legacy I2S API — matches proven factory HW test
 #include <Wire.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
@@ -40,40 +40,43 @@ void Es7243eMic::init(kairo::Runtime& rt, Xl9535& expander) {
 }
 
 void Es7243eMic::i2sInit() {
-    // Full-duplex I2S0: TX → NS4168 (GPIO45), RX ← ES7243E (GPIO39).
-    // Per IDF 5.x full-duplex pattern: call i2s_channel_init_std_mode on BOTH
-    // handles with the SAME config (dout + din both set). TX handle configures
-    // the clocks; RX handle re-uses the same config so GPIOs register properly.
-    i2s_chan_config_t chanCfg = I2S_CHANNEL_DEFAULT_CONFIG(I2S_NUM_0, I2S_ROLE_MASTER);
-    chanCfg.auto_clear = true;  // TX outputs silence when no data written
-    i2s_chan_handle_t tx = nullptr;
-    i2s_chan_handle_t rx = nullptr;
-    i2s_new_channel(&chanCfg, &tx, &rx);
+    // Legacy I2S driver (driver/i2s.h) — single full-duplex install on I2S0:
+    //   TX → NS4168 SDI (GPIO45),  RX ← ES7243E SDO (GPIO39).
+    // Verbatim match of the proven factory hardware test
+    // (ESP32S3_Full_HW_Test_Lovyan_V4_1_GTSD_Fix.ino, audioI2SInit()).
+    // The new i2s_std full-duplex driver's writes succeed (err=0, full bytes)
+    // but produce NO audible TX output on this board; the legacy driver drives
+    // the shared bus correctly. The mic (RX) works under both APIs.
+    i2s_config_t cfg = {};
+    cfg.mode                 = (i2s_mode_t)(I2S_MODE_MASTER | I2S_MODE_TX | I2S_MODE_RX);
+    cfg.sample_rate          = 16000;
+    cfg.bits_per_sample      = I2S_BITS_PER_SAMPLE_32BIT;
+    cfg.channel_format       = I2S_CHANNEL_FMT_RIGHT_LEFT;
+    cfg.communication_format = I2S_COMM_FORMAT_STAND_I2S;
+    cfg.intr_alloc_flags     = ESP_INTR_FLAG_LEVEL1;
+    cfg.dma_desc_num         = 6;    // legacy alias: dma_buf_count
+    cfg.dma_frame_num        = 128;  // legacy alias: dma_buf_len
+    cfg.use_apll             = false;
+    cfg.tx_desc_auto_clear   = true;
+    cfg.fixed_mclk           = 16000 * 256;  // 4.096 MHz MCLK → ES7243E
 
-    // MCLK = 256 * 16 kHz = 4.096 MHz (ES7243E slaves on this)
-    i2s_std_clk_config_t clkCfg = I2S_STD_CLK_DEFAULT_CONFIG(16000);
-    clkCfg.mclk_multiple = I2S_MCLK_MULTIPLE_256;
+    esp_err_t err = i2s_driver_install(I2S_NUM_0, &cfg, 0, nullptr);
+    if (err != ESP_OK) {
+        if (rt_) rt_->log().error("Es7243eMic", "i2s_driver_install failed",
+            {{"err", esp_err_to_name(err)}});
+        return;
+    }
 
-    // Single config with ALL pins — both TX and RX handles get the same struct.
-    // IDF routes .dout when called on TX handle, .din when called on RX handle.
-    i2s_std_config_t cfg = {
-        .clk_cfg  = clkCfg,
-        .slot_cfg = I2S_STD_PHILIPS_SLOT_DEFAULT_CONFIG(I2S_DATA_BIT_WIDTH_32BIT,
-                                                         I2S_SLOT_MODE_STEREO),
-        .gpio_cfg = {
-            .mclk = (gpio_num_t)PIN_I2S_MCLK,  // GPIO3  → ES7243E
-            .bclk = (gpio_num_t)PIN_I2S_BCLK,  // GPIO0  → ES7243E + NS4168
-            .ws   = (gpio_num_t)PIN_I2S_WS,    // GPIO38 → ES7243E + NS4168
-            .dout = (gpio_num_t)PIN_I2S_DOUT,  // GPIO45 → NS4168 SDI
-            .din  = (gpio_num_t)PIN_I2S_DIN,   // GPIO39 ← ES7243E SDO
-            .invert_flags = {.mclk_inv = false, .bclk_inv = false, .ws_inv = false},
-        },
-    };
-    i2s_channel_init_std_mode(tx, &cfg);
-    i2s_channel_init_std_mode(rx, &cfg);
+    i2s_pin_config_t pins = {};
+    pins.mck_io_num   = PIN_I2S_MCLK;   // GPIO3  → ES7243E MCLK
+    pins.bck_io_num   = PIN_I2S_BCLK;   // GPIO0  → ES7243E + NS4168
+    pins.ws_io_num    = PIN_I2S_WS;     // GPIO38 → ES7243E + NS4168
+    pins.data_out_num = PIN_I2S_DOUT;   // GPIO45 → NS4168 SDI
+    pins.data_in_num  = PIN_I2S_DIN;    // GPIO39 ← ES7243E SDO
+    i2s_set_pin(I2S_NUM_0, &pins);
 
-    i2sRxHandle_ = rx;
-    i2sTxHandle_ = tx;
+    i2s_zero_dma_buffer(I2S_NUM_0);
+    i2sInstalled_ = true;
 }
 
 bool Es7243eMic::i2cInit() {
@@ -88,17 +91,14 @@ bool Es7243eMic::i2cInit() {
 }
 
 void Es7243eMic::start() {
-    // Step 1: Start I2S first — ES7243E needs MCLK before I2C will ACK
+    // Step 1: Install I2S first — ES7243E needs MCLK before I2C will ACK.
+    // i2s_driver_install already starts the port with clocks live.
     i2sInit();
 
-    if (!i2sRxHandle_) {
+    if (!i2sInstalled_) {
         if (rt_) rt_->log().error("Es7243eMic", "I2S init failed");
         return;
     }
-
-    // Enable channels so MCLK is live
-    i2s_channel_enable((i2s_chan_handle_t)i2sRxHandle_);
-    i2s_channel_enable((i2s_chan_handle_t)i2sTxHandle_);
 
     // Step 2: Wait for ES7243E to see stable MCLK, then init via I2C
     vTaskDelay(pdMS_TO_TICKS(10));
@@ -120,41 +120,31 @@ void Es7243eMic::start() {
 }
 
 void Es7243eMic::stop() {
-    if (i2sRxHandle_) {
-        i2s_channel_disable((i2s_chan_handle_t)i2sRxHandle_);
-        i2s_del_channel((i2s_chan_handle_t)i2sRxHandle_);
-        i2sRxHandle_ = nullptr;
-    }
-    if (i2sTxHandle_) {
-        i2s_channel_disable((i2s_chan_handle_t)i2sTxHandle_);
-        i2s_del_channel((i2s_chan_handle_t)i2sTxHandle_);
-        i2sTxHandle_ = nullptr;
+    if (i2sInstalled_) {
+        i2s_driver_uninstall(I2S_NUM_0);
+        i2sInstalled_ = false;
     }
     capturing_ = false;
     peak_       = 0.0f;
 }
 
+// Capture toggles a software flag only — the legacy driver keeps the shared
+// port running so MCLK stays live for both ES7243E and the NS4168 speaker.
+// (i2s_stop() would kill the clock for the whole port.)
 void Es7243eMic::startCapture() {
-    if (i2sRxHandle_ && !capturing_) {
-        i2s_channel_enable((i2s_chan_handle_t)i2sRxHandle_);
-        capturing_ = true;
-    }
+    if (i2sInstalled_) capturing_ = true;
 }
 
 void Es7243eMic::stopCapture() {
-    if (i2sRxHandle_ && capturing_) {
-        i2s_channel_disable((i2s_chan_handle_t)i2sRxHandle_);
-        capturing_ = false;
-    }
+    capturing_ = false;
 }
 
 void Es7243eMic::tick(uint64_t /*nowMs*/) {
-    if (!i2sRxHandle_ || !capturing_) return;
+    if (!i2sInstalled_ || !capturing_) return;
 
     static int32_t buf[512];
     size_t bytesRead = 0;
-    esp_err_t err = i2s_channel_read((i2s_chan_handle_t)i2sRxHandle_,
-                                      buf, sizeof(buf), &bytesRead, pdMS_TO_TICKS(10));
+    esp_err_t err = i2s_read(I2S_NUM_0, buf, sizeof(buf), &bytesRead, pdMS_TO_TICKS(10));
     if (err != ESP_OK || bytesRead == 0) return;
 
     size_t samples = bytesRead / sizeof(int32_t);

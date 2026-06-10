@@ -5,7 +5,7 @@
 // Raw Serial is intentional: no Kairo runtime/logger here.
 #include <Arduino.h>
 #include <Wire.h>
-#include <driver/i2s_std.h>
+#include <driver/i2s.h>   // legacy I2S API — matches proven factory HW test (.ino)
 #include <driver/gpio.h>
 #include <esp_rom_sys.h>
 #include <esp_err.h>
@@ -18,9 +18,6 @@ static constexpr int PIN_SDA = 47, PIN_SCL = 48;
 static constexpr int PIN_MCLK = 3, PIN_BCLK = 0, PIN_WS = 38, PIN_DIN = 39, PIN_DOUT = 45;
 static constexpr uint8_t ES7243E_ADDR = 0x11;
 static constexpr uint32_t SAMPLE_RATE = 16000;
-
-static i2s_chan_handle_t txCh_ = nullptr;
-static i2s_chan_handle_t rxCh_ = nullptr;
 
 static const uint8_t ES7243E_INIT[][2] = {
     {0x01,0x3A},{0x00,0x80},{0xF9,0x00},{0x04,0x02},{0x04,0x01},{0xF9,0x01},{0x00,0x1E},
@@ -35,30 +32,33 @@ static const uint8_t ES7243E_INIT[][2] = {
     printf("  %-40s -> %d (%s)\n", #call, (int)e, esp_err_to_name(e)); } while(0)
 
 static void i2sInit() {
-    i2s_chan_config_t ch = I2S_CHANNEL_DEFAULT_CONFIG(I2S_NUM_0, I2S_ROLE_MASTER);
-    ch.auto_clear = false;   // EXPERIMENT: was true — repeat last buffer on underrun
-    CHK(i2s_new_channel(&ch, &txCh_, &rxCh_));
+    // Legacy I2S driver — single full-duplex install on I2S0, matching the
+    // proven factory HW test (.ino). The new i2s_std driver's TX produced no
+    // audible output on this board; the legacy driver works.
+    i2s_config_t cfg = {};
+    cfg.mode                 = (i2s_mode_t)(I2S_MODE_MASTER | I2S_MODE_TX | I2S_MODE_RX);
+    cfg.sample_rate          = SAMPLE_RATE;
+    cfg.bits_per_sample      = I2S_BITS_PER_SAMPLE_32BIT;
+    cfg.channel_format       = I2S_CHANNEL_FMT_RIGHT_LEFT;
+    cfg.communication_format = I2S_COMM_FORMAT_STAND_I2S;
+    cfg.intr_alloc_flags     = ESP_INTR_FLAG_LEVEL1;
+    cfg.dma_desc_num         = 6;
+    cfg.dma_frame_num        = 128;
+    cfg.use_apll             = false;
+    cfg.tx_desc_auto_clear   = true;
+    cfg.fixed_mclk           = (int)SAMPLE_RATE * 256;
 
-    i2s_std_clk_config_t clk = I2S_STD_CLK_DEFAULT_CONFIG(SAMPLE_RATE);
-    clk.mclk_multiple = I2S_MCLK_MULTIPLE_256;
-
-    i2s_std_config_t cfg = {
-        .clk_cfg  = clk,
-        .slot_cfg = I2S_STD_PHILIPS_SLOT_DEFAULT_CONFIG(I2S_DATA_BIT_WIDTH_32BIT, I2S_SLOT_MODE_STEREO),
-        .gpio_cfg = {
-            .mclk = (gpio_num_t)PIN_MCLK,
-            .bclk = (gpio_num_t)PIN_BCLK,
-            .ws   = (gpio_num_t)PIN_WS,
-            .dout = (gpio_num_t)PIN_DOUT,
-            .din  = (gpio_num_t)PIN_DIN,
-            .invert_flags = {false, false, false},
-        },
-    };
     printf("[I2S] init returns (watch for non-zero = silent failure):\n");
-    CHK(i2s_channel_init_std_mode(txCh_, &cfg));
-    CHK(i2s_channel_init_std_mode(rxCh_, &cfg));
-    CHK(i2s_channel_enable(txCh_));
-    CHK(i2s_channel_enable(rxCh_));
+    CHK(i2s_driver_install(I2S_NUM_0, &cfg, 0, nullptr));
+
+    i2s_pin_config_t pins = {};
+    pins.mck_io_num   = PIN_MCLK;
+    pins.bck_io_num   = PIN_BCLK;
+    pins.ws_io_num    = PIN_WS;
+    pins.data_out_num = PIN_DOUT;
+    pins.data_in_num  = PIN_DIN;
+    CHK(i2s_set_pin(I2S_NUM_0, &pins));
+    CHK(i2s_zero_dma_buffer(I2S_NUM_0));
 }
 
 static void playTone(uint16_t freqHz, uint16_t ms, int32_t amplitude) {
@@ -74,7 +74,7 @@ static void playTone(uint16_t freqHz, uint16_t ms, int32_t amplitude) {
             n++; written++;
         }
         size_t out = 0;
-        lastErr = i2s_channel_write(txCh_, buf, n * 2 * sizeof(int32_t), &out, pdMS_TO_TICKS(300));
+        lastErr = i2s_write(I2S_NUM_0, buf, n * 2 * sizeof(int32_t), &out, pdMS_TO_TICKS(300));
         totalOut += out;
         if (lastErr != ESP_OK) break;
     }
@@ -107,22 +107,24 @@ void setup() {
     printf("[ES7243E] init: %u writes, %d failed\n", (unsigned)n, fails);
 
     // ===== A/B ISOLATION TEST =====================================
-    // RX (mic) stays enabled the whole time → BCLK/WS keep running, so NS4168
-    // is clocked in BOTH phases. The ONLY thing that changes is what's on
-    // GPIO45 (SDATA). This splits "physical chain dead" from "I2S-TX broken".
+    // Phase A drives GPIO45 (SDATA) with a real tone via the legacy I2S driver;
+    // Phase B uninstalls I2S, floats GPIO45, and hammers GPIO46 for crosstalk.
+    // Splits "physical chain dead" from "I2S-TX broken in software".
 
     // ---- PHASE A: I2S-TX drives GPIO45 with a real 1 kHz tone (6 s) --------
+    // With the legacy driver this should now be AUDIBLE (the new i2s_std driver
+    // was silent here — that was the bug, not the hardware).
     printf("\n########## PHASE A: I2S-TX TONE on GPIO45 (6s) — LISTEN ##########\n");
     for (int i = 0; i < 8; i++) {
         printf("[A] i2s tone burst %d/8\n", i + 1);
         playTone(1000, 700, 0x40000000);   // ~0.7s each → ~6s total
     }
-    printf("[A] done. Heard a clean tone? (we expect SILENCE here)\n");
+    printf("[A] done. Heard a clean tone? (legacy driver: we now EXPECT a tone)\n");
 
     // ---- PHASE B: GPIO45 FLOATING + hammer GPIO46 (WS2812) crosstalk (6s) --
     // Reproduces the reference RX-only firmware's condition with OUR toolchain.
     printf("\n########## PHASE B: GPIO45 FLOAT + GPIO46 crosstalk (6s) — LISTEN ##########\n");
-    i2s_channel_disable(txCh_);                       // stop I2S driving GPIO45
+    i2s_driver_uninstall(I2S_NUM_0);                  // stop I2S driving GPIO45
     gpio_reset_pin((gpio_num_t)PIN_DOUT);             // release pad → GPIO func
     gpio_set_direction((gpio_num_t)PIN_DOUT, GPIO_MODE_INPUT);  // high-Z / float
     gpio_reset_pin((gpio_num_t)46);

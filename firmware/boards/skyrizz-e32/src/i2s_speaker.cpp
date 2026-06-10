@@ -2,7 +2,7 @@
 #include "kairo/skyrizze32/es7243e_mic.h"
 #include "kairo/runtime.h"
 #include "kairo/log/logger.h"
-#include <driver/i2s_std.h>
+#include <driver/i2s.h>   // legacy I2S API — shared I2S0 with Es7243eMic
 #include <esp_err.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
@@ -15,11 +15,11 @@ void I2sSpeaker::start() {
     if (rt_) rt_->log().info("I2sSpeaker", "NS4168 ready (shared I2S0 TX, GPIO45)");
 }
 
-// Beep task params — small struct passed via xTaskCreate pvParameters
+// Beep task params — small struct passed via xTaskCreate pvParameters.
+// Writes go to the shared legacy I2S0 port (installed by Es7243eMic).
 struct BeepParams {
-    i2s_chan_handle_t tx;
-    uint16_t         freqHz;
-    uint16_t         ms;
+    uint16_t freqHz;
+    uint16_t ms;
 };
 
 // FreeRTOS task: runs beep in background so GUI thread is not blocked
@@ -53,23 +53,23 @@ static void beepTask(void* arg) {
         uint32_t remaining = totalFrames - framesWritten;
         uint32_t chunk     = (remaining < samplesPerCycle) ? remaining : samplesPerCycle;
         size_t   bytesOut  = 0;
-        lastErr = i2s_channel_write(p->tx,
+        lastErr = i2s_write(I2S_NUM_0,
                              buf, chunk * 2 * sizeof(int32_t),
                              &bytesOut, pdMS_TO_TICKS(200));
         totalOut += bytesOut;
         if (lastErr != ESP_OK) break;
         framesWritten += chunk;
     }
-    // Diagnostic: did the data actually shift out? err=0 + bytesOut full ⇒
-    // software wrote to GPIO45 OK (silence then = NS4168/wiring/format).
-    std::printf("[SPK] i2s_write err=%d (%s) bytesOut=%u/%u tx=%p\n",
+    // Bring-up diagnostic (temporary): err=0 + full bytesOut means the data
+    // shifted out of I2S0/GPIO45 OK. Remove once speaker output is confirmed.
+    std::printf("[SPK] i2s_write err=%d (%s) bytesOut=%u/%u\n",
                 (int)lastErr, esp_err_to_name(lastErr), (unsigned)totalOut,
-                (unsigned)(totalFrames * 2 * sizeof(int32_t)), (void*)p->tx);
+                (unsigned)(totalFrames * 2 * sizeof(int32_t)));
 
     // Write a short silence so NS4168 doesn't end on a DC offset
     int32_t silence[64] = {};
     size_t dummy = 0;
-    i2s_channel_write(p->tx, silence, sizeof(silence), &dummy, pdMS_TO_TICKS(50));
+    i2s_write(I2S_NUM_0, silence, sizeof(silence), &dummy, pdMS_TO_TICKS(50));
 
     vPortFree(buf);
     delete p;
@@ -81,9 +81,8 @@ void I2sSpeaker::playTone(uint16_t freqHz, uint16_t ms) {
         if (rt_) rt_->log().warn("I2sSpeaker", "no mic reference");
         return;
     }
-    void* tx = mic_->txHandle();
-    if (!tx) {
-        if (rt_) rt_->log().warn("I2sSpeaker", "I2S TX handle not ready — mic not started?");
+    if (!mic_->i2sReady()) {
+        if (rt_) rt_->log().warn("I2sSpeaker", "I2S not ready — mic not started?");
         return;
     }
 
@@ -91,7 +90,7 @@ void I2sSpeaker::playTone(uint16_t freqHz, uint16_t ms) {
         {{"hz", std::to_string(freqHz)}, {"ms", std::to_string(ms)}});
 
     // Spawn background task — keeps GUI thread responsive during the beep
-    auto* params  = new BeepParams{(i2s_chan_handle_t)tx, freqHz, ms};
+    auto* params  = new BeepParams{freqHz, ms};
     BaseType_t ok = xTaskCreate(beepTask, "beep", 4096, params,
                                 5, nullptr);
     if (ok != pdPASS) {
