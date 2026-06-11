@@ -1,7 +1,7 @@
 #include "kairo/screens/logs_screen.h"
 #include "kairo/runtime.h"
 #include "kairo/ui/view_dispatcher.h"
-#include "kairo/plugin/plugin_manager.h"
+#include "kairo/app/app_registry.h"
 #include "kairo/clock.h"
 #include <cstdio>
 
@@ -29,8 +29,10 @@ UiNode* LogsScreen::build(NodeArena& a, Runtime& rt) {
                              (unsigned)m, (unsigned)s);
     rows_.push_back(buf);
 
-    std::snprintf(buf, sizeof(buf), "Apps:   %d loaded",
-                  (int)rt.plugins().plugins().size());
+    int apps = 0, svcs = 0;
+    for (const auto& m : rt.apps().list())
+        (m.type == AppType::App ? apps : svcs)++;
+    std::snprintf(buf, sizeof(buf), "Apps:   %d (+%d services)", apps, svcs);
     rows_.push_back(buf);
 
     Style root; root.dir = FlexDir::Col; root.flexGrow = 1; root.padding = 3; root.gap = 1;

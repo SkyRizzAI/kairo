@@ -27,9 +27,10 @@ namespace events {
     inline constexpr const char* BtPaired             = "BtPaired";            // {"name":"iPhone"}
     inline constexpr const char* BtConnected          = "BtConnected";         // {"name":"iPhone"}
     inline constexpr const char* BtDisconnected       = "BtDisconnected";
+    // App registry (install/remove a launchable app — built-in or custom)
+    inline constexpr const char* AppInstalled         = "AppInstalled";        // {"id","name"}
+    inline constexpr const char* AppRemoved           = "AppRemoved";          // {"id"}
     // Non-MVP (declared for future use)
-    inline constexpr const char* PluginLoaded         = "PluginLoaded";
-    inline constexpr const char* PluginUnloaded       = "PluginUnloaded";
     inline constexpr const char* NotificationCreated  = "NotificationCreated";
 }
 

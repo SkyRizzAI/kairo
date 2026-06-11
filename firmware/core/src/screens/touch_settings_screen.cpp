@@ -11,7 +11,7 @@ TouchSettingsScreen::TouchSettingsScreen(Runtime& rt) : ComponentScreen(rt) {}
 
 void TouchSettingsScreen::onTouchTest(void* u) {
     auto* s = static_cast<TouchSettingsScreen*>(u);
-    s->rt_.apps().launch(s->touchApp_);
+    s->rt_.appHost().launch(s->touchApp_);
 }
 
 UiNode* TouchSettingsScreen::build(NodeArena& a, Runtime&) {

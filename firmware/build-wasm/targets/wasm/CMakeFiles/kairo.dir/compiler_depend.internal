@@ -5,11 +5,14 @@ targets/wasm/CMakeFiles/kairo.dir/main.cpp.o
  /Users/solpochi/Projects/oss/kairo/firmware/targets/wasm/main.cpp
  /Users/solpochi/Projects/oss/kairo/firmware/boards/simulator/include/kairo/sim/simulator_board.h
  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/app/app.h
+ /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/app/app_manifest.h
+ /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/app/app_registry.h
  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/app/component_app.h
  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/apps/bluetooth_app.h
  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/apps/clock_app.h
  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/apps/counter_app.h
  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/apps/js_app.h
+ /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/apps/js_app_store.h
  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/apps/stopwatch_app.h
  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/apps/task_demo_app.h
  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/apps/ticker_app.h
@@ -21,12 +24,15 @@ targets/wasm/CMakeFiles/kairo.dir/main.cpp.o
  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/config/config_store.h
  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/event/async_event_poster.h
  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/event/event.h
+ /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/fs/mem_filesystem.h
+ /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/fs/vfs.h
  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/hal/audio_input.h
  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/hal/audio_output.h
  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/hal/bluetooth.h
  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/hal/camera.h
  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/hal/display.h
  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/hal/driver.h
+ /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/hal/filesystem.h
  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/hal/remote_screen_tap.h
  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/hal/wifi.h
  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/input/gesture.h
@@ -44,17 +50,6 @@ targets/wasm/CMakeFiles/kairo.dir/main.cpp.o
  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/nema/task_runner.h
  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/nema/thread.h
  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/platform.h
- /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/plugin/plugin.h
- /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/plugin/plugin_manager.h
- /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/plugins/clock_plugin.h
- /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/plugins/counter_plugin.h
- /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/plugins/hello_plugin.h
- /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/plugins/js_app_plugin.h
- /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/plugins/js_app_store.h
- /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/plugins/stopwatch_plugin.h
- /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/plugins/task_demo_plugin.h
- /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/plugins/ticker_plugin.h
- /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/plugins/ui_showcase_plugin.h
  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/runtime.h
  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/screens/about_screen.h
  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/screens/app_list_screen.h
@@ -67,9 +62,9 @@ targets/wasm/CMakeFiles/kairo.dir/main.cpp.o
  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/screens/sounds_settings_screen.h
  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/screens/touch_settings_screen.h
  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/service.h
- /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/service/service_container.h
  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/services/audio_service.h
  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/services/camera_service.h
+ /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/services/cli_service.h
  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/services/clock_service.h
  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/services/input_service.h
  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/services/remote_service.h
@@ -92,7 +87,6 @@ targets/wasm/CMakeFiles/kairo.dir/main.cpp.o
  /Users/solpochi/Projects/oss/kairo/firmware/platforms/wasm/include/kairo/wasm/wasm_config.h
  /Users/solpochi/Projects/oss/kairo/firmware/platforms/wasm/include/kairo/wasm/wasm_platform.h
  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/alloca.h
- /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/assert.h
  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/bits/alltypes.h
  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/bits/errno.h
  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/bits/limits.h
@@ -655,7 +649,6 @@ targets/wasm/CMakeFiles/kairo.dir/main.cpp.o
  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/array
  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/atomic
  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/bit
- /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/cassert
  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/cctype
  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/cerrno
  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/chrono
@@ -693,6 +686,7 @@ targets/wasm/CMakeFiles/kairo.dir/main.cpp.o
  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/new
  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/optional
  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/ratio
+ /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/set
  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/stdbool.h
  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/stddef.h
  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/stdexcept
@@ -705,7 +699,6 @@ targets/wasm/CMakeFiles/kairo.dir/main.cpp.o
  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/system_error
  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/tuple
  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/type_traits
- /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/typeindex
  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/typeinfo
  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/unordered_map
  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/utility

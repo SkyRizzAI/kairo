@@ -17,10 +17,11 @@ struct ILogSink;
 class EventBus;
 class ServiceContainer;
 class ServiceManager;
+struct IService;
 class HardwareRegistry;
 class CapabilityRegistry;
 struct SystemInfo;
-class PluginManager;
+class AppRegistry;
 class AppHostManager;
 class ViewDispatcher;
 class Canvas;
@@ -56,8 +57,15 @@ public:
     AsyncEventPoster&   asyncPoster();  // thread-safe cross-task event queue
     InputService&       input();        // single input funnel (any thread → main)
     nema::TaskRunner&   tasks();        // offload blocking work off the UI thread
-    PluginManager&      plugins();
-    AppHostManager&     apps();       // app launch + pause/resume (Plan 22)
+    AppRegistry&        apps();       // installed-app table: install/list/launch
+    AppHostManager&     appHost();    // app loader: launch IApp + pause/resume (Plan 22)
+
+    // Hand a background service to the Nema lifecycle. Before start(): it boots
+    // with the system (startAll). While Running: it starts immediately. Used by
+    // the AppRegistry for app-installed services; targets go through
+    // apps().installService() instead of calling this directly.
+    void adoptService(IService* svc);
+    void dropService (IService* svc);   // stop (if running) + untrack
     ViewDispatcher&     view();
     Canvas&             canvas();   // only valid if "display" capability present
     DisplayPowerManager& dpm();     // sleep/lock state machine (only after start())
@@ -91,7 +99,7 @@ private:
     std::unique_ptr<HardwareRegistry>  hardware_;
     std::unique_ptr<CapabilityRegistry> capabilities_;
     std::unique_ptr<SystemInfo>        systemInfo_;
-    std::unique_ptr<PluginManager>     pluginManager_;
+    std::unique_ptr<AppRegistry>       appRegistry_;
     std::unique_ptr<AppHostManager>    appHosts_;
     std::unique_ptr<ViewDispatcher>    viewDispatcher_;
     std::unique_ptr<Canvas>            canvas_;

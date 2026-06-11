@@ -11,7 +11,7 @@
 
 Kairo = platform handheld bergaya Flipper Zero, **1-bit retro/pixel UI**, dengan Core Runtime C++ portable yang jalan di **simulator** (web) dan **hardware ESP32-S3 + e-ink**.
 
-**Status: MVP + Plugin + UI Runtime + ESP32 dev board + Nema kernel (multi-thread) + App-model + WiFi + HTTP + Virtual Keyboard + networked apps.** Firmware **berhasil di-flash & jalan di device fisik** sampai Fase B app-model (dikonfirmasi developer). Fitur konektivitas (WiFi/Ticker/keyboard) sudah build dual-target + terverifikasi di simulator; **belum diverifikasi di hardware**.
+**Status: MVP + App Registry (Flipper-style apps/services, eks-Plugin) + UI Runtime + ESP32 dev board + Nema kernel (multi-thread) + App-model + WiFi + HTTP + Virtual Keyboard + networked apps.** Firmware **berhasil di-flash & jalan di device fisik** sampai Fase B app-model (dikonfirmasi developer). Fitur konektivitas (WiFi/Ticker/keyboard) sudah build dual-target + terverifikasi di simulator; **belum diverifikasi di hardware**.
 
 ---
 
@@ -20,7 +20,7 @@ Kairo = platform handheld bergaya Flipper Zero, **1-bit retro/pixel UI**, dengan
 | Area | Status | Bukti |
 |---|---|---|
 | Core Runtime (boot, logger, event bus, services, introspection) | ✅ HW | jalan di sim + esp32 |
-| Plugin Runtime (IPlugin, PluginManager, PluginContext) | ✅ HW | plugin load/unload |
+| App Registry (AppManifest, AppRegistry — built-in/custom apps + services; menggantikan Plugin Runtime) | ✅ HW | install/list/launch |
 | UI Runtime retro (Canvas 1-bit, font 5×8, ViewDispatcher) | ✅ HW | semua screen render |
 | Kairo Dev Board (ESP32-S3 + e-ink GxEPD2 + 6 tombol TCA9534) | ✅ HW | build + flash + jalan |
 | **Async display** (e-ink flush di task terpisah, dirty-rect, latest-wins) | ✅ HW | tombol tak freeze saat refresh |
@@ -47,7 +47,7 @@ core 1 (UI)                  core 0 (work/IO)            main loop (Arduino)
 GuiService thread            TaskRunner worker           rt.step():
  owns Canvas+ViewDispatcher   scan(), http.get()          asyncPoster.flush()
  input → handleKey            (boleh BLOCK)               serviceManager.tick()
- screen draw → flush                                      pluginManager.tick()
+ screen draw → flush
  task completions            Input poll thread (TCA9534)  platform.idle()
                               → InputService queue
  App thread (foreground)
@@ -64,7 +64,7 @@ Nama kernel: **Nema** (νῆμα = "benang/thread"), namespace `kairo::nema`. "F
 
 ```
 Home (Apps / Logs / Settings)
- ├── Apps → daftar plugin → launch app (thread sendiri via AppHost)
+ ├── Apps → AppRegistry.list() → launch app (thread sendiri via AppHost)
  │     Clock · Counter (+modal) · Stopwatch (fullscreen) · Task Demo · Ticker
  ├── Logs → uptime + jumlah app
  └── Settings → WiFi (→ WifiApp) · About (board/fw/caps)
@@ -132,7 +132,7 @@ packages/forge/          SvelteKit web client: /simulator (WASM), /remote, /flas
 - **api.binance.com** 404 di region dev → pakai `data-api.binance.vision` (mirror publik, sama seperti ref firmware).
 - **Web panel tsconfig** kurang `lib:["dom"]` → tsc lapor error `window`/`document` (pre-existing, bukan bug; Bun bundler tetap jalan).
 - **Persistence flaky** selama sesi konektivitas: beberapa file simulator/web berkali revert; semua sudah di-verifikasi di disk + re-apply.
-- Dev Board tak punya battery monitoring (no ADC). Dynamic plugin loading masih static di `main.cpp`.
+- Dev Board tak punya battery monitoring (no ADC). Built-in apps masih di-install static di `main.cpp` (custom apps: OTA via KLP; microSD menunggu Plan 38).
 
 ---
 

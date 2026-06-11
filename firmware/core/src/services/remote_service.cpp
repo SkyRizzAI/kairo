@@ -1,5 +1,7 @@
 #include "kairo/services/remote_service.h"
+#include "kairo/services/cli_service.h"
 #include "kairo/services/input_service.h"
+#include "kairo/hal/filesystem.h"
 #include "kairo/log/logger.h"
 #include "kairo/event/event_bus.h"
 #include "kairo/event/event.h"
@@ -65,6 +67,19 @@ void RemoteService::dispatch(const klp::Frame& f) {
                 powerFn_(powerUser_, f.payload[0]);
             }
             break;
+        case klp::Channel::Cli: {            // host→device terminal: [command line]
+            if (!cli_ || f.payload.empty()) break;
+            std::string line((const char*)f.payload.data(), f.payload.size());
+            cli_->execute(line, [this](const std::string& s) {
+                link_->send(klp::Channel::Cli, (const uint8_t*)s.data(), s.size());
+            });
+            const uint8_t eot = 0x04;        // mark end-of-output → host re-prompts
+            link_->send(klp::Channel::Cli, &eot, 1);
+            break;
+        }
+        case klp::Channel::File:             // host→device filesystem request
+            if (fs_ && !f.payload.empty()) handleFile(f.payload);
+            break;
         case klp::Channel::Ext: {            // host→device sim control
             if (f.payload.empty()) break;
             uint8_t op = f.payload[0];
@@ -79,6 +94,69 @@ void RemoteService::dispatch(const klp::Frame& f) {
         }
         default:
             break;   // SCREEN/LOG/OTA handled elsewhere or outbound-only
+    }
+}
+
+void RemoteService::handleFile(const std::vector<uint8_t>& in) {
+    const uint8_t op = in[0];
+
+    // Reply framing: [op][status][path\0][extra...].
+    auto reply = [&](uint8_t status, const std::string& path,
+                     const uint8_t* extra, size_t extraLen) {
+        std::vector<uint8_t> p;
+        p.push_back(op);
+        p.push_back(status);
+        p.insert(p.end(), path.begin(), path.end());
+        p.push_back(0);
+        if (extra && extraLen) p.insert(p.end(), extra, extra + extraLen);
+        link_->send(klp::Channel::File, p.data(), p.size());
+    };
+
+    if (op == FileOp::Write) {
+        // [op][pathLen:2 LE][path][data...]
+        if (in.size() < 3) return;
+        uint16_t plen = in[1] | (in[2] << 8);
+        if (in.size() < (size_t)3 + plen) return;
+        std::string path((const char*)in.data() + 3, plen);
+        const uint8_t* data = in.data() + 3 + plen;
+        size_t dlen = in.size() - 3 - plen;
+        reply(fs_->write(path, data, dlen) ? 0 : 2, path, nullptr, 0);
+        return;
+    }
+
+    // All other ops: [op][path...]
+    std::string path((const char*)in.data() + 1, in.size() - 1);
+    switch (op) {
+        case FileOp::List: {
+            std::vector<FsEntry> entries;
+            bool ok = fs_->list(path, entries);
+            std::vector<uint8_t> body;
+            for (const auto& e : entries) {           // [type:1][size:4 LE][name\0]
+                body.push_back(e.isDir ? 1 : 0);
+                body.push_back(e.size & 0xff);
+                body.push_back((e.size >> 8) & 0xff);
+                body.push_back((e.size >> 16) & 0xff);
+                body.push_back((e.size >> 24) & 0xff);
+                body.insert(body.end(), e.name.begin(), e.name.end());
+                body.push_back(0);
+            }
+            reply(ok ? 0 : 1, path, body.data(), body.size());
+            break;
+        }
+        case FileOp::Read: {
+            std::vector<uint8_t> data;
+            bool ok = fs_->read(path, data);
+            reply(ok ? 0 : 1, path, data.data(), data.size());
+            break;
+        }
+        case FileOp::Mkdir:
+            reply(fs_->mkdir(path) ? 0 : 2, path, nullptr, 0);
+            break;
+        case FileOp::Remove:
+            reply(fs_->remove(path) ? 0 : 2, path, nullptr, 0);
+            break;
+        default:
+            break;
     }
 }
 

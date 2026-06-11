@@ -2904,3 +2904,795 @@ events:
         - "/"
       CMAKE_FIND_ROOT_PATH: "/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot"
 ...
+
+---
+events:
+  -
+    kind: "find-v1"
+    backtrace:
+      - "/opt/homebrew/share/cmake/Modules/Platform/Emscripten.cmake:6 (find_file)"
+      - "/opt/homebrew/share/cmake/Modules/CMakeSystemSpecificInformation.cmake:32 (include)"
+      - "CMakeLists.txt:2 (project)"
+    mode: "file"
+    variable: "_EMSCRIPTEN_PLATFORM_MODULE"
+    description: "Path to a file."
+    settings:
+      SearchFramework: "FIRST"
+      SearchAppBundle: "FIRST"
+      CMAKE_FIND_USE_CMAKE_PATH: true
+      CMAKE_FIND_USE_CMAKE_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_CMAKE_SYSTEM_PATH: true
+      CMAKE_FIND_USE_INSTALL_PREFIX: true
+    names:
+      - "Platform/Emscripten.cmake"
+    candidate_directories:
+      - "/Users/solpochi/emsdk/upstream/emscripten/cmake/Modules/"
+    searched_directories:
+      - "/Users/solpochi/emsdk/upstream/emscripten/cmake/Modules/Platform.framework/Headers/Emscripten.cmake"
+    found: "/Users/solpochi/emsdk/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake"
+    search_context:
+      ENV{PATH}:
+        - "/Users/solpochi/Projects/oss/kairo/node_modules/.bin"
+        - "/Users/solpochi/Projects/oss/kairo/node_modules/.bin"
+        - "/Users/solpochi/Projects/oss/node_modules/.bin"
+        - "/Users/solpochi/Projects/node_modules/.bin"
+        - "/Users/solpochi/node_modules/.bin"
+        - "/Users/node_modules/.bin"
+        - "/node_modules/.bin"
+        - "/Users/solpochi/emsdk"
+        - "/Users/solpochi/emsdk/upstream/emscripten"
+        - "/Users/solpochi/Projects/oss/kairo/node_modules/.bin"
+        - "/Users/solpochi/Projects/oss/node_modules/.bin"
+        - "/Users/solpochi/Projects/node_modules/.bin"
+        - "/Users/solpochi/node_modules/.bin"
+        - "/Users/node_modules/.bin"
+        - "/node_modules/.bin"
+        - "/Users/solpochi/.opencode/bin"
+        - "/Users/solpochi/.grok/bin"
+        - "/Users/solpochi/.antigravity/antigravity/bin"
+        - "/Users/solpochi/go/bin"
+        - "/Users/solpochi/.local/bin"
+        - "/Users/solpochi/.bun/bin"
+        - "/Users/solpochi/.local/state/fnm_multishells/27147_1781170259897/bin"
+        - "/usr/local/bin"
+        - "/System/Cryptexes/App/usr/bin"
+        - "/usr/bin"
+        - "/bin"
+        - "/usr/sbin"
+        - "/sbin"
+        - "/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin"
+        - "/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin"
+        - "/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin"
+        - "/opt/pkg/env/active/bin"
+        - "/opt/pmk/env/global/bin"
+        - "/opt/homebrew/bin"
+        - "/Users/solpochi/.local/state/fnm_multishells/26784_1781170259410/bin"
+        - "/Users/solpochi/.local/state/fnm_multishells/61740_1781102015967/bin"
+        - "/Users/solpochi/.local/state/fnm_multishells/69465_1779458980528/bin"
+        - "/Users/solpochi/.local/state/fnm_multishells/35188_1778121912027/bin"
+        - "/Users/solpochi/.local/state/fnm_multishells/3466_1777824799000/bin"
+        - "/Users/solpochi/.atuin/bin"
+        - "/Users/solpochi/.local/state/fnm_multishells/3201_1777824744858/bin"
+        - "/Users/solpochi/.cargo/bin"
+        - "/Users/solpochi/.foundry/bin"
+        - "/Users/solpochi/.orbstack/bin"
+        - "/Users/solpochi/.oh-my-zsh/custom/plugins/fzf-zsh-plugin/bin"
+        - "/Users/solpochi/.fzf/bin"
+      CMAKE_INSTALL_PREFIX: "/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot"
+      CMAKE_SYSTEM_PREFIX_PATH:
+        - "/"
+      CMAKE_FIND_ROOT_PATH: "/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot"
+...
+
+---
+events:
+  -
+    kind: "find-v1"
+    backtrace:
+      - "/opt/homebrew/share/cmake/Modules/Platform/Emscripten.cmake:6 (find_file)"
+      - "/opt/homebrew/share/cmake/Modules/CMakeSystemSpecificInformation.cmake:32 (include)"
+      - "CMakeLists.txt:2 (project)"
+    mode: "file"
+    variable: "_EMSCRIPTEN_PLATFORM_MODULE"
+    description: "Path to a file."
+    settings:
+      SearchFramework: "FIRST"
+      SearchAppBundle: "FIRST"
+      CMAKE_FIND_USE_CMAKE_PATH: true
+      CMAKE_FIND_USE_CMAKE_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_CMAKE_SYSTEM_PATH: true
+      CMAKE_FIND_USE_INSTALL_PREFIX: true
+    names:
+      - "Platform/Emscripten.cmake"
+    candidate_directories:
+      - "/Users/solpochi/emsdk/upstream/emscripten/cmake/Modules/"
+    searched_directories:
+      - "/Users/solpochi/emsdk/upstream/emscripten/cmake/Modules/Platform.framework/Headers/Emscripten.cmake"
+    found: "/Users/solpochi/emsdk/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake"
+    search_context:
+      ENV{PATH}:
+        - "/Users/solpochi/Projects/oss/kairo/node_modules/.bin"
+        - "/Users/solpochi/Projects/oss/kairo/node_modules/.bin"
+        - "/Users/solpochi/Projects/oss/node_modules/.bin"
+        - "/Users/solpochi/Projects/node_modules/.bin"
+        - "/Users/solpochi/node_modules/.bin"
+        - "/Users/node_modules/.bin"
+        - "/node_modules/.bin"
+        - "/Users/solpochi/emsdk"
+        - "/Users/solpochi/emsdk/upstream/emscripten"
+        - "/Users/solpochi/Projects/oss/kairo/node_modules/.bin"
+        - "/Users/solpochi/Projects/oss/node_modules/.bin"
+        - "/Users/solpochi/Projects/node_modules/.bin"
+        - "/Users/solpochi/node_modules/.bin"
+        - "/Users/node_modules/.bin"
+        - "/node_modules/.bin"
+        - "/Users/solpochi/.opencode/bin"
+        - "/Users/solpochi/.grok/bin"
+        - "/Users/solpochi/.antigravity/antigravity/bin"
+        - "/Users/solpochi/go/bin"
+        - "/Users/solpochi/.local/bin"
+        - "/Users/solpochi/.bun/bin"
+        - "/Users/solpochi/.local/state/fnm_multishells/27147_1781170259897/bin"
+        - "/usr/local/bin"
+        - "/System/Cryptexes/App/usr/bin"
+        - "/usr/bin"
+        - "/bin"
+        - "/usr/sbin"
+        - "/sbin"
+        - "/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin"
+        - "/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin"
+        - "/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin"
+        - "/opt/pkg/env/active/bin"
+        - "/opt/pmk/env/global/bin"
+        - "/opt/homebrew/bin"
+        - "/Users/solpochi/.local/state/fnm_multishells/26784_1781170259410/bin"
+        - "/Users/solpochi/.local/state/fnm_multishells/61740_1781102015967/bin"
+        - "/Users/solpochi/.local/state/fnm_multishells/69465_1779458980528/bin"
+        - "/Users/solpochi/.local/state/fnm_multishells/35188_1778121912027/bin"
+        - "/Users/solpochi/.local/state/fnm_multishells/3466_1777824799000/bin"
+        - "/Users/solpochi/.atuin/bin"
+        - "/Users/solpochi/.local/state/fnm_multishells/3201_1777824744858/bin"
+        - "/Users/solpochi/.cargo/bin"
+        - "/Users/solpochi/.foundry/bin"
+        - "/Users/solpochi/.orbstack/bin"
+        - "/Users/solpochi/.oh-my-zsh/custom/plugins/fzf-zsh-plugin/bin"
+        - "/Users/solpochi/.fzf/bin"
+      CMAKE_INSTALL_PREFIX: "/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot"
+      CMAKE_SYSTEM_PREFIX_PATH:
+        - "/"
+      CMAKE_FIND_ROOT_PATH: "/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot"
+...
+
+---
+events:
+  -
+    kind: "find-v1"
+    backtrace:
+      - "/opt/homebrew/share/cmake/Modules/Platform/Emscripten.cmake:6 (find_file)"
+      - "/opt/homebrew/share/cmake/Modules/CMakeSystemSpecificInformation.cmake:32 (include)"
+      - "CMakeLists.txt:2 (project)"
+    mode: "file"
+    variable: "_EMSCRIPTEN_PLATFORM_MODULE"
+    description: "Path to a file."
+    settings:
+      SearchFramework: "FIRST"
+      SearchAppBundle: "FIRST"
+      CMAKE_FIND_USE_CMAKE_PATH: true
+      CMAKE_FIND_USE_CMAKE_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_CMAKE_SYSTEM_PATH: true
+      CMAKE_FIND_USE_INSTALL_PREFIX: true
+    names:
+      - "Platform/Emscripten.cmake"
+    candidate_directories:
+      - "/Users/solpochi/emsdk/upstream/emscripten/cmake/Modules/"
+    searched_directories:
+      - "/Users/solpochi/emsdk/upstream/emscripten/cmake/Modules/Platform.framework/Headers/Emscripten.cmake"
+    found: "/Users/solpochi/emsdk/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake"
+    search_context:
+      ENV{PATH}:
+        - "/Users/solpochi/Projects/oss/kairo/node_modules/.bin"
+        - "/Users/solpochi/Projects/oss/kairo/node_modules/.bin"
+        - "/Users/solpochi/Projects/oss/node_modules/.bin"
+        - "/Users/solpochi/Projects/node_modules/.bin"
+        - "/Users/solpochi/node_modules/.bin"
+        - "/Users/node_modules/.bin"
+        - "/node_modules/.bin"
+        - "/Users/solpochi/emsdk"
+        - "/Users/solpochi/emsdk/upstream/emscripten"
+        - "/Users/solpochi/Projects/oss/kairo/node_modules/.bin"
+        - "/Users/solpochi/Projects/oss/node_modules/.bin"
+        - "/Users/solpochi/Projects/node_modules/.bin"
+        - "/Users/solpochi/node_modules/.bin"
+        - "/Users/node_modules/.bin"
+        - "/node_modules/.bin"
+        - "/Users/solpochi/.opencode/bin"
+        - "/Users/solpochi/.grok/bin"
+        - "/Users/solpochi/.antigravity/antigravity/bin"
+        - "/Users/solpochi/go/bin"
+        - "/Users/solpochi/.local/bin"
+        - "/Users/solpochi/.bun/bin"
+        - "/Users/solpochi/.local/state/fnm_multishells/27147_1781170259897/bin"
+        - "/usr/local/bin"
+        - "/System/Cryptexes/App/usr/bin"
+        - "/usr/bin"
+        - "/bin"
+        - "/usr/sbin"
+        - "/sbin"
+        - "/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin"
+        - "/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin"
+        - "/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin"
+        - "/opt/pkg/env/active/bin"
+        - "/opt/pmk/env/global/bin"
+        - "/opt/homebrew/bin"
+        - "/Users/solpochi/.local/state/fnm_multishells/26784_1781170259410/bin"
+        - "/Users/solpochi/.local/state/fnm_multishells/61740_1781102015967/bin"
+        - "/Users/solpochi/.local/state/fnm_multishells/69465_1779458980528/bin"
+        - "/Users/solpochi/.local/state/fnm_multishells/35188_1778121912027/bin"
+        - "/Users/solpochi/.local/state/fnm_multishells/3466_1777824799000/bin"
+        - "/Users/solpochi/.atuin/bin"
+        - "/Users/solpochi/.local/state/fnm_multishells/3201_1777824744858/bin"
+        - "/Users/solpochi/.cargo/bin"
+        - "/Users/solpochi/.foundry/bin"
+        - "/Users/solpochi/.orbstack/bin"
+        - "/Users/solpochi/.oh-my-zsh/custom/plugins/fzf-zsh-plugin/bin"
+        - "/Users/solpochi/.fzf/bin"
+      CMAKE_INSTALL_PREFIX: "/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot"
+      CMAKE_SYSTEM_PREFIX_PATH:
+        - "/"
+      CMAKE_FIND_ROOT_PATH: "/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot"
+...
+
+---
+events:
+  -
+    kind: "find-v1"
+    backtrace:
+      - "/opt/homebrew/share/cmake/Modules/Platform/Emscripten.cmake:6 (find_file)"
+      - "/opt/homebrew/share/cmake/Modules/CMakeSystemSpecificInformation.cmake:32 (include)"
+      - "CMakeLists.txt:2 (project)"
+    mode: "file"
+    variable: "_EMSCRIPTEN_PLATFORM_MODULE"
+    description: "Path to a file."
+    settings:
+      SearchFramework: "FIRST"
+      SearchAppBundle: "FIRST"
+      CMAKE_FIND_USE_CMAKE_PATH: true
+      CMAKE_FIND_USE_CMAKE_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_CMAKE_SYSTEM_PATH: true
+      CMAKE_FIND_USE_INSTALL_PREFIX: true
+    names:
+      - "Platform/Emscripten.cmake"
+    candidate_directories:
+      - "/Users/solpochi/emsdk/upstream/emscripten/cmake/Modules/"
+    searched_directories:
+      - "/Users/solpochi/emsdk/upstream/emscripten/cmake/Modules/Platform.framework/Headers/Emscripten.cmake"
+    found: "/Users/solpochi/emsdk/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake"
+    search_context:
+      ENV{PATH}:
+        - "/Users/solpochi/Projects/oss/kairo/node_modules/.bin"
+        - "/Users/solpochi/Projects/oss/kairo/node_modules/.bin"
+        - "/Users/solpochi/Projects/oss/node_modules/.bin"
+        - "/Users/solpochi/Projects/node_modules/.bin"
+        - "/Users/solpochi/node_modules/.bin"
+        - "/Users/node_modules/.bin"
+        - "/node_modules/.bin"
+        - "/Users/solpochi/emsdk"
+        - "/Users/solpochi/emsdk/upstream/emscripten"
+        - "/Users/solpochi/Projects/oss/kairo/node_modules/.bin"
+        - "/Users/solpochi/Projects/oss/node_modules/.bin"
+        - "/Users/solpochi/Projects/node_modules/.bin"
+        - "/Users/solpochi/node_modules/.bin"
+        - "/Users/node_modules/.bin"
+        - "/node_modules/.bin"
+        - "/Users/solpochi/.opencode/bin"
+        - "/Users/solpochi/.grok/bin"
+        - "/Users/solpochi/.antigravity/antigravity/bin"
+        - "/Users/solpochi/go/bin"
+        - "/Users/solpochi/.local/bin"
+        - "/Users/solpochi/.bun/bin"
+        - "/Users/solpochi/.local/state/fnm_multishells/27147_1781170259897/bin"
+        - "/usr/local/bin"
+        - "/System/Cryptexes/App/usr/bin"
+        - "/usr/bin"
+        - "/bin"
+        - "/usr/sbin"
+        - "/sbin"
+        - "/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin"
+        - "/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin"
+        - "/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin"
+        - "/opt/pkg/env/active/bin"
+        - "/opt/pmk/env/global/bin"
+        - "/opt/homebrew/bin"
+        - "/Users/solpochi/.local/state/fnm_multishells/26784_1781170259410/bin"
+        - "/Users/solpochi/.local/state/fnm_multishells/61740_1781102015967/bin"
+        - "/Users/solpochi/.local/state/fnm_multishells/69465_1779458980528/bin"
+        - "/Users/solpochi/.local/state/fnm_multishells/35188_1778121912027/bin"
+        - "/Users/solpochi/.local/state/fnm_multishells/3466_1777824799000/bin"
+        - "/Users/solpochi/.atuin/bin"
+        - "/Users/solpochi/.local/state/fnm_multishells/3201_1777824744858/bin"
+        - "/Users/solpochi/.cargo/bin"
+        - "/Users/solpochi/.foundry/bin"
+        - "/Users/solpochi/.orbstack/bin"
+        - "/Users/solpochi/.oh-my-zsh/custom/plugins/fzf-zsh-plugin/bin"
+        - "/Users/solpochi/.fzf/bin"
+      CMAKE_INSTALL_PREFIX: "/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot"
+      CMAKE_SYSTEM_PREFIX_PATH:
+        - "/"
+      CMAKE_FIND_ROOT_PATH: "/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot"
+...
+
+---
+events:
+  -
+    kind: "find-v1"
+    backtrace:
+      - "/opt/homebrew/share/cmake/Modules/Platform/Emscripten.cmake:6 (find_file)"
+      - "/opt/homebrew/share/cmake/Modules/CMakeSystemSpecificInformation.cmake:32 (include)"
+      - "CMakeLists.txt:2 (project)"
+    mode: "file"
+    variable: "_EMSCRIPTEN_PLATFORM_MODULE"
+    description: "Path to a file."
+    settings:
+      SearchFramework: "FIRST"
+      SearchAppBundle: "FIRST"
+      CMAKE_FIND_USE_CMAKE_PATH: true
+      CMAKE_FIND_USE_CMAKE_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_CMAKE_SYSTEM_PATH: true
+      CMAKE_FIND_USE_INSTALL_PREFIX: true
+    names:
+      - "Platform/Emscripten.cmake"
+    candidate_directories:
+      - "/Users/solpochi/emsdk/upstream/emscripten/cmake/Modules/"
+    searched_directories:
+      - "/Users/solpochi/emsdk/upstream/emscripten/cmake/Modules/Platform.framework/Headers/Emscripten.cmake"
+    found: "/Users/solpochi/emsdk/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake"
+    search_context:
+      ENV{PATH}:
+        - "/Users/solpochi/Projects/oss/kairo/node_modules/.bin"
+        - "/Users/solpochi/Projects/oss/kairo/node_modules/.bin"
+        - "/Users/solpochi/Projects/oss/node_modules/.bin"
+        - "/Users/solpochi/Projects/node_modules/.bin"
+        - "/Users/solpochi/node_modules/.bin"
+        - "/Users/node_modules/.bin"
+        - "/node_modules/.bin"
+        - "/Users/solpochi/emsdk"
+        - "/Users/solpochi/emsdk/upstream/emscripten"
+        - "/Users/solpochi/.opencode/bin"
+        - "/Users/solpochi/.grok/bin"
+        - "/Users/solpochi/.antigravity/antigravity/bin"
+        - "/Users/solpochi/go/bin"
+        - "/Users/solpochi/.local/bin"
+        - "/Users/solpochi/.bun/bin"
+        - "/Users/solpochi/.local/state/fnm_multishells/27143_1781170259893/bin"
+        - "/usr/local/bin"
+        - "/System/Cryptexes/App/usr/bin"
+        - "/usr/bin"
+        - "/bin"
+        - "/usr/sbin"
+        - "/sbin"
+        - "/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin"
+        - "/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin"
+        - "/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin"
+        - "/opt/pkg/env/active/bin"
+        - "/opt/pmk/env/global/bin"
+        - "/opt/homebrew/bin"
+        - "/Users/solpochi/.local/state/fnm_multishells/26784_1781170259410/bin"
+        - "/Users/solpochi/.local/state/fnm_multishells/61740_1781102015967/bin"
+        - "/Users/solpochi/.local/state/fnm_multishells/69465_1779458980528/bin"
+        - "/Users/solpochi/.local/state/fnm_multishells/35188_1778121912027/bin"
+        - "/Users/solpochi/.local/state/fnm_multishells/3466_1777824799000/bin"
+        - "/Users/solpochi/.atuin/bin"
+        - "/Users/solpochi/.local/state/fnm_multishells/3201_1777824744858/bin"
+        - "/Users/solpochi/.cargo/bin"
+        - "/Users/solpochi/.foundry/bin"
+        - "/Users/solpochi/.orbstack/bin"
+        - "/Users/solpochi/.oh-my-zsh/custom/plugins/fzf-zsh-plugin/bin"
+        - "/Users/solpochi/.fzf/bin"
+        - "/Users/solpochi/.claude/plugins/cache/thedotmack/claude-mem/13.5.6/bin"
+        - "/Users/solpochi/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin"
+      CMAKE_INSTALL_PREFIX: "/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot"
+      CMAKE_SYSTEM_PREFIX_PATH:
+        - "/"
+      CMAKE_FIND_ROOT_PATH: "/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot"
+...
+
+---
+events:
+  -
+    kind: "find-v1"
+    backtrace:
+      - "/opt/homebrew/share/cmake/Modules/Platform/Emscripten.cmake:6 (find_file)"
+      - "/opt/homebrew/share/cmake/Modules/CMakeSystemSpecificInformation.cmake:32 (include)"
+      - "CMakeLists.txt:2 (project)"
+    mode: "file"
+    variable: "_EMSCRIPTEN_PLATFORM_MODULE"
+    description: "Path to a file."
+    settings:
+      SearchFramework: "FIRST"
+      SearchAppBundle: "FIRST"
+      CMAKE_FIND_USE_CMAKE_PATH: true
+      CMAKE_FIND_USE_CMAKE_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_CMAKE_SYSTEM_PATH: true
+      CMAKE_FIND_USE_INSTALL_PREFIX: true
+    names:
+      - "Platform/Emscripten.cmake"
+    candidate_directories:
+      - "/Users/solpochi/emsdk/upstream/emscripten/cmake/Modules/"
+    searched_directories:
+      - "/Users/solpochi/emsdk/upstream/emscripten/cmake/Modules/Platform.framework/Headers/Emscripten.cmake"
+    found: "/Users/solpochi/emsdk/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake"
+    search_context:
+      ENV{PATH}:
+        - "/Users/solpochi/Projects/oss/kairo/node_modules/.bin"
+        - "/Users/solpochi/Projects/oss/kairo/node_modules/.bin"
+        - "/Users/solpochi/Projects/oss/node_modules/.bin"
+        - "/Users/solpochi/Projects/node_modules/.bin"
+        - "/Users/solpochi/node_modules/.bin"
+        - "/Users/node_modules/.bin"
+        - "/node_modules/.bin"
+        - "/Users/solpochi/emsdk"
+        - "/Users/solpochi/emsdk/upstream/emscripten"
+        - "/Users/solpochi/Projects/oss/kairo/node_modules/.bin"
+        - "/Users/solpochi/Projects/oss/node_modules/.bin"
+        - "/Users/solpochi/Projects/node_modules/.bin"
+        - "/Users/solpochi/node_modules/.bin"
+        - "/Users/node_modules/.bin"
+        - "/node_modules/.bin"
+        - "/Users/solpochi/.opencode/bin"
+        - "/Users/solpochi/.grok/bin"
+        - "/Users/solpochi/.antigravity/antigravity/bin"
+        - "/Users/solpochi/go/bin"
+        - "/Users/solpochi/.local/bin"
+        - "/Users/solpochi/.bun/bin"
+        - "/Users/solpochi/.local/state/fnm_multishells/27147_1781170259897/bin"
+        - "/usr/local/bin"
+        - "/System/Cryptexes/App/usr/bin"
+        - "/usr/bin"
+        - "/bin"
+        - "/usr/sbin"
+        - "/sbin"
+        - "/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin"
+        - "/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin"
+        - "/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin"
+        - "/opt/pkg/env/active/bin"
+        - "/opt/pmk/env/global/bin"
+        - "/opt/homebrew/bin"
+        - "/Users/solpochi/.local/state/fnm_multishells/26784_1781170259410/bin"
+        - "/Users/solpochi/.local/state/fnm_multishells/61740_1781102015967/bin"
+        - "/Users/solpochi/.local/state/fnm_multishells/69465_1779458980528/bin"
+        - "/Users/solpochi/.local/state/fnm_multishells/35188_1778121912027/bin"
+        - "/Users/solpochi/.local/state/fnm_multishells/3466_1777824799000/bin"
+        - "/Users/solpochi/.atuin/bin"
+        - "/Users/solpochi/.local/state/fnm_multishells/3201_1777824744858/bin"
+        - "/Users/solpochi/.cargo/bin"
+        - "/Users/solpochi/.foundry/bin"
+        - "/Users/solpochi/.orbstack/bin"
+        - "/Users/solpochi/.oh-my-zsh/custom/plugins/fzf-zsh-plugin/bin"
+        - "/Users/solpochi/.fzf/bin"
+      CMAKE_INSTALL_PREFIX: "/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot"
+      CMAKE_SYSTEM_PREFIX_PATH:
+        - "/"
+      CMAKE_FIND_ROOT_PATH: "/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot"
+...
+
+---
+events:
+  -
+    kind: "find-v1"
+    backtrace:
+      - "/opt/homebrew/share/cmake/Modules/Platform/Emscripten.cmake:6 (find_file)"
+      - "/opt/homebrew/share/cmake/Modules/CMakeSystemSpecificInformation.cmake:32 (include)"
+      - "CMakeLists.txt:2 (project)"
+    mode: "file"
+    variable: "_EMSCRIPTEN_PLATFORM_MODULE"
+    description: "Path to a file."
+    settings:
+      SearchFramework: "FIRST"
+      SearchAppBundle: "FIRST"
+      CMAKE_FIND_USE_CMAKE_PATH: true
+      CMAKE_FIND_USE_CMAKE_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_CMAKE_SYSTEM_PATH: true
+      CMAKE_FIND_USE_INSTALL_PREFIX: true
+    names:
+      - "Platform/Emscripten.cmake"
+    candidate_directories:
+      - "/Users/solpochi/emsdk/upstream/emscripten/cmake/Modules/"
+    searched_directories:
+      - "/Users/solpochi/emsdk/upstream/emscripten/cmake/Modules/Platform.framework/Headers/Emscripten.cmake"
+    found: "/Users/solpochi/emsdk/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake"
+    search_context:
+      ENV{PATH}:
+        - "/Users/solpochi/Projects/oss/kairo/node_modules/.bin"
+        - "/Users/solpochi/Projects/oss/kairo/node_modules/.bin"
+        - "/Users/solpochi/Projects/oss/node_modules/.bin"
+        - "/Users/solpochi/Projects/node_modules/.bin"
+        - "/Users/solpochi/node_modules/.bin"
+        - "/Users/node_modules/.bin"
+        - "/node_modules/.bin"
+        - "/Users/solpochi/emsdk"
+        - "/Users/solpochi/emsdk/upstream/emscripten"
+        - "/Users/solpochi/.opencode/bin"
+        - "/Users/solpochi/.grok/bin"
+        - "/Users/solpochi/.antigravity/antigravity/bin"
+        - "/Users/solpochi/go/bin"
+        - "/Users/solpochi/.local/bin"
+        - "/Users/solpochi/.bun/bin"
+        - "/Users/solpochi/.local/state/fnm_multishells/27143_1781170259893/bin"
+        - "/usr/local/bin"
+        - "/System/Cryptexes/App/usr/bin"
+        - "/usr/bin"
+        - "/bin"
+        - "/usr/sbin"
+        - "/sbin"
+        - "/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin"
+        - "/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin"
+        - "/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin"
+        - "/opt/pkg/env/active/bin"
+        - "/opt/pmk/env/global/bin"
+        - "/opt/homebrew/bin"
+        - "/Users/solpochi/.local/state/fnm_multishells/26784_1781170259410/bin"
+        - "/Users/solpochi/.local/state/fnm_multishells/61740_1781102015967/bin"
+        - "/Users/solpochi/.local/state/fnm_multishells/69465_1779458980528/bin"
+        - "/Users/solpochi/.local/state/fnm_multishells/35188_1778121912027/bin"
+        - "/Users/solpochi/.local/state/fnm_multishells/3466_1777824799000/bin"
+        - "/Users/solpochi/.atuin/bin"
+        - "/Users/solpochi/.local/state/fnm_multishells/3201_1777824744858/bin"
+        - "/Users/solpochi/.cargo/bin"
+        - "/Users/solpochi/.foundry/bin"
+        - "/Users/solpochi/.orbstack/bin"
+        - "/Users/solpochi/.oh-my-zsh/custom/plugins/fzf-zsh-plugin/bin"
+        - "/Users/solpochi/.fzf/bin"
+        - "/Users/solpochi/.claude/plugins/cache/thedotmack/claude-mem/13.5.6/bin"
+        - "/Users/solpochi/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin"
+      CMAKE_INSTALL_PREFIX: "/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot"
+      CMAKE_SYSTEM_PREFIX_PATH:
+        - "/"
+      CMAKE_FIND_ROOT_PATH: "/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot"
+...
+
+---
+events:
+  -
+    kind: "find-v1"
+    backtrace:
+      - "/opt/homebrew/share/cmake/Modules/Platform/Emscripten.cmake:6 (find_file)"
+      - "/opt/homebrew/share/cmake/Modules/CMakeSystemSpecificInformation.cmake:32 (include)"
+      - "CMakeLists.txt:2 (project)"
+    mode: "file"
+    variable: "_EMSCRIPTEN_PLATFORM_MODULE"
+    description: "Path to a file."
+    settings:
+      SearchFramework: "FIRST"
+      SearchAppBundle: "FIRST"
+      CMAKE_FIND_USE_CMAKE_PATH: true
+      CMAKE_FIND_USE_CMAKE_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_CMAKE_SYSTEM_PATH: true
+      CMAKE_FIND_USE_INSTALL_PREFIX: true
+    names:
+      - "Platform/Emscripten.cmake"
+    candidate_directories:
+      - "/Users/solpochi/emsdk/upstream/emscripten/cmake/Modules/"
+    searched_directories:
+      - "/Users/solpochi/emsdk/upstream/emscripten/cmake/Modules/Platform.framework/Headers/Emscripten.cmake"
+    found: "/Users/solpochi/emsdk/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake"
+    search_context:
+      ENV{PATH}:
+        - "/Users/solpochi/Projects/oss/kairo/node_modules/.bin"
+        - "/Users/solpochi/Projects/oss/kairo/node_modules/.bin"
+        - "/Users/solpochi/Projects/oss/node_modules/.bin"
+        - "/Users/solpochi/Projects/node_modules/.bin"
+        - "/Users/solpochi/node_modules/.bin"
+        - "/Users/node_modules/.bin"
+        - "/node_modules/.bin"
+        - "/Users/solpochi/emsdk"
+        - "/Users/solpochi/emsdk/upstream/emscripten"
+        - "/Users/solpochi/Projects/oss/kairo/node_modules/.bin"
+        - "/Users/solpochi/Projects/oss/node_modules/.bin"
+        - "/Users/solpochi/Projects/node_modules/.bin"
+        - "/Users/solpochi/node_modules/.bin"
+        - "/Users/node_modules/.bin"
+        - "/node_modules/.bin"
+        - "/Users/solpochi/.opencode/bin"
+        - "/Users/solpochi/.grok/bin"
+        - "/Users/solpochi/.antigravity/antigravity/bin"
+        - "/Users/solpochi/go/bin"
+        - "/Users/solpochi/.local/bin"
+        - "/Users/solpochi/.bun/bin"
+        - "/Users/solpochi/.local/state/fnm_multishells/27147_1781170259897/bin"
+        - "/usr/local/bin"
+        - "/System/Cryptexes/App/usr/bin"
+        - "/usr/bin"
+        - "/bin"
+        - "/usr/sbin"
+        - "/sbin"
+        - "/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin"
+        - "/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin"
+        - "/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin"
+        - "/opt/pkg/env/active/bin"
+        - "/opt/pmk/env/global/bin"
+        - "/opt/homebrew/bin"
+        - "/Users/solpochi/.local/state/fnm_multishells/26784_1781170259410/bin"
+        - "/Users/solpochi/.local/state/fnm_multishells/61740_1781102015967/bin"
+        - "/Users/solpochi/.local/state/fnm_multishells/69465_1779458980528/bin"
+        - "/Users/solpochi/.local/state/fnm_multishells/35188_1778121912027/bin"
+        - "/Users/solpochi/.local/state/fnm_multishells/3466_1777824799000/bin"
+        - "/Users/solpochi/.atuin/bin"
+        - "/Users/solpochi/.local/state/fnm_multishells/3201_1777824744858/bin"
+        - "/Users/solpochi/.cargo/bin"
+        - "/Users/solpochi/.foundry/bin"
+        - "/Users/solpochi/.orbstack/bin"
+        - "/Users/solpochi/.oh-my-zsh/custom/plugins/fzf-zsh-plugin/bin"
+        - "/Users/solpochi/.fzf/bin"
+      CMAKE_INSTALL_PREFIX: "/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot"
+      CMAKE_SYSTEM_PREFIX_PATH:
+        - "/"
+      CMAKE_FIND_ROOT_PATH: "/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot"
+...
+
+---
+events:
+  -
+    kind: "find-v1"
+    backtrace:
+      - "/opt/homebrew/share/cmake/Modules/Platform/Emscripten.cmake:6 (find_file)"
+      - "/opt/homebrew/share/cmake/Modules/CMakeSystemSpecificInformation.cmake:32 (include)"
+      - "CMakeLists.txt:2 (project)"
+    mode: "file"
+    variable: "_EMSCRIPTEN_PLATFORM_MODULE"
+    description: "Path to a file."
+    settings:
+      SearchFramework: "FIRST"
+      SearchAppBundle: "FIRST"
+      CMAKE_FIND_USE_CMAKE_PATH: true
+      CMAKE_FIND_USE_CMAKE_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_CMAKE_SYSTEM_PATH: true
+      CMAKE_FIND_USE_INSTALL_PREFIX: true
+    names:
+      - "Platform/Emscripten.cmake"
+    candidate_directories:
+      - "/Users/solpochi/emsdk/upstream/emscripten/cmake/Modules/"
+    searched_directories:
+      - "/Users/solpochi/emsdk/upstream/emscripten/cmake/Modules/Platform.framework/Headers/Emscripten.cmake"
+    found: "/Users/solpochi/emsdk/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake"
+    search_context:
+      ENV{PATH}:
+        - "/Users/solpochi/Projects/oss/kairo/node_modules/.bin"
+        - "/Users/solpochi/Projects/oss/kairo/node_modules/.bin"
+        - "/Users/solpochi/Projects/oss/node_modules/.bin"
+        - "/Users/solpochi/Projects/node_modules/.bin"
+        - "/Users/solpochi/node_modules/.bin"
+        - "/Users/node_modules/.bin"
+        - "/node_modules/.bin"
+        - "/Users/solpochi/emsdk"
+        - "/Users/solpochi/emsdk/upstream/emscripten"
+        - "/Users/solpochi/Projects/oss/kairo/node_modules/.bin"
+        - "/Users/solpochi/Projects/oss/node_modules/.bin"
+        - "/Users/solpochi/Projects/node_modules/.bin"
+        - "/Users/solpochi/node_modules/.bin"
+        - "/Users/node_modules/.bin"
+        - "/node_modules/.bin"
+        - "/Users/solpochi/.opencode/bin"
+        - "/Users/solpochi/.grok/bin"
+        - "/Users/solpochi/.antigravity/antigravity/bin"
+        - "/Users/solpochi/go/bin"
+        - "/Users/solpochi/.local/bin"
+        - "/Users/solpochi/.bun/bin"
+        - "/Users/solpochi/.local/state/fnm_multishells/27147_1781170259897/bin"
+        - "/usr/local/bin"
+        - "/System/Cryptexes/App/usr/bin"
+        - "/usr/bin"
+        - "/bin"
+        - "/usr/sbin"
+        - "/sbin"
+        - "/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin"
+        - "/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin"
+        - "/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin"
+        - "/opt/pkg/env/active/bin"
+        - "/opt/pmk/env/global/bin"
+        - "/opt/homebrew/bin"
+        - "/Users/solpochi/.local/state/fnm_multishells/26784_1781170259410/bin"
+        - "/Users/solpochi/.local/state/fnm_multishells/61740_1781102015967/bin"
+        - "/Users/solpochi/.local/state/fnm_multishells/69465_1779458980528/bin"
+        - "/Users/solpochi/.local/state/fnm_multishells/35188_1778121912027/bin"
+        - "/Users/solpochi/.local/state/fnm_multishells/3466_1777824799000/bin"
+        - "/Users/solpochi/.atuin/bin"
+        - "/Users/solpochi/.local/state/fnm_multishells/3201_1777824744858/bin"
+        - "/Users/solpochi/.cargo/bin"
+        - "/Users/solpochi/.foundry/bin"
+        - "/Users/solpochi/.orbstack/bin"
+        - "/Users/solpochi/.oh-my-zsh/custom/plugins/fzf-zsh-plugin/bin"
+        - "/Users/solpochi/.fzf/bin"
+      CMAKE_INSTALL_PREFIX: "/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot"
+      CMAKE_SYSTEM_PREFIX_PATH:
+        - "/"
+      CMAKE_FIND_ROOT_PATH: "/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot"
+...
+
+---
+events:
+  -
+    kind: "find-v1"
+    backtrace:
+      - "/opt/homebrew/share/cmake/Modules/Platform/Emscripten.cmake:6 (find_file)"
+      - "/opt/homebrew/share/cmake/Modules/CMakeSystemSpecificInformation.cmake:32 (include)"
+      - "CMakeLists.txt:2 (project)"
+    mode: "file"
+    variable: "_EMSCRIPTEN_PLATFORM_MODULE"
+    description: "Path to a file."
+    settings:
+      SearchFramework: "FIRST"
+      SearchAppBundle: "FIRST"
+      CMAKE_FIND_USE_CMAKE_PATH: true
+      CMAKE_FIND_USE_CMAKE_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_CMAKE_SYSTEM_PATH: true
+      CMAKE_FIND_USE_INSTALL_PREFIX: true
+    names:
+      - "Platform/Emscripten.cmake"
+    candidate_directories:
+      - "/Users/solpochi/emsdk/upstream/emscripten/cmake/Modules/"
+    searched_directories:
+      - "/Users/solpochi/emsdk/upstream/emscripten/cmake/Modules/Platform.framework/Headers/Emscripten.cmake"
+    found: "/Users/solpochi/emsdk/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake"
+    search_context:
+      ENV{PATH}:
+        - "/Users/solpochi/Projects/oss/kairo/node_modules/.bin"
+        - "/Users/solpochi/Projects/oss/kairo/node_modules/.bin"
+        - "/Users/solpochi/Projects/oss/node_modules/.bin"
+        - "/Users/solpochi/Projects/node_modules/.bin"
+        - "/Users/solpochi/node_modules/.bin"
+        - "/Users/node_modules/.bin"
+        - "/node_modules/.bin"
+        - "/Users/solpochi/emsdk"
+        - "/Users/solpochi/emsdk/upstream/emscripten"
+        - "/Users/solpochi/Projects/oss/kairo/node_modules/.bin"
+        - "/Users/solpochi/Projects/oss/node_modules/.bin"
+        - "/Users/solpochi/Projects/node_modules/.bin"
+        - "/Users/solpochi/node_modules/.bin"
+        - "/Users/node_modules/.bin"
+        - "/node_modules/.bin"
+        - "/Users/solpochi/.opencode/bin"
+        - "/Users/solpochi/.grok/bin"
+        - "/Users/solpochi/.antigravity/antigravity/bin"
+        - "/Users/solpochi/go/bin"
+        - "/Users/solpochi/.local/bin"
+        - "/Users/solpochi/.bun/bin"
+        - "/Users/solpochi/.local/state/fnm_multishells/27207_1781170259935/bin"
+        - "/usr/local/bin"
+        - "/System/Cryptexes/App/usr/bin"
+        - "/usr/bin"
+        - "/bin"
+        - "/usr/sbin"
+        - "/sbin"
+        - "/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin"
+        - "/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin"
+        - "/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin"
+        - "/opt/pkg/env/active/bin"
+        - "/opt/pmk/env/global/bin"
+        - "/opt/homebrew/bin"
+        - "/Users/solpochi/.local/state/fnm_multishells/26784_1781170259410/bin"
+        - "/Users/solpochi/.local/state/fnm_multishells/61740_1781102015967/bin"
+        - "/Users/solpochi/.local/state/fnm_multishells/69465_1779458980528/bin"
+        - "/Users/solpochi/.local/state/fnm_multishells/35188_1778121912027/bin"
+        - "/Users/solpochi/.local/state/fnm_multishells/3466_1777824799000/bin"
+        - "/Users/solpochi/.atuin/bin"
+        - "/Users/solpochi/.local/state/fnm_multishells/3201_1777824744858/bin"
+        - "/Users/solpochi/.cargo/bin"
+        - "/Users/solpochi/.foundry/bin"
+        - "/Users/solpochi/.orbstack/bin"
+        - "/Users/solpochi/.oh-my-zsh/custom/plugins/fzf-zsh-plugin/bin"
+        - "/Users/solpochi/.fzf/bin"
+      CMAKE_INSTALL_PREFIX: "/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot"
+      CMAKE_SYSTEM_PREFIX_PATH:
+        - "/"
+      CMAKE_FIND_ROOT_PATH: "/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot"
+...

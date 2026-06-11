@@ -9,7 +9,7 @@
 #include "kairo/hal/wifi.h"
 #include "kairo/config/config_store.h"
 #include "kairo/event/event_bus.h"
-#include "kairo/plugins/js_app_store.h"
+#include "kairo/apps/js_app_store.h"
 #include <string>
 #include <vector>
 #include <cstdlib>
@@ -42,6 +42,27 @@ void WasmPlatform::registerDrivers(Runtime& rt) {
     remote_.onPower(&WasmPlatform::powerThunk, this);
     remote_.onControl(&WasmPlatform::controlThunk, this);
     remote_.setProfile(rt.board().profile());
+
+    // CLI terminal over KLP (Plan 40) — same built-ins as hardware; commands that
+    // need a missing driver (e.g. `ble`) report "not available" in the browser.
+    registerCoreCliCommands(cli_, rt);
+    remote_.attachCli(cli_);
+
+    // VFS with two in-RAM partitions to show the Linux-style mount system: root
+    // at "/", plus a second backend mounted at "/sd" (a stand-in for a microSD —
+    // writes there land in a DIFFERENT backend). On hardware these become LittleFS
+    // (/) and FAT (/sd). The FILE channel/browser see one tree regardless.
+    vfs_.mount("/", &rootFs_);
+    vfs_.mount("/sd", &sdFs_);
+    rt.container().registerAs<IFileSystem>(&vfs_);
+    rt.capabilities().add("storage");
+    rootFs_.seed("/readme.txt", "Kairo virtual filesystem (in-RAM, volatile).\n"
+                                "Browse, edit, upload and delete here or via `fs` in the terminal.\n");
+    rootFs_.seed("/apps/hello.kapp", "// a placeholder app bundle\n");
+    rootFs_.mkdir("/data");
+    sdFs_.seed("/sd-card.txt", "This file lives on the /sd mount (separate backend).\n");
+    remote_.attachFs(vfs_);
+
     link_.onReady(&WasmPlatform::readyThunk, this);   // push current screen on connect
 
     rt.hardware().add({"display", DriverKind::Display, "wasm 1-bit (remote)"});

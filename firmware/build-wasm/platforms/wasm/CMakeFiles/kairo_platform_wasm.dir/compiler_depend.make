@@ -735,17 +735,21 @@ platforms/wasm/CMakeFiles/kairo_platform_wasm.dir/src/wasm_platform.cpp.o: /User
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/app/app.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/app/component_app.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/apps/js_app.h \
+  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/apps/js_app_store.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/board.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/clock.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/config/config_store.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/event/async_event_poster.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/event/event.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/event/event_bus.h \
+  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/fs/mem_filesystem.h \
+  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/fs/vfs.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/hal/audio_input.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/hal/audio_output.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/hal/camera.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/hal/display.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/hal/driver.h \
+  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/hal/filesystem.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/hal/remote_screen_tap.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/hal/wifi.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/input/gesture.h \
@@ -762,14 +766,12 @@ platforms/wasm/CMakeFiles/kairo_platform_wasm.dir/src/wasm_platform.cpp.o: /User
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/nema/task_runner.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/nema/thread.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/platform.h \
-  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/plugin/plugin.h \
-  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/plugins/js_app_plugin.h \
-  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/plugins/js_app_store.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/runtime.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/service.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/service/service_container.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/services/audio_service.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/services/camera_service.h \
+  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/services/cli_service.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/services/input_service.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/services/remote_service.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/system/board_profile.h \
@@ -1387,6 +1389,7 @@ platforms/wasm/CMakeFiles/kairo_platform_wasm.dir/src/wasm_platform.cpp.o: /User
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/new \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/optional \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/ratio \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/set \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/stdbool.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/stddef.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/stdexcept \
@@ -1464,6 +1467,8 @@ platforms/wasm/CMakeFiles/kairo_platform_wasm.dir/src/wasm_platform.cpp.o: /User
   /Users/solpochi/emsdk/upstream/lib/clang/23/include/stdint.h
 
 
+/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/set:
+
 /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/map:
 
 /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__tree:
@@ -1482,17 +1487,13 @@ platforms/wasm/CMakeFiles/kairo_platform_wasm.dir/src/wasm_platform.cpp.o: /User
 
 /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/services/remote_service.h:
 
+/Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/services/cli_service.h:
+
 /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/services/audio_service.h:
 
 /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/service/service_container.h:
 
 /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/runtime.h:
-
-/Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/plugins/js_app_plugin.h:
-
-/Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/plugins/js_app_store.h:
-
-/Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/plugin/plugin.h:
 
 /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/nema/task_runner.h:
 
@@ -1509,6 +1510,10 @@ platforms/wasm/CMakeFiles/kairo_platform_wasm.dir/src/wasm_platform.cpp.o: /User
 /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/hal/audio_output.h:
 
 /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/hal/audio_input.h:
+
+/Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/fs/mem_filesystem.h:
+
+/Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/apps/js_app_store.h:
 
 /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/app/app.h:
 
@@ -2676,6 +2681,8 @@ platforms/wasm/CMakeFiles/kairo_platform_wasm.dir/src/wasm_platform.cpp.o: /User
 
 /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__configuration/availability.h:
 
+/Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/fs/vfs.h:
+
 /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/copy_cvref.h:
 
 /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/find.h:
@@ -2695,6 +2702,8 @@ platforms/wasm/CMakeFiles/kairo_platform_wasm.dir/src/wasm_platform.cpp.o: /User
 /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/partial_sort_copy.h:
 
 /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/minmax_element.h:
+
+/Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/hal/filesystem.h:
 
 /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/min_element.h:
 

@@ -683,6 +683,11 @@ platforms/wasm/CMakeFiles/kairo_platform_wasm.dir/src/wasm_platform.cpp.o: \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/types.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/system/board_profile.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/ui/key.h \
+  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/services/cli_service.h \
+  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/fs/mem_filesystem.h \
+  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/hal/filesystem.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/set \
+  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/fs/vfs.h \
   /Users/solpochi/Projects/oss/kairo/firmware/platforms/wasm/include/kairo/sim/sim_wifi_driver.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/hal/wifi.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/runtime.h \
@@ -722,9 +727,7 @@ platforms/wasm/CMakeFiles/kairo_platform_wasm.dir/src/wasm_platform.cpp.o: \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/system/capability_registry.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/board.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/event/event_bus.h \
-  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/plugins/js_app_store.h \
-  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/plugins/js_app_plugin.h \
-  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/plugin/plugin.h \
+  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/apps/js_app_store.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/apps/js_app.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/app/component_app.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/app/app.h \

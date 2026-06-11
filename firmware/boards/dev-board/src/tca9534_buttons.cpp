@@ -27,7 +27,7 @@ void TCA9534Buttons::start() {
     Wire.endTransmission();
     last_ = readRaw();  // baseline — clears any pending INT
 
-    // Dedicated polling thread — never blocked by display/plugins.
+    // Dedicated polling thread — never blocked by display/app work.
     // Core 0 (with WiFi) is fine: an I²C read is ~1ms and the thread sleeps
     // 15ms between polls. Main loop runs on core 1.
     thread_.start({"btn_poll", 3072, 6, 0}, &TCA9534Buttons::pollThread, this);

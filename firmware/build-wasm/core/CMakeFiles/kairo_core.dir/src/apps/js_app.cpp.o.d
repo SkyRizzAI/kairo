@@ -3,7 +3,6 @@ core/CMakeFiles/kairo_core.dir/src/apps/js_app.cpp.o: \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/apps/js_app.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/app/component_app.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/app/app.h \
-  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/ui/node.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/cstdint \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__config \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__config_site \
@@ -15,6 +14,7 @@ core/CMakeFiles/kairo_core.dir/src/apps/js_app.cpp.o: \
   /Users/solpochi/emsdk/upstream/lib/clang/23/include/stdint.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/stdint.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/bits/alltypes.h \
+  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/ui/node.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/ui/widgets.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/cstddef \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/version \

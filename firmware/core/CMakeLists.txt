@@ -23,10 +23,12 @@ src/input/gesture.cpp
     src/system/hardware_registry.cpp
     src/system/capability_registry.cpp
     src/system/board_profile.cpp
+    src/fs/mem_filesystem.cpp
+    src/fs/vfs.cpp
     src/services/clock_service.cpp
+    src/services/cli_service.cpp
     src/services/gui_service.cpp
-    src/plugin/plugin_context.cpp
-    src/plugin/plugin_manager.cpp
+    src/app/app_registry.cpp
     src/app/app_host.cpp
     src/app/app_host_manager.cpp
     src/app/component_app.cpp
@@ -41,18 +43,9 @@ src/input/gesture.cpp
     src/apps/camera_app.cpp
     src/apps/ui_showcase_app.cpp
     src/apps/js_app.cpp
+    src/apps/js_app_store.cpp
     src/ui/text_input.cpp
     src/ui/virtual_keyboard.cpp
-    src/plugins/hello_plugin.cpp
-    src/plugins/clock_plugin.cpp
-    src/plugins/counter_plugin.cpp
-    src/plugins/stopwatch_plugin.cpp
-    src/plugins/task_demo_plugin.cpp
-    src/plugins/ticker_plugin.cpp
-    src/plugins/camera_plugin.cpp
-    src/plugins/ui_showcase_plugin.cpp
-    src/plugins/js_app_plugin.cpp
-    src/plugins/js_app_store.cpp
     src/ui/canvas.cpp
     src/ui/layout.cpp
     src/ui/widgets.cpp

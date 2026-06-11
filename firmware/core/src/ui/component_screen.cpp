@@ -9,6 +9,11 @@ namespace kairo {
 
 void ComponentScreen::requestRedraw() { rt_.view().requestRedraw(); }
 
+void ComponentScreen::enter() {
+    state_.modality = input::InputModality::Button;
+    requestRedraw();
+}
+
 void ComponentScreen::draw(Canvas& c) {
     arena_.reset();
     state_.pressed = nullptr;          // arena reset invalidates node pointers

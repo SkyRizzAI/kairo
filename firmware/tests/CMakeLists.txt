@@ -20,3 +20,7 @@ add_test(NAME klp_test COMMAND klp_test)
 add_test(NAME link_test COMMAND link_test)
 add_test(NAME js_test COMMAND js_test)
 add_test(NAME js_render_test COMMAND js_render_test)
+
+add_executable(service_test service_test.cpp)
+target_link_libraries(service_test PRIVATE kairo_core)
+add_test(NAME service_test COMMAND service_test)

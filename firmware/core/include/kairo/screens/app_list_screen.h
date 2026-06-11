@@ -7,8 +7,8 @@ namespace kairo {
 
 class Runtime;
 
-// App list — component-migrated (Plan 30). Header + a ScrollView of plugin rows;
-// each row is a Pressable that launches the plugin (tap or focus+Activate).
+// App list — component-migrated (Plan 30). Header + a ScrollView of app rows;
+// each row is a Pressable that launches the app (tap or focus+Activate).
 class AppListScreen : public ComponentScreen {
 public:
     explicit AppListScreen(Runtime& rt);

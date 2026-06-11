@@ -7,9 +7,14 @@
 #include "kairo/hal/display.h"
 #include "kairo/log/logger.h"
 #include "kairo/services/remote_service.h"
-#include "kairo/plugins/js_app_store.h"
+#include "kairo/services/cli_service.h"
+#include "kairo/apps/js_app_store.h"
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
+#include <esp_system.h>
+#include <esp_heap_caps.h>
+#include <string>
+#include <vector>
 
 namespace kairo {
 
@@ -52,6 +57,41 @@ void Esp32Platform::postRegister(Runtime& rt) {
     remote_.onPower(&Esp32Platform::powerThunk, this);
     remote_.onControl(&Esp32Platform::controlThunk, this);   // OTA app-install (Plan 37)
     remote_.setProfile(rt.board().profile());
+
+    // CLI terminal over KLP (Plan 40). Core built-ins + a live-heap `ram` that
+    // replaces the totals-only core version with real free-heap numbers.
+    registerCoreCliCommands(cli_, rt);
+    cli_.add("ram", "free heap / PSRAM (live)",
+        [](const std::vector<std::string>&, const CliService::Out& out) {
+            out("free heap:  " + std::to_string(esp_get_free_heap_size()) + " B");
+            out("min free:   " + std::to_string(esp_get_minimum_free_heap_size()) + " B");
+            out("free psram: " + std::to_string(heap_caps_get_free_size(MALLOC_CAP_SPIRAM)) + " B");
+        });
+    remote_.attachCli(cli_);
+
+    // VFS + FILE channel. Root "/" is PERSISTENT (LittleFS on the internal flash
+    // "spiffs" partition — survives reboot); "/tmp" is volatile RAM scratch. A FAT
+    // backend can mount at "/sd" when a card is detected — the mount table means no
+    // upper layer changes. (Plan 38.)
+    bool fsOk = rootFs_.begin("spiffs", "/lfs");
+    vfs_.mount("/", &rootFs_);
+    vfs_.mount("/tmp", &tmpFs_);
+    rt.container().registerAs<IFileSystem>(&vfs_);
+    rt.capabilities().add("storage");
+    if (fsOk) {
+        // Seed once on a fresh filesystem; never clobber the user's files on later
+        // boots (this is the whole point of persistence).
+        rootFs_.mkdir("/apps");
+        rootFs_.mkdir("/data");
+        std::vector<uint8_t> probe;
+        if (!rootFs_.read("/readme.txt", probe)) {
+            std::string msg = "Kairo filesystem (LittleFS — persistent across reboots).\n";
+            rootFs_.write("/readme.txt", (const uint8_t*)msg.data(), msg.size());
+        }
+    }
+    rt.log().info("Esp32Platform", "filesystem", {{"root", fsOk ? "littlefs" : "FAILED"}});
+    remote_.attachFs(vfs_);
+
     link_.onReady(&Esp32Platform::readyThunk, this);    // push screen on connect
 
     remoteWired_ = true;

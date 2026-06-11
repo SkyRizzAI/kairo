@@ -4,7 +4,6 @@
 #include "kairo/log/logger.h"
 #include "kairo/event/event_bus.h"
 #include "kairo/event/event.h"
-#include "kairo/clock.h"
 #include <vector>
 #include <algorithm>
 
@@ -22,7 +21,7 @@ static const char* stateStr(ServiceState s) {
     return "?";
 }
 
-ServiceManager::ServiceManager(ServiceContainer& c, Logger& log, EventBus& bus, IClock& /*clk*/)
+ServiceManager::ServiceManager(ServiceContainer& c, Logger& log, EventBus& bus)
     : container_(c), log_(log), bus_(bus) {
     for (auto* svc : c.services()) {
         states_[svc] = ServiceState::Created;
@@ -43,21 +42,35 @@ void ServiceManager::transition(IService* svc, ServiceState to) {
     }
 }
 
+void ServiceManager::startOne(IService* svc) {
+    if (states_[svc] == ServiceState::Running) return;
+    transition(svc, ServiceState::Starting);
+    try {
+        svc->start();
+        transition(svc, ServiceState::Running);
+    } catch (const std::exception& e) {
+        log_.error("ServiceManager",
+            std::string(svc->name()) + " failed to start: " + e.what());
+        transition(svc, ServiceState::Failed);
+    } catch (...) {
+        log_.error("ServiceManager",
+            std::string(svc->name()) + " failed to start: unknown exception");
+        transition(svc, ServiceState::Failed);
+    }
+}
+
+void ServiceManager::stopOne(IService* svc) {
+    if (states_[svc] != ServiceState::Running) return;
+    transition(svc, ServiceState::Stopping);
+    try {
+        svc->stop();
+    } catch (...) {}
+    transition(svc, ServiceState::Stopped);
+}
+
 void ServiceManager::startAll() {
     for (auto* svc : container_.services()) {
-        transition(svc, ServiceState::Starting);
-        try {
-            svc->start();
-            transition(svc, ServiceState::Running);
-        } catch (const std::exception& e) {
-            log_.error("ServiceManager",
-                std::string(svc->name()) + " failed to start: " + e.what());
-            transition(svc, ServiceState::Failed);
-        } catch (...) {
-            log_.error("ServiceManager",
-                std::string(svc->name()) + " failed to start: unknown exception");
-            transition(svc, ServiceState::Failed);
-        }
+        startOne(svc);
     }
 }
 
@@ -65,12 +78,7 @@ void ServiceManager::stopAll() {
     auto svcs = container_.services();
     std::reverse(svcs.begin(), svcs.end());  // stop in reverse registration order
     for (auto* svc : svcs) {
-        if (states_[svc] != ServiceState::Running) continue;
-        transition(svc, ServiceState::Stopping);
-        try {
-            svc->stop();
-        } catch (...) {}
-        transition(svc, ServiceState::Stopped);
+        stopOne(svc);
     }
 }
 

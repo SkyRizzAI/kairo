@@ -7,12 +7,12 @@ namespace kairo::nema {
 
 // TaskRunner — offload blocking work off the UI thread.
 //
-// THIS is what makes Kairo "never freeze": a plugin/screen that needs to do
+// THIS is what makes Kairo "never freeze": an app/screen that needs to do
 // something slow (HTTP download, file I/O, crypto, long compute) submits it as
 // a Job. The Job runs on a dedicated worker thread — the UI thread keeps
 // ticking, rendering, and handling input the whole time. When the Job finishes,
 // its optional `done` callback runs back ON THE UI THREAD (drained in
-// Runtime::step), so it can safely touch UI / plugin state with no locks.
+// Runtime::step), so it can safely touch UI / app state with no locks.
 //
 //   rt.tasks().submit(
 //       [shared] { shared->result = http.get(url); },   // worker thread (blocks)

@@ -1,0 +1,11 @@
+{
+	"InstallScripts" : 
+	[
+		"/Users/solpochi/Projects/oss/kairo/firmware/build-host/cmake_install.cmake",
+		"/Users/solpochi/Projects/oss/kairo/firmware/build-host/vendor/quickjs/cmake_install.cmake",
+		"/Users/solpochi/Projects/oss/kairo/firmware/build-host/core/cmake_install.cmake",
+		"/Users/solpochi/Projects/oss/kairo/firmware/build-host/boards/simulator/cmake_install.cmake",
+		"/Users/solpochi/Projects/oss/kairo/firmware/build-host/tests/cmake_install.cmake"
+	],
+	"Parallel" : false
+}

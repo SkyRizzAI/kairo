@@ -15,6 +15,18 @@ export interface EventEntry {
 	name: string;
 	fields: Record<string, string>;
 }
+// CLI output chunk. `text` is a line of output; `done` marks end-of-command (the
+// device sent EOT) so the terminal can re-enable its prompt.
+export interface CliChunk {
+	text?: string;
+	done?: boolean;
+}
+// One directory entry from the FILE channel (mirrors firmware FsEntry).
+export interface FileEntry {
+	name: string;
+	isDir: boolean;
+	size: number;
+}
 
 // Board profile — the device's physical layout (SYSTEM GetInfo reply, Plan 33).
 // Mirrors firmware BoardProfile/ComponentDef; coordinates are normalized 0–1
@@ -43,7 +55,27 @@ const GET_INFO = 0x01; // SYSTEM channel opcode
 
 export const Power = { Restart: 0x10, Sleep: 0x11, Shutdown: 0x12 } as const;
 export const Key = { Up: 1, Down: 2, Left: 3, Right: 4, Select: 5, Cancel: 6 } as const;
+
+// Browser keyboard → Kairo Key. Shared by every view that forwards keystrokes to
+// a device (/remote SessionView, /simulator) so the mapping lives in one place.
+export const KEY_MAP: Record<string, number> = {
+	ArrowUp: Key.Up,
+	ArrowDown: Key.Down,
+	ArrowLeft: Key.Left,
+	ArrowRight: Key.Right,
+	Enter: Key.Select,
+	' ': Key.Select,
+	Escape: Key.Cancel,
+	Backspace: Key.Cancel
+};
+
+// "WxH" of a screen frame, or "—" before the first frame. Shared by the headers
+// of /remote and /simulator so the formatting stays identical.
+export function frameDims(frame: ScreenFrame | null): string {
+	return frame ? `${frame.w}×${frame.h}` : '—';
+}
 const ExtOp = { InjectEvent: 0x01, WifiSetNetworks: 0x02, AppInstall: 0x03 } as const;
+const FileOp = { List: 0x01, Read: 0x03, Write: 0x04, Mkdir: 0x05, Remove: 0x06 } as const;
 
 type Listeners = {
 	screen: Set<(f: ScreenFrame) => void>;
@@ -51,6 +83,7 @@ type Listeners = {
 	event: Set<(e: EventEntry) => void>;
 	ready: Set<() => void>;
 	profile: Set<(p: BoardProfile) => void>;
+	cli: Set<(c: CliChunk) => void>;
 };
 
 // RemoteSession — transport-agnostic client of a Kairo device (WASM sim or real
@@ -62,12 +95,16 @@ export class RemoteSession {
 	#ready = false;
 	#profile: BoardProfile | null = null;
 	#helloTimer: ReturnType<typeof setInterval> | null = null;
+	// FILE channel is request/response; one queue of pending resolvers per opcode.
+	// Sequential UI usage → FIFO correlation is enough.
+	#filePending: Record<number, ((r: { status: number; rest: Uint8Array } | null) => void)[]> = {};
 	#l: Listeners = {
 		screen: new Set(),
 		log: new Set(),
 		event: new Set(),
 		ready: new Set(),
-		profile: new Set()
+		profile: new Set(),
+		cli: new Set()
 	};
 
 	constructor(t: ILinkTransport) {
@@ -160,6 +197,28 @@ export class RemoteSession {
 			}
 			return;
 		}
+		if (f.channel === Channel.File) {
+			// reply: [op][status][path\0][extra...]. Resolve the oldest request of op.
+			const p = f.payload;
+			const op = p[0];
+			const status = p[1];
+			let i = 2;
+			while (i < p.length && p[i]) i++; // skip path
+			i++;
+			const rest = p.subarray(i);
+			this.#filePending[op]?.shift()?.({ status, rest });
+			return;
+		}
+		if (f.channel === Channel.Cli) {
+			// device→host: text output chunks, terminated by a single 0x04 (EOT).
+			if (f.payload.length === 1 && f.payload[0] === 0x04) {
+				this.#emit('cli', { done: true } as CliChunk);
+			} else {
+				const text = new TextDecoder().decode(f.payload);
+				this.#emit('cli', { text } as CliChunk);
+			}
+			return;
+		}
 		if (f.channel === Channel.Screen) {
 			const p = f.payload;
 			const w = p[0] | (p[1] << 8);
@@ -201,6 +260,87 @@ export class RemoteSession {
 
 	sendKey(key: number) {
 		this.#t.send(encodeFrame(Channel.Input, new Uint8Array([key])));
+	}
+	// Run a CLI command line; output arrives via the 'cli' listener.
+	sendCli(line: string) {
+		this.#t.send(encodeFrame(Channel.Cli, new TextEncoder().encode(line)));
+	}
+
+	// ── FILE channel (request/response) ──
+	#fileReq(op: number, body: Uint8Array): Promise<{ status: number; rest: Uint8Array } | null> {
+		return new Promise((resolve) => {
+			const entry = (r: { status: number; rest: Uint8Array } | null) => {
+				clearTimeout(timer);
+				resolve(r);
+			};
+			const timer = setTimeout(() => {
+				const q = this.#filePending[op];
+				const k = q?.indexOf(entry) ?? -1;
+				if (k >= 0) q.splice(k, 1);
+				resolve(null); // no reply (device offline / unsupported) → null
+			}, 5000);
+			(this.#filePending[op] ??= []).push(entry);
+			this.#t.send(encodeFrame(Channel.File, body));
+		});
+	}
+
+	async listDir(path: string): Promise<FileEntry[] | null> {
+		const pb = new TextEncoder().encode(path);
+		const body = new Uint8Array(1 + pb.length);
+		body[0] = FileOp.List;
+		body.set(pb, 1);
+		const r = await this.#fileReq(FileOp.List, body);
+		if (!r || r.status !== 0) return null;
+		const entries: FileEntry[] = [];
+		const p = r.rest;
+		let i = 0;
+		while (i < p.length) {
+			const isDir = p[i++] === 1;
+			const size = (p[i] | (p[i + 1] << 8) | (p[i + 2] << 16) | (p[i + 3] << 24)) >>> 0;
+			i += 4;
+			let j = i;
+			while (j < p.length && p[j]) j++;
+			const name = new TextDecoder().decode(p.subarray(i, j));
+			i = j + 1;
+			entries.push({ name, isDir, size });
+		}
+		return entries;
+	}
+
+	async readFile(path: string): Promise<Uint8Array | null> {
+		const pb = new TextEncoder().encode(path);
+		const body = new Uint8Array(1 + pb.length);
+		body[0] = FileOp.Read;
+		body.set(pb, 1);
+		const r = await this.#fileReq(FileOp.Read, body);
+		return r && r.status === 0 ? r.rest.slice() : null;
+	}
+
+	async writeFile(path: string, data: Uint8Array): Promise<boolean> {
+		const pb = new TextEncoder().encode(path);
+		const body = new Uint8Array(3 + pb.length + data.length);
+		body[0] = FileOp.Write;
+		body[1] = pb.length & 0xff;
+		body[2] = (pb.length >> 8) & 0xff;
+		body.set(pb, 3);
+		body.set(data, 3 + pb.length);
+		const r = await this.#fileReq(FileOp.Write, body);
+		return !!r && r.status === 0;
+	}
+
+	async #filePathOp(op: number, path: string): Promise<boolean> {
+		const pb = new TextEncoder().encode(path);
+		const body = new Uint8Array(1 + pb.length);
+		body[0] = op;
+		body.set(pb, 1);
+		const r = await this.#fileReq(op, body);
+		return !!r && r.status === 0;
+	}
+	mkdir(path: string) {
+		return this.#filePathOp(FileOp.Mkdir, path);
+	}
+	removeFile(path: string) {
+		return this.#filePathOp(FileOp.Remove, path);
 	}
 	power(op: number) {
 		this.#t.send(encodeFrame(Channel.System, new Uint8Array([op])));

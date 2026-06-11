@@ -1,8 +1,7 @@
 #include "kairo/screens/app_list_screen.h"
 #include "kairo/runtime.h"
 #include "kairo/ui/view_dispatcher.h"
-#include "kairo/plugin/plugin_manager.h"
-#include "kairo/plugin/plugin.h"
+#include "kairo/app/app_registry.h"
 
 namespace kairo {
 
@@ -13,19 +12,25 @@ AppListScreen::AppListScreen(Runtime& rt) : ComponentScreen(rt, 160) {}
 void AppListScreen::enter() {
     scroll_.scrollMain = 0;
     state_.focus.focused = 0;
-    rt_.view().requestRedraw();
+    ComponentScreen::enter();
 }
 
 void AppListScreen::onLaunch(void* u) {
     auto* r = static_cast<Row*>(u);
     auto& ids = r->self->ids_;
     if (r->index >= 0 && r->index < (int)ids.size() && !ids[r->index].empty())
-        r->self->rt_.plugins().selectPlugin(ids[r->index].c_str());
+        r->self->rt_.apps().launch(ids[r->index].c_str());
 }
 
 UiNode* AppListScreen::build(NodeArena& a, Runtime& rt) {
     names_.clear(); ids_.clear(); rows_.clear();
-    for (auto* p : rt.plugins().plugins()) { names_.push_back(p->name()); ids_.push_back(p->id()); }
+    // Launchable apps only — services (AppType::Service) are background daemons
+    // and stay hidden from the launcher (same as Flipper's menu).
+    for (const auto& m : rt.apps().list()) {
+        if (m.type != AppType::App) continue;
+        names_.push_back(m.name);
+        ids_.push_back(m.id);
+    }
     if (names_.empty()) { names_.push_back("No apps"); ids_.push_back(""); }
     rows_.resize(names_.size());
 

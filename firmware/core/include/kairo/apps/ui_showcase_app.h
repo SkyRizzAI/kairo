@@ -9,7 +9,7 @@ namespace kairo {
 //   • Menu          — pick a demo
 //   • Scroll List   — long scrollable list: drag/flick (touch) or focus (buttons)
 //   • Input Controls — Toggle, Stepper, Select, Slider live
-// Doubles as the manual UI test surface. Lives in the Apps list (a plugin).
+// Doubles as the manual UI test surface. Lives in the Apps list (a built-in app).
 class UiShowcaseApp : public ComponentApp {
 public:
     UiShowcaseApp();

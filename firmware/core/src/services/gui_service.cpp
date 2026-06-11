@@ -135,7 +135,7 @@ void GuiService::loop() {
                 // Plan 22: long-hold → pause the foreground app (back to home).
                 // Intercepted here so the app never sees it.
                 if (ie.action == input::Action::Pause) {
-                    rt_.apps().pauseForeground();
+                    rt_.appHost().pauseForeground();
                     continue;
                 }
                 if (!dpm_.deliverKey(ie.key, now)) {
@@ -153,7 +153,7 @@ void GuiService::loop() {
         vd.tick(now);
 
         // 4. Background job completions — run on THIS (UI) thread, so callbacks
-        //    can safely touch screen/plugin UI state.
+        //    can safely touch screen/app UI state.
         rt_.tasks().drainCompletions();
 
         // 5. Render — skip while sleeping; flush one blank frame on sleep entry.

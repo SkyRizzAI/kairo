@@ -21,6 +21,9 @@ enum class Channel : uint8_t {
     Ota     = 0x05,
     Ext     = 0x06,   // host→device sim-control commands (inject event, wifi router)
     Event   = 0x07,   // device→host EventBus stream (for the Events panel)
+    Cli     = 0x08,   // bidirectional terminal: host sends a command line, device
+                      // streams text output, ending with a single 0x04 (EOT) frame
+    File    = 0x09,   // filesystem request/response (list/read/write/mkdir/remove)
 };
 
 namespace Flags {

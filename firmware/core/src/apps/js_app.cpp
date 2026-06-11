@@ -11,8 +11,9 @@ namespace kairo {
 
 using namespace ui;
 
-JsApp::JsApp(std::string id, std::string name, std::string bundleJs)
-    : id_(std::move(id)), name_(std::move(name)), js_(std::move(bundleJs)) {}
+JsApp::JsApp(std::string id, std::string name, std::string version, std::string bundleJs)
+    : id_(std::move(id)), name_(std::move(name)), version_(std::move(version)),
+      js_(std::move(bundleJs)) {}
 
 JsApp::~JsApp() = default;
 

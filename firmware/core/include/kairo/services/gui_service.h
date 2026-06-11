@@ -15,9 +15,9 @@ struct IDisplayDriver;
 //
 // Furi-style: the GUI is a service running in its own thread that is the SINGLE
 // owner of the Canvas + ViewDispatcher. The main loop no longer renders; it only
-// ticks background services/plugins. Because all UI work (input dispatch, screen
+// ticks background services. Because all UI work (input dispatch, screen
 // tick/draw, task completions, status bar) happens here, there is one UI thread
-// and no shared-mutable-UI race — provided plugins never touch UI state from
+// and no shared-mutable-UI race — provided apps never touch UI state from
 // their main-loop onTick (they use TaskRunner + completions, which run here).
 //
 // Loop each ~15ms:

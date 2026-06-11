@@ -6,35 +6,23 @@
 #include "kairo/log/logger.h"
 #include "kairo/esp32/esp32_platform.h"
 #include "kairo/skyrizze32/skyrizz_e32.h"
-#include "kairo/service/service_container.h"
 #include "kairo/services/clock_service.h"
-#include "kairo/plugins/hello_plugin.h"
-#include "kairo/plugins/clock_plugin.h"
-#include "kairo/plugins/counter_plugin.h"
-#include "kairo/plugins/stopwatch_plugin.h"
-#include "kairo/plugins/task_demo_plugin.h"
-#include "kairo/plugins/ticker_plugin.h"
-#include "kairo/plugins/camera_plugin.h"
-#include "kairo/plugins/ui_showcase_plugin.h"
-#include "kairo/plugins/js_app_store.h"
-#include "kairo/plugin/plugin_manager.h"
+#include "kairo/app/app_registry.h"
+#include "kairo/apps/clock_app.h"
+#include "kairo/apps/counter_app.h"
+#include "kairo/apps/stopwatch_app.h"
+#include "kairo/apps/task_demo_app.h"
+#include "kairo/apps/ticker_app.h"
+#include "kairo/apps/camera_app.h"
+#include "kairo/apps/ui_showcase_app.h"
+#include "kairo/apps/js_app_store.h"
 #include "kairo/screens/home_screen.h"
 #include "kairo/ui/view_dispatcher.h"
 
 namespace {
-kairo::Esp32Platform             platform;
+kairo::Esp32Platform            platform;
 kairo::skyrizze32::SkyRizzE32   board;
-kairo::Runtime                   rt = kairo::Runtime::create();
-
-kairo::HelloPlugin      helloPlugin;
-kairo::ClockPlugin      clockPlugin;
-kairo::CounterPlugin    counterPlugin;
-kairo::StopwatchPlugin  stopwatchPlugin;
-kairo::TaskDemoPlugin   taskDemoPlugin;
-kairo::TickerPlugin     tickerPlugin;
-kairo::CameraPlugin     cameraPlugin;
-kairo::UiShowcasePlugin uiShowcasePlugin;
-kairo::HomeScreen*      homeScreen = nullptr;
+kairo::Runtime                  rt = kairo::Runtime::create();
 }
 
 void setup() {
@@ -51,24 +39,34 @@ void setup() {
     rt.initCore();
     rt.registerServices();
 
+    // Background service shipped via the same registry as apps (AppType::
+    // Service, hidden from the launcher). Installed before start() → boots
+    // with the system.
     static kairo::ClockService cs(rt.log(), rt.events());
-    rt.container().registerService(&cs);
+    rt.apps().installService(cs, "com.kairo.svc.clock");
 
     rt.start();
 
-    rt.plugins().load(helloPlugin);
-    rt.plugins().load(clockPlugin);
-    rt.plugins().load(counterPlugin);
-    rt.plugins().load(stopwatchPlugin);
-    rt.plugins().load(taskDemoPlugin);
-    rt.plugins().load(tickerPlugin);
-    rt.plugins().load(cameraPlugin);
-    rt.plugins().load(uiShowcasePlugin);
-    kairo::loadEmbeddedJsApps(rt);   // built-in JS apps (Plan 37)
+    // Install the built-in apps (they appear in the launcher; selecting one
+    // spawns it on its own thread). Camera is a UI-thread screen, not a thread.
+    static kairo::ClockApp       clockApp;
+    static kairo::CounterApp     counterApp;
+    static kairo::StopwatchApp   stopwatchApp;
+    static kairo::TaskDemoApp    taskDemoApp;
+    static kairo::TickerApp      tickerApp;
+    static kairo::UiShowcaseApp  uiShowcaseApp;
+    static kairo::CameraApp      cameraApp(rt);
+    rt.apps().install(clockApp);
+    rt.apps().install(counterApp);
+    rt.apps().install(stopwatchApp);
+    rt.apps().install(taskDemoApp);
+    rt.apps().install(tickerApp);
+    rt.apps().install(uiShowcaseApp);
+    rt.apps().installScreen("com.kairo.camera", "Camera", cameraApp);
+    kairo::loadEmbeddedJsApps(rt);   // built-in JS (custom) apps (Plan 37)
 
     static kairo::HomeScreen hs(rt);
-    homeScreen = &hs;
-    rt.view().push(*homeScreen);
+    rt.view().push(hs);
 
     // Logger exists now → use rt.log(), not raw Serial (see CLAUDE.md).
     rt.log().info("Boot", "ready");

@@ -631,15 +631,7 @@ core/CMakeFiles/kairo_core.dir/src/services/remote_service.cpp.o: \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/types.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/system/board_profile.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/ui/key.h \
-  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/services/input_service.h \
-  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/nema/input_event.h \
-  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/input/input_code.h \
-  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/input/input_action.h \
-  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/input/gesture.h \
-  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/input/pointer.h \
-  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/nema/message_queue.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/deque \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__fwd/deque.h \
+  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/services/cli_service.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/functional \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__functional/binary_negate.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__functional/bind.h \
@@ -664,6 +656,15 @@ core/CMakeFiles/kairo_core.dir/src/services/remote_service.cpp.o: \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__functional/default_searcher.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__functional/not_fn.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__functional/perfect_forward.h \
+  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/services/input_service.h \
+  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/nema/input_event.h \
+  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/input/input_code.h \
+  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/input/input_action.h \
+  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/input/gesture.h \
+  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/input/pointer.h \
+  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/nema/message_queue.h \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/deque \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__fwd/deque.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/condition_variable \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__stop_token/stop_callback.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__stop_token/intrusive_shared_ptr.h \
@@ -674,6 +675,8 @@ core/CMakeFiles/kairo_core.dir/src/services/remote_service.cpp.o: \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/chrono \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__chrono/file_clock.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/forward_list \
+  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/hal/filesystem.h \
+  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/hal/driver.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/log/logger.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/clock.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/event/event_bus.h \

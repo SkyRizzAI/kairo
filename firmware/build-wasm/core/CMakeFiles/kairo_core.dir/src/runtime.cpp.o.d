@@ -697,10 +697,9 @@ core/CMakeFiles/kairo_core.dir/src/runtime.cpp.o: \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/system/hardware_registry.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/hal/driver.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/system/capability_registry.h \
-  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/plugin/plugin_manager.h \
-  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/plugin/plugin.h \
+  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/app/app_registry.h \
+  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/app/app_manifest.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/app/app_host_manager.h \
-  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/plugin/plugin_context.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/ui/view_dispatcher.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/ui/screen.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/ui/canvas.h \

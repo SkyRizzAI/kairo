@@ -12,14 +12,10 @@ static constexpr int   DRAG_THRESH = 6;     // px of movement before a tap → d
 static constexpr float FRICTION    = 0.85f; // momentum decay per tick
 static constexpr float MIN_VEL     = 1.0f;  // stop momentum below this
 
-static bool contains(const UiNode* n, int16_t x, int16_t y) {
-    return x >= n->x && x < n->x + n->w && y >= n->y && y < n->y + n->h;
-}
-
 // Deepest Scroll node whose box contains the point (so nested scrolls work).
 static UiNode* scrollAt(UiNode* n, int16_t x, int16_t y) {
     UiNode* found = nullptr;
-    if (n->type == NodeType::Scroll && contains(n, x, y)) found = n;
+    if (n->type == NodeType::Scroll && nodeContains(n, x, y)) found = n;
     for (UiNode* k = n->firstChild; k; k = k->nextSibling)
         if (UiNode* c = scrollAt(k, x, y)) found = c;
     return found;
@@ -28,7 +24,7 @@ static UiNode* scrollAt(UiNode* n, int16_t x, int16_t y) {
 // Deepest Slider node containing the point (touch value control).
 static UiNode* sliderAt(UiNode* n, int16_t x, int16_t y) {
     UiNode* found = nullptr;
-    if (n->type == NodeType::Slider && contains(n, x, y)) found = n;
+    if (n->type == NodeType::Slider && nodeContains(n, x, y)) found = n;
     for (UiNode* k = n->firstChild; k; k = k->nextSibling)
         if (UiNode* c = sliderAt(k, x, y)) found = c;
     return found;

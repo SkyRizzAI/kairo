@@ -188,6 +188,30 @@ src/app/app_host_manager.cpp.s:
 	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm && $(MAKE) $(MAKESILENT) -f core/CMakeFiles/kairo_core.dir/build.make core/CMakeFiles/kairo_core.dir/src/app/app_host_manager.cpp.s
 .PHONY : src/app/app_host_manager.cpp.s
 
+src/app/app_registry.o: src/app/app_registry.cpp.o
+.PHONY : src/app/app_registry.o
+
+# target to build an object file
+src/app/app_registry.cpp.o:
+	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm && $(MAKE) $(MAKESILENT) -f core/CMakeFiles/kairo_core.dir/build.make core/CMakeFiles/kairo_core.dir/src/app/app_registry.cpp.o
+.PHONY : src/app/app_registry.cpp.o
+
+src/app/app_registry.i: src/app/app_registry.cpp.i
+.PHONY : src/app/app_registry.i
+
+# target to preprocess a source file
+src/app/app_registry.cpp.i:
+	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm && $(MAKE) $(MAKESILENT) -f core/CMakeFiles/kairo_core.dir/build.make core/CMakeFiles/kairo_core.dir/src/app/app_registry.cpp.i
+.PHONY : src/app/app_registry.cpp.i
+
+src/app/app_registry.s: src/app/app_registry.cpp.s
+.PHONY : src/app/app_registry.s
+
+# target to generate assembly for a file
+src/app/app_registry.cpp.s:
+	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm && $(MAKE) $(MAKESILENT) -f core/CMakeFiles/kairo_core.dir/build.make core/CMakeFiles/kairo_core.dir/src/app/app_registry.cpp.s
+.PHONY : src/app/app_registry.cpp.s
+
 src/app/component_app.o: src/app/component_app.cpp.o
 .PHONY : src/app/component_app.o
 
@@ -331,6 +355,30 @@ src/apps/js_app.s: src/apps/js_app.cpp.s
 src/apps/js_app.cpp.s:
 	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm && $(MAKE) $(MAKESILENT) -f core/CMakeFiles/kairo_core.dir/build.make core/CMakeFiles/kairo_core.dir/src/apps/js_app.cpp.s
 .PHONY : src/apps/js_app.cpp.s
+
+src/apps/js_app_store.o: src/apps/js_app_store.cpp.o
+.PHONY : src/apps/js_app_store.o
+
+# target to build an object file
+src/apps/js_app_store.cpp.o:
+	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm && $(MAKE) $(MAKESILENT) -f core/CMakeFiles/kairo_core.dir/build.make core/CMakeFiles/kairo_core.dir/src/apps/js_app_store.cpp.o
+.PHONY : src/apps/js_app_store.cpp.o
+
+src/apps/js_app_store.i: src/apps/js_app_store.cpp.i
+.PHONY : src/apps/js_app_store.i
+
+# target to preprocess a source file
+src/apps/js_app_store.cpp.i:
+	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm && $(MAKE) $(MAKESILENT) -f core/CMakeFiles/kairo_core.dir/build.make core/CMakeFiles/kairo_core.dir/src/apps/js_app_store.cpp.i
+.PHONY : src/apps/js_app_store.cpp.i
+
+src/apps/js_app_store.s: src/apps/js_app_store.cpp.s
+.PHONY : src/apps/js_app_store.s
+
+# target to generate assembly for a file
+src/apps/js_app_store.cpp.s:
+	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm && $(MAKE) $(MAKESILENT) -f core/CMakeFiles/kairo_core.dir/build.make core/CMakeFiles/kairo_core.dir/src/apps/js_app_store.cpp.s
+.PHONY : src/apps/js_app_store.cpp.s
 
 src/apps/stopwatch_app.o: src/apps/stopwatch_app.cpp.o
 .PHONY : src/apps/stopwatch_app.o
@@ -523,6 +571,54 @@ src/event/event_bus.s: src/event/event_bus.cpp.s
 src/event/event_bus.cpp.s:
 	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm && $(MAKE) $(MAKESILENT) -f core/CMakeFiles/kairo_core.dir/build.make core/CMakeFiles/kairo_core.dir/src/event/event_bus.cpp.s
 .PHONY : src/event/event_bus.cpp.s
+
+src/fs/mem_filesystem.o: src/fs/mem_filesystem.cpp.o
+.PHONY : src/fs/mem_filesystem.o
+
+# target to build an object file
+src/fs/mem_filesystem.cpp.o:
+	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm && $(MAKE) $(MAKESILENT) -f core/CMakeFiles/kairo_core.dir/build.make core/CMakeFiles/kairo_core.dir/src/fs/mem_filesystem.cpp.o
+.PHONY : src/fs/mem_filesystem.cpp.o
+
+src/fs/mem_filesystem.i: src/fs/mem_filesystem.cpp.i
+.PHONY : src/fs/mem_filesystem.i
+
+# target to preprocess a source file
+src/fs/mem_filesystem.cpp.i:
+	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm && $(MAKE) $(MAKESILENT) -f core/CMakeFiles/kairo_core.dir/build.make core/CMakeFiles/kairo_core.dir/src/fs/mem_filesystem.cpp.i
+.PHONY : src/fs/mem_filesystem.cpp.i
+
+src/fs/mem_filesystem.s: src/fs/mem_filesystem.cpp.s
+.PHONY : src/fs/mem_filesystem.s
+
+# target to generate assembly for a file
+src/fs/mem_filesystem.cpp.s:
+	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm && $(MAKE) $(MAKESILENT) -f core/CMakeFiles/kairo_core.dir/build.make core/CMakeFiles/kairo_core.dir/src/fs/mem_filesystem.cpp.s
+.PHONY : src/fs/mem_filesystem.cpp.s
+
+src/fs/vfs.o: src/fs/vfs.cpp.o
+.PHONY : src/fs/vfs.o
+
+# target to build an object file
+src/fs/vfs.cpp.o:
+	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm && $(MAKE) $(MAKESILENT) -f core/CMakeFiles/kairo_core.dir/build.make core/CMakeFiles/kairo_core.dir/src/fs/vfs.cpp.o
+.PHONY : src/fs/vfs.cpp.o
+
+src/fs/vfs.i: src/fs/vfs.cpp.i
+.PHONY : src/fs/vfs.i
+
+# target to preprocess a source file
+src/fs/vfs.cpp.i:
+	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm && $(MAKE) $(MAKESILENT) -f core/CMakeFiles/kairo_core.dir/build.make core/CMakeFiles/kairo_core.dir/src/fs/vfs.cpp.i
+.PHONY : src/fs/vfs.cpp.i
+
+src/fs/vfs.s: src/fs/vfs.cpp.s
+.PHONY : src/fs/vfs.s
+
+# target to generate assembly for a file
+src/fs/vfs.cpp.s:
+	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm && $(MAKE) $(MAKESILENT) -f core/CMakeFiles/kairo_core.dir/build.make core/CMakeFiles/kairo_core.dir/src/fs/vfs.cpp.s
+.PHONY : src/fs/vfs.cpp.s
 
 src/hal/async_display.o: src/hal/async_display.cpp.o
 .PHONY : src/hal/async_display.o
@@ -859,294 +955,6 @@ src/nema/thread_host.s: src/nema/thread_host.cpp.s
 src/nema/thread_host.cpp.s:
 	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm && $(MAKE) $(MAKESILENT) -f core/CMakeFiles/kairo_core.dir/build.make core/CMakeFiles/kairo_core.dir/src/nema/thread_host.cpp.s
 .PHONY : src/nema/thread_host.cpp.s
-
-src/plugin/plugin_context.o: src/plugin/plugin_context.cpp.o
-.PHONY : src/plugin/plugin_context.o
-
-# target to build an object file
-src/plugin/plugin_context.cpp.o:
-	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm && $(MAKE) $(MAKESILENT) -f core/CMakeFiles/kairo_core.dir/build.make core/CMakeFiles/kairo_core.dir/src/plugin/plugin_context.cpp.o
-.PHONY : src/plugin/plugin_context.cpp.o
-
-src/plugin/plugin_context.i: src/plugin/plugin_context.cpp.i
-.PHONY : src/plugin/plugin_context.i
-
-# target to preprocess a source file
-src/plugin/plugin_context.cpp.i:
-	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm && $(MAKE) $(MAKESILENT) -f core/CMakeFiles/kairo_core.dir/build.make core/CMakeFiles/kairo_core.dir/src/plugin/plugin_context.cpp.i
-.PHONY : src/plugin/plugin_context.cpp.i
-
-src/plugin/plugin_context.s: src/plugin/plugin_context.cpp.s
-.PHONY : src/plugin/plugin_context.s
-
-# target to generate assembly for a file
-src/plugin/plugin_context.cpp.s:
-	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm && $(MAKE) $(MAKESILENT) -f core/CMakeFiles/kairo_core.dir/build.make core/CMakeFiles/kairo_core.dir/src/plugin/plugin_context.cpp.s
-.PHONY : src/plugin/plugin_context.cpp.s
-
-src/plugin/plugin_manager.o: src/plugin/plugin_manager.cpp.o
-.PHONY : src/plugin/plugin_manager.o
-
-# target to build an object file
-src/plugin/plugin_manager.cpp.o:
-	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm && $(MAKE) $(MAKESILENT) -f core/CMakeFiles/kairo_core.dir/build.make core/CMakeFiles/kairo_core.dir/src/plugin/plugin_manager.cpp.o
-.PHONY : src/plugin/plugin_manager.cpp.o
-
-src/plugin/plugin_manager.i: src/plugin/plugin_manager.cpp.i
-.PHONY : src/plugin/plugin_manager.i
-
-# target to preprocess a source file
-src/plugin/plugin_manager.cpp.i:
-	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm && $(MAKE) $(MAKESILENT) -f core/CMakeFiles/kairo_core.dir/build.make core/CMakeFiles/kairo_core.dir/src/plugin/plugin_manager.cpp.i
-.PHONY : src/plugin/plugin_manager.cpp.i
-
-src/plugin/plugin_manager.s: src/plugin/plugin_manager.cpp.s
-.PHONY : src/plugin/plugin_manager.s
-
-# target to generate assembly for a file
-src/plugin/plugin_manager.cpp.s:
-	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm && $(MAKE) $(MAKESILENT) -f core/CMakeFiles/kairo_core.dir/build.make core/CMakeFiles/kairo_core.dir/src/plugin/plugin_manager.cpp.s
-.PHONY : src/plugin/plugin_manager.cpp.s
-
-src/plugins/camera_plugin.o: src/plugins/camera_plugin.cpp.o
-.PHONY : src/plugins/camera_plugin.o
-
-# target to build an object file
-src/plugins/camera_plugin.cpp.o:
-	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm && $(MAKE) $(MAKESILENT) -f core/CMakeFiles/kairo_core.dir/build.make core/CMakeFiles/kairo_core.dir/src/plugins/camera_plugin.cpp.o
-.PHONY : src/plugins/camera_plugin.cpp.o
-
-src/plugins/camera_plugin.i: src/plugins/camera_plugin.cpp.i
-.PHONY : src/plugins/camera_plugin.i
-
-# target to preprocess a source file
-src/plugins/camera_plugin.cpp.i:
-	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm && $(MAKE) $(MAKESILENT) -f core/CMakeFiles/kairo_core.dir/build.make core/CMakeFiles/kairo_core.dir/src/plugins/camera_plugin.cpp.i
-.PHONY : src/plugins/camera_plugin.cpp.i
-
-src/plugins/camera_plugin.s: src/plugins/camera_plugin.cpp.s
-.PHONY : src/plugins/camera_plugin.s
-
-# target to generate assembly for a file
-src/plugins/camera_plugin.cpp.s:
-	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm && $(MAKE) $(MAKESILENT) -f core/CMakeFiles/kairo_core.dir/build.make core/CMakeFiles/kairo_core.dir/src/plugins/camera_plugin.cpp.s
-.PHONY : src/plugins/camera_plugin.cpp.s
-
-src/plugins/clock_plugin.o: src/plugins/clock_plugin.cpp.o
-.PHONY : src/plugins/clock_plugin.o
-
-# target to build an object file
-src/plugins/clock_plugin.cpp.o:
-	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm && $(MAKE) $(MAKESILENT) -f core/CMakeFiles/kairo_core.dir/build.make core/CMakeFiles/kairo_core.dir/src/plugins/clock_plugin.cpp.o
-.PHONY : src/plugins/clock_plugin.cpp.o
-
-src/plugins/clock_plugin.i: src/plugins/clock_plugin.cpp.i
-.PHONY : src/plugins/clock_plugin.i
-
-# target to preprocess a source file
-src/plugins/clock_plugin.cpp.i:
-	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm && $(MAKE) $(MAKESILENT) -f core/CMakeFiles/kairo_core.dir/build.make core/CMakeFiles/kairo_core.dir/src/plugins/clock_plugin.cpp.i
-.PHONY : src/plugins/clock_plugin.cpp.i
-
-src/plugins/clock_plugin.s: src/plugins/clock_plugin.cpp.s
-.PHONY : src/plugins/clock_plugin.s
-
-# target to generate assembly for a file
-src/plugins/clock_plugin.cpp.s:
-	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm && $(MAKE) $(MAKESILENT) -f core/CMakeFiles/kairo_core.dir/build.make core/CMakeFiles/kairo_core.dir/src/plugins/clock_plugin.cpp.s
-.PHONY : src/plugins/clock_plugin.cpp.s
-
-src/plugins/counter_plugin.o: src/plugins/counter_plugin.cpp.o
-.PHONY : src/plugins/counter_plugin.o
-
-# target to build an object file
-src/plugins/counter_plugin.cpp.o:
-	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm && $(MAKE) $(MAKESILENT) -f core/CMakeFiles/kairo_core.dir/build.make core/CMakeFiles/kairo_core.dir/src/plugins/counter_plugin.cpp.o
-.PHONY : src/plugins/counter_plugin.cpp.o
-
-src/plugins/counter_plugin.i: src/plugins/counter_plugin.cpp.i
-.PHONY : src/plugins/counter_plugin.i
-
-# target to preprocess a source file
-src/plugins/counter_plugin.cpp.i:
-	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm && $(MAKE) $(MAKESILENT) -f core/CMakeFiles/kairo_core.dir/build.make core/CMakeFiles/kairo_core.dir/src/plugins/counter_plugin.cpp.i
-.PHONY : src/plugins/counter_plugin.cpp.i
-
-src/plugins/counter_plugin.s: src/plugins/counter_plugin.cpp.s
-.PHONY : src/plugins/counter_plugin.s
-
-# target to generate assembly for a file
-src/plugins/counter_plugin.cpp.s:
-	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm && $(MAKE) $(MAKESILENT) -f core/CMakeFiles/kairo_core.dir/build.make core/CMakeFiles/kairo_core.dir/src/plugins/counter_plugin.cpp.s
-.PHONY : src/plugins/counter_plugin.cpp.s
-
-src/plugins/hello_plugin.o: src/plugins/hello_plugin.cpp.o
-.PHONY : src/plugins/hello_plugin.o
-
-# target to build an object file
-src/plugins/hello_plugin.cpp.o:
-	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm && $(MAKE) $(MAKESILENT) -f core/CMakeFiles/kairo_core.dir/build.make core/CMakeFiles/kairo_core.dir/src/plugins/hello_plugin.cpp.o
-.PHONY : src/plugins/hello_plugin.cpp.o
-
-src/plugins/hello_plugin.i: src/plugins/hello_plugin.cpp.i
-.PHONY : src/plugins/hello_plugin.i
-
-# target to preprocess a source file
-src/plugins/hello_plugin.cpp.i:
-	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm && $(MAKE) $(MAKESILENT) -f core/CMakeFiles/kairo_core.dir/build.make core/CMakeFiles/kairo_core.dir/src/plugins/hello_plugin.cpp.i
-.PHONY : src/plugins/hello_plugin.cpp.i
-
-src/plugins/hello_plugin.s: src/plugins/hello_plugin.cpp.s
-.PHONY : src/plugins/hello_plugin.s
-
-# target to generate assembly for a file
-src/plugins/hello_plugin.cpp.s:
-	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm && $(MAKE) $(MAKESILENT) -f core/CMakeFiles/kairo_core.dir/build.make core/CMakeFiles/kairo_core.dir/src/plugins/hello_plugin.cpp.s
-.PHONY : src/plugins/hello_plugin.cpp.s
-
-src/plugins/js_app_plugin.o: src/plugins/js_app_plugin.cpp.o
-.PHONY : src/plugins/js_app_plugin.o
-
-# target to build an object file
-src/plugins/js_app_plugin.cpp.o:
-	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm && $(MAKE) $(MAKESILENT) -f core/CMakeFiles/kairo_core.dir/build.make core/CMakeFiles/kairo_core.dir/src/plugins/js_app_plugin.cpp.o
-.PHONY : src/plugins/js_app_plugin.cpp.o
-
-src/plugins/js_app_plugin.i: src/plugins/js_app_plugin.cpp.i
-.PHONY : src/plugins/js_app_plugin.i
-
-# target to preprocess a source file
-src/plugins/js_app_plugin.cpp.i:
-	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm && $(MAKE) $(MAKESILENT) -f core/CMakeFiles/kairo_core.dir/build.make core/CMakeFiles/kairo_core.dir/src/plugins/js_app_plugin.cpp.i
-.PHONY : src/plugins/js_app_plugin.cpp.i
-
-src/plugins/js_app_plugin.s: src/plugins/js_app_plugin.cpp.s
-.PHONY : src/plugins/js_app_plugin.s
-
-# target to generate assembly for a file
-src/plugins/js_app_plugin.cpp.s:
-	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm && $(MAKE) $(MAKESILENT) -f core/CMakeFiles/kairo_core.dir/build.make core/CMakeFiles/kairo_core.dir/src/plugins/js_app_plugin.cpp.s
-.PHONY : src/plugins/js_app_plugin.cpp.s
-
-src/plugins/js_app_store.o: src/plugins/js_app_store.cpp.o
-.PHONY : src/plugins/js_app_store.o
-
-# target to build an object file
-src/plugins/js_app_store.cpp.o:
-	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm && $(MAKE) $(MAKESILENT) -f core/CMakeFiles/kairo_core.dir/build.make core/CMakeFiles/kairo_core.dir/src/plugins/js_app_store.cpp.o
-.PHONY : src/plugins/js_app_store.cpp.o
-
-src/plugins/js_app_store.i: src/plugins/js_app_store.cpp.i
-.PHONY : src/plugins/js_app_store.i
-
-# target to preprocess a source file
-src/plugins/js_app_store.cpp.i:
-	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm && $(MAKE) $(MAKESILENT) -f core/CMakeFiles/kairo_core.dir/build.make core/CMakeFiles/kairo_core.dir/src/plugins/js_app_store.cpp.i
-.PHONY : src/plugins/js_app_store.cpp.i
-
-src/plugins/js_app_store.s: src/plugins/js_app_store.cpp.s
-.PHONY : src/plugins/js_app_store.s
-
-# target to generate assembly for a file
-src/plugins/js_app_store.cpp.s:
-	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm && $(MAKE) $(MAKESILENT) -f core/CMakeFiles/kairo_core.dir/build.make core/CMakeFiles/kairo_core.dir/src/plugins/js_app_store.cpp.s
-.PHONY : src/plugins/js_app_store.cpp.s
-
-src/plugins/stopwatch_plugin.o: src/plugins/stopwatch_plugin.cpp.o
-.PHONY : src/plugins/stopwatch_plugin.o
-
-# target to build an object file
-src/plugins/stopwatch_plugin.cpp.o:
-	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm && $(MAKE) $(MAKESILENT) -f core/CMakeFiles/kairo_core.dir/build.make core/CMakeFiles/kairo_core.dir/src/plugins/stopwatch_plugin.cpp.o
-.PHONY : src/plugins/stopwatch_plugin.cpp.o
-
-src/plugins/stopwatch_plugin.i: src/plugins/stopwatch_plugin.cpp.i
-.PHONY : src/plugins/stopwatch_plugin.i
-
-# target to preprocess a source file
-src/plugins/stopwatch_plugin.cpp.i:
-	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm && $(MAKE) $(MAKESILENT) -f core/CMakeFiles/kairo_core.dir/build.make core/CMakeFiles/kairo_core.dir/src/plugins/stopwatch_plugin.cpp.i
-.PHONY : src/plugins/stopwatch_plugin.cpp.i
-
-src/plugins/stopwatch_plugin.s: src/plugins/stopwatch_plugin.cpp.s
-.PHONY : src/plugins/stopwatch_plugin.s
-
-# target to generate assembly for a file
-src/plugins/stopwatch_plugin.cpp.s:
-	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm && $(MAKE) $(MAKESILENT) -f core/CMakeFiles/kairo_core.dir/build.make core/CMakeFiles/kairo_core.dir/src/plugins/stopwatch_plugin.cpp.s
-.PHONY : src/plugins/stopwatch_plugin.cpp.s
-
-src/plugins/task_demo_plugin.o: src/plugins/task_demo_plugin.cpp.o
-.PHONY : src/plugins/task_demo_plugin.o
-
-# target to build an object file
-src/plugins/task_demo_plugin.cpp.o:
-	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm && $(MAKE) $(MAKESILENT) -f core/CMakeFiles/kairo_core.dir/build.make core/CMakeFiles/kairo_core.dir/src/plugins/task_demo_plugin.cpp.o
-.PHONY : src/plugins/task_demo_plugin.cpp.o
-
-src/plugins/task_demo_plugin.i: src/plugins/task_demo_plugin.cpp.i
-.PHONY : src/plugins/task_demo_plugin.i
-
-# target to preprocess a source file
-src/plugins/task_demo_plugin.cpp.i:
-	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm && $(MAKE) $(MAKESILENT) -f core/CMakeFiles/kairo_core.dir/build.make core/CMakeFiles/kairo_core.dir/src/plugins/task_demo_plugin.cpp.i
-.PHONY : src/plugins/task_demo_plugin.cpp.i
-
-src/plugins/task_demo_plugin.s: src/plugins/task_demo_plugin.cpp.s
-.PHONY : src/plugins/task_demo_plugin.s
-
-# target to generate assembly for a file
-src/plugins/task_demo_plugin.cpp.s:
-	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm && $(MAKE) $(MAKESILENT) -f core/CMakeFiles/kairo_core.dir/build.make core/CMakeFiles/kairo_core.dir/src/plugins/task_demo_plugin.cpp.s
-.PHONY : src/plugins/task_demo_plugin.cpp.s
-
-src/plugins/ticker_plugin.o: src/plugins/ticker_plugin.cpp.o
-.PHONY : src/plugins/ticker_plugin.o
-
-# target to build an object file
-src/plugins/ticker_plugin.cpp.o:
-	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm && $(MAKE) $(MAKESILENT) -f core/CMakeFiles/kairo_core.dir/build.make core/CMakeFiles/kairo_core.dir/src/plugins/ticker_plugin.cpp.o
-.PHONY : src/plugins/ticker_plugin.cpp.o
-
-src/plugins/ticker_plugin.i: src/plugins/ticker_plugin.cpp.i
-.PHONY : src/plugins/ticker_plugin.i
-
-# target to preprocess a source file
-src/plugins/ticker_plugin.cpp.i:
-	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm && $(MAKE) $(MAKESILENT) -f core/CMakeFiles/kairo_core.dir/build.make core/CMakeFiles/kairo_core.dir/src/plugins/ticker_plugin.cpp.i
-.PHONY : src/plugins/ticker_plugin.cpp.i
-
-src/plugins/ticker_plugin.s: src/plugins/ticker_plugin.cpp.s
-.PHONY : src/plugins/ticker_plugin.s
-
-# target to generate assembly for a file
-src/plugins/ticker_plugin.cpp.s:
-	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm && $(MAKE) $(MAKESILENT) -f core/CMakeFiles/kairo_core.dir/build.make core/CMakeFiles/kairo_core.dir/src/plugins/ticker_plugin.cpp.s
-.PHONY : src/plugins/ticker_plugin.cpp.s
-
-src/plugins/ui_showcase_plugin.o: src/plugins/ui_showcase_plugin.cpp.o
-.PHONY : src/plugins/ui_showcase_plugin.o
-
-# target to build an object file
-src/plugins/ui_showcase_plugin.cpp.o:
-	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm && $(MAKE) $(MAKESILENT) -f core/CMakeFiles/kairo_core.dir/build.make core/CMakeFiles/kairo_core.dir/src/plugins/ui_showcase_plugin.cpp.o
-.PHONY : src/plugins/ui_showcase_plugin.cpp.o
-
-src/plugins/ui_showcase_plugin.i: src/plugins/ui_showcase_plugin.cpp.i
-.PHONY : src/plugins/ui_showcase_plugin.i
-
-# target to preprocess a source file
-src/plugins/ui_showcase_plugin.cpp.i:
-	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm && $(MAKE) $(MAKESILENT) -f core/CMakeFiles/kairo_core.dir/build.make core/CMakeFiles/kairo_core.dir/src/plugins/ui_showcase_plugin.cpp.i
-.PHONY : src/plugins/ui_showcase_plugin.cpp.i
-
-src/plugins/ui_showcase_plugin.s: src/plugins/ui_showcase_plugin.cpp.s
-.PHONY : src/plugins/ui_showcase_plugin.s
-
-# target to generate assembly for a file
-src/plugins/ui_showcase_plugin.cpp.s:
-	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm && $(MAKE) $(MAKESILENT) -f core/CMakeFiles/kairo_core.dir/build.make core/CMakeFiles/kairo_core.dir/src/plugins/ui_showcase_plugin.cpp.s
-.PHONY : src/plugins/ui_showcase_plugin.cpp.s
 
 src/runtime.o: src/runtime.cpp.o
 .PHONY : src/runtime.o
@@ -1531,6 +1339,30 @@ src/services/camera_service.s: src/services/camera_service.cpp.s
 src/services/camera_service.cpp.s:
 	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm && $(MAKE) $(MAKESILENT) -f core/CMakeFiles/kairo_core.dir/build.make core/CMakeFiles/kairo_core.dir/src/services/camera_service.cpp.s
 .PHONY : src/services/camera_service.cpp.s
+
+src/services/cli_service.o: src/services/cli_service.cpp.o
+.PHONY : src/services/cli_service.o
+
+# target to build an object file
+src/services/cli_service.cpp.o:
+	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm && $(MAKE) $(MAKESILENT) -f core/CMakeFiles/kairo_core.dir/build.make core/CMakeFiles/kairo_core.dir/src/services/cli_service.cpp.o
+.PHONY : src/services/cli_service.cpp.o
+
+src/services/cli_service.i: src/services/cli_service.cpp.i
+.PHONY : src/services/cli_service.i
+
+# target to preprocess a source file
+src/services/cli_service.cpp.i:
+	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm && $(MAKE) $(MAKESILENT) -f core/CMakeFiles/kairo_core.dir/build.make core/CMakeFiles/kairo_core.dir/src/services/cli_service.cpp.i
+.PHONY : src/services/cli_service.cpp.i
+
+src/services/cli_service.s: src/services/cli_service.cpp.s
+.PHONY : src/services/cli_service.s
+
+# target to generate assembly for a file
+src/services/cli_service.cpp.s:
+	cd /Users/solpochi/Projects/oss/kairo/firmware/build-wasm && $(MAKE) $(MAKESILENT) -f core/CMakeFiles/kairo_core.dir/build.make core/CMakeFiles/kairo_core.dir/src/services/cli_service.cpp.s
+.PHONY : src/services/cli_service.cpp.s
 
 src/services/clock_service.o: src/services/clock_service.cpp.o
 .PHONY : src/services/clock_service.o
@@ -2124,6 +1956,9 @@ help:
 	@echo "... src/app/app_host_manager.o"
 	@echo "... src/app/app_host_manager.i"
 	@echo "... src/app/app_host_manager.s"
+	@echo "... src/app/app_registry.o"
+	@echo "... src/app/app_registry.i"
+	@echo "... src/app/app_registry.s"
 	@echo "... src/app/component_app.o"
 	@echo "... src/app/component_app.i"
 	@echo "... src/app/component_app.s"
@@ -2142,6 +1977,9 @@ help:
 	@echo "... src/apps/js_app.o"
 	@echo "... src/apps/js_app.i"
 	@echo "... src/apps/js_app.s"
+	@echo "... src/apps/js_app_store.o"
+	@echo "... src/apps/js_app_store.i"
+	@echo "... src/apps/js_app_store.s"
 	@echo "... src/apps/stopwatch_app.o"
 	@echo "... src/apps/stopwatch_app.i"
 	@echo "... src/apps/stopwatch_app.s"
@@ -2166,6 +2004,12 @@ help:
 	@echo "... src/event/event_bus.o"
 	@echo "... src/event/event_bus.i"
 	@echo "... src/event/event_bus.s"
+	@echo "... src/fs/mem_filesystem.o"
+	@echo "... src/fs/mem_filesystem.i"
+	@echo "... src/fs/mem_filesystem.s"
+	@echo "... src/fs/vfs.o"
+	@echo "... src/fs/vfs.i"
+	@echo "... src/fs/vfs.s"
 	@echo "... src/hal/async_display.o"
 	@echo "... src/hal/async_display.i"
 	@echo "... src/hal/async_display.s"
@@ -2208,42 +2052,6 @@ help:
 	@echo "... src/nema/thread_host.o"
 	@echo "... src/nema/thread_host.i"
 	@echo "... src/nema/thread_host.s"
-	@echo "... src/plugin/plugin_context.o"
-	@echo "... src/plugin/plugin_context.i"
-	@echo "... src/plugin/plugin_context.s"
-	@echo "... src/plugin/plugin_manager.o"
-	@echo "... src/plugin/plugin_manager.i"
-	@echo "... src/plugin/plugin_manager.s"
-	@echo "... src/plugins/camera_plugin.o"
-	@echo "... src/plugins/camera_plugin.i"
-	@echo "... src/plugins/camera_plugin.s"
-	@echo "... src/plugins/clock_plugin.o"
-	@echo "... src/plugins/clock_plugin.i"
-	@echo "... src/plugins/clock_plugin.s"
-	@echo "... src/plugins/counter_plugin.o"
-	@echo "... src/plugins/counter_plugin.i"
-	@echo "... src/plugins/counter_plugin.s"
-	@echo "... src/plugins/hello_plugin.o"
-	@echo "... src/plugins/hello_plugin.i"
-	@echo "... src/plugins/hello_plugin.s"
-	@echo "... src/plugins/js_app_plugin.o"
-	@echo "... src/plugins/js_app_plugin.i"
-	@echo "... src/plugins/js_app_plugin.s"
-	@echo "... src/plugins/js_app_store.o"
-	@echo "... src/plugins/js_app_store.i"
-	@echo "... src/plugins/js_app_store.s"
-	@echo "... src/plugins/stopwatch_plugin.o"
-	@echo "... src/plugins/stopwatch_plugin.i"
-	@echo "... src/plugins/stopwatch_plugin.s"
-	@echo "... src/plugins/task_demo_plugin.o"
-	@echo "... src/plugins/task_demo_plugin.i"
-	@echo "... src/plugins/task_demo_plugin.s"
-	@echo "... src/plugins/ticker_plugin.o"
-	@echo "... src/plugins/ticker_plugin.i"
-	@echo "... src/plugins/ticker_plugin.s"
-	@echo "... src/plugins/ui_showcase_plugin.o"
-	@echo "... src/plugins/ui_showcase_plugin.i"
-	@echo "... src/plugins/ui_showcase_plugin.s"
 	@echo "... src/runtime.o"
 	@echo "... src/runtime.i"
 	@echo "... src/runtime.s"
@@ -2292,6 +2100,9 @@ help:
 	@echo "... src/services/camera_service.o"
 	@echo "... src/services/camera_service.i"
 	@echo "... src/services/camera_service.s"
+	@echo "... src/services/cli_service.o"
+	@echo "... src/services/cli_service.i"
+	@echo "... src/services/cli_service.s"
 	@echo "... src/services/clock_service.o"
 	@echo "... src/services/clock_service.i"
 	@echo "... src/services/clock_service.s"

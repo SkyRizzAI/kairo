@@ -12,6 +12,10 @@
 #include "kairo/link/mux_transport.h"
 #include "kairo/hal/remote_screen_tap.h"
 #include "kairo/services/remote_service.h"
+#include "kairo/services/cli_service.h"
+#include "kairo/fs/mem_filesystem.h"
+#include "kairo/fs/vfs.h"
+#include "kairo/esp32/littlefs_filesystem.h"
 
 namespace kairo {
 
@@ -50,6 +54,10 @@ private:
     LinkService        link_;
     RemoteScreenTap    tap_;
     RemoteService      remote_;
+    CliService         cli_;
+    Vfs                vfs_;       // mount table
+    LittleFsFileSystem rootFs_;    // "/"   — persistent (internal flash)
+    MemFileSystem      tmpFs_;     // "/tmp" — volatile scratch (RAM)
     bool               remoteWired_ = false;
 };
 

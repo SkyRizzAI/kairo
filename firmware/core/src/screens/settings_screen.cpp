@@ -31,8 +31,8 @@ void SettingsScreen::launch(Kind k) {
         case Touch:      rt_.view().push(touchSettings_);  break;
         case Sounds:     rt_.view().push(sounds_);         break;
         case Camera:     rt_.view().push(cameraSettings_); break;
-        case WiFi:       rt_.apps().launch(wifiApp_);      break;
-        case Bluetooth:  rt_.apps().launch(bluetoothApp_); break;
+        case WiFi:       rt_.appHost().launch(wifiApp_);      break;
+        case Bluetooth:  rt_.appHost().launch(bluetoothApp_); break;
     }
 }
 

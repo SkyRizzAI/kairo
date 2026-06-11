@@ -15,10 +15,18 @@ namespace kairo {
 class InputService;
 class Logger;
 class EventBus;
+class CliService;
+struct IFileSystem;
 
 // SYSTEM channel opcodes (first payload byte).
 namespace SysOp {
     enum : uint8_t { GetInfo = 0x01, Restart = 0x10, Sleep = 0x11, Shutdown = 0x12 };
+}
+
+// FILE channel opcodes (first payload byte). Request host→device, reply
+// device→host as [op][status][path\0][...]; status 0=ok, 1=not found, 2=error.
+namespace FileOp {
+    enum : uint8_t { List = 0x01, Read = 0x03, Write = 0x04, Mkdir = 0x05, Remove = 0x06 };
 }
 
 // EXT channel opcodes (host→device sim control).
@@ -39,6 +47,8 @@ public:
     void init(LinkService& link, InputService& input);
     void attachLog(Logger& log);                 // install LOG-channel sink
     void attachEvents(EventBus& bus);            // stream EventBus → EVENT channel
+    void attachCli(CliService& cli) { cli_ = &cli; }   // route CLI channel here
+    void attachFs(IFileSystem& fs) { fs_ = &fs; }      // route FILE channel here
     void onPower(PowerFn fn, void* user) { powerFn_ = fn; powerUser_ = user; }
     void onControl(ControlFn fn, void* user) { controlFn_ = fn; controlUser_ = user; }
     // Board profile (name, LCD, buttons) serialized to JSON and replied on
@@ -55,10 +65,13 @@ private:
 
     static void onFrameThunk(void* user, const klp::Frame& f);
     void dispatch(const klp::Frame& f);
+    void handleFile(const std::vector<uint8_t>& in);   // FILE channel request → reply
 
     LinkService*  link_   = nullptr;
     InputService* input_  = nullptr;
     EventBus*     events_ = nullptr;
+    CliService*   cli_    = nullptr;
+    IFileSystem*  fs_     = nullptr;
     PowerFn       powerFn_ = nullptr;
     void*         powerUser_ = nullptr;
     ControlFn     controlFn_ = nullptr;

@@ -9,7 +9,7 @@ inline const EmbeddedApp EMBEDDED_APPS[] = {
 import{View as F,Text as z,Pressable as G,ScrollView as H,useState as I}from"kairo";import{jsxDEV as f}from"kairo/jsx-dev-runtime";function J(){let[A,B]=I(Number(kairo.storage.get("taps")||"0")),C=()=>{let q=A+1;B(q),kairo.storage.set("taps",String(q)),kairo.log("info","SysInfo","tap "+q)};return f(F,{style:{flexDirection:"column",padding:3,gap:2},children:[f(z,{variant:"title",children:kairo.device.name},void 0,!1,void 0,this),f(G,{onPress:C,children:f(z,{children:`Taps: ${A}  (tap +)`},void 0,!1,void 0,this)},void 0,!1,void 0,this),f(z,{variant:"caption",children:"Capabilities:"},void 0,!1,void 0,this),f(H,{style:{flexGrow:1},children:kairo.device.caps.map((q)=>f(z,{children:"- "+q},void 0,!1,void 0,this))},void 0,!1,void 0,this)]},void 0,!0,void 0,this)}export{J as default};
 
 )KJS" },
-    { "com.kairo.example.counter", "Counter", R"KJS(
+    { "com.kairo.example.counter", "Counter (JS)", R"KJS(
 import{View as B,Text as h,Pressable as z,Row as C,useState as F}from"kairo";import{jsxDEV as f}from"kairo/jsx-dev-runtime";function G(){let[A,q]=F(0);return f(B,{style:{flexDirection:"column",padding:4,gap:6,alignItems:"center"},children:[f(h,{variant:"title",children:`Count: ${A}`},void 0,!1,void 0,this),f(C,{style:{gap:8},children:[f(z,{onPress:()=>q((y)=>y-1),children:f(h,{children:"-"},void 0,!1,void 0,this)},void 0,!1,void 0,this),f(z,{onPress:()=>q((y)=>y+1),children:f(h,{children:"+"},void 0,!1,void 0,this)},void 0,!1,void 0,this)]},void 0,!0,void 0,this),f(z,{onPress:()=>q(0),children:f(h,{children:"Reset"},void 0,!1,void 0,this)},void 0,!1,void 0,this)]},void 0,!0,void 0,this)}export{G as default};
 
 )KJS" },

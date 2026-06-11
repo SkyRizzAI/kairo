@@ -27,6 +27,22 @@ public:
         byType_[std::type_index(typeid(I))] = static_cast<void*>(static_cast<I*>(instance));
     }
 
+    // Lifecycle-only registration through the base interface — no type-index
+    // entry, so it's safe for callers that only hold an IService* (e.g. services
+    // installed by apps via the AppRegistry). Idempotent per instance.
+    void addService(IService* svc) {
+        assert(svc);
+        for (auto* s : services_) if (s == svc) return;
+        services_.push_back(svc);
+    }
+
+    // Remove from lifecycle tracking (caller stops it first — see ServiceManager).
+    void removeService(IService* svc) {
+        for (auto it = services_.begin(); it != services_.end(); ++it) {
+            if (*it == svc) { services_.erase(it); return; }
+        }
+    }
+
     template <class T>
     T* resolve() {
         auto it = byType_.find(std::type_index(typeid(T)));

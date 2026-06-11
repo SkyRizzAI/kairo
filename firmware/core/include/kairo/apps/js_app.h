@@ -14,11 +14,16 @@ namespace kairo {
 // thread (AppHost) so JS GC never touches the UI thread.
 class JsApp : public ComponentApp {
 public:
-    JsApp(std::string id, std::string name, std::string bundleJs);
+    JsApp(std::string id, std::string name, std::string version, std::string bundleJs);
     ~JsApp() override;
 
-    const char* id()   const override { return id_.c_str(); }
-    const char* name() const override { return name_.c_str(); }
+    const char* id()      const override { return id_.c_str(); }
+    const char* name()    const override { return name_.c_str(); }
+    const char* version() const { return version_.c_str(); }
+
+    // QuickJS evaluates JS recursively and needs a much deeper stack than
+    // native C++ apps. 32 KB avoids the stack overflow seen with the default 8 KB.
+    uint32_t stackBytes() const override { return 32768; }
 
 protected:
     void        onStart(AppContext& ctx) override;
@@ -26,7 +31,7 @@ protected:
     size_t      arenaCapacity() const override { return 1024; }
 
 private:
-    std::string id_, name_, js_;
+    std::string id_, name_, version_, js_;
     std::unique_ptr<js::JsEngine> eng_;
     bool        loaded_ = false;
     char        errLine_[96] = "";

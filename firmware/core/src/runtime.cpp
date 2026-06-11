@@ -12,9 +12,8 @@
 #include "kairo/system/system_info.h"
 #include "kairo/system/hardware_registry.h"
 #include "kairo/system/capability_registry.h"
-#include "kairo/plugin/plugin_manager.h"
+#include "kairo/app/app_registry.h"
 #include "kairo/app/app_host_manager.h"
-#include "kairo/plugin/plugin_context.h"
 #include "kairo/ui/view_dispatcher.h"
 #include "kairo/ui/screen.h"
 #include "kairo/ui/canvas.h"
@@ -72,7 +71,7 @@ void Runtime::initCore() {
     systemInfo_->platformName    = platform_->name();
     systemInfo_->boardName       = board_->name();
 
-    pluginManager_  = std::make_unique<PluginManager>(*this);
+    appRegistry_    = std::make_unique<AppRegistry>(*this);
     appHosts_       = std::make_unique<AppHostManager>(*this);
     viewDispatcher_ = std::make_unique<ViewDispatcher>();
 
@@ -93,7 +92,7 @@ void Runtime::registerServices() {
     platform_->postRegister(*this);
 
     // Build service manager now that container is populated
-    serviceManager_ = std::make_unique<ServiceManager>(*container_, *logger_, *eventBus_, clock());
+    serviceManager_ = std::make_unique<ServiceManager>(*container_, *logger_, *eventBus_);
 
     // Create Canvas backed by the registered display driver (if any).
     // Logical scale: prefer config "display/scale", else the driver's dpi() hint,
@@ -148,9 +147,8 @@ void Runtime::run() {
         step();
     }
     logger_->info("Runtime", "Shutdown requested — stopping");
-    if (gui_) gui_->stop();   // stop UI thread first — it touches screens/plugins
-    taskRunner_.stop();       // join worker before plugins/services tear down
-    pluginManager_->unloadAll();
+    if (gui_) gui_->stop();   // stop UI thread first — it touches screens/apps
+    taskRunner_.stop();       // join worker before services tear down
     serviceManager_->stopAll();
     logger_->info("Runtime", "Shutdown complete");
 }
@@ -171,7 +169,8 @@ void Runtime::step() {
     asyncPoster_.flush(*eventBus_);
 
     serviceManager_->tickAll(now);
-    pluginManager_->tickAll(now);
+    // Apps run on their own threads (AppHostManager) — no cooperative per-frame
+    // tick here; background work belongs in Services, which ticked above.
 
     platform_->idle();
 }
@@ -189,8 +188,22 @@ ServiceContainer&   Runtime::container()     { assert(container_); return *conta
 HardwareRegistry&   Runtime::hardware()      { assert(hardware_);  return *hardware_; }
 CapabilityRegistry& Runtime::capabilities()  { assert(capabilities_); return *capabilities_; }
 const SystemInfo&   Runtime::info()    const { assert(systemInfo_);  return *systemInfo_; }
-PluginManager&      Runtime::plugins()       { assert(pluginManager_); return *pluginManager_; }
-AppHostManager&     Runtime::apps()          { assert(appHosts_); return *appHosts_; }
+AppRegistry&        Runtime::apps()          { assert(appRegistry_); return *appRegistry_; }
+AppHostManager&     Runtime::appHost()       { assert(appHosts_); return *appHosts_; }
+
+void Runtime::adoptService(IService* svc) {
+    assert(svc && container_ && serviceManager_);
+    container_->addService(svc);
+    // Before start(): startAll() will pick it up at boot. Already Running:
+    // bring it up now so runtime-installed services actually run.
+    if (phase_ == BootPhase::Running) serviceManager_->startOne(svc);
+}
+
+void Runtime::dropService(IService* svc) {
+    assert(svc && container_ && serviceManager_);
+    serviceManager_->stopOne(svc);
+    container_->removeService(svc);
+}
 ViewDispatcher&     Runtime::view()          { assert(viewDispatcher_); return *viewDispatcher_; }
 Canvas&             Runtime::canvas()        { assert(canvas_); return *canvas_; }
 DisplayPowerManager& Runtime::dpm()          { assert(gui_); return gui_->dpm(); }

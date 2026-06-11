@@ -17,7 +17,9 @@ export enum Channel {
 	System = 0x04, // device info, power (restart/sleep/shutdown)
 	Ota = 0x05, // firmware update chunks
 	Ext = 0x06, // host→device sim-control commands (inject event, wifi router)
-	Event = 0x07 // device→host EventBus stream (Events panel)
+	Event = 0x07, // device→host EventBus stream (Events panel)
+	Cli = 0x08, // terminal: host sends a command line, device streams text + EOT
+	File = 0x09 // filesystem request/response (list/read/write/mkdir/remove)
 }
 
 export const Flags = {

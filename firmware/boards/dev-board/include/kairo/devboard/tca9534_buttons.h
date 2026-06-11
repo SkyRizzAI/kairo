@@ -12,7 +12,7 @@ class InputService;
 // TCA9534 6-button driver.
 //
 // Polls the I²C expander in its OWN nema::Thread (not the main loop). Because
-// this thread is never blocked by e-ink refresh or plugin work, a button edge
+// this thread is never blocked by e-ink refresh or app work, a button edge
 // is captured and posted to InputService the instant it happens — no lost or
 // "jumped" presses. The main task drains InputService at its own pace.
 class TCA9534Buttons : public IService {

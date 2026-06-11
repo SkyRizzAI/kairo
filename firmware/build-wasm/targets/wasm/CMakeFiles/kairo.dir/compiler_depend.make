@@ -4,11 +4,14 @@
 targets/wasm/CMakeFiles/kairo.dir/main.cpp.o: /Users/solpochi/Projects/oss/kairo/firmware/targets/wasm/main.cpp \
   /Users/solpochi/Projects/oss/kairo/firmware/boards/simulator/include/kairo/sim/simulator_board.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/app/app.h \
+  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/app/app_manifest.h \
+  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/app/app_registry.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/app/component_app.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/apps/bluetooth_app.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/apps/clock_app.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/apps/counter_app.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/apps/js_app.h \
+  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/apps/js_app_store.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/apps/stopwatch_app.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/apps/task_demo_app.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/apps/ticker_app.h \
@@ -20,12 +23,15 @@ targets/wasm/CMakeFiles/kairo.dir/main.cpp.o: /Users/solpochi/Projects/oss/kairo
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/config/config_store.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/event/async_event_poster.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/event/event.h \
+  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/fs/mem_filesystem.h \
+  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/fs/vfs.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/hal/audio_input.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/hal/audio_output.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/hal/bluetooth.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/hal/camera.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/hal/display.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/hal/driver.h \
+  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/hal/filesystem.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/hal/remote_screen_tap.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/hal/wifi.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/input/gesture.h \
@@ -43,17 +49,6 @@ targets/wasm/CMakeFiles/kairo.dir/main.cpp.o: /Users/solpochi/Projects/oss/kairo
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/nema/task_runner.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/nema/thread.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/platform.h \
-  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/plugin/plugin.h \
-  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/plugin/plugin_manager.h \
-  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/plugins/clock_plugin.h \
-  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/plugins/counter_plugin.h \
-  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/plugins/hello_plugin.h \
-  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/plugins/js_app_plugin.h \
-  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/plugins/js_app_store.h \
-  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/plugins/stopwatch_plugin.h \
-  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/plugins/task_demo_plugin.h \
-  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/plugins/ticker_plugin.h \
-  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/plugins/ui_showcase_plugin.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/runtime.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/screens/about_screen.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/screens/app_list_screen.h \
@@ -66,9 +61,9 @@ targets/wasm/CMakeFiles/kairo.dir/main.cpp.o: /Users/solpochi/Projects/oss/kairo
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/screens/sounds_settings_screen.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/screens/touch_settings_screen.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/service.h \
-  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/service/service_container.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/services/audio_service.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/services/camera_service.h \
+  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/services/cli_service.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/services/clock_service.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/services/input_service.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/services/remote_service.h \
@@ -91,7 +86,6 @@ targets/wasm/CMakeFiles/kairo.dir/main.cpp.o: /Users/solpochi/Projects/oss/kairo
   /Users/solpochi/Projects/oss/kairo/firmware/platforms/wasm/include/kairo/wasm/wasm_config.h \
   /Users/solpochi/Projects/oss/kairo/firmware/platforms/wasm/include/kairo/wasm/wasm_platform.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/alloca.h \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/assert.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/bits/alltypes.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/bits/errno.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/bits/limits.h \
@@ -654,7 +648,6 @@ targets/wasm/CMakeFiles/kairo.dir/main.cpp.o: /Users/solpochi/Projects/oss/kairo
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/array \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/atomic \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/bit \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/cassert \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/cctype \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/cerrno \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/chrono \
@@ -692,6 +685,7 @@ targets/wasm/CMakeFiles/kairo.dir/main.cpp.o: /Users/solpochi/Projects/oss/kairo
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/new \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/optional \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/ratio \
+  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/set \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/stdbool.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/stddef.h \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/stdexcept \
@@ -704,7 +698,6 @@ targets/wasm/CMakeFiles/kairo.dir/main.cpp.o: /Users/solpochi/Projects/oss/kairo
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/system_error \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/tuple \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/type_traits \
-  /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/typeindex \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/typeinfo \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/unordered_map \
   /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/utility \
@@ -953,6 +946,8 @@ targets/wasm/CMakeFiles/kairo.dir/main.cpp.o: /Users/solpochi/Projects/oss/kairo
 
 /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_trivial.h:
 
+/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_swappable.h:
+
 /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_specialization.h:
 
 /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_replaceable.h:
@@ -1070,8 +1065,6 @@ targets/wasm/CMakeFiles/kairo.dir/main.cpp.o: /Users/solpochi/Projects/oss/kairo
 /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_trivially_constructible.h:
 
 /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__system_error/error_condition.h:
-
-/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/typeindex:
 
 /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__system_error/error_code.h:
 
@@ -1199,23 +1192,21 @@ targets/wasm/CMakeFiles/kairo.dir/main.cpp.o: /Users/solpochi/Projects/oss/kairo
 
 /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__math/traits.h:
 
-/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_arithmetic.h:
-
-/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__math/special_functions.h:
-
 /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__math/rounding_functions.h:
 
-/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__tuple/tuple_like_ext.h:
+/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__utility/element_count.h:
 
-/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__math/roots.h:
+/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__functional/mem_fn.h:
 
-/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__math/modulo.h:
+/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__math/remainder.h:
 
 /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__math/min_max.h:
 
 /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__math/inverse_hyperbolic_functions.h:
 
 /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__math/hyperbolic_functions.h:
+
+/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__math/error_functions.h:
 
 /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__fwd/sstream.h:
 
@@ -1234,8 +1225,6 @@ targets/wasm/CMakeFiles/kairo.dir/main.cpp.o: /Users/solpochi/Projects/oss/kairo
 /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__ranges/from_range.h:
 
 /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__locale_dir/pad_and_output.h:
-
-/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__locale_dir/get_c_locale.h:
 
 /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/hal/camera.h:
 
@@ -1281,15 +1270,11 @@ targets/wasm/CMakeFiles/kairo.dir/main.cpp.o: /Users/solpochi/Projects/oss/kairo
 
 /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/erase_if_container.h:
 
-/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/default_sentinel.h:
-
 /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__new/new_handler.h:
 
 /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/data.h:
 
 /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__memory/pointer_traits.h:
-
-/Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/plugins/ticker_plugin.h:
 
 /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/back_insert_iterator.h:
 
@@ -1320,6 +1305,8 @@ targets/wasm/CMakeFiles/kairo.dir/main.cpp.o: /Users/solpochi/Projects/oss/kairo
 /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__fwd/subrange.h:
 
 /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__fwd/string_view.h:
+
+/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__fwd/set.h:
 
 /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/comp.h:
 
@@ -1389,15 +1376,11 @@ targets/wasm/CMakeFiles/kairo.dir/main.cpp.o: /Users/solpochi/Projects/oss/kairo
 
 /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__functional/reference_wrapper.h:
 
+/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__functional/operations.h:
+
 /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/in_out_result.h:
 
 /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__functional/mem_fun_ref.h:
-
-/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__utility/element_count.h:
-
-/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__math/remainder.h:
-
-/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__functional/mem_fn.h:
 
 /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__math/fma.h:
 
@@ -1421,13 +1404,19 @@ targets/wasm/CMakeFiles/kairo.dir/main.cpp.o: /Users/solpochi/Projects/oss/kairo
 
 /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__functional/bind.h:
 
-/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/cassert:
-
 /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/bit:
 
 /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/fill.h:
 
 /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__functional/binary_negate.h:
+
+/Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/screens/sounds_settings_screen.h:
+
+/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__functional/hash.h:
+
+/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/equal.h:
+
+/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__exception/nested_exception.h:
 
 /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/chrono:
 
@@ -1551,8 +1540,6 @@ targets/wasm/CMakeFiles/kairo.dir/main.cpp.o: /Users/solpochi/Projects/oss/kairo
 
 /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__compare/common_comparison_category.h:
 
-/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__chrono/steady_clock.h:
-
 /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/emscripten/wget.h:
 
 /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__chrono/high_resolution_clock.h:
@@ -1578,8 +1565,6 @@ targets/wasm/CMakeFiles/kairo.dir/main.cpp.o: /Users/solpochi/Projects/oss/kairo
 /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__charconv/to_chars_result.h:
 
 /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/algorithm:
-
-/Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/plugins/clock_plugin.h:
 
 /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__charconv/to_chars_integral.h:
 
@@ -1615,6 +1600,14 @@ targets/wasm/CMakeFiles/kairo.dir/main.cpp.o: /Users/solpochi/Projects/oss/kairo
 
 /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__charconv/tables.h:
 
+/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/datasizeof.h:
+
+/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__compare/ordering.h:
+
+/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/partition.h:
+
+/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__atomic/contention_t.h:
+
 /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__atomic/atomic_flag.h:
 
 /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__ios/fpos.h:
@@ -1627,19 +1620,41 @@ targets/wasm/CMakeFiles/kairo.dir/main.cpp.o: /Users/solpochi/Projects/oss/kairo
 
 /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__atomic/atomic.h:
 
-/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__assertion_handler:
+/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/binary_search.h:
 
-/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__concepts/destructible.h:
+/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/emscripten/version.h:
 
-/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__assert:
+/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/upper_bound.h:
 
-/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/string.h:
+/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/clocale:
 
-/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__locale_dir/messages.h:
+/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__math/copysign.h:
 
-/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/cmath:
+/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__utility/move.h:
 
-/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/unique_copy.h:
+/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_same.h:
+
+/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__thread/id.h:
+
+/Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/ui/component_runtime.h:
+
+/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/push_heap.h:
+
+/Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/apps/bluetooth_app.h:
+
+/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_core_convertible.h:
+
+/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/unwrap_range.h:
+
+/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/access.h:
+
+/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/bits/errno.h:
+
+/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/is_sorted.h:
+
+/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/partition_point.h:
+
+/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/unwrap_iter.h:
 
 /Users/solpochi/emsdk/upstream/lib/clang/23/include/__stddef_nullptr_t.h:
 
@@ -1666,6 +1681,10 @@ targets/wasm/CMakeFiles/kairo.dir/main.cpp.o: /Users/solpochi/Projects/oss/kairo
 /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__memory/array_cookie.h:
 
 /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/shuffle.h:
+
+/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__tuple/tuple_like_ext.h:
+
+/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__math/roots.h:
 
 /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__math/exponential_functions.h:
 
@@ -1725,19 +1744,7 @@ targets/wasm/CMakeFiles/kairo.dir/main.cpp.o: /Users/solpochi/Projects/oss/kairo
 
 /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/radix_sort.h:
 
-/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/access.h:
-
-/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/unwrap_iter.h:
-
-/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/bits/errno.h:
-
-/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/is_sorted.h:
-
-/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/partition_point.h:
-
-/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__atomic/contention_t.h:
-
-/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/partition.h:
+/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/move.h:
 
 /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/mismatch.h:
 
@@ -1745,11 +1752,27 @@ targets/wasm/CMakeFiles/kairo.dir/main.cpp.o: /Users/solpochi/Projects/oss/kairo
 
 /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/minmax_element.h:
 
+/Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/hal/filesystem.h:
+
 /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/min_element.h:
 
 /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/max.h:
 
 /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/make_projected.h:
+
+/Users/solpochi/emsdk/upstream/lib/clang/23/include/__stdarg_va_copy.h:
+
+/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/next_permutation.h:
+
+/Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/services/audio_service.h:
+
+/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/copy_cvref.h:
+
+/Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/fs/vfs.h:
+
+/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/find.h:
+
+/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/make_heap.h:
 
 /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/lower_bound.h:
 
@@ -1819,9 +1842,25 @@ targets/wasm/CMakeFiles/kairo.dir/main.cpp.o: /Users/solpochi/Projects/oss/kairo
 
 /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__functional/default_searcher.h:
 
+/Users/solpochi/emsdk/upstream/lib/clang/23/include/__stddef_ptrdiff_t.h:
+
+/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/unwrap_ref.h:
+
+/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__concepts/convertible_to.h:
+
+/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__math/gamma.h:
+
+/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/reverse_access.h:
+
+/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/find_first_of.h:
+
 /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__utility/rel_ops.h:
 
 /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/equal_range.h:
+
+/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__fwd/vector.h:
+
+/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/prev_permutation.h:
 
 /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/string_view:
 
@@ -1829,19 +1868,31 @@ targets/wasm/CMakeFiles/kairo.dir/main.cpp.o: /Users/solpochi/Projects/oss/kairo
 
 /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/count.h:
 
-/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__exception/nested_exception.h:
-
-/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/equal.h:
-
-/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__fwd/vector.h:
-
-/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/prev_permutation.h:
-
 /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__bit/bit_cast.h:
 
 /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/emscripten/promise.h:
 
 /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/copy_move_common.h:
+
+/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/replace.h:
+
+/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/unreachable_sentinel.h:
+
+/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/is_heap_until.h:
+
+/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/emscripten/em_js.h:
+
+/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__ranges/dangling.h:
+
+/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__exception/exception.h:
+
+/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__stop_token/intrusive_shared_ptr.h:
+
+/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__bit_reference:
+
+/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/generate_n.h:
+
+/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/copy_backward.h:
 
 /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/fill_n.h:
 
@@ -1881,6 +1932,8 @@ targets/wasm/CMakeFiles/kairo.dir/main.cpp.o: /Users/solpochi/Projects/oss/kairo
 
 /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__atomic/to_gcc_order.h:
 
+/Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/app/app_manifest.h:
+
 /Users/solpochi/Projects/oss/kairo/firmware/platforms/wasm/include/kairo/wasm/wasm_platform.h:
 
 /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/hal/remote_screen_tap.h:
@@ -1891,37 +1944,21 @@ targets/wasm/CMakeFiles/kairo.dir/main.cpp.o: /Users/solpochi/Projects/oss/kairo
 
 /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/comp_ref_type.h:
 
-/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/simd_utils.h:
+/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_volatile.h:
 
-/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_signed.h:
+/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/all_of.h:
 
-/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/set_symmetric_difference.h:
+/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/stdio.h:
 
-/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/emscripten/version.h:
+/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__math/hypot.h:
 
-/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/upper_bound.h:
+/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__memory/is_sufficiently_aligned.h:
 
-/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/binary_search.h:
+/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__locale_dir/locale_base_api.h:
 
-/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/clocale:
+/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__ranges/container_compatible_range.h:
 
-/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__math/copysign.h:
-
-/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_core_convertible.h:
-
-/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/unwrap_range.h:
-
-/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__utility/move.h:
-
-/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_same.h:
-
-/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__thread/id.h:
-
-/Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/ui/component_runtime.h:
-
-/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/push_heap.h:
-
-/Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/apps/bluetooth_app.h:
+/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/clamp.h:
 
 /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_assignable.h:
 
@@ -1939,17 +1976,31 @@ targets/wasm/CMakeFiles/kairo.dir/main.cpp.o: /Users/solpochi/Projects/oss/kairo
 
 /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/generate.h:
 
+/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__assertion_handler:
+
 /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__log_hardening_failure:
 
 /Users/solpochi/Projects/oss/kairo/firmware/platforms/wasm/include/kairo/sim/sim_wifi_driver.h:
+
+/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/make_const_lvalue_ref.h:
+
+/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__bit/invert_if.h:
+
+/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__atomic/support.h:
+
+/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__utility/integer_sequence.h:
+
+/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/replace_copy_if.h:
+
+/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__utility/pair.h:
+
+/Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/ui/widgets.h:
 
 /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/types.h:
 
 /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/ui/virtual_keyboard.h:
 
 /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/ui/screen.h:
-
-/Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/plugins/js_app_plugin.h:
 
 /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/event/event.h:
 
@@ -1963,37 +2014,19 @@ targets/wasm/CMakeFiles/kairo.dir/main.cpp.o: /Users/solpochi/Projects/oss/kairo
 
 /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__concepts/constructible.h:
 
+/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_final.h:
+
+/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__configuration/compiler.h:
+
+/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__atomic/atomic_init.h:
+
+/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/none_of.h:
+
 /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/system/board_profile.h:
 
 /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_aggregate.h:
 
 /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/services/input_service.h:
-
-/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/make_heap.h:
-
-/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/copy_cvref.h:
-
-/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/find.h:
-
-/Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/services/audio_service.h:
-
-/Users/solpochi/emsdk/upstream/lib/clang/23/include/__stddef_ptrdiff_t.h:
-
-/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/unwrap_ref.h:
-
-/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__concepts/convertible_to.h:
-
-/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__math/gamma.h:
-
-/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/reverse_access.h:
-
-/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/find_first_of.h:
-
-/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/datasizeof.h:
-
-/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__compare/ordering.h:
-
-/Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/service/service_container.h:
 
 /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/compat/time.h:
 
@@ -2005,33 +2038,15 @@ targets/wasm/CMakeFiles/kairo.dir/main.cpp.o: /Users/solpochi/Projects/oss/kairo
 
 /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/service.h:
 
-/Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/screens/touch_settings_screen.h:
+/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__locale_dir/get_c_locale.h:
+
+/Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/services/cli_service.h:
 
 /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/remove_reference.h:
 
 /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/screens/sleep_settings_screen.h:
 
 /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/screens/home_screen.h:
-
-/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/replace.h:
-
-/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/unreachable_sentinel.h:
-
-/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/is_heap_until.h:
-
-/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/emscripten/em_js.h:
-
-/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__ranges/dangling.h:
-
-/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__exception/exception.h:
-
-/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__stop_token/intrusive_shared_ptr.h:
-
-/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__bit_reference:
-
-/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/generate_n.h:
-
-/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/copy_backward.h:
 
 /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__functional/boyer_moore_searcher.h:
 
@@ -2051,27 +2066,9 @@ targets/wasm/CMakeFiles/kairo.dir/main.cpp.o: /Users/solpochi/Projects/oss/kairo
 
 /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/runtime.h:
 
-/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_primary_template.h:
+/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__concepts/destructible.h:
 
-/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/common_type.h:
-
-/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/iterator_traits.h:
-
-/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/make_32_64_or_128_bit.h:
-
-/Users/solpochi/Projects/oss/kairo/firmware/platforms/wasm/include/kairo/wasm/wasm_cable_transport.h:
-
-/Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/nema/task_runner.h:
-
-/Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/plugins/hello_plugin.h:
-
-/Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/plugins/ui_showcase_plugin.h:
-
-/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__fwd/set.h:
-
-/Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/plugins/task_demo_plugin.h:
-
-/Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/plugins/stopwatch_plugin.h:
+/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__assert:
 
 /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__concepts/copyable.h:
 
@@ -2089,39 +2086,21 @@ targets/wasm/CMakeFiles/kairo.dir/main.cpp.o: /Users/solpochi/Projects/oss/kairo
 
 /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/platform.h:
 
-/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__mbstate_t.h:
-
-/Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/log/logger.h:
-
-/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_swappable.h:
-
-/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/assert.h:
-
 /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__configuration/abi.h:
 
 /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/pop_heap.h:
 
-/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/make_const_lvalue_ref.h:
+/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_primary_template.h:
 
-/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__bit/invert_if.h:
+/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/common_type.h:
 
-/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__atomic/support.h:
+/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/iterator_traits.h:
 
-/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__utility/integer_sequence.h:
+/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/make_32_64_or_128_bit.h:
 
-/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/replace_copy_if.h:
+/Users/solpochi/Projects/oss/kairo/firmware/platforms/wasm/include/kairo/wasm/wasm_cable_transport.h:
 
-/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__utility/pair.h:
-
-/Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/ui/widgets.h:
-
-/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__atomic/aliases.h:
-
-/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__math/error_functions.h:
-
-/Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/plugins/js_app_store.h:
-
-/Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/plugin/plugin.h:
+/Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/nema/task_runner.h:
 
 /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__utility/exchange.h:
 
@@ -2137,21 +2116,23 @@ targets/wasm/CMakeFiles/kairo.dir/main.cpp.o: /Users/solpochi/Projects/oss/kairo
 
 /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/find_segment_if.h:
 
-/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__functional/hash.h:
-
-/Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/screens/sounds_settings_screen.h:
-
 /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__locale_dir/wbuffer_convert.h:
 
 /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/apps/clock_app.h:
 
 /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__chrono/duration.h:
 
+/Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/fs/mem_filesystem.h:
+
 /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/apps/touch_test_app.h:
 
 /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/clock.h:
 
-/Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/plugins/counter_plugin.h:
+/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__math/modulo.h:
+
+/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__mbstate_t.h:
+
+/Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/log/logger.h:
 
 /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__fwd/fstream.h:
 
@@ -2183,18 +2164,6 @@ targets/wasm/CMakeFiles/kairo.dir/main.cpp.o: /Users/solpochi/Projects/oss/kairo
 
 /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/nema/thread.h:
 
-/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_final.h:
-
-/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__configuration/compiler.h:
-
-/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__atomic/atomic_init.h:
-
-/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/none_of.h:
-
-/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/max_element.h:
-
-/Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/hal/wifi.h:
-
 /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/hal/audio_input.h:
 
 /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/stdlib.h:
@@ -2219,13 +2188,17 @@ targets/wasm/CMakeFiles/kairo.dir/main.cpp.o: /Users/solpochi/Projects/oss/kairo
 
 /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/input/gesture.h:
 
-/Users/solpochi/emsdk/upstream/lib/clang/23/include/__stdarg_va_copy.h:
+/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/max_element.h:
 
-/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/next_permutation.h:
+/Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/hal/wifi.h:
 
 /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/move_iterator.h:
 
 /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/nth_element.h:
+
+/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_arithmetic.h:
+
+/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__math/special_functions.h:
 
 /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__fwd/streambuf.h:
 
@@ -2234,6 +2207,12 @@ targets/wasm/CMakeFiles/kairo.dir/main.cpp.o: /Users/solpochi/Projects/oss/kairo
 /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/condition_variable:
 
 /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/adjacent_find.h:
+
+/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/simd_utils.h:
+
+/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_signed.h:
+
+/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/set_symmetric_difference.h:
 
 /Users/solpochi/Projects/oss/kairo/firmware/boards/simulator/include/kairo/sim/simulator_board.h:
 
@@ -2253,29 +2232,11 @@ targets/wasm/CMakeFiles/kairo.dir/main.cpp.o: /Users/solpochi/Projects/oss/kairo
 
 /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/apps/wifi_app.h:
 
-/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/stdio.h:
+/Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/screens/touch_settings_screen.h:
 
-/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__math/hypot.h:
+/Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/app/app_registry.h:
 
-/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__memory/is_sufficiently_aligned.h:
-
-/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__locale_dir/locale_base_api.h:
-
-/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__ranges/container_compatible_range.h:
-
-/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/clamp.h:
-
-/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/is_volatile.h:
-
-/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/all_of.h:
-
-/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/swap_ranges.h:
-
-/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__concepts/different_from.h:
-
-/Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/screens/controls_screen.h:
-
-/Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/hal/audio_output.h:
+/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__atomic/aliases.h:
 
 /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/stdint.h:
 
@@ -2291,12 +2252,30 @@ targets/wasm/CMakeFiles/kairo.dir/main.cpp.o: /Users/solpochi/Projects/oss/kairo
 
 /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/apps/ticker_app.h:
 
-/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/move.h:
-
-/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__functional/operations.h:
-
-/Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/plugin/plugin_manager.h:
-
 /Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__type_traits/has_virtual_destructor.h:
 
 /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/apps/stopwatch_app.h:
+
+/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__chrono/steady_clock.h:
+
+/Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/apps/js_app_store.h:
+
+/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/swap_ranges.h:
+
+/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__concepts/different_from.h:
+
+/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/set:
+
+/Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/screens/controls_screen.h:
+
+/Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/hal/audio_output.h:
+
+/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__iterator/default_sentinel.h:
+
+/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/string.h:
+
+/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__locale_dir/messages.h:
+
+/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/cmath:
+
+/Users/solpochi/emsdk/upstream/emscripten/cache/sysroot/include/c++/v1/__algorithm/unique_copy.h:

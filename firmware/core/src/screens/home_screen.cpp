@@ -11,12 +11,12 @@ using namespace ui;
 HomeScreen::HomeScreen(Runtime& rt)
     : ComponentScreen(rt), appList_(rt), logs_(rt), settings_(rt) {}
 
-void HomeScreen::enter() { rt_.view().requestRedraw(); }
+void HomeScreen::enter() { ComponentScreen::enter(); }
 
 void HomeScreen::onApps(void* u)     { auto* s = static_cast<HomeScreen*>(u); s->rt_.view().push(s->appList_); }
 void HomeScreen::onLogs(void* u)     { auto* s = static_cast<HomeScreen*>(u); s->rt_.view().push(s->logs_); }
 void HomeScreen::onSettings(void* u) { auto* s = static_cast<HomeScreen*>(u); s->rt_.view().push(s->settings_); }
-void HomeScreen::onContinue(void* u) { static_cast<HomeScreen*>(u)->rt_.apps().resumePaused(); }
+void HomeScreen::onContinue(void* u) { static_cast<HomeScreen*>(u)->rt_.appHost().resumePaused(); }
 
 UiNode* HomeScreen::build(NodeArena& a, Runtime& rt) {
     Style root;  root.dir = FlexDir::Col; root.flexGrow = 1; root.padding = 4; root.gap = 6;
@@ -34,9 +34,9 @@ UiNode* HomeScreen::build(NodeArena& a, Runtime& rt) {
         prev = n;
     };
     // Plan 22: a paused app appears as the top "Continue" entry.
-    if (rt.apps().hasPaused()) {
+    if (rt.appHost().hasPaused()) {
         std::snprintf(continueLabel_, sizeof(continueLabel_), "Continue: %s",
-                      rt.apps().pausedName() ? rt.apps().pausedName() : "app");
+                      rt.appHost().pausedName() ? rt.appHost().pausedName() : "app");
         add(ListRow(a, continueLabel_, onContinue, this));
     }
     add(ListRow(a, "Apps",     onApps,     this));

@@ -72,7 +72,8 @@ void AppHost::enter() {
     started_  = true;
     finished_ = false;
     // App thread on core 0 (off the GUI/core-1). May block freely.
-    thread_.start({"nema_app", 8192, 5, 0}, &AppHost::threadEntry, this);
+    // Stack size comes from the app: JS apps need more (QuickJS recurses deeply).
+    thread_.start({"nema_app", app_.stackBytes(), 5, 0}, &AppHost::threadEntry, this);
     rt_.view().requestRedraw();
 }
 
@@ -102,25 +103,31 @@ void AppHost::draw(Canvas& c) {
     if (!hasFrame_) return;
 
     // Fullscreen fast path: push the whole frame straight to the panel in one
-    // pass (skips 76,800 per-pixel drawPixel calls — the dominant render cost).
-    // GuiService skips its own canvas flush for us (see suppressCanvasFlush()).
-    if (app_.fullscreen() && display_) {
+    // pass (skips 76,800 per-pixel drawPixel calls). Only valid when the app
+    // buffer is at physical dimensions (scale == 1.0); at scale > 1.0, w_/h_
+    // are logical (smaller) and flushBuffer would silently no-op.
+    if (app_.fullscreen() && display_ &&
+        w_ == display_->width() && h_ == display_->height()) {
         display_->flushBuffer(readyBuf_, w_, h_);
         return;
     }
 
-    // Normal mode: status bar occupies the top strip (already drawn by
-    // GuiService), so blit the app frame below it via the canvas.
-    uint16_t top = (uint16_t)(ui::SEP1_Y + 2);
+    // Scaled fullscreen or normal mode: blit via canvas drawPixel.
+    // Fullscreen apps own the whole canvas; clear first so physical-pixel gaps
+    // left by non-integer scale don't show stale content at the edges.
+    if (app_.fullscreen()) c.clear(false);
+    uint16_t top = app_.fullscreen() ? 0 : (uint16_t)(ui::SEP1_Y + 2);
     for (uint16_t y = top; y < h_; y++)
         for (uint16_t x = 0; x < w_; x++)
             c.drawPixel(x, y, readyBuf_[(size_t)y * w_ + x] != 0);
 }
 
 bool AppHost::suppressCanvasFlush() const {
-    // Fullscreen apps flush directly in draw() via display_->flushBuffer();
-    // tell GuiService not to also flush the (unused) 1-bit canvas over it.
-    return app_.fullscreen() && display_ != nullptr;
+    // Suppress only when we actually took the flushBuffer fast path (physical
+    // dimensions match). At scale > 1.0 we fall through to the canvas blit path
+    // and GuiService must flush normally.
+    return app_.fullscreen() && display_ != nullptr &&
+           w_ == display_->width() && h_ == display_->height();
 }
 
 void AppHost::tick(uint64_t) {

@@ -686,6 +686,6 @@ core/CMakeFiles/kairo_core.dir/src/screens/logs_screen.cpp.o: \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/nema/task_runner.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/nema/thread.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/ui/view_dispatcher.h \
-  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/plugin/plugin_manager.h \
-  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/plugin/plugin.h \
+  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/app/app_registry.h \
+  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/app/app_manifest.h \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/clock.h

@@ -26,6 +26,7 @@ public:
     virtual bool onBack() { return false; }
 
     // IScreen
+    void enter() override;    // resets modality → focus ring re-appears on wake
     void onAction(input::Action a) override;
     void onPointer(const input::PointerEvent& e) override;
     void draw(Canvas& c) override;

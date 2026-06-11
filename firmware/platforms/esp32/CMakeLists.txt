@@ -7,10 +7,12 @@ idf_component_register(
         "src/esp32_usb_cdc.cpp"
         "src/esp32_platform.cpp"
         "src/nvs_config_store.cpp"
+        "src/littlefs_filesystem.cpp"
     INCLUDE_DIRS "include"
     REQUIRES
         core
         espressif__arduino-esp32
+        joltwallet__littlefs
         esp_wifi
         esp_event
         nvs_flash
