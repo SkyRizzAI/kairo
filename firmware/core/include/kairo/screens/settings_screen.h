@@ -8,6 +8,7 @@
 #include "kairo/screens/touch_settings_screen.h"
 #include "kairo/screens/sounds_settings_screen.h"
 #include "kairo/screens/camera_settings_screen.h"
+#include "kairo/screens/profile_settings_screen.h"
 #include <memory>
 #include <vector>
 
@@ -24,7 +25,7 @@ public:
     ui::UiNode* build(ui::NodeArena& a, Runtime& rt) override;
 
 private:
-    enum Kind { WiFi, Bluetooth, Display, Controls, Touch, Sounds, Camera, About };
+    enum Kind { WiFi, Bluetooth, Display, Controls, Touch, Sounds, Camera, About, Profile };
     struct Item { SettingsScreen* self; Kind kind; const char* label; };
 
     AboutScreen          about_;
@@ -34,7 +35,8 @@ private:
     BluetoothApp         bluetoothApp_;
     TouchSettingsScreen  touchSettings_;
     SoundsSettingsScreen sounds_;
-    CameraSettingsScreen cameraSettings_;
+    CameraSettingsScreen  cameraSettings_;
+    ProfileSettingsScreen profileSettings_;
 
     ui::ScrollState   scroll_;
     std::vector<Item> items_;

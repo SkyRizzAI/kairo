@@ -73,6 +73,7 @@ src/input/gesture.cpp
     src/screens/touch_settings_screen.cpp
     src/screens/sounds_settings_screen.cpp
     src/screens/camera_settings_screen.cpp
+    src/screens/profile_settings_screen.cpp
     src/services/display_power_manager.cpp
     src/services/audio_service.cpp
     src/services/camera_service.cpp

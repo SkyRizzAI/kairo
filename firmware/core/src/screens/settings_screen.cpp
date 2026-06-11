@@ -10,7 +10,7 @@ using namespace ui;
 
 SettingsScreen::SettingsScreen(Runtime& rt)
     : ComponentScreen(rt, 160), about_(rt), sleepSettings_(rt), controls_(rt),
-      touchSettings_(rt), sounds_(rt), cameraSettings_(rt) {}
+      touchSettings_(rt), sounds_(rt), cameraSettings_(rt), profileSettings_(rt) {}
 
 void SettingsScreen::enter() {
     scroll_.scrollMain = 0;
@@ -30,7 +30,8 @@ void SettingsScreen::launch(Kind k) {
         case Controls:   rt_.view().push(controls_);       break;
         case Touch:      rt_.view().push(touchSettings_);  break;
         case Sounds:     rt_.view().push(sounds_);         break;
-        case Camera:     rt_.view().push(cameraSettings_); break;
+        case Camera:     rt_.view().push(cameraSettings_);    break;
+        case Profile:    rt_.view().push(profileSettings_);   break;
         case WiFi:       rt_.appHost().launch(wifiApp_);      break;
         case Bluetooth:  rt_.appHost().launch(bluetoothApp_); break;
     }
@@ -47,6 +48,7 @@ UiNode* SettingsScreen::build(NodeArena& a, Runtime& rt) {
     if (caps.has("audio.input") || caps.has("audio.output"))
                                                           items_.push_back({this, Sounds,   "Sounds"});
     if (caps.has("camera"))                              items_.push_back({this, Camera,   "Camera"});
+    if (caps.has("profile"))                               items_.push_back({this, Profile,  "Profile"});
     items_.push_back({this, About,    "About"});
 
     Style root; root.dir = FlexDir::Col; root.flexGrow = 1; root.padding = 3; root.gap = 1;
