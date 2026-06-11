@@ -156,15 +156,15 @@ profile verify <input>       -> "ok" / "no" (uji manual API verify)
 
 ## 3. Fase pengerjaan
 
-- [ ] **Fase 1 — Core service + hash.** `sha256.{h,cpp}` (+ test vector host),
-      `ProfileService` (NVS load/seed/get/set/verify), unit test host (set→verify ok,
-      input salah→false, tak-di-set→false, default ter-seed). Daftarkan ke core
-      CMake + test.
-- [ ] **Fase 2 — Registrasi platform + nama device.** Wire `profile_.init` di esp32 &
-      wasm; set BLE adv name dari `deviceName()`; capability `"profile"`.
-- [ ] **Fase 3 — CLI.** `whoami` + `profile ...` commands.
-- [ ] **Fase 4 — Custom-app API.** `kairo.profile.*` (read + verify) di `js_api.cpp`;
-      uji lewat satu `.kapp` contoh kecil.
+- [x] **Fase 1 — Core service + hash.** `firmware/core/include/kairo/crypto/sha256.h`,
+      `firmware/core/src/crypto/sha256.cpp` (XorShift32 PRNG salt + FIPS 180-4 SHA-256).
+      `ProfileService` (load/seed/get/set/verify + constant-time compare). Core CMake updated.
+- [x] **Fase 2 — Registrasi platform + nama device.** Wired di esp32 & wasm; BLE adv name
+      diset dari `profile_.deviceName()` setelah remote init; capability `"profile"` ditambah.
+- [x] **Fase 3 — CLI.** `whoami` (user + device name) dan `profile` (set user|device,
+      passwd, verify) di `registerCoreCliCommands`.
+- [x] **Fase 4 — Custom-app API.** `kairo.profile.userName/deviceName/hasPassword/verifyPassword`
+      di `js_api.cpp`; gated dengan capability check; setters sengaja tidak ada.
 - [ ] **Fase 5 — Forge (opsional).** Tampilkan device/user name di header sesi;
       panel Settings "Profile" untuk lihat/ubah (lewat CLI atau channel System).
       *Boleh ditunda; firmware sudah cukup tanpa ini.*
