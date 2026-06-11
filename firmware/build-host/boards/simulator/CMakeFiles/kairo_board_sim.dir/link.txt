@@ -1,2 +1,0 @@
-/usr/bin/ar qc libkairo_board_sim.a CMakeFiles/kairo_board_sim.dir/src/simulator_board.cpp.o
-/usr/bin/ranlib libkairo_board_sim.a

@@ -1,1 +1,0 @@
-/Users/solpochi/emsdk/upstream/emscripten/em++ -pthread -sENVIRONMENT=web,worker -sINITIAL_MEMORY=536870912 -sPTHREAD_POOL_SIZE=12 -s EXPORTED_FUNCTIONS=[_main,_kairo_klp_recv,_malloc,_free] -s EXPORTED_RUNTIME_METHODS=[HEAPU8,ccall,cwrap] @CMakeFiles/kairo.dir/objects1.rsp -o kairo.js @CMakeFiles/kairo.dir/linkLibs.rsp

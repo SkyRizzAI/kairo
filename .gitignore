@@ -35,6 +35,8 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 
 # Firmware build artifacts
 firmware/build/
+firmware/build-wasm/
+firmware/build-host/
 compile_commands.json
 refs
 
