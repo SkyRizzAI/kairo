@@ -1,4 +1,5 @@
 #include "kairo/services/cli_service.h"
+#include "kairo/services/profile_service.h"
 #include "kairo/runtime.h"
 #include "kairo/board.h"
 #include "kairo/system/system_info.h"
@@ -138,6 +139,42 @@ void registerCoreCliCommands(CliService& cli, Runtime& rt) {
     };
     cli.add("ble", "Bluetooth/BLE radio status", ble);
     cli.add("bluetooth", "alias of ble", ble);
+
+    cli.add("whoami", "show owner user and device name",
+        [r](const std::vector<std::string>&, const CliService::Out& out) {
+            auto* p = r->container().resolve<ProfileService>();
+            if (!p) { out("profile: not available"); return; }
+            out("user:   " + p->userName());
+            out("device: " + p->deviceName());
+        });
+
+    cli.add("profile", "view/edit owner profile (set user|device, passwd, verify)",
+        [r](const std::vector<std::string>& args, const CliService::Out& out) {
+            auto* p = r->container().resolve<ProfileService>();
+            if (!p) { out("profile: not available"); return; }
+            if (args.empty()) {
+                out("user:     " + p->userName());
+                out("device:   " + p->deviceName());
+                out(std::string("password: ") + (p->hasPassword() ? "set" : "not set"));
+                return;
+            }
+            const std::string& sub = args[0];
+            if (sub == "set") {
+                if (args.size() < 3) { out("usage: profile set user|device <value>"); return; }
+                if      (args[1] == "user")   { p->setUserName(args[2]);   out("user set: "   + args[2]); }
+                else if (args[1] == "device") { p->setDeviceName(args[2]); out("device set: " + args[2]); }
+                else out("usage: profile set user|device <value>");
+            } else if (sub == "passwd") {
+                if (args.size() < 2) { out("usage: profile passwd <new> | --clear"); return; }
+                if (args[1] == "--clear") { p->clearPassword(); out("password cleared"); }
+                else                      { p->setPassword(args[1]); out("password set"); }
+            } else if (sub == "verify") {
+                if (args.size() < 2) { out("usage: profile verify <input>"); return; }
+                out(p->verifyPassword(args[1]) ? "ok" : "no");
+            } else {
+                out("usage: profile [set user|device <val>] [passwd <new>|--clear] [verify <input>]");
+            }
+        });
 
     cli.add("fs", "filesystem: fs ls|cat|rm|mkdir [path]",
         [r](const std::vector<std::string>& args, const CliService::Out& out) {

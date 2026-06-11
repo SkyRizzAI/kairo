@@ -8,6 +8,7 @@
 #include "kairo/hal/remote_screen_tap.h"
 #include "kairo/services/remote_service.h"
 #include "kairo/services/cli_service.h"
+#include "kairo/services/profile_service.h"
 #include "kairo/fs/mem_filesystem.h"
 #include "kairo/fs/vfs.h"
 #include "kairo/sim/sim_wifi_driver.h"
@@ -37,6 +38,7 @@ private:
     RemoteScreenTap    tap_;
     RemoteService      remote_;
     CliService         cli_;
+    ProfileService     profile_;   // owner identity (Plan 40)
     Vfs                vfs_;       // mount table (root + demo /sd)
     MemFileSystem      rootFs_;    // mounted at "/"
     MemFileSystem      sdFs_;      // mounted at "/sd" (demonstrates a 2nd partition)

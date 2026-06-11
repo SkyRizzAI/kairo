@@ -27,6 +27,11 @@ void WasmPlatform::registerDrivers(Runtime& rt) {
     rt.container().registerAs<IDisplayDriver>(&tap_);    // Canvas renders into the tap → streamed
     rt.container().registerAs<IConfigStore>(&config_);
 
+    // Owner profile: load from config (or seed defaults).
+    profile_.init(config_);
+    rt.container().registerService(&profile_);
+    rt.capabilities().add("profile");
+
     // WiFi (virtual router) — same SimWifiDriver as the native sim, so the
     // device's WiFi app works and Forge's WiFi panel can inject networks.
     wifi_.init(rt.log(), rt.events(), &rt.asyncPoster());

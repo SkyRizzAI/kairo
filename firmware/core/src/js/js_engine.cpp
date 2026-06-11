@@ -1,5 +1,7 @@
 #include "kairo/js/js_engine.h"
 #include "kairo/js/kairo_runtime_js.h"
+#include "kairo/runtime.h"
+#include "kairo/log/logger.h"
 #include "kairo/ui/node.h"
 #include "kairo/ui/widgets.h"
 #include <chrono>
@@ -64,7 +66,14 @@ JsEngine::JsEngine() {
     JS_SetContextOpaque(ctx_, this);
     JS_SetInterruptHandler(rt_, interrupt_trampoline, this);
     JS_SetModuleLoaderFunc(rt_, module_normalize, module_loader, this);
-    JS_SetMaxStackSize(rt_, 256 * 1024);
+    // On-device: keep the JS recursion limit below the FreeRTOS task stack
+    // (64 KB). Native C frames are 32-bit / ~half the size of the 64-bit host,
+    // so 48 KB comfortably fits within 64 KB once C overhead is subtracted.
+    // On host tests the stack is effectively unlimited; leave QuickJS at its
+    // default (256 KB) so tests aren't artificially constrained.
+#ifdef ESP_PLATFORM
+    JS_SetMaxStackSize(rt_, 48 * 1024);
+#endif
     scheduleFn_ = JS_NewCFunction(ctx_, schedule_cfn, "schedule", 0);
 }
 
@@ -119,14 +128,17 @@ bool JsEngine::loadApp(const char* js, const char* name) {
     if (!ok()) return false;
     err_.clear();
     startMs_ = nowMs();
+    if (host_) host_->log().debug("JsEngine", "compile", {{"app", name}});
     // Compile the app as a module, then evaluate the graph (resolves `kairo`).
     JSValue mod = JS_Eval(ctx_, js, std::strlen(js), name,
                           JS_EVAL_TYPE_MODULE | JS_EVAL_FLAG_COMPILE_ONLY);
     if (JS_IsException(mod)) { captureError(); JS_FreeValue(ctx_, mod); return false; }
     JSModuleDef* appDef = static_cast<JSModuleDef*>(JS_VALUE_GET_PTR(mod));
+    if (host_) host_->log().debug("JsEngine", "eval", {{"app", name}});
     JSValue res = JS_EvalFunction(ctx_, JS_DupValue(ctx_, mod));
     if (JS_IsException(res)) { captureError(); JS_FreeValue(ctx_, res); JS_FreeValue(ctx_, mod); return false; }
     JS_FreeValue(ctx_, res);
+    if (host_) host_->log().debug("JsEngine", "jobs", {{"app", name}});
     pumpJobs();
 
     JSValue ns = JS_GetModuleNamespace(ctx_, appDef);

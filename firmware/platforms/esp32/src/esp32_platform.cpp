@@ -29,6 +29,11 @@ void Esp32Platform::registerDrivers(Runtime& rt) {
     config_.init(rt.log());
     rt.container().registerService(&config_);
     rt.container().registerAs<IConfigStore>(&config_);
+
+    // Owner profile: load from NVS (or seed defaults on first boot).
+    profile_.init(config_);
+    rt.container().registerService(&profile_);
+    rt.capabilities().add("profile");
 }
 
 void Esp32Platform::postRegister(Runtime& rt) {
@@ -57,6 +62,9 @@ void Esp32Platform::postRegister(Runtime& rt) {
     remote_.onPower(&Esp32Platform::powerThunk, this);
     remote_.onControl(&Esp32Platform::controlThunk, this);   // OTA app-install (Plan 37)
     remote_.setProfile(rt.board().profile());
+    // Advertise the owner's chosen device name over BLE (visible in scans).
+    if (auto* bt = rt.container().resolve<IBluetoothController>())
+        bt->setDeviceName(profile_.deviceName().c_str());
 
     // CLI terminal over KLP (Plan 40). Core built-ins + a live-heap `ram` that
     // replaces the totals-only core version with real free-heap numbers.

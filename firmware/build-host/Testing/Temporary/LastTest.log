@@ -1,10 +1,10 @@
-Start testing: Jun 11 20:03 WIB
+Start testing: Jun 11 20:28 WIB
 ----------------------------------------------------------
 1/6 Testing: layout_test
 1/6 Test: layout_test
 Command: "/Users/solpochi/Projects/oss/kairo/firmware/build-host/tests/layout_test"
 Directory: /Users/solpochi/Projects/oss/kairo/firmware/build-host/tests
-"layout_test" start time: Jun 11 20:03 WIB
+"layout_test" start time: Jun 11 20:28 WIB
 Output:
 ----------------------------------------------------------
 == Layout engine tests ==
@@ -38,10 +38,10 @@ Output:
   ok:   over-scroll clamped to maxScroll 120
 == ALL PASS ==
 <end of output>
-Test time =   0.49 sec
+Test time =   0.21 sec
 ----------------------------------------------------------
 Test Passed.
-"layout_test" end time: Jun 11 20:03 WIB
+"layout_test" end time: Jun 11 20:28 WIB
 "layout_test" time elapsed: 00:00:00
 ----------------------------------------------------------
 
@@ -49,15 +49,15 @@ Test Passed.
 2/6 Test: klp_test
 Command: "/Users/solpochi/Projects/oss/kairo/firmware/build-host/tests/klp_test"
 Directory: /Users/solpochi/Projects/oss/kairo/firmware/build-host/tests
-"klp_test" start time: Jun 11 20:03 WIB
+"klp_test" start time: Jun 11 20:28 WIB
 Output:
 ----------------------------------------------------------
 klp_test OK
 <end of output>
-Test time =   0.37 sec
+Test time =   0.11 sec
 ----------------------------------------------------------
 Test Passed.
-"klp_test" end time: Jun 11 20:03 WIB
+"klp_test" end time: Jun 11 20:28 WIB
 "klp_test" time elapsed: 00:00:00
 ----------------------------------------------------------
 
@@ -65,15 +65,15 @@ Test Passed.
 3/6 Test: link_test
 Command: "/Users/solpochi/Projects/oss/kairo/firmware/build-host/tests/link_test"
 Directory: /Users/solpochi/Projects/oss/kairo/firmware/build-host/tests
-"link_test" start time: Jun 11 20:03 WIB
+"link_test" start time: Jun 11 20:28 WIB
 Output:
 ----------------------------------------------------------
 link_test OK
 <end of output>
-Test time =   0.41 sec
+Test time =   0.12 sec
 ----------------------------------------------------------
 Test Passed.
-"link_test" end time: Jun 11 20:03 WIB
+"link_test" end time: Jun 11 20:28 WIB
 "link_test" time elapsed: 00:00:00
 ----------------------------------------------------------
 
@@ -81,7 +81,7 @@ Test Passed.
 4/6 Test: js_test
 Command: "/Users/solpochi/Projects/oss/kairo/firmware/build-host/tests/js_test"
 Directory: /Users/solpochi/Projects/oss/kairo/firmware/build-host/tests
-"js_test" start time: Jun 11 20:03 WIB
+"js_test" start time: Jun 11 20:28 WIB
 Output:
 ----------------------------------------------------------
 == JsEngine (QuickJS) tests ==
@@ -95,10 +95,10 @@ Output:
   ok:   engine still usable after interrupt
 == ALL PASS ==
 <end of output>
-Test time =   0.61 sec
+Test time =   0.64 sec
 ----------------------------------------------------------
 Test Passed.
-"js_test" end time: Jun 11 20:03 WIB
+"js_test" end time: Jun 11 20:28 WIB
 "js_test" time elapsed: 00:00:00
 ----------------------------------------------------------
 
@@ -106,7 +106,7 @@ Test Passed.
 5/6 Test: js_render_test
 Command: "/Users/solpochi/Projects/oss/kairo/firmware/build-host/tests/js_render_test"
 Directory: /Users/solpochi/Projects/oss/kairo/firmware/build-host/tests
-"js_render_test" start time: Jun 11 20:03 WIB
+"js_render_test" start time: Jun 11 20:28 WIB
 Output:
 ----------------------------------------------------------
 == JS→UiNode bridge tests ==
@@ -122,10 +122,10 @@ Output:
   ok:   second onPress → 'Count: 2'
 == ALL PASS ==
 <end of output>
-Test time =   0.41 sec
+Test time =   0.40 sec
 ----------------------------------------------------------
 Test Passed.
-"js_render_test" end time: Jun 11 20:03 WIB
+"js_render_test" end time: Jun 11 20:28 WIB
 "js_render_test" time elapsed: 00:00:00
 ----------------------------------------------------------
 
@@ -133,16 +133,16 @@ Test Passed.
 6/6 Test: service_test
 Command: "/Users/solpochi/Projects/oss/kairo/firmware/build-host/tests/service_test"
 Directory: /Users/solpochi/Projects/oss/kairo/firmware/build-host/tests
-"service_test" start time: Jun 11 20:03 WIB
+"service_test" start time: Jun 11 20:28 WIB
 Output:
 ----------------------------------------------------------
 service_test: all assertions passed
 <end of output>
-Test time =   0.38 sec
+Test time =   0.11 sec
 ----------------------------------------------------------
 Test Passed.
-"service_test" end time: Jun 11 20:03 WIB
+"service_test" end time: Jun 11 20:28 WIB
 "service_test" time elapsed: 00:00:00
 ----------------------------------------------------------
 
-End testing: Jun 11 20:03 WIB
+End testing: Jun 11 20:28 WIB

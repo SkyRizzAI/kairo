@@ -21,9 +21,10 @@ public:
     const char* name()    const override { return name_.c_str(); }
     const char* version() const { return version_.c_str(); }
 
-    // QuickJS evaluates JS recursively and needs a much deeper stack than
-    // native C++ apps. 32 KB avoids the stack overflow seen with the default 8 KB.
-    uint32_t stackBytes() const override { return 32768; }
+    // QuickJS compilation uses two nested JS_Eval calls (app module + kairo
+    // runtime module), both on the native C stack. Each pass needs ~12 KB;
+    // add C overhead and we need at least ~40 KB. 64 KB gives a safe margin.
+    uint32_t stackBytes() const override { return 65536; }
 
 protected:
     void        onStart(AppContext& ctx) override;

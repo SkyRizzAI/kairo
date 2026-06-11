@@ -1,7 +1,7 @@
-layout_test 3 0.164028
-klp_test 3 0.124208
-link_test 3 0.136387
-js_test 3 0.203624
-js_render_test 3 0.137469
-service_test 3 0.125157
+layout_test 5 0.0422797
+klp_test 5 0.0212088
+link_test 5 0.0245426
+js_test 5 0.128918
+js_render_test 4 0.0990749
+service_test 5 0.0228766
 ---

@@ -777,11 +777,13 @@ core/CMakeFiles/kairo_core.dir/src/js/js_engine.cpp.o: \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__locale_dir/wstring_convert.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/cstdarg \
   /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/js/kairo_runtime_js.h \
-  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/ui/node.h \
-  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/ui/widgets.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/chrono \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__chrono/file_clock.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/forward_list \
+  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/runtime.h \
+  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/types.h \
+  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/event/async_event_poster.h \
+  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/event/event.h \
+  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/nema/message_queue.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/deque \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__fwd/deque.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/functional \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__functional/binary_negate.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__functional/bind.h \
@@ -806,5 +808,33 @@ core/CMakeFiles/kairo_core.dir/src/js/js_engine.cpp.o: \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__functional/default_searcher.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__functional/not_fn.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__functional/perfect_forward.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/deque \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__fwd/deque.h
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/condition_variable \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__stop_token/stop_callback.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__stop_token/intrusive_shared_ptr.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__stop_token/stop_state.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__stop_token/atomic_unique_lock.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__stop_token/intrusive_list_view.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__stop_token/stop_token.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/chrono \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__chrono/file_clock.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/forward_list \
+  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/services/input_service.h \
+  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/nema/input_event.h \
+  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/ui/key.h \
+  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/input/input_code.h \
+  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/input/input_action.h \
+  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/input/gesture.h \
+  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/input/pointer.h \
+  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/services/audio_service.h \
+  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/hal/audio_input.h \
+  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/hal/audio_output.h \
+  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/services/camera_service.h \
+  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/hal/camera.h \
+  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/nema/task_runner.h \
+  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/nema/thread.h \
+  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/log/logger.h \
+  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/log/log_sink.h \
+  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/log/log_entry.h \
+  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/clock.h \
+  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/ui/node.h \
+  /Users/solpochi/Projects/oss/kairo/firmware/core/include/kairo/ui/widgets.h

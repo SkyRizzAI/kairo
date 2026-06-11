@@ -6,6 +6,7 @@
 #include "kairo/service/service_container.h"
 #include "kairo/config/config_store.h"
 #include "kairo/hal/http_client.h"
+#include "kairo/services/profile_service.h"
 #include <string>
 #include <utility>
 
@@ -61,6 +62,29 @@ static JSValue api_store_remove(JSContext* ctx, JSValueConst, int argc, JSValueC
     return JS_UNDEFINED;
 }
 
+// kairo.profile.* — read-only identity + verify API for custom apps (Plan 40).
+// Setters are intentionally absent: apps cannot change the owner's identity.
+static JSValue api_profile_userName(JSContext* ctx, JSValueConst, int, JSValueConst*) {
+    auto* e = self(ctx); if (!e || !e->host()) return JS_NULL;
+    auto* p = e->host()->container().resolve<ProfileService>();
+    return p ? JS_NewString(ctx, p->userName().c_str()) : JS_NULL;
+}
+static JSValue api_profile_deviceName(JSContext* ctx, JSValueConst, int, JSValueConst*) {
+    auto* e = self(ctx); if (!e || !e->host()) return JS_NULL;
+    auto* p = e->host()->container().resolve<ProfileService>();
+    return p ? JS_NewString(ctx, p->deviceName().c_str()) : JS_NULL;
+}
+static JSValue api_profile_hasPassword(JSContext* ctx, JSValueConst, int, JSValueConst*) {
+    auto* e = self(ctx); if (!e || !e->host()) return JS_FALSE;
+    auto* p = e->host()->container().resolve<ProfileService>();
+    return p ? JS_NewBool(ctx, p->hasPassword()) : JS_FALSE;
+}
+static JSValue api_profile_verifyPassword(JSContext* ctx, JSValueConst, int argc, JSValueConst* argv) {
+    auto* e = self(ctx); if (!e || !e->host() || argc < 1) return JS_FALSE;
+    auto* p = e->host()->container().resolve<ProfileService>();
+    return p ? JS_NewBool(ctx, p->verifyPassword(argStr(ctx, argv[0]))) : JS_FALSE;
+}
+
 // kairo.http.get(url) → { status, body }. Blocking on the app thread (off UI).
 static JSValue api_http_get(JSContext* ctx, JSValueConst, int argc, JSValueConst* argv) {
     auto* e = self(ctx); if (!e || !e->host() || argc < 1) return JS_NULL;
@@ -114,6 +138,18 @@ void JsEngine::installApi() {
         JSValue http = JS_NewObject(ctx);
         setFn(ctx, http, "get", api_http_get, 1);
         JS_SetPropertyStr(ctx, api, "http", http);
+    }
+
+    // profile (always present when capability "profile" is available — safe to
+    // expose unconditionally: functions return null/false if service is absent)
+    if (host_->capabilities().has("profile") ||
+        host_->container().resolve<ProfileService>()) {
+        JSValue prof = JS_NewObject(ctx);
+        setFn(ctx, prof, "userName",       api_profile_userName,       0);
+        setFn(ctx, prof, "deviceName",     api_profile_deviceName,     0);
+        setFn(ctx, prof, "hasPassword",    api_profile_hasPassword,    0);
+        setFn(ctx, prof, "verifyPassword", api_profile_verifyPassword, 1);
+        JS_SetPropertyStr(ctx, api, "profile", prof);
     }
 
     JS_SetPropertyStr(ctx, g, "kairo", api);

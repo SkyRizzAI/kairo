@@ -25,6 +25,8 @@ src/input/gesture.cpp
     src/system/board_profile.cpp
     src/fs/mem_filesystem.cpp
     src/fs/vfs.cpp
+    src/crypto/sha256.cpp
+    src/services/profile_service.cpp
     src/services/clock_service.cpp
     src/services/cli_service.cpp
     src/services/gui_service.cpp
