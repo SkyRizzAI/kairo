@@ -1,6 +1,6 @@
-#include "kairo/ui/layout.h"
+#include "nema/ui/layout.h"
 
-namespace kairo::ui {
+namespace nema::ui {
 
 static void arrange(UiNode* n);   // fwd: arrangeScroll recurses into it
 
@@ -222,4 +222,4 @@ void layout(UiNode& root, uint16_t rootW, uint16_t rootH, const TextMetrics& tm,
     arrange(&root);
 }
 
-} // namespace kairo::ui
+} // namespace nema::ui

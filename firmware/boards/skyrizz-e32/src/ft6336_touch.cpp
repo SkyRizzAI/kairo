@@ -1,12 +1,12 @@
-#include "kairo/skyrizze32/ft6336_touch.h"
-#include "kairo/skyrizze32/xl9535.h"
-#include "kairo/skyrizze32/board_config.h"
-#include "kairo/runtime.h"
-#include "kairo/log/logger.h"
+#include "nema/skyrizze32/ft6336_touch.h"
+#include "nema/skyrizze32/xl9535.h"
+#include "nema/skyrizze32/board_config.h"
+#include "nema/runtime.h"
+#include "nema/log/logger.h"
 #include <Wire.h>
 #include <Arduino.h>
 
-namespace kairo::skyrizze32 {
+namespace nema::skyrizze32 {
 
 static constexpr uint8_t FT_ADDR        = 0x38;
 static constexpr uint8_t FT_TD_STATUS   = 0x02;
@@ -94,4 +94,4 @@ void Ft6336Touch::toLogical(uint16_t rawX, uint16_t rawY, uint16_t& lx, uint16_t
     ly = rawY >= LCD_H ? (LCD_H - 1) : rawY;
 }
 
-} // namespace kairo::skyrizze32
+} // namespace nema::skyrizze32

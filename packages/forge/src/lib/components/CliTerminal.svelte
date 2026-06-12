@@ -17,7 +17,7 @@
 	} = $props();
 
 	type Line = { kind: 'in' | 'out'; text: string };
-	let lines = $state<Line[]>([{ kind: 'out', text: "Kairo CLI — type 'help'." }]);
+	let lines = $state<Line[]>([{ kind: 'out', text: "Palanu CLI — type 'help'." }]);
 	let input = $state('');
 	let busy = $state(false);
 	let scroller = $state<HTMLElement>();

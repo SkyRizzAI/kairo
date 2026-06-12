@@ -1,15 +1,15 @@
-#include "kairo/devboard/dev_board.h"
-#include "kairo/runtime.h"
-#include "kairo/log/logger.h"
-#include "kairo/system/hardware_registry.h"
-#include "kairo/system/capability_registry.h"
-#include "kairo/service/service_container.h"
-#include "kairo/hal/display.h"
-#include "kairo/devboard/board_config.h"
+#include "nema/devboard/dev_board.h"
+#include "nema/runtime.h"
+#include "nema/log/logger.h"
+#include "nema/system/hardware_registry.h"
+#include "nema/system/capability_registry.h"
+#include "nema/service/service_container.h"
+#include "nema/hal/display.h"
+#include "nema/devboard/board_config.h"
 #include <Wire.h>
 #include <Arduino.h>
 
-namespace kairo {
+namespace nema {
 
 using namespace devboard;
 
@@ -54,4 +54,4 @@ void DevBoard::describeHardware(Runtime& rt) {
         {{"mcu", "ESP32-S3-WROOM-1"}, {"flash", "8MB"}, {"psram", "8MB"}});
 }
 
-} // namespace kairo
+} // namespace nema

@@ -1,10 +1,10 @@
-#include "kairo/esp32/nvs_config_store.h"
-#include "kairo/log/logger.h"
+#include "nema/esp32/nvs_config_store.h"
+#include "nema/log/logger.h"
 #include <nvs_flash.h>
 #include <nvs.h>
 #include <cstring>
 
-namespace kairo {
+namespace nema {
 
 void NvsConfigStore::start() {
     esp_err_t err = nvs_flash_init();
@@ -69,4 +69,4 @@ bool NvsConfigStore::remove(const char* ns, const char* key) {
     return err == ESP_OK;
 }
 
-} // namespace kairo
+} // namespace nema

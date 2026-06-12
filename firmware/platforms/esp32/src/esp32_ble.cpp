@@ -1,18 +1,18 @@
-#include "kairo/esp32/esp32_ble.h"
-#include "kairo/runtime.h"
-#include "kairo/log/logger.h"
-#include "kairo/event/event_bus.h"
-#include "kairo/event/event.h"
-#include "kairo/event/async_event_poster.h"
-#include "kairo/service/service_container.h"
-#include "kairo/system/hardware_registry.h"
-#include "kairo/system/capability_registry.h"
-#include "kairo/link/klp_ble.h"
+#include "nema/esp32/esp32_ble.h"
+#include "nema/runtime.h"
+#include "nema/log/logger.h"
+#include "nema/event/event_bus.h"
+#include "nema/event/event.h"
+#include "nema/event/async_event_poster.h"
+#include "nema/service/service_container.h"
+#include "nema/system/hardware_registry.h"
+#include "nema/system/capability_registry.h"
+#include "nema/link/klp_ble.h"
 #include <cstdio>
 #include <cstring>
 #include <string>
 
-namespace kairo {
+namespace nema {
 
 void Esp32Ble::onRegister(Runtime& rt) {
     log_    = &rt.log();
@@ -26,7 +26,7 @@ void Esp32Ble::onRegister(Runtime& rt) {
     rt.capabilities().add("bluetooth.ble");
 }
 
-} // namespace kairo
+} // namespace nema
 
 // ─────────────────────────────────────────────────────────────────────────────
 #ifdef CONFIG_BT_NIMBLE_ENABLED
@@ -41,7 +41,7 @@ void Esp32Ble::onRegister(Runtime& rt) {
 
 extern "C" void ble_store_config_init(void);
 
-namespace kairo {
+namespace nema {
 
 static Esp32Ble* g_ble = nullptr;
 
@@ -319,10 +319,10 @@ void Esp32Ble::forgetAll() {
     for (int i = 0; i < num; i++) ble_gap_unpair(&addrs[i]);
 }
 
-} // namespace kairo
+} // namespace nema
 
 #else  // ── BT disabled: no-op stubs so non-BT boards still link ──
-namespace kairo {
+namespace nema {
 bool Esp32Ble::enable(BtMode) { if (log_) log_->warn("Esp32Ble", "BT not enabled in sdkconfig"); return false; }
 void Esp32Ble::disable() {}
 void Esp32Ble::onSync() {}
@@ -340,5 +340,5 @@ size_t Esp32Ble::bondedCount() const { return 0; }
 bool Esp32Ble::bondedAt(size_t, BtPeer&) const { return false; }
 void Esp32Ble::forget(const uint8_t[6]) {}
 void Esp32Ble::forgetAll() {}
-} // namespace kairo
+} // namespace nema
 #endif

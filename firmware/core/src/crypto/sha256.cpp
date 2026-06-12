@@ -1,10 +1,10 @@
 // SHA-256 — portable, public domain (FIPS 180-4).
 // No platform dependencies: compiles identically on host, WASM, and ESP32.
-#include "kairo/crypto/sha256.h"
+#include "nema/crypto/sha256.h"
 #include <cstring>
 #include <cstdint>
 
-namespace kairo {
+namespace nema {
 namespace {
 
 static inline uint32_t rotr(uint32_t x, uint32_t n) {
@@ -119,4 +119,4 @@ std::string randomHexSalt(size_t n) {
     return out;
 }
 
-} // namespace kairo
+} // namespace nema

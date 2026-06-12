@@ -97,11 +97,11 @@ dengan navigasi tombol yang sudah ada.
 
 ```
 firmware/core/
-├─ include/kairo/ui/widgets.h        ← + ScrollView builder
+├─ include/palanu/ui/widgets.h        ← + ScrollView builder
 ├─ src/ui/widgets.cpp
 ├─ src/ui/layout.cpp                 ← clip/viewport sizing for ScrollView
 ├─ src/ui/renderer.cpp               ← clip region + scrollbar draw
-├─ include/kairo/ui/gesture_recognizer.h
+├─ include/palanu/ui/gesture_recognizer.h
 ├─ src/ui/gesture_recognizer.cpp     ← tap/drag/swipe/long-press over PointerEvent
 └─ src/ui/component_runtime.cpp      ← feed pointer through recognizer; momentum tick
 ```

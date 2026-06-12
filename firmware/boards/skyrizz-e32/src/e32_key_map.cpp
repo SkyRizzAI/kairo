@@ -1,7 +1,7 @@
-#include "kairo/skyrizze32/e32_key_map.h"
-#include "kairo/skyrizze32/board_config.h"
+#include "nema/skyrizze32/e32_key_map.h"
+#include "nema/skyrizze32/board_config.h"
 
-namespace kairo::skyrizze32 {
+namespace nema::skyrizze32 {
 
 using namespace input;
 
@@ -115,4 +115,4 @@ Action E32KeyMap::idToAction(uint8_t id, Gesture g) {
     }
 }
 
-} // namespace kairo::skyrizze32
+} // namespace nema::skyrizze32

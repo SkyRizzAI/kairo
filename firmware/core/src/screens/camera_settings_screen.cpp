@@ -1,10 +1,10 @@
-#include "kairo/screens/camera_settings_screen.h"
-#include "kairo/runtime.h"
-#include "kairo/ui/view_dispatcher.h"
-#include "kairo/services/camera_service.h"
+#include "nema/screens/camera_settings_screen.h"
+#include "nema/runtime.h"
+#include "nema/ui/view_dispatcher.h"
+#include "nema/services/camera_service.h"
 #include <cstdio>
 
-namespace kairo {
+namespace nema {
 
 using namespace ui;
 
@@ -49,4 +49,4 @@ UiNode* CameraSettingsScreen::build(NodeArena& a, Runtime& rt) {
     });
 }
 
-} // namespace kairo
+} // namespace nema

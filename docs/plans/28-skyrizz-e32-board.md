@@ -61,7 +61,7 @@ Single source of truth: `dev-board-1-pin_map.md` + `dev-board-1-pin_cap.md`.
 
 ```cpp
 #pragma once
-namespace kairo::skyrizze32 {
+namespace nema::skyrizze32 {
 
 // I²C bus (shared: XL9535, sensors, touch, SE050)
 constexpr int PIN_SCL     = 48;
@@ -121,7 +121,7 @@ constexpr uint8_t BTN_MIDDLE = 1;  // PB1 → P05 (Port 0, bit 5)
 constexpr uint8_t BTN_RIGHT  = 2;  // SW2 → P04 (Port 0, bit 4)
 // BTN_PB2 = 3 (P06), BTN_SW3 = 4 (P11) — registered tapi unmapped ke action default
 
-} // namespace kairo::skyrizze32
+} // namespace nema::skyrizze32
 ```
 
 **Catatan penetapan 3 tombol:** `SW1/PB1/SW2` dipilih sebagai tombol navigasi utama
@@ -405,7 +405,7 @@ TSC2007 terhubung via I2C + PENIRQ di GPIO2. Karena:
 
 ```
 firmware/boards/skyrizz-e32/
-├─ include/kairo/skyrizze32/
+├─ include/palanu/skyrizze32/
 │  ├─ board_config.h        # pin + XL9535 bit constants
 │  ├─ skyrizz_e32.h         # SkyRizzE32 : IBoard
 │  ├─ xl9535.h              # Xl9535 : IService
@@ -453,7 +453,7 @@ Existing yang dipakai tanpa perubahan:
 ### Board registration
 - [ ] `skyrizz_e32.h/cpp` — `SkyRizzE32 : IBoard`
 - [ ] `describeHardware()` + `registerServices()`
-- [ ] Wire up ke Esp32Platform board selection (compile-time flag `-DKAIRO_BOARD=skyrizz-e32`)
+- [ ] Wire up ke Esp32Platform board selection (compile-time flag `-DPALANU_BOARD=skyrizz-e32`)
 
 ### VirtualKeyboard 1D mode
 - [ ] `virtual_keyboard.cpp` — `handle1D()` + `render1D()` cursor linear
@@ -476,7 +476,7 @@ Existing yang dipakai tanpa perubahan:
 
 ## Acceptance criteria
 
-- [ ] Build clean: `idf.py -DKAIRO_BOARD=skyrizz-e32 build` tanpa error/warning
+- [ ] Build clean: `idf.py -DPALANU_BOARD=skyrizz-e32 build` tanpa error/warning
 - [ ] XL9535: readInputs() mengembalikan state benar untuk SW1/PB1/SW2
 - [ ] 3 tombol: HomeScreen navigasi Up/Down/Select berfungsi via Prev/Next/Activate
 - [ ] Back: long-press PB1 ≥ 500ms → `Action::Back` → `ViewDispatcher::pop()`

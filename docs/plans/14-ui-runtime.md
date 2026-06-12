@@ -11,7 +11,7 @@
 
 ## Goal
 
-Sesuai arsitektur dari ref (`kairo.h`):
+Sesuai arsitektur dari ref (`palanu.h`):
 
 ```
 Input (Key) → ViewDispatcher → IScreen::update(key) → requestRedraw()
@@ -37,7 +37,7 @@ Input (Key) → ViewDispatcher → IScreen::update(key) → requestRedraw()
 - `ViewDispatcher`: screen stack, `requestRedraw()`, `takeRedraw()`, `handleKey(Key)`, `tick(now)`.
 - Integrasi ke `Runtime::run()`: tick dispatcher + conditional flush.
 - `PluginContext::pushScreen()`, `popScreen()`.
-- Contoh: `SplashScreen` — tampilkan "KAIRO OS" ASCII art saat boot.
+- Contoh: `SplashScreen` — tampilkan "PALANU OS" ASCII art saat boot.
 
 ### Out of scope
 
@@ -53,8 +53,8 @@ Input (Key) → ViewDispatcher → IScreen::update(key) → requestRedraw()
 ### Key enum
 
 ```cpp
-// firmware/core/include/kairo/ui/key.h
-namespace kairo {
+// firmware/core/include/palanu/ui/key.h
+namespace nema {
 enum class Key : uint8_t {
     None = 0,
     Up, Down, Left, Right,
@@ -68,8 +68,8 @@ const char* keyName(Key k);
 ### IScreen
 
 ```cpp
-// firmware/core/include/kairo/ui/screen.h
-namespace kairo {
+// firmware/core/include/palanu/ui/screen.h
+namespace nema {
 class Canvas;
 
 struct IScreen {
@@ -85,8 +85,8 @@ struct IScreen {
 ### ViewDispatcher
 
 ```cpp
-// firmware/core/include/kairo/ui/view_dispatcher.h
-namespace kairo {
+// firmware/core/include/palanu/ui/view_dispatcher.h
+namespace nema {
 
 class ViewDispatcher {
 public:
@@ -142,7 +142,7 @@ void Runtime::run() {
 class SplashScreen : public IScreen {
     void draw(Canvas& c) override {
         c.clear();
-        // ASCII art "KAIRO" — besar, centered
+        // ASCII art "PALANU" — besar, centered
         const char* art[] = {
             "  _  __   _   ___ ____  ___  ",
             " | |/ /  / \\ |_ _|  _ \\/ _ \\ ",
@@ -239,7 +239,7 @@ Zona umum:
 Gunakan konstanta ini konsisten di semua screen:
 
 ```cpp
-namespace kairo::ui {
+namespace nema::ui {
     constexpr uint16_t STATUS_Y   = 0;
     constexpr uint16_t CONTENT_Y  = 10;   // setelah status bar + separator
     constexpr uint16_t FOOTER_Y   = 168;

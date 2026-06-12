@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Build the Kairo Dev Board firmware (ESP32-S3 + e-ink).
+# Build the nema Dev Board firmware (ESP32-S3 + e-ink).
 # Sources ESP-IDF, sets target on first run, then builds.
 set -euo pipefail
 
@@ -20,4 +20,4 @@ if [[ ! -f sdkconfig ]]; then
 fi
 
 idf.py build
-echo "Build OK → $(pwd)/build/kairo-dev-board.bin"
+echo "Build OK → $(pwd)/build/nema-dev-board.bin"

@@ -1,6 +1,6 @@
 # 10 — Simulator Web UI (Bun relay + React panels)
 
-> Sisi web: `packages/simulator` jadi (a) **Bun server** yang spawn `kairo-sim` & relay stdio↔WebSocket, dan (b) **React UI** dengan 4 panel: **Logs, Events, Services, Controls**.
+> Sisi web: `packages/simulator` jadi (a) **Bun server** yang spawn `palanu-sim` & relay stdio↔WebSocket, dan (b) **React UI** dengan 4 panel: **Logs, Events, Services, Controls**.
 
 - Status: ☐ Not started
 - Milestone: M2 (Observability) + M3 (Simulator)
@@ -14,7 +14,7 @@
 - Server Bun (`Bun.serve`) yang:
   - Serve React UI (HTML import, **tanpa Vite**).
   - Buka endpoint **WebSocket**.
-  - Saat command `boot` → **spawn** `kairo-sim` (`Bun.spawn`, env `KAIRO_SIM_JSON=1`), pipe **stdout** → parse JSON-lines → broadcast ke WS; pipe WS command → **stdin** binary.
+  - Saat command `boot` → **spawn** `palanu-sim` (`Bun.spawn`, env `PALANU_SIM_JSON=1`), pipe **stdout** → parse JSON-lines → broadcast ke WS; pipe WS command → **stdin** binary.
   - `shutdown`/`restart` → kelola lifecycle proses (kill / re-spawn; hormati exit code restart dari stage 09).
 - React UI dengan 4 panel + indikator status koneksi/boot.
 
@@ -42,7 +42,7 @@
 ### Arsitektur server (Bun)
 
 ```text
-Browser ──WS──► Bun.serve ──┬─ spawn kairo-sim (KAIRO_SIM_JSON=1)
+Browser ──WS──► Bun.serve ──┬─ spawn palanu-sim (PALANU_SIM_JSON=1)
                             │   ├─ proc.stdout → readline → JSON → ws.publish(topic)
                             │   └─ ws.message(cmd) → proc.stdin.write(JSON+"\n")
                             └─ serve index.html (React)
@@ -50,7 +50,7 @@ Browser ──WS──► Bun.serve ──┬─ spawn kairo-sim (KAIRO_SIM_JSON
 
 - Gunakan **topic pub/sub** `Bun.serve` (`ws.subscribe("sim"); server.publish("sim", msg)`) agar broadcast ke semua client mudah.
 - **Spawn manager** (modul kecil): `boot()`, `shutdown()`, `restart()`, status. Menyimpan handle `Bun.spawn`. Baca stdout via `for await (const chunk of proc.stdout)` + buffer pemecah baris (`\n`). Tangani exit: kalau exit code = kode `restart` (stage 09, mis. 75) → auto re-spawn; selain itu broadcast `{"type":"sim_exit","code":...}`.
-- Lokasi binary: cari di `firmware/build/targets/simulator/kairo-sim` relatif root repo. Kalau belum ada → broadcast pesan error "build dulu" (jangan crash server).
+- Lokasi binary: cari di `firmware/build/targets/simulator/palanu-sim` relatif root repo. Kalau belum ada → broadcast pesan error "build dulu" (jangan crash server).
 
 ### Server sketsa (`index.ts`)
 
@@ -80,8 +80,8 @@ async function pumpStdout(server: Bun.Server) {
 
 function bootSim(server: Bun.Server) {
   if (proc) return;
-  proc = Bun.spawn(["firmware/build/targets/simulator/kairo-sim"], {
-    env: { ...process.env, KAIRO_SIM_JSON: "1" },
+  proc = Bun.spawn(["firmware/build/targets/simulator/palanu-sim"], {
+    env: { ...process.env, PALANU_SIM_JSON: "1" },
     stdin: "pipe", stdout: "pipe", stderr: "inherit",
     onExit(_p, code) { broadcast(server, { type: "sim_exit", code }); proc = null;
       if (code === 75) bootSim(server); /* restart contract */ }
@@ -93,7 +93,7 @@ const server = Bun.serve({
   routes: { "/": index },
   fetch(req, server) {
     if (new URL(req.url).pathname === "/ws" && server.upgrade(req)) return;
-    return new Response("Kairo Simulator");
+    return new Response("Palanu Simulator");
   },
   websocket: {
     open(ws) { ws.subscribe("sim"); ws.send(JSON.stringify({ type: "hello" })); },
@@ -107,7 +107,7 @@ const server = Bun.serve({
     },
   },
 });
-console.log(`Kairo Simulator → http://localhost:${server.port}`);
+console.log(`Palanu Simulator → http://localhost:${server.port}`);
 ```
 
 > Detail API (`server.publish`, akses `server` di handler, tipe `Subprocess`) sesuaikan dengan versi Bun aktual — lihat `node_modules/bun-types/docs`. Pola di atas adalah cetak biru.
@@ -161,7 +161,7 @@ packages/simulator/
 ## Acceptance criteria
 
 - `bun run dev` di `packages/simulator` membuka server; browser ke URL menampilkan UI.
-- Klik **Boot** → `kairo-sim` ter-spawn; Logs mulai mengalir, Services menampilkan driver+ClockService jadi **Running**, Events menampilkan `SystemReady`+`ClockTick`.
+- Klik **Boot** → `palanu-sim` ter-spawn; Logs mulai mengalir, Services menampilkan driver+ClockService jadi **Running**, Events menampilkan `SystemReady`+`ClockTick`.
 - Filter level di Logs bekerja.
 - **Inject Event** mengirim event yang muncul di EventsPanel.
 - **Shutdown** → services jadi Stopped lalu proses keluar; **Restart** → proses re-spawn & stream lanjut.

@@ -38,7 +38,7 @@
 ### File
 
 ```text
-firmware/core/include/kairo/system/
+firmware/core/include/palanu/system/
 ├─ system_info.h
 ├─ hardware_registry.h
 └─ capability_registry.h
@@ -51,10 +51,10 @@ firmware/core/src/system/
 
 ```cpp
 // system_info.h
-namespace kairo {
+namespace nema {
 struct SystemInfo {
-  std::string buildVersion    = KAIRO_BUILD_VERSION;   // -D dari CMake
-  std::string firmwareVersion = KAIRO_FW_VERSION;
+  std::string buildVersion    = PALANU_BUILD_VERSION;   // -D dari CMake
+  std::string firmwareVersion = PALANU_FW_VERSION;
   std::string platformName;    // "simulator"
   std::string boardName;       // "simulator"
   // host: nilai memori placeholder; ESP32 isi nyata nanti
@@ -91,7 +91,7 @@ public:
   - `rt.hardware().add({"battery", DriverKind::Battery, "virtual 100%"})`
   - `rt.hardware().add({"wifi", DriverKind::Wifi, "virtual"})`
   - `rt.capabilities().add("battery"); rt.capabilities().add("wifi"); rt.capabilities().add("networking");`
-- Versi via CMake: `target_compile_definitions(... KAIRO_BUILD_VERSION="0.1.0-mvp" KAIRO_FW_VERSION="0.1.0")`.
+- Versi via CMake: `target_compile_definitions(... PALANU_BUILD_VERSION="0.1.0-mvp" PALANU_FW_VERSION="0.1.0")`.
 
 ### Demonstrasi capability-driven
 

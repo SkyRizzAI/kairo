@@ -1,10 +1,10 @@
-#include "kairo/apps/touch_test_app.h"
-#include "kairo/app/app_context.h"
-#include "kairo/runtime.h"
-#include "kairo/ui/canvas.h"
+#include "nema/apps/touch_test_app.h"
+#include "nema/app/app_context.h"
+#include "nema/runtime.h"
+#include "nema/ui/canvas.h"
 #include <cstdio>
 
-namespace kairo {
+namespace nema {
 
 ui::UiNode* TouchTestApp::build(ui::NodeArena&, AppContext&) {
     return nullptr;   // drawRaw() owns the frame
@@ -59,4 +59,4 @@ bool TouchTestApp::drawRaw(Canvas& c, AppContext& ctx) {
     return true;   // we painted the whole frame
 }
 
-} // namespace kairo
+} // namespace nema

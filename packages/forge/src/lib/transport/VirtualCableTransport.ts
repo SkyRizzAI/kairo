@@ -1,14 +1,14 @@
 import type { ILinkTransport } from '$lib/klp/transport';
 
 // VirtualCableTransport — the simulator "cable" (Plan 35). Loads the CLASSIC
-// emscripten build (kairo.js) via a <script> tag so Vite never transforms it
+// emscripten build (nema.js) via a <script> tag so Vite never transforms it
 // (Vite's ESM transform mangles import.meta.url and breaks pthread workers).
 // emscripten manages its own pthread pool from the page thread. KLP is delivered
-// in-process: outbound via Module.kairoKlpOut, inbound via _kairo_klp_recv.
+// in-process: outbound via Module.nemaKlpOut, inbound via _nema_nlp_recv.
 interface KairoModule {
 	_malloc(n: number): number;
 	_free(p: number): void;
-	_kairo_klp_recv(ptr: number, len: number): void;
+	_nema_nlp_recv(ptr: number, len: number): void;
 	HEAPU8: Uint8Array;
 }
 
@@ -41,7 +41,7 @@ export class VirtualCableTransport implements ILinkTransport {
 		return new Promise((resolve, reject) => {
 			window.Module = {
 				locateFile: (p: string) => '/fw/' + p, // headered endpoint (COEP+CORP)
-				kairoKlpOut: (bytes: Uint8Array) => this.#data?.(new Uint8Array(bytes)),
+				nemaKlpOut: (bytes: Uint8Array) => this.#data?.(new Uint8Array(bytes)),
 				onRuntimeInitialized: () => {
 					this.#mod = window.Module as unknown as KairoModule;
 					this.#ready = true;
@@ -50,9 +50,9 @@ export class VirtualCableTransport implements ILinkTransport {
 				}
 			};
 			const s = document.createElement('script');
-			s.src = '/fw/kairo.js';
+			s.src = '/fw/nema.js';
 			s.async = true;
-			s.onerror = () => reject(new Error('failed to load /wasm/kairo.js'));
+			s.onerror = () => reject(new Error('failed to load /wasm/nema.js'));
 			document.head.appendChild(s);
 		});
 	}
@@ -62,7 +62,7 @@ export class VirtualCableTransport implements ILinkTransport {
 		if (!m) return;
 		const ptr = m._malloc(d.length);
 		m.HEAPU8.set(d, ptr);
-		m._kairo_klp_recv(ptr, d.length);
+		m._nema_nlp_recv(ptr, d.length);
 		m._free(ptr);
 	}
 	onData(fn: (d: Uint8Array) => void) {

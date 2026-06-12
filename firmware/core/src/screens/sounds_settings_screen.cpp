@@ -1,10 +1,10 @@
-#include "kairo/screens/sounds_settings_screen.h"
-#include "kairo/runtime.h"
-#include "kairo/ui/view_dispatcher.h"
-#include "kairo/services/audio_service.h"
+#include "nema/screens/sounds_settings_screen.h"
+#include "nema/runtime.h"
+#include "nema/ui/view_dispatcher.h"
+#include "nema/services/audio_service.h"
 #include <cstdio>
 
-namespace kairo {
+namespace nema {
 
 using namespace ui;
 
@@ -72,4 +72,4 @@ UiNode* SoundsSettingsScreen::build(NodeArena& a, Runtime& rt) {
     });
 }
 
-} // namespace kairo
+} // namespace nema

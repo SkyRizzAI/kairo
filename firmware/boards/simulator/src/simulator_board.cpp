@@ -1,9 +1,9 @@
-#include "kairo/sim/simulator_board.h"
-#include "kairo/runtime.h"
-#include "kairo/log/logger.h"
-#include "kairo/system/capability_registry.h"
+#include "nema/sim/simulator_board.h"
+#include "nema/runtime.h"
+#include "nema/log/logger.h"
+#include "nema/system/capability_registry.h"
 
-namespace kairo {
+namespace nema {
 
 void SimulatorBoard::describeHardware(Runtime& rt) {
     // Hardware registered by SimulatorPlatform::registerDrivers already.
@@ -21,4 +21,4 @@ void SimulatorBoard::describeHardware(Runtime& rt) {
     }
 }
 
-} // namespace kairo
+} // namespace nema

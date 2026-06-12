@@ -1,9 +1,19 @@
 // Nema Thread — host (simulator) implementation via std::thread.
-#include "kairo/nema/thread.h"
+//
+// Stack sizing note: std::thread does not let us set a per-thread stack size, so
+// the JS app's stackBytes() is not honoured here the way ESP's xTaskCreate honours
+// it. Instead the thread stack is configured platform-wide:
+//   - native host:  the libc default (≈512 KB on macOS/Linux) — ample.
+//   - WASM:         set via -sDEFAULT_PTHREAD_STACK_SIZE in targets/wasm (the
+//                   Emscripten default is only 64 KB, far too small for QuickJS).
+// The QuickJS recursion guard (JsApp::onStart → setMaxStackSize) is kept safely
+// below that real stack, so a runaway script throws a clean error rather than
+// overflowing.
+#include "nema/thread.h"
 #include <thread>
 #include <chrono>
 
-namespace kairo::nema {
+namespace nema {
 
 void Thread::start(const ThreadConfig& /*cfg*/, Entry entry, void* arg) {
     entry_ = entry;
@@ -37,4 +47,4 @@ Thread::~Thread() {
     join();
 }
 
-} // namespace kairo::nema
+} // namespace nema

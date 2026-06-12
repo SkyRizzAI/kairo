@@ -1,7 +1,7 @@
-#include "kairo/system/capability_registry.h"
+#include "nema/system/capability_registry.h"
 #include <algorithm>
 
-namespace kairo {
+namespace nema {
 
 void CapabilityRegistry::add(std::string capability) {
     caps_.push_back(std::move(capability));
@@ -15,4 +15,4 @@ const std::vector<std::string>& CapabilityRegistry::list() const {
     return caps_;
 }
 
-} // namespace kairo
+} // namespace nema

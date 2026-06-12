@@ -1,6 +1,6 @@
 # 25 — Adaptive UI (Resolution-Independent Layout)
 
-> UI Kairo menjadi resolution-independent: tidak ada koordinat atau dimensi yang
+> UI Palanu menjadi resolution-independent: tidak ada koordinat atau dimensi yang
 > di-hardcode ke 264×176. Layout mengikuti resolusi aktual display, dan pada layar
 > yang lebih besar/lebih kecil tampilan tetap proporsional dan fungsional.
 
@@ -18,11 +18,11 @@
 |--------|-----------|---------|
 | **Android** | `dp` (density-independent pixel). 1 dp = 1 px di 160 DPI, 2 px di 320 DPI. Font dalam `sp`. Layout constraint-based. | Standar industri mobile |
 | **iOS/macOS** | `pt` (points) vs physical px. Retina = 2×/3× scale. Auto Layout + anchors. | Vector fonts (CoreText) |
-| **LVGL** (embedded) | `lv_coord_t` = logical pixel. `LV_DPI` global. Font dikompilasi dalam beberapa ukuran bitmap. Tidak ada hardcode resolusi di app. | Paling relevan untuk Kairo |
+| **LVGL** (embedded) | `lv_coord_t` = logical pixel. `LV_DPI` global. Font dikompilasi dalam beberapa ukuran bitmap. Tidak ada hardcode resolusi di app. | Paling relevan untuk Palanu |
 | **Flipper Zero (Furi)** | Hardcoded 128×64. Tidak responsif sama sekali. | Apa yang TIDAK kita lakukan |
 | **TouchGFX (STM32)** | Design-time resolution, tidak runtime-adaptive. | Kurang relevan |
 
-### Pendekatan Kairo
+### Pendekatan Palanu
 
 Mengikuti pola LVGL: **logical coordinate system** dengan **integer scale factor**.
 Tidak pakai vector font (terlalu berat untuk ESP32), tidak pakai layout engine kompleks
@@ -381,7 +381,7 @@ cmake --build build
 
 | File | Perubahan |
 |------|-----------|
-| `core/include/kairo/ui/ui_constants.h` | Hapus SCREEN_W/H/COLS/FOOTER_Y/SEP2_Y/CONTENT_H/ROWS; tambah inline functions |
+| `core/include/palanu/ui/ui_constants.h` | Hapus SCREEN_W/H/COLS/FOOTER_Y/SEP2_Y/CONTENT_H/ROWS; tambah inline functions |
 | `core/src/ui/components.cpp` | 1 baris: SCREEN_W → c.width() |
 | `core/src/ui/status_bar.cpp` | 2 baris: SCREEN_W → c.width() |
 | `core/src/screens/about_screen.cpp` | 2 baris: SCREEN_W/H → c.width()/height() |
@@ -393,9 +393,9 @@ cmake --build build
 
 | File | Perubahan |
 |------|-----------|
-| `core/include/kairo/ui/canvas.h` | Tambah scale_, ubah width()/height() |
+| `core/include/palanu/ui/canvas.h` | Tambah scale_, ubah width()/height() |
 | `core/src/ui/canvas.cpp` | Semua draw primitives scale by scale_ |
-| `core/include/kairo/hal/display.h` | Tambah `virtual uint16_t dpi() const { return 0; }` |
+| `core/include/palanu/hal/display.h` | Tambah `virtual uint16_t dpi() const { return 0; }` |
 
 ### Phase 3 (3 file)
 
@@ -403,7 +403,7 @@ cmake --build build
 |------|-----------|
 | `core/src/ui/font_10x16.cpp` | File baru — FONT_10X16 data |
 | `core/src/ui/font_15x24.cpp` | File baru — FONT_15X24 data (opsional) |
-| `core/include/kairo/ui/canvas.h` | `applyScale()` auto-select font |
+| `core/include/palanu/ui/canvas.h` | `applyScale()` auto-select font |
 | `core/CMakeLists.txt` | Tambah font sources |
 
 ---

@@ -1,14 +1,14 @@
-#include "kairo/skyrizze32/es7243e_mic.h"
-#include "kairo/skyrizze32/board_config.h"
-#include "kairo/runtime.h"
-#include "kairo/log/logger.h"
+#include "nema/skyrizze32/es7243e_mic.h"
+#include "nema/skyrizze32/board_config.h"
+#include "nema/runtime.h"
+#include "nema/log/logger.h"
 #include <driver/i2s.h>   // legacy I2S API — matches proven factory HW test
 #include <Wire.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 #include <string>
 
-namespace kairo::skyrizze32 {
+namespace nema::skyrizze32 {
 
 // ES7243E init sequence — verbatim from Rust reference main.rs es7243_init().
 // IMPORTANT: ES7243E requires MCLK to be running before any I2C write will ACK.
@@ -34,7 +34,7 @@ static const uint8_t kEs7243eInit[][2] = {
 };
 static constexpr size_t kEs7243eInitLen = sizeof(kEs7243eInit) / sizeof(kEs7243eInit[0]);
 
-void Es7243eMic::init(kairo::Runtime& rt, Xl9535& expander) {
+void Es7243eMic::init(nema::Runtime& rt, Xl9535& expander) {
     rt_       = &rt;
     expander_ = &expander;
 }
@@ -163,4 +163,4 @@ void Es7243eMic::tick(uint64_t /*nowMs*/) {
     if (peak_ > 1.0f) peak_ = 1.0f;
 }
 
-} // namespace kairo::skyrizze32
+} // namespace nema::skyrizze32

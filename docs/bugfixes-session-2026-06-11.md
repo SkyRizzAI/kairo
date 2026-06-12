@@ -22,7 +22,7 @@ void ComponentScreen::enter() {
 
 Both `HomeScreen::enter()` and `AppListScreen::enter()` were updated to call through to `ComponentScreen::enter()` instead of manually calling `requestRedraw()`.
 
-**Files changed**: `core/include/kairo/ui/component_screen.h`, `core/src/ui/component_screen.cpp`, `core/src/screens/home_screen.cpp`, `core/src/screens/app_list_screen.cpp`
+**Files changed**: `core/include/palanu/ui/component_screen.h`, `core/src/ui/component_screen.cpp`, `core/src/screens/home_screen.cpp`, `core/src/screens/app_list_screen.cpp`
 
 ---
 
@@ -75,8 +75,8 @@ bool AppHost::suppressCanvasFlush() const {
 
 **Root cause (primary)**: `JsApp` overrode `stackBytes()` to return 32768 (32 KB) for its FreeRTOS task. Loading a JS app involves two *nested* `JS_Eval(COMPILE_ONLY)` calls on the native C stack:
 1. `loadApp()` calls `JS_Eval(app_js, COMPILE_ONLY)` 
-2. This triggers `module_loader` for the `kairo` import
-3. `module_loader` calls `JS_Eval(KAIRO_RUNTIME_JS, COMPILE_ONLY)` — on the same native stack
+2. This triggers `module_loader` for the `palanu` import
+3. `module_loader` calls `JS_Eval(PALANU_RUNTIME_JS, COMPILE_ONLY)` — on the same native stack
 
 Each compilation pass consumes ~12–15 KB of native C stack. Two nested = ~30 KB, which overflowed the 32 KB task stack. FreeRTOS stack overflow on ESP32-S3 in check-type 2 (TRACE) mode does not produce a clean crash or restart — it silently corrupts memory, which manifested as a hang.
 
@@ -87,7 +87,7 @@ Each compilation pass consumes ~12–15 KB of native C stack. Two nested = ~30 K
 1. Increased `JsApp::stackBytes()` from 32 KB to 64 KB, giving enough headroom for nested compilation plus rendering plus C overhead.
 
 ```cpp
-// firmware/core/include/kairo/apps/js_app.h
+// firmware/core/include/palanu/apps/js_app.h
 uint32_t stackBytes() const override { return 65536; }
 ```
 
@@ -102,14 +102,100 @@ uint32_t stackBytes() const override { return 65536; }
 
 3. Added diagnostic log checkpoints in `loadApp()` (`compile` → `eval` → `jobs`) so future hangs can be pinpointed to a specific phase rather than showing nothing after launch.
 
-4. Added missing `#include "kairo/runtime.h"` and `#include "kairo/log/logger.h"` to `js_engine.cpp` — without these the `host_->log()` calls would not compile (incomplete type errors).
+4. Added missing `#include "nema/runtime.h"` and `#include "nema/log/logger.h"` to `js_engine.cpp` — without these the `host_->log()` calls would not compile (incomplete type errors).
 
-**Files changed**: `core/include/kairo/apps/js_app.h`, `core/src/js/js_engine.cpp`
+**Files changed**: `core/include/palanu/apps/js_app.h`, `core/src/js/js_engine.cpp`
+
+---
+
+## Fix 6 — JS apps fail to load (CORRECTS Fix 5's diagnosis)
+
+**Symptom**: Opening Sys Info / Counter (JS) either freezes the device (blank
+screen, OS hangs) or — on the WASM simulator — shows
+`JsApp: JS load failed: Maximum call stack size exceeded`.
+
+**Fix 5 was wrong.** It blamed nested `JS_Eval` compilation overflowing the native
+stack and tuned ESP-only numbers (task stack 32→64 KB, QuickJS guard 256→48 KB).
+That never fixed it because the diagnosis was wrong on three counts, each verified
+empirically with host probes:
+
+1. **The cost is QuickJS *module evaluation* (the interpreter), not parsing.**
+   Loading the runtime+apps as precompiled QuickJS *bytecode* needs the **same**
+   load stack as source (~24 KB on the 64-bit host) — proven by a bytecode
+   round-trip test. So "nested compilation" / eager-compile fixes do nothing, and
+   precompiling-to-bytecode is a dead end for this bug (also: bytecode was larger).
+
+2. **`thread_host.cpp` silently ignored `stackBytes()`.** On ESP the app runs on a
+   FreeRTOS task sized by `stackBytes()`. On host/WASM it ran on a `std::thread`
+   with the platform-default stack — so **every `stackBytes()` tweak was a no-op on
+   the simulator.** The QuickJS engine ran on an unsized worker stack.
+
+3. **The QuickJS overflow guard was uncoordinated with the real stack.**
+   `JS_SetMaxStackSize` was called **only under `#ifdef ESP_PLATFORM`** (48 KB). On
+   WASM/host it was left at QuickJS-ng's **1 MB default** — unrelated to the actual
+   worker stack — which is why the guard mis-fired on the simulator
+   (`Maximum call stack size exceeded`) for apps that actually need ~24 KB, and why
+   on ESP an overflow corrupted the FreeRTOS task stack (silent hang) instead of
+   throwing a catchable error.
+
+   Why the host tests "passed": `js_render_test` loads an app importing only from
+   `"nema"`. The real apps dual-import `"nema"` **and** `"nema/jsx-dev-runtime"`,
+   and run on a big 8 MB host stack — so the actual app-load path on a constrained
+   stack was never exercised.
+
+**The real fix** (coordinate the stack budget on every platform + graceful failure):
+
+- **The WASM thread stack is too small.** Emscripten's `DEFAULT_PTHREAD_STACK_SIZE`
+  is `0` → falls back to `STACK_SIZE` = **64 KB**, but the JS app worker needs a few
+  hundred KB. Fixed by `-sDEFAULT_PTHREAD_STACK_SIZE=1048576 -sSTACK_SIZE=1048576`
+  in `targets/wasm`, giving every thread a 1 MB stack. (`thread_host.cpp` stays on
+  `std::thread`; an earlier attempt to hand-roll `pthread` + `pthread_attr_setstacksize`
+  regressed to a blank/frozen app because Emscripten's pooled-worker model didn't
+  start the custom-stack thread — the link flag is the correct mechanism.)
+- `JsApp::stackBytes()` is platform-aware: **512 KB** on host/WASM, **256 KB** on
+  ESP. `JsApp::onStart` sets the QuickJS guard to **3/4 of the stack on ALL
+  platforms** (`setMaxStackSize`), so a too-deep / runaway script throws a **clean,
+  catchable** error well before the real stack corrupts — the error card renders,
+  the OS keeps running. The ESP-only hardcoded guard in `js_engine.cpp` was removed.
+- **ESP app-thread stack moved to PSRAM.** 128 KB didn't fit internal RAM (task
+  creation failed → app silently returned to the list). `thread_esp32.cpp` now
+  routes large stacks (≥96 KB) to `xTaskCreatePinnedToCoreWithCaps(MALLOC_CAP_SPIRAM)`
+  (board has `CONFIG_SPIRAM_ALLOW_STACK_EXTERNAL_MEMORY=y`), so the 256 KB JS stack
+  lives in PSRAM and internal RAM is untouched. Such a task is deleted by `join()`
+  via `vTaskDeleteWithCaps` after the task parks itself (`vTaskSuspend`), per the
+  IDF requirement that WithCaps tasks not self-delete.
+- `JsEngine::settleEval()` now inspects the module-evaluation **promise**: an ES
+  module that throws at top level evaluates to a *rejected promise*, which the old
+  code never checked — so a broken app looked "loaded". Now it surfaces a real
+  error (no silent blank).
+- `thread_esp32.cpp` fails loudly (signals `join()`, clears `running()`) if the
+  task can't be created, instead of leaving the owner waiting forever.
+- **`ViewDispatcher::redrawPending_` made atomic.** It was a plain `bool` written by
+  `requestRedraw()` (the app thread, via `AppHost::present`) and read by the GUI
+  loop's `takeRedraw()` — a cross-thread data race. On WASM (Web Workers +
+  SharedArrayBuffer) the compiler could hoist the GUI loop's read into a register
+  and never observe the app thread's write, so a freshly-loaded app stayed **blank
+  until some GUI-side event** (clock tick, keypress, restart) flipped the flag —
+  the intermittent "blank, works after restart" on the simulator. Now
+  `store(release)` / `exchange(acquire)`.
+
+**Verified**:
+- **Simulator (WASM)**: confirmed working by the user — JS apps now load
+  (`compile → eval → jobs → loaded`) and render. Builds clean (`bun run build:wasm`).
+- **Host**: 8/8 tests pass, including a new `js_graceful_test` (deep parse, runaway
+  recursion, top-level throw → clean errors, then a real app still loads) and
+  `js_dualimport_test` (every built-in app loads).
+- **ESP (skyrizz-e32)**: firmware builds clean (2.2 MB, 58% partition free).
+
+**Still needs on-device validation**: flash skyrizz-e32 and confirm Sys Info /
+Counter now (1) load — logs should show `compile → eval → jobs → loaded` like the
+simulator, not just `launch app=…` — and (2) exit/re-enter cleanly several times
+(exercises the PSRAM WithCaps task teardown: park-then-`vTaskDeleteWithCaps`).
 
 ---
 
 ## Notes
 
-- All three fixes build cleanly (`cmake --build build-host`) and all 6 host tests pass (`ctest`).
+- All fixes build cleanly (`cmake --build build-host`) and host tests pass (`ctest`).
 - Fix 4's scaled fallback (per-pixel blit) is slower than the direct `flushBuffer` path. For scale > 1.0 fullscreen apps, each frame does up to 150×100 = 15,000 `drawPixel` calls instead of one DMA push. This is acceptable for now; a future optimisation could scale the app buffer up to physical dimensions server-side.
 - The intermittent freeze triggered by up/down keys (on any app, any scale) was not reproduced deterministically this session. It may be partially addressed by Fix 3 (modality reset prevented DPM key from landing on the wrong handler), but needs further investigation.

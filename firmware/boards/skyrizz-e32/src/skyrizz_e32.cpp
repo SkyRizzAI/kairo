@@ -1,16 +1,16 @@
-#include "kairo/skyrizze32/skyrizz_e32.h"
-#include "kairo/skyrizze32/board_config.h"
-#include "kairo/runtime.h"
-#include "kairo/log/logger.h"
-#include "kairo/system/hardware_registry.h"
-#include "kairo/system/capability_registry.h"
-#include "kairo/service/service_container.h"
-#include "kairo/hal/display.h"
-#include "kairo/config/config_store.h"
+#include "nema/skyrizze32/skyrizz_e32.h"
+#include "nema/skyrizze32/board_config.h"
+#include "nema/runtime.h"
+#include "nema/log/logger.h"
+#include "nema/system/hardware_registry.h"
+#include "nema/system/capability_registry.h"
+#include "nema/service/service_container.h"
+#include "nema/hal/display.h"
+#include "nema/config/config_store.h"
 #include <Wire.h>
 #include <Arduino.h>
 
-namespace kairo::skyrizze32 {
+namespace nema::skyrizze32 {
 
 void SkyRizzE32::describeHardware(Runtime& rt) {
     // Shared I²C bus — used by XL9535, sensors, TSC2007, SE050
@@ -95,4 +95,4 @@ void SkyRizzE32::describeHardware(Runtime& rt) {
         {{"mcu", "ESP32-S3-WROOM-1-N16R8"}, {"flash", "16MB"}, {"psram", "8MB"}});
 }
 
-} // namespace kairo::skyrizze32
+} // namespace nema::skyrizze32

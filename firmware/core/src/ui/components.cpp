@@ -1,8 +1,8 @@
-#include "kairo/ui/components.h"
-#include "kairo/ui/canvas.h"
-#include "kairo/ui/ui_constants.h"
+#include "nema/ui/components.h"
+#include "nema/ui/canvas.h"
+#include "nema/ui/ui_constants.h"
 
-namespace kairo {
+namespace nema {
 namespace ui {
 
 uint16_t drawTitle(Canvas& c, const char* title) {
@@ -61,4 +61,4 @@ void drawConfirm(Canvas& c, const char* prompt, int cursor,
 }
 
 } // namespace ui
-} // namespace kairo
+} // namespace nema

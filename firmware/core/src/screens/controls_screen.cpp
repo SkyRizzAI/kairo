@@ -1,14 +1,14 @@
-#include "kairo/screens/controls_screen.h"
-#include "kairo/runtime.h"
-#include "kairo/ui/view_dispatcher.h"
-#include "kairo/services/input_service.h"
-#include "kairo/input/i_key_map.h"
-#include "kairo/input/input_action.h"
-#include "kairo/service/service_container.h"
-#include "kairo/config/config_store.h"
+#include "nema/screens/controls_screen.h"
+#include "nema/runtime.h"
+#include "nema/ui/view_dispatcher.h"
+#include "nema/services/input_service.h"
+#include "nema/input/i_key_map.h"
+#include "nema/input/input_action.h"
+#include "nema/service/service_container.h"
+#include "nema/config/config_store.h"
 #include <cstdio>
 
-namespace kairo {
+namespace nema {
 
 using namespace ui;
 
@@ -78,4 +78,4 @@ UiNode* ControlsScreen::build(NodeArena& a, Runtime& rt) {
     });
 }
 
-} // namespace kairo
+} // namespace nema

@@ -1,12 +1,12 @@
-#include "kairo/esp32/esp32_usb_cdc.h"
+#include "nema/esp32/esp32_usb_cdc.h"
 #include <Arduino.h>
 #include <HWCDC.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 
-namespace kairo {
+namespace nema {
 
-// Kairo-owned HWCDC instance — see the note in esp32_usb_cdc.h for why the
+// Palanu-owned HWCDC instance — see the note in esp32_usb_cdc.h for why the
 // arduino-esp32 global `HWCDCSerial` does not exist under arduino-as-component.
 HWCDC& usbSerialJtag() {
     static HWCDC port;
@@ -46,4 +46,4 @@ void Esp32UsbCdc::readerTask(void* arg) {
     }
 }
 
-} // namespace kairo
+} // namespace nema

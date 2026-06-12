@@ -1,7 +1,7 @@
-#include "kairo/system/hardware_registry.h"
+#include "nema/system/hardware_registry.h"
 #include <algorithm>
 
-namespace kairo {
+namespace nema {
 
 void HardwareRegistry::add(HardwareEntry entry) {
     entries_.push_back(std::move(entry));
@@ -16,4 +16,4 @@ const std::vector<HardwareEntry>& HardwareRegistry::list() const {
     return entries_;
 }
 
-} // namespace kairo
+} // namespace nema

@@ -14,7 +14,7 @@
 Setelah stage ini selesai:
 
 - Ada folder `firmware/` lengkap sesuai layout di `00-overview.md §3`.
-- `cmake` bisa meng-configure & build executable host `kairo-sim` yang isinya cuma cetak satu log "Hello Kairo" via stdout lalu exit 0.
+- `cmake` bisa meng-configure & build executable host `palanu-sim` yang isinya cuma cetak satu log "Hello Palanu" via stdout lalu exit 0.
 - `bun` workspace tetap sehat (`bun install` jalan), dan ada placeholder script untuk build firmware.
 
 ## Scope
@@ -24,7 +24,7 @@ Setelah stage ini selesai:
 - Layout direktori `firmware/{core,platforms,boards,targets,tools,vendor}`.
 - Top-level `firmware/CMakeLists.txt` + per-modul `CMakeLists.txt`.
 - Vendoring `nlohmann/json.hpp` (single header).
-- `kairo-sim` executable kosong (stub `main()`).
+- `palanu-sim` executable kosong (stub `main()`).
 - `.gitignore` untuk artifact build (`firmware/build/`).
 - Script bantu di `firmware/tools/` dan/atau root `package.json`.
 
@@ -42,27 +42,27 @@ Setelah stage ini selesai:
 
 ```text
 firmware/
-├─ CMakeLists.txt                  # top-level, project(kairo CXX), C++17
+├─ CMakeLists.txt                  # top-level, project(nema CXX), C++17
 ├─ core/
-│  ├─ include/kairo/.gitkeep
+│  ├─ include/palanu/.gitkeep
 │  ├─ src/.gitkeep
-│  └─ CMakeLists.txt               # add_library(kairo_core ...) — sementara INTERFACE/empty
+│  └─ CMakeLists.txt               # add_library(nema_core ...) — sementara INTERFACE/empty
 ├─ platforms/simulator/CMakeLists.txt
 ├─ boards/simulator/CMakeLists.txt
 ├─ targets/simulator/
 │  ├─ main.cpp                     # stub: tulis 1 baris ke stdout, return 0
-│  └─ CMakeLists.txt               # add_executable(kairo-sim main.cpp) link kairo_core
+│  └─ CMakeLists.txt               # add_executable(nema-sim main.cpp) link nema_core
 ├─ vendor/nlohmann/json.hpp        # single-header (download / vendor)
 └─ tools/
    ├─ build-sim.sh                 # cmake configure+build
-   └─ run-sim.sh                   # jalankan ./build/.../kairo-sim
+   └─ run-sim.sh                   # jalankan ./build/.../palanu-sim
 ```
 
 ### Top-level `firmware/CMakeLists.txt` (sketsa)
 
 ```cmake
 cmake_minimum_required(VERSION 3.20)
-project(kairo LANGUAGES CXX)
+project(nema LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -71,8 +71,8 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)   # untuk clangd
 add_compile_options(-Wall -Wextra)
 
 # header-only vendor (nlohmann/json)
-add_library(kairo_vendor INTERFACE)
-target_include_directories(kairo_vendor INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/vendor)
+add_library(nema_vendor INTERFACE)
+target_include_directories(nema_vendor INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/vendor)
 
 add_subdirectory(core)
 add_subdirectory(platforms/simulator)
@@ -85,7 +85,7 @@ add_subdirectory(targets/simulator)
 ```cpp
 #include <cstdio>
 int main() {
-    std::fputs("Hello Kairo (build foundation OK)\n", stdout);
+    std::fputs("Hello Palanu (build foundation OK)\n", stdout);
     return 0;
 }
 ```
@@ -112,7 +112,7 @@ int main() {
 set -euo pipefail
 cd "$(dirname "$0")/.."
 cmake -S . -B build -G "Unix Makefiles"
-cmake --build build --target kairo-sim -j
+cmake --build build --target palanu-sim -j
 ```
 
 ### `.gitignore` (tambahan)
@@ -128,7 +128,7 @@ firmware/build/
 - [ ] Buat struktur folder `firmware/` + `.gitkeep` pada folder kosong.
 - [ ] Vendor `firmware/vendor/nlohmann/json.hpp` (single-header release).
 - [ ] Tulis top-level `firmware/CMakeLists.txt` + per-modul `CMakeLists.txt` (core/platform/board sementara library kosong).
-- [ ] Tulis `targets/simulator/main.cpp` stub + `CMakeLists.txt` (executable `kairo-sim`).
+- [ ] Tulis `targets/simulator/main.cpp` stub + `CMakeLists.txt` (executable `palanu-sim`).
 - [ ] `firmware/tools/build-sim.sh` & `run-sim.sh` (chmod +x).
 - [ ] Update root `package.json` scripts + `.gitignore`.
 - [ ] Verifikasi build & run.
@@ -136,7 +136,7 @@ firmware/build/
 ## Acceptance criteria
 
 - `bash firmware/tools/build-sim.sh` sukses tanpa error/warning fatal.
-- `bash firmware/tools/run-sim.sh` mencetak `Hello Kairo (build foundation OK)` dan exit code 0.
+- `bash firmware/tools/run-sim.sh` mencetak `Hello Palanu (build foundation OK)` dan exit code 0.
 - `bun install` di root tetap sukses; `firmware/build/` ter-ignore git.
 - `compile_commands.json` tergenerate (clangd happy).
 
@@ -145,7 +145,7 @@ firmware/build/
 ```bash
 # dari root repo
 bun run build:firmware
-bun run run:firmware    # → "Hello Kairo (build foundation OK)"
+bun run run:firmware    # → "Hello Palanu (build foundation OK)"
 echo $?                 # → 0
 ```
 

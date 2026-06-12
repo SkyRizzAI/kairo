@@ -9,7 +9,7 @@
 > device hidup (OS tetap). Plan 39 ini mengganti **firmware itu sendiri** (kernel +
 > driver + app bawaan). Dua-duanya "OTA" tapi beda lapisan. Lihat §0.1.
 >
-> Asal-usul: rekomendasi **P5/P6** di `docs/research/akiraos-vs-kairo.md` (pola
+> Asal-usul: rekomendasi **P5/P6** di `docs/research/akiraos-vs-palanu.md` (pola
 > AkiraOS: MCUboot dual-slot + SHA-256 + signature + rollback; settings AES-GCM).
 > AkiraOS pakai MCUboot (Zephyr); kita pakai padanannya di **ESP-IDF**:
 > `esp_https_ota`/`app_update` + Secure Boot v2 — **tanpa** menarik Zephyr.
@@ -27,7 +27,7 @@
 
 ### 0.1 Dua jenis "OTA" (penting — ini jawaban "OTA itu apa")
 **OTA = Over-The-Air**: meng-update software di device lewat nirkabel/koneksi,
-**tanpa** colok kabel & flash manual (esptool). Di Kairo ada **dua lapis**:
+**tanpa** colok kabel & flash manual (esptool). Di Palanu ada **dua lapis**:
 
 | | **App OTA** (Plan 37 Fase 6) | **Firmware OTA** (Plan 39 ini) |
 |---|---|---|
@@ -94,8 +94,8 @@ coredump, data, coredump,0xFF0000, 0x10000,
 
 ### 2.1 Core
 ```
-firmware/core/include/kairo/ota/ota_updater.h   // IOtaUpdater (begin/write/end/abort)
-firmware/core/include/kairo/ota/ota_session.h   // state, progress, hash akumulasi
+firmware/core/include/palanu/ota/ota_updater.h   // IOtaUpdater (begin/write/end/abort)
+firmware/core/include/palanu/ota/ota_session.h   // state, progress, hash akumulasi
 firmware/core/src/ota/...                        // verifikasi SHA-256, progress event
 ```
 - `IOtaUpdater` transport-agnostic: dipanggil oleh **OTA-pull** (WiFi) maupun

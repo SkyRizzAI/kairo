@@ -1,8 +1,8 @@
-#include "kairo/skyrizze32/gc2145_camera.h"
-#include "kairo/skyrizze32/board_config.h"
-#include "kairo/skyrizze32/xl9535.h"
-#include "kairo/runtime.h"
-#include "kairo/log/logger.h"
+#include "nema/skyrizze32/gc2145_camera.h"
+#include "nema/skyrizze32/board_config.h"
+#include "nema/skyrizze32/xl9535.h"
+#include "nema/runtime.h"
+#include "nema/log/logger.h"
 #include <esp_cam_ctlr.h>
 #include <esp_cam_ctlr_dvp.h>
 #include <esp_heap_caps.h>
@@ -11,7 +11,7 @@
 #include <Wire.h>
 #include <string>
 
-namespace kairo::skyrizze32 {
+namespace nema::skyrizze32 {
 
 // ── GC2145 SCCB init tables ────────────────────────────────────────────────
 // Ported verbatim from Rust reference camera.rs GC2145_DEFAULT_INIT and
@@ -159,7 +159,7 @@ static const uint8_t kGc2145Rgb565Override[][2] = {
 
 // ── Driver implementation ──────────────────────────────────────────────────
 
-void Gc2145Camera::init(kairo::Runtime& rt, Xl9535& expander) {
+void Gc2145Camera::init(nema::Runtime& rt, Xl9535& expander) {
     rt_       = &rt;
     expander_ = &expander;
 }
@@ -320,4 +320,4 @@ const uint8_t* Gc2145Camera::captureFrame() {
     return frameBuf_;
 }
 
-} // namespace kairo::skyrizze32
+} // namespace nema::skyrizze32

@@ -1,12 +1,12 @@
-#include "kairo/app/app_host_manager.h"
-#include "kairo/app/app_host.h"
-#include "kairo/app/app.h"
-#include "kairo/screens/close_and_open_modal.h"
-#include "kairo/runtime.h"
-#include "kairo/log/logger.h"
-#include "kairo/ui/view_dispatcher.h"
+#include "nema/app/app_host_manager.h"
+#include "nema/app/app_host.h"
+#include "nema/app/app.h"
+#include "nema/screens/close_and_open_modal.h"
+#include "nema/runtime.h"
+#include "nema/log/logger.h"
+#include "nema/ui/view_dispatcher.h"
 
-namespace kairo {
+namespace nema {
 
 AppHostManager::AppHostManager(Runtime& rt) : rt_(rt) {}
 AppHostManager::~AppHostManager() = default;
@@ -55,4 +55,4 @@ const char* AppHostManager::pausedName() const {
     return paused_ ? paused_->appName() : nullptr;
 }
 
-} // namespace kairo
+} // namespace nema

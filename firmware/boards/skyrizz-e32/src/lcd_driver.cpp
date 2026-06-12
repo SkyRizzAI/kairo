@@ -1,10 +1,10 @@
-#include "kairo/skyrizze32/lcd_driver.h"
-#include "kairo/skyrizze32/xl9535.h"
-#include "kairo/skyrizze32/board_config.h"
-#include "kairo/runtime.h"
-#include "kairo/log/logger.h"
-#include "kairo/service/service_container.h"
-#include "kairo/config/config_store.h"
+#include "nema/skyrizze32/lcd_driver.h"
+#include "nema/skyrizze32/xl9535.h"
+#include "nema/skyrizze32/board_config.h"
+#include "nema/runtime.h"
+#include "nema/log/logger.h"
+#include "nema/service/service_container.h"
+#include "nema/config/config_store.h"
 #include <driver/spi_master.h>
 #include <driver/gpio.h>
 #include <esp_heap_caps.h>
@@ -12,7 +12,7 @@
 #include <cstring>
 #include <cstdio>
 
-namespace kairo::skyrizze32 {
+namespace nema::skyrizze32 {
 
 // MIPI DCS commands — common to ILI9341, ST7789, GC9A01, and most TFT panels.
 static constexpr uint8_t CMD_SWRESET = 0x01;
@@ -303,4 +303,4 @@ void LcdDriver::spiWrite(uint8_t* data, size_t len, bool isData) {
     spi_device_transmit((spi_device_handle_t)spiHandle_, &t);
 }
 
-} // namespace kairo::skyrizze32
+} // namespace nema::skyrizze32

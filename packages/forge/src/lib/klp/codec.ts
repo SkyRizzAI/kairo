@@ -1,4 +1,4 @@
-// Kairo Link Protocol (KLP) — wire codec.
+// Nema Link Protocol (KLP) — wire codec.
 //
 // One protocol, many transports. The SAME frames travel over BLE, USB-Serial,
 // or the simulator "virtual cable" (postMessage). Only the transport differs.

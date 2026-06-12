@@ -1,5 +1,5 @@
-#include "kairo/hal/async_display.h"
-#include "kairo/log/logger.h"
+#include "nema/hal/async_display.h"
+#include "nema/log/logger.h"
 #include <cstring>
 #include <cstdlib>
 #include <utility>
@@ -11,7 +11,7 @@
   #include <esp_heap_caps.h>
 #endif
 
-namespace kairo {
+namespace nema {
 
 // Buffer allocation: PSRAM on ESP32 (these are ~46KB each), plain heap on host.
 static uint8_t* allocBuf(size_t n) {
@@ -145,4 +145,4 @@ void AsyncDisplayDriver::serviceLoop() {}
 
 #endif
 
-} // namespace kairo
+} // namespace nema

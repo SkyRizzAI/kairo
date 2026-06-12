@@ -1,13 +1,13 @@
-#include "kairo/apps/task_demo_app.h"
-#include "kairo/app/app_context.h"
-#include "kairo/runtime.h"
-#include "kairo/clock.h"
-#include "kairo/nema/task_runner.h"
-#include "kairo/nema/thread.h"
-#include "kairo/ui/widgets.h"
+#include "nema/apps/task_demo_app.h"
+#include "nema/app/app_context.h"
+#include "nema/runtime.h"
+#include "nema/clock.h"
+#include "nema/task_runner.h"
+#include "nema/thread.h"
+#include "nema/ui/widgets.h"
 #include <cstdio>
 
-namespace kairo {
+namespace nema {
 
 using namespace ui;
 
@@ -59,4 +59,4 @@ UiNode* TaskDemoApp::build(NodeArena& a, AppContext& ctx) {
     });
 }
 
-} // namespace kairo
+} // namespace nema

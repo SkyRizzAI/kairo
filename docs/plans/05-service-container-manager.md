@@ -36,7 +36,7 @@
 ### File
 
 ```text
-firmware/core/include/kairo/service/
+firmware/core/include/palanu/service/
 ├─ service_container.h
 └─ service_manager.h
 firmware/core/src/service/
@@ -47,7 +47,7 @@ firmware/core/src/service/
 ### Service Container (sketsa)
 
 ```cpp
-namespace kairo {
+namespace nema {
 class ServiceContainer {
 public:
   // simpan instance (ownership di luar atau via unique_ptr) sebagai singleton by type
@@ -77,7 +77,7 @@ Running ──stop()──► Stopping ──► Stopped
 ```
 
 ```cpp
-namespace kairo {
+namespace nema {
 class ServiceManager {
 public:
   ServiceManager(ServiceContainer& c, Logger& log, EventBus& bus, IClock& clk);

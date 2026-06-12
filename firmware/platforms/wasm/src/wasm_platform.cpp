@@ -1,20 +1,20 @@
-#include "kairo/wasm/wasm_platform.h"
-#include "kairo/runtime.h"
-#include "kairo/service/service_container.h"
-#include "kairo/services/input_service.h"
-#include "kairo/system/hardware_registry.h"
-#include "kairo/system/capability_registry.h"
-#include "kairo/board.h"
-#include "kairo/hal/display.h"
-#include "kairo/hal/wifi.h"
-#include "kairo/config/config_store.h"
-#include "kairo/event/event_bus.h"
-#include "kairo/apps/js_app_store.h"
+#include "nema/wasm/wasm_platform.h"
+#include "nema/runtime.h"
+#include "nema/service/service_container.h"
+#include "nema/services/input_service.h"
+#include "nema/system/hardware_registry.h"
+#include "nema/system/capability_registry.h"
+#include "nema/board.h"
+#include "nema/hal/display.h"
+#include "nema/hal/wifi.h"
+#include "nema/config/config_store.h"
+#include "nema/event/event_bus.h"
+#include "nema/apps/js_app_store.h"
 #include <string>
 #include <vector>
 #include <cstdlib>
 
-namespace kairo {
+namespace nema {
 
 void WasmPlatform::registerDrivers(Runtime& rt) {
     rt_ = &rt;
@@ -61,7 +61,7 @@ void WasmPlatform::registerDrivers(Runtime& rt) {
     vfs_.mount("/sd", &sdFs_);
     rt.container().registerAs<IFileSystem>(&vfs_);
     rt.capabilities().add("storage");
-    rootFs_.seed("/readme.txt", "Kairo virtual filesystem (in-RAM, volatile).\n"
+    rootFs_.seed("/readme.txt", "Palanu virtual filesystem (in-RAM, volatile).\n"
                                 "Browse, edit, upload and delete here or via `fs` in the terminal.\n");
     rootFs_.seed("/apps/hello.kapp", "// a placeholder app bundle\n");
     rootFs_.mkdir("/data");
@@ -114,4 +114,4 @@ void WasmPlatform::powerThunk(void* user, uint8_t op) {
     else if (op == SysOp::Shutdown) s->rt_->requestShutdown();
 }
 
-} // namespace kairo
+} // namespace nema

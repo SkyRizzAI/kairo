@@ -61,7 +61,7 @@ Isi minimal:
 3. **Mode CLI (tanpa web)**:
    ```bash
    bun run sim:cli      # output log human-readable
-   # atau JSON: KAIRO_SIM_JSON=1 firmware/build/targets/simulator/kairo-sim
+   # atau JSON: PALANU_SIM_JSON=1 firmware/build/targets/simulator/palanu-sim
    ```
 4. **Troubleshooting**: binary tak ketemu → `bun run build:firmware`; port bentrok; cmake belum terpasang.
 
@@ -69,11 +69,11 @@ Isi minimal:
 
 ```text
 bun run sim
-  └─ build kairo-sim (CMake/clang)
+  └─ build palanu-sim (CMake/clang)
   └─ Bun.serve (packages/simulator)
-       └─ browser klik Boot → spawn kairo-sim (JSON mode)
+       └─ browser klik Boot → spawn palanu-sim (JSON mode)
             stdout JSON-lines ─► Bun ─► WS ─► panels (Logs/Events/Services)
-            panels (Controls) ─► WS ─► Bun ─► stdin ─► kairo-sim
+            panels (Controls) ─► WS ─► Bun ─► stdin ─► palanu-sim
 ```
 
 ---
@@ -113,5 +113,5 @@ bun run sim:cli
 ## Risks / notes
 
 - Ini gerbang mutu MVP; jangan tandai selesai sampai SEMUA acceptance criteria di atas tercentang nyata (bukan asumsi).
-- Setelah MVP hijau, kandidat stage berikut (post-MVP): Plugin Runtime (M4), Display + UI Runtime (M5), platform ESP32 + Kairo Dev Board ESP32-S3+e-ink (M6). Lihat overview §0 untuk tier hardware.
+- Setelah MVP hijau, kandidat stage berikut (post-MVP): Plugin Runtime (M4), Display + UI Runtime (M5), platform ESP32 + Palanu Dev Board ESP32-S3+e-ink (M6). Lihat overview §0 untuk tier hardware.
 ```

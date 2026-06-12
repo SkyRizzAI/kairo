@@ -7,7 +7,7 @@
 //   3. GC2145 actually switched to RGB565 — via reg 0x84 read-back
 //   4. Actual pixel data format — via raw byte hex dump of first frame
 //
-// Raw Serial is intentional here: no Kairo runtime/logger exists in this target.
+// Raw Serial is intentional here: no Palanu runtime/logger exists in this target.
 #include <Arduino.h>
 #include <Wire.h>
 #include <driver/spi_master.h>

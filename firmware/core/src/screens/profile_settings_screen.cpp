@@ -1,15 +1,15 @@
-#include "kairo/screens/profile_settings_screen.h"
-#include "kairo/services/profile_service.h"
-#include "kairo/runtime.h"
-#include "kairo/service/service_container.h"
-#include "kairo/system/capability_registry.h"
-#include "kairo/ui/view_dispatcher.h"
-#include "kairo/input/input_action.h"
+#include "nema/screens/profile_settings_screen.h"
+#include "nema/services/profile_service.h"
+#include "nema/runtime.h"
+#include "nema/service/service_container.h"
+#include "nema/system/capability_registry.h"
+#include "nema/ui/view_dispatcher.h"
+#include "nema/input/input_action.h"
 #include <cstring>
 #include <cstdio>
 #include <algorithm>
 
-namespace kairo {
+namespace nema {
 
 using namespace ui;
 
@@ -150,4 +150,4 @@ ui::UiNode* ProfileSettingsScreen::build(NodeArena& a, Runtime& rt) {
     });
 }
 
-} // namespace kairo
+} // namespace nema

@@ -1,7 +1,7 @@
-#include "kairo/input/gesture.h"
+#include "nema/input/gesture.h"
 #include <cstring>
 
-namespace kairo::input {
+namespace nema::input {
 
 void GestureEngine::feedEdge(uint8_t id, bool pressed, uint64_t now) {
     if (id >= MAX_BUTTONS) return;
@@ -109,4 +109,4 @@ void GestureEngine::fire(uint8_t id, Gesture g, uint64_t now) {
     if (cb_) cb_(ctx_, id, g, now);
 }
 
-} // namespace kairo::input
+} // namespace nema::input

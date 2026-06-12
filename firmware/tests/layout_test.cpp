@@ -1,13 +1,13 @@
 // Host unit test for the flexbox-subset layout engine (Plan 27, Phase 1).
 // Pure logic — uses a fake TextMetrics (no Canvas/display). Build & run on host.
-#include "kairo/ui/node.h"
-#include "kairo/ui/widgets.h"
-#include "kairo/ui/layout.h"
+#include "nema/ui/node.h"
+#include "nema/ui/widgets.h"
+#include "nema/ui/layout.h"
 #include <cstdio>
 #include <cstring>
 #include <cstdlib>
 
-using namespace kairo::ui;
+using namespace nema::ui;
 
 static int g_fail = 0;
 #define CHECK(cond, msg) do { \

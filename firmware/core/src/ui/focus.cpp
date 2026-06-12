@@ -1,6 +1,6 @@
-#include "kairo/ui/focus.h"
+#include "nema/ui/focus.h"
 
-namespace kairo::ui {
+namespace nema::ui {
 
 // DFS collect focusable nodes in tree order. Returns count; fills out[] up to max.
 static int collect(UiNode* n, UiNode** out, int max, int idx) {
@@ -53,4 +53,4 @@ bool handleFocusKey(UiNode& root, FocusState& fs, Key k) {
     }
 }
 
-} // namespace kairo::ui
+} // namespace nema::ui

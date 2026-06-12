@@ -30,7 +30,7 @@
 
 ### Out of scope
 
-- Color rendering (Kairo UI adalah 1-bit — bahkan di LCD color, pakai monochrome palette).
+- Color rendering (Palanu UI adalah 1-bit — bahkan di LCD color, pakai monochrome palette).
 - Partial refresh / dirty-rect optimization (implementasikan saat dibutuhkan di hardware e-ink).
 - Touch input.
 - Anti-aliasing, truetype font.
@@ -52,8 +52,8 @@ Satu byte per pixel (bukan packed bit) untuk kemudahan drawing. Flush ke hardwar
 ### IDisplayDriver (1-bit)
 
 ```cpp
-// firmware/core/include/kairo/hal/display.h
-namespace kairo {
+// firmware/core/include/palanu/hal/display.h
+namespace nema {
 
 struct IDisplayDriver : IDriver {
     virtual uint16_t width()  const = 0;
@@ -72,8 +72,8 @@ struct IDisplayDriver : IDriver {
 Canvas adalah layer drawing yang UI Runtime pakai. Tidak tahu tipe driver.
 
 ```cpp
-// firmware/core/include/kairo/ui/canvas.h
-namespace kairo {
+// firmware/core/include/palanu/ui/canvas.h
+namespace nema {
 
 struct BitmapFont {
     const uint8_t* data;    // glyphs packed: [charW * charH bits per glyph]
@@ -126,7 +126,7 @@ Tersedia sebagai `extern const uint8_t FONT_5X8_DATA[]` di `src/ui/font_5x8.cpp`
 ### SimDisplay
 
 ```cpp
-// firmware/platforms/simulator/include/kairo/sim/sim_display.h
+// firmware/platforms/simulator/include/palanu/sim/sim_display.h
 class SimDisplay : public IDisplayDriver, public IService {
     static constexpr uint16_t W = 264, H = 176;
     uint8_t buf_[W * H] = {};   // 0=black, 1=white
@@ -226,8 +226,8 @@ Revisi layout grid di `frontend.tsx`:
 
 ## Tasks
 
-- [ ] `firmware/core/include/kairo/hal/display.h` (`IDisplayDriver` 1-bit).
-- [ ] `Canvas` + `BitmapFont` struct di `firmware/core/include/kairo/ui/canvas.h`.
+- [ ] `firmware/core/include/palanu/hal/display.h` (`IDisplayDriver` 1-bit).
+- [ ] `Canvas` + `BitmapFont` struct di `firmware/core/include/palanu/ui/canvas.h`.
 - [ ] `firmware/core/src/ui/font_5x8.cpp` — data font 5×8, 95 glyphs.
 - [ ] `firmware/core/src/ui/canvas.cpp` — drawPixel, fillRect, drawRect, drawLine, drawText, drawBitmap, invertRect, flush.
 - [ ] `SimDisplay` (buf + drawPixel/fillRect/clear/flush → emit frame).
@@ -239,12 +239,12 @@ Revisi layout grid di `frontend.tsx`:
 - [ ] Revisi layout grid `frontend.tsx`.
 - [ ] Core CMakeLists: tambah `src/ui/canvas.cpp`, `src/ui/font_5x8.cpp`.
 - [ ] Platform CMakeLists: tambah `src/sim_display.cpp`.
-- [ ] Verifikasi: `canvas.fillRect(0,0,264,176,false); canvas.drawText(10,80,"KAIRO",true); canvas.flush();` → terlihat di browser.
+- [ ] Verifikasi: `canvas.fillRect(0,0,264,176,false); canvas.drawText(10,80,"PALANU",true); canvas.flush();` → terlihat di browser.
 
 ## Acceptance criteria
 
 - Canvas 264×176 muncul di browser dengan background hitam/putih.
-- `drawText("HELLO KAIRO", 10, 80)` dengan font 5×8 → teks terbaca di canvas.
+- `drawText("HELLO PALANU", 10, 80)` dengan font 5×8 → teks terbaca di canvas.
 - `invertRect` pada area teks → efek highlight terbalik.
 - `flush()` di C++ → frame update di browser dalam <200ms (localhost).
 - Core tidak tahu resolusi atau tipe driver — hanya pakai `IDisplayDriver` interface.

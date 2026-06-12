@@ -1,11 +1,11 @@
-#include "kairo/ui/text_input.h"
-#include "kairo/ui/canvas.h"
-#include "kairo/ui/ui_constants.h"
-#include "kairo/ui/components.h"
+#include "nema/ui/text_input.h"
+#include "nema/ui/canvas.h"
+#include "nema/ui/ui_constants.h"
+#include "nema/ui/components.h"
 #include <cstring>
 #include <cstdio>
 
-namespace kairo {
+namespace nema {
 namespace ui {
 
 // charset: lowercase, uppercase, digits, common symbols. Last slot = DONE.
@@ -65,4 +65,4 @@ void TextInput::draw(Canvas& c, const char* prompt) const {
 }
 
 } // namespace ui
-} // namespace kairo
+} // namespace nema

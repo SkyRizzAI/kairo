@@ -39,7 +39,7 @@
 ### Tipe & file
 
 ```text
-firmware/core/include/kairo/log/
+firmware/core/include/palanu/log/
 ├─ log_entry.h     # LogEntry, Field
 ├─ log_sink.h      # ILogSink
 └─ logger.h        # Logger
@@ -53,7 +53,7 @@ firmware/core/src/log/
 
 ```cpp
 // log_entry.h
-namespace kairo {
+namespace nema {
 struct Field { const char* key; std::string value; };
 struct LogEntry {
   uint64_t   epochMs;
@@ -65,7 +65,7 @@ struct LogEntry {
 }
 
 // log_sink.h
-namespace kairo {
+namespace nema {
 struct ILogSink {
   virtual ~ILogSink() = default;
   virtual void write(const LogEntry& e) = 0;
@@ -73,7 +73,7 @@ struct ILogSink {
 }
 
 // logger.h
-namespace kairo {
+namespace nema {
 class Logger {
 public:
   explicit Logger(IClock& clock);

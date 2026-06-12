@@ -1,8 +1,8 @@
 // Host test for the embedded QuickJS engine wrapper (Plan 37 Fase 1).
-#include "kairo/js/js_engine.h"
+#include "nema/js/js_engine.h"
 #include <cstdio>
 
-using namespace kairo::js;
+using namespace nema::js;
 
 static int fail = 0;
 #define CHECK(c, m) do { if (!(c)) { std::printf("  FAIL: %s\n", m); fail++; } \

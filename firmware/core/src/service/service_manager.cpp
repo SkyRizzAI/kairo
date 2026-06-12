@@ -1,13 +1,13 @@
-#include "kairo/service/service_manager.h"
-#include "kairo/service/service_container.h"
-#include "kairo/service.h"
-#include "kairo/log/logger.h"
-#include "kairo/event/event_bus.h"
-#include "kairo/event/event.h"
+#include "nema/service/service_manager.h"
+#include "nema/service/service_container.h"
+#include "nema/service.h"
+#include "nema/log/logger.h"
+#include "nema/event/event_bus.h"
+#include "nema/event/event.h"
 #include <vector>
 #include <algorithm>
 
-namespace kairo {
+namespace nema {
 
 static const char* stateStr(ServiceState s) {
     switch (s) {
@@ -95,4 +95,4 @@ ServiceState ServiceManager::stateOf(IService* svc) const {
     return (it != states_.end()) ? it->second : ServiceState::Created;
 }
 
-} // namespace kairo
+} // namespace nema

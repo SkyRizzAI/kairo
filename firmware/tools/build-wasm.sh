@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Build the Kairo firmware to WebAssembly (Emscripten) and copy the artifacts
+# Build the Nema firmware to WebAssembly (Emscripten) and copy the artifacts
 # into Forge's static dir so the browser can load them. Needs emsdk active:
 #   source ~/emsdk/emsdk_env.sh
 set -euo pipefail
@@ -16,11 +16,11 @@ if ! command -v emcc >/dev/null 2>&1; then
 fi
 
 emcmake cmake -S "$FIRMWARE_DIR" -B "$BUILD_DIR" -G "Unix Makefiles"
-cmake --build "$BUILD_DIR" --target kairo -j"$(sysctl -n hw.logicalcpu 2>/dev/null || nproc)"
+cmake --build "$BUILD_DIR" --target nema -j"$(sysctl -n hw.logicalcpu 2>/dev/null || nproc)"
 
 mkdir -p "$OUT_DIR"
-rm -f "$OUT_DIR/kairo.mjs"
-cp "$BUILD_DIR/targets/wasm/kairo.js"   "$OUT_DIR/"
-cp "$BUILD_DIR/targets/wasm/kairo.wasm" "$OUT_DIR/"
+rm -f "$OUT_DIR/nema.mjs"
+cp "$BUILD_DIR/targets/wasm/nema.js"   "$OUT_DIR/"
+cp "$BUILD_DIR/targets/wasm/nema.wasm" "$OUT_DIR/"
 
-echo "WASM OK → $OUT_DIR (kairo.js + kairo.wasm)"
+echo "WASM OK → $OUT_DIR (nema.js + nema.wasm)"

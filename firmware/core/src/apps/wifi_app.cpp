@@ -1,16 +1,16 @@
-#include "kairo/apps/wifi_app.h"
-#include "kairo/app/app_context.h"
-#include "kairo/runtime.h"
-#include "kairo/service/service_container.h"
-#include "kairo/hal/wifi.h"
-#include "kairo/config/config_store.h"
-#include "kairo/nema/task_runner.h"
-#include "kairo/ui/widgets.h"
-#include "kairo/ui/canvas.h"
+#include "nema/apps/wifi_app.h"
+#include "nema/app/app_context.h"
+#include "nema/runtime.h"
+#include "nema/service/service_container.h"
+#include "nema/hal/wifi.h"
+#include "nema/config/config_store.h"
+#include "nema/task_runner.h"
+#include "nema/ui/widgets.h"
+#include "nema/ui/canvas.h"
 #include <cstdio>
 #include <cstring>
 
-namespace kairo {
+namespace nema {
 
 using namespace ui;
 
@@ -174,4 +174,4 @@ UiNode* WifiApp::build(NodeArena& a, AppContext&) {
     }
 }
 
-} // namespace kairo
+} // namespace nema

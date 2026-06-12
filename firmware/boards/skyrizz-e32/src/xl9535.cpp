@@ -1,13 +1,13 @@
-#include "kairo/skyrizze32/xl9535.h"
-#include "kairo/skyrizze32/board_config.h"
-#include "kairo/runtime.h"
-#include "kairo/log/logger.h"
-#include "kairo/input/i_key_map.h"
+#include "nema/skyrizze32/xl9535.h"
+#include "nema/skyrizze32/board_config.h"
+#include "nema/runtime.h"
+#include "nema/log/logger.h"
+#include "nema/input/i_key_map.h"
 #include <Wire.h>
 #include <Arduino.h>
 #include <driver/gpio.h>
 
-namespace kairo::skyrizze32 {
+namespace nema::skyrizze32 {
 
 void Xl9535::isrHandler(void* arg) {
     auto* self = static_cast<Xl9535*>(arg);
@@ -146,4 +146,4 @@ uint16_t Xl9535::readRaw() {
     return (uint16_t)((p1 << 8) | p0);
 }
 
-} // namespace kairo::skyrizze32
+} // namespace nema::skyrizze32

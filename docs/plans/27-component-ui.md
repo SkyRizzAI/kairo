@@ -45,7 +45,7 @@
 
 ## 0. Kenapa ini, dan apa yang berubah secara fundamental
 
-UI Kairo sekarang **immediate-mode**: app memanggil `c.drawText(x,y,...)`, `c.fillRect(...)`
+UI Palanu sekarang **immediate-mode**: app memanggil `c.drawText(x,y,...)`, `c.fillRect(...)`
 dengan koordinat absolut yang dihitung manual tiap screen. Itu seperti menggambar langsung
 ke kanvas.
 
@@ -84,7 +84,7 @@ yang sama**. Satu layout engine + satu renderer. Itu jawaban untuk "C atau JS pa
 
 ## 0.1 Allowed APIs (terverifikasi dari source — JANGAN mengarang signature)
 
-**Canvas** (`core/include/kairo/ui/canvas.h`) — backend paint, semua koordinat LOGICAL:
+**Canvas** (`core/include/palanu/ui/canvas.h`) — backend paint, semua koordinat LOGICAL:
 ```cpp
 Canvas(IDisplayDriver& driver, uint8_t scale = 1);
 uint16_t width() const;  uint16_t height() const;  uint8_t scale() const;  void setScale(uint8_t);
@@ -103,32 +103,32 @@ uint16_t centerX(const char*) const;
 `BitmapFont { const uint8_t* data; uint8_t charW, charH, firstChar, numChars, spacing; }`.
 Font default `FONT_5X8` (charW=5,charH=8). `extern const BitmapFont FONT_5X8;`
 
-**IApp** (`core/include/kairo/app/app.h`):
+**IApp** (`core/include/palanu/app/app.h`):
 ```cpp
 struct IApp { virtual const char* id() const=0; virtual const char* name() const=0;
               virtual void run(AppContext&)=0; virtual bool fullscreen() const { return false; } };
 ```
 
-**AppContext** (`core/include/kairo/app/app_context.h`):
+**AppContext** (`core/include/palanu/app/app_context.h`):
 ```cpp
 Canvas& canvas();  void present();
 bool nextInput(InputEvent& out);  bool waitInput(InputEvent& out, uint32_t timeoutMs);
 void requestExit();  bool shouldExit() const;  Runtime& runtime();
 ```
 
-**IScreen + ScreenMode** (`core/include/kairo/ui/screen.h`):
+**IScreen + ScreenMode** (`core/include/palanu/ui/screen.h`):
 ```cpp
 enum class ScreenMode : uint8_t { Normal, Fullscreen, Modal };
 struct IScreen { void enter(); void update(Key); void draw(Canvas&)=0; void tick(uint64_t);
                  ScreenMode mode() const; uint16_t modalWidth()/modalHeight() const; };
 ```
 
-**InputEvent** (`core/include/kairo/nema/input_event.h`):
+**InputEvent** (`core/include/palanu/nema/input_event.h`):
 ```cpp
 struct InputEvent { enum class Type:uint8_t{Press,Release,Repeat}; Key key=Key::None; Type type=Type::Press; };
 ```
 
-**Key** (`core/include/kairo/ui/key.h`): `None, Up, Down, Left, Right, Select, Cancel`.
+**Key** (`core/include/palanu/ui/key.h`): `None, Up, Down, Left, Right, Select, Cancel`.
 
 **ui_constants.h**: `CHAR_W=6, CHAR_H=9, STATUS_Y, STATUS_H, SEP1_Y, CONTENT_Y`;
 inline `footerY(h)`, `sep2Y(h)`, `contentRows(h)`, `cols(w)`.
@@ -146,10 +146,10 @@ inline `footerY(h)`, `sep2Y(h)`, `contentRows(h)`, `cols(w)`.
 
 ## 1. Node Tree
 
-`core/include/kairo/ui/node.h`
+`core/include/palanu/ui/node.h`
 
 ```cpp
-namespace kairo::ui {
+namespace nema::ui {
 
 enum class NodeType : uint8_t { View, Text, Pressable };
 enum class FlexDir  : uint8_t { Row, Col };
@@ -192,7 +192,7 @@ struct UiNode {
     uint16_t   w = 0, h = 0;
 };
 
-} // namespace kairo::ui
+} // namespace nema::ui
 ```
 
 > **Catatan jujur soal `text` ownership:** node tidak menyalin string. Untuk C builder yang
@@ -204,12 +204,12 @@ struct UiNode {
 
 ## 2. Layout Engine (jantung)
 
-`core/include/kairo/ui/layout.h` (+ `.cpp`)
+`core/include/palanu/ui/layout.h` (+ `.cpp`)
 
 Dua-pass flexbox **subset**. Bekerja dalam **logical px** (Canvas scale urus fisik).
 
 ```cpp
-namespace kairo::ui {
+namespace nema::ui {
 // Hitung x/y/w/h tiap node, mengisi field hasil di UiNode.
 // (rootW, rootH) = area logical tersedia (mis. c.width(), c.height()-statusbar).
 void layout(UiNode& root, uint16_t rootW, uint16_t rootH, const Canvas& metrics);
@@ -240,12 +240,12 @@ overlay top-level §6), margin per-sisi, percentage size. Subset ini menutup ~95
 
 ## 3. Builder API (C) + Arena
 
-`core/include/kairo/ui/widgets.h` (+ `.cpp` untuk mid-level)
+`core/include/palanu/ui/widgets.h` (+ `.cpp` untuk mid-level)
 
 ### 3.5 Arena (alokasi node)
 
 ```cpp
-namespace kairo::ui {
+namespace nema::ui {
 class NodeArena {
 public:
     explicit NodeArena(size_t capacity);   // alokasi sekali (mis. 256 node)
@@ -289,10 +289,10 @@ UiNode* Menu  (NodeArena&, const char** items, int n, int* selOut, void(*onPick)
 
 ## 4. Renderer + Font/Text-size
 
-`core/include/kairo/ui/renderer.h` (+ `.cpp`)
+`core/include/palanu/ui/renderer.h` (+ `.cpp`)
 
 ```cpp
-namespace kairo::ui {
+namespace nema::ui {
 void render(const UiNode& root, Canvas& c, int focusedId = -1);
 const BitmapFont& fontForRole(TextRole role);   // resolusi role → font aktual
 }
@@ -318,10 +318,10 @@ karena screen ditulis ulang sebagai komponen.**
 
 ## 5. Focus + Input
 
-`core/include/kairo/ui/focus.h` (+ `.cpp`)
+`core/include/palanu/ui/focus.h` (+ `.cpp`)
 
 ```cpp
-namespace kairo::ui {
+namespace nema::ui {
 struct FocusState {
     int focused = 0;     // index Pressable terfokus
     int count   = 0;     // jumlah focusable di tree terakhir
@@ -345,12 +345,12 @@ bool handleFocusKey(UiNode& root, FocusState& fs, Key k);
 
 ## 6. Integrasi App Model
 
-`core/include/kairo/app/component_app.h` (+ `.cpp`)
+`core/include/palanu/app/component_app.h` (+ `.cpp`)
 
 Base class yang menjembatani node-tree ke `IApp` (app-threaded) — pola sama `counter_app`:
 
 ```cpp
-namespace kairo {
+namespace nema {
 class ComponentApp : public IApp {
 public:
     void run(AppContext& ctx) override;   // loop: build → layout → render → present; input → focus/state
@@ -428,13 +428,13 @@ Tiap fase build + jalan di host & ESP32.
 
 | File | Aksi | Fase |
 |---|---|---|
-| `core/include/kairo/ui/node.h` | buat | 1 |
-| `core/include/kairo/ui/layout.h` + `src/ui/layout.cpp` | buat | 1 |
-| `core/include/kairo/ui/widgets.h` (NodeArena + primitives) + `src/ui/widgets.cpp` | buat | 1→4 |
-| `core/include/kairo/ui/renderer.h` + `src/ui/renderer.cpp` | buat | 2 |
-| `core/include/kairo/ui/focus.h` + `src/ui/focus.cpp` | buat | 3 |
+| `core/include/palanu/ui/node.h` | buat | 1 |
+| `core/include/palanu/ui/layout.h` + `src/ui/layout.cpp` | buat | 1 |
+| `core/include/palanu/ui/widgets.h` (NodeArena + primitives) + `src/ui/widgets.cpp` | buat | 1→4 |
+| `core/include/palanu/ui/renderer.h` + `src/ui/renderer.cpp` | buat | 2 |
+| `core/include/palanu/ui/focus.h` + `src/ui/focus.cpp` | buat | 3 |
 | `core/src/ui/font_10x16.cpp` (+ generator) | buat (pixel-double) | 4 |
-| `core/include/kairo/app/component_app.h` + `src/app/component_app.cpp` | buat | 5 |
+| `core/include/palanu/app/component_app.h` + `src/app/component_app.cpp` | buat | 5 |
 | `core/src/apps/component_demo.cpp` (demo) | buat | 2→5 |
 | `core/CMakeLists.txt` | +sources baru | tiap fase |
 | Canvas / screens / apps existing | **TIDAK disentuh** | — |

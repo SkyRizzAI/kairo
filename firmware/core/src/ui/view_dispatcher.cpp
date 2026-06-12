@@ -1,9 +1,9 @@
-#include "kairo/ui/view_dispatcher.h"
-#include "kairo/ui/screen.h"
-#include "kairo/input/input_code.h"
-#include "kairo/input/input_action.h"
+#include "nema/ui/view_dispatcher.h"
+#include "nema/ui/screen.h"
+#include "nema/input/input_code.h"
+#include "nema/input/input_action.h"
 
-namespace kairo {
+namespace nema {
 
 void ViewDispatcher::push(IScreen& screen) {
     stack_.push_back(&screen);
@@ -37,12 +37,10 @@ IScreen* ViewDispatcher::previous() const {
 
 bool ViewDispatcher::empty() const { return stack_.empty(); }
 
-void ViewDispatcher::requestRedraw() { redrawPending_ = true; }
+void ViewDispatcher::requestRedraw() { redrawPending_.store(true, std::memory_order_release); }
 
 bool ViewDispatcher::takeRedraw() {
-    bool v = redrawPending_;
-    redrawPending_ = false;
-    return v;
+    return redrawPending_.exchange(false, std::memory_order_acquire);
 }
 
 void ViewDispatcher::handleAction(input::Action a) {
@@ -66,4 +64,4 @@ void ViewDispatcher::tick(uint64_t nowMs) {
     if (auto* s = active()) s->tick(nowMs);
 }
 
-} // namespace kairo
+} // namespace nema

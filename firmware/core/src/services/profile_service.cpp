@@ -1,7 +1,7 @@
-#include "kairo/services/profile_service.h"
-#include "kairo/crypto/sha256.h"
+#include "nema/services/profile_service.h"
+#include "nema/crypto/sha256.h"
 
-namespace kairo {
+namespace nema {
 
 static constexpr const char* NS         = "profile";
 static constexpr const char* KEY_USER   = "user";
@@ -19,8 +19,8 @@ void ProfileService::init(IConfigStore& cfg) {
 
     // Seed defaults on first boot (keys absent from NVS); never overwrite
     // values the user has already changed.
-    if (!hasUser) { user_   = "Kairor";   cfg.setString(NS, KEY_USER,   user_); }
-    if (!hasDev)  { device_ = "My Kairo"; cfg.setString(NS, KEY_DEVICE, device_); }
+    if (!hasUser) { user_   = "Palaner";   cfg.setString(NS, KEY_USER,   user_); }
+    if (!hasDev)  { device_ = "My Palanu"; cfg.setString(NS, KEY_DEVICE, device_); }
 }
 
 void ProfileService::setUserName(const std::string& n) {
@@ -62,4 +62,4 @@ bool ProfileService::verifyPassword(const std::string& input) const {
     return diff == 0;
 }
 
-} // namespace kairo
+} // namespace nema

@@ -22,10 +22,10 @@
 > custom-app data exchange, BLE central). Framing/protokol (KLP) ada di Plan 35;
 > Layer 1 menyediakan **byte pipe + connection mgmt + profil/class extensible**.
 
-- Status: ✅ BLE selesai (host + ESP32-S3). Host-side: HAL (`bluetooth.h`,`usb_cdc.h`) + Bt* events + SimBleAdapter/Controller + registrasi sim + capability `bluetooth`/`bluetooth.ble` + command `ble_phone_*` + BluetoothApp (ComponentApp) + Settings gated; host build hijau, smoke test pairing (BtPairRequest+passkey) ✓. **ESP32-S3: `Esp32Ble` (NimBLE) — advertise + GATT server + LE Secure Connections (numeric-comparison) + bond di NVS; di-`onRegister` oleh `Esp32Platform` (capability `bluetooth.ble`). `idf.py build` hijau → `kairo-skyrizz-e32.bin` (70% flash free).** Verifikasi pairing fisik (HP) menunggu device terhubung. USB-CDC: lihat §6 — transport KLP siap (`UsbCdcLinkTransport`). **(+Plan 37) USB-CDC remote AKTIF**: `Esp32UsbCdc` (HWCDC `Serial` = USB-Serial-JTAG, reader-task) + `MuxTransport` gabung USB+BLE → satu RemoteService/screen-tap. Console berbagi pipa yang sama → KLP magic-byte resync menanganinya; untuk pipa bersih sempurna, set console off-USB (1 baris sdkconfig). Build dua device hijau; verifikasi colok fisik menunggu device.
+- Status: ✅ BLE selesai (host + ESP32-S3). Host-side: HAL (`bluetooth.h`,`usb_cdc.h`) + Bt* events + SimBleAdapter/Controller + registrasi sim + capability `bluetooth`/`bluetooth.ble` + command `ble_phone_*` + BluetoothApp (ComponentApp) + Settings gated; host build hijau, smoke test pairing (BtPairRequest+passkey) ✓. **ESP32-S3: `Esp32Ble` (NimBLE) — advertise + GATT server + LE Secure Connections (numeric-comparison) + bond di NVS; di-`onRegister` oleh `Esp32Platform` (capability `bluetooth.ble`). `idf.py build` hijau → `palanu-skyrizz-e32.bin` (70% flash free).** Verifikasi pairing fisik (HP) menunggu device terhubung. USB-CDC: lihat §6 — transport KLP siap (`UsbCdcLinkTransport`). **(+Plan 37) USB-CDC remote AKTIF**: `Esp32UsbCdc` (HWCDC `Serial` = USB-Serial-JTAG, reader-task) + `MuxTransport` gabung USB+BLE → satu RemoteService/screen-tap. Console berbagi pipa yang sama → KLP magic-byte resync menanganinya; untuk pipa bersih sempurna, set console off-USB (1 baris sdkconfig). Build dua device hijau; verifikasi colok fisik menunggu device.
 - Milestone: M7 (Connectivity)
 - Depends on: **19.5 (Nema: Thread/TaskRunner)**, **19.6 (App-model: IApp/AppHost/AppContext)**, 16 (ESP32 Platform), 24 (Config Store), 30 (Component runtime + screen migration)
-- Blocks: **35 (Kairo Link Protocol & Remote Layer)**, OTA
+- Blocks: **35 (Nema Link Protocol & Remote Layer)**, OTA
 
 > Kontrak kejujuran (sama seperti 19.5/20): tidak ada klaim ajaib; tiap fase
 > build & jalan di host+ESP32; race ditangani by-design; verifikasi pairing
@@ -35,7 +35,7 @@
 
 ## 0. Latar belakang & keputusan kunci
 
-Kairo belum punya sistem Bluetooth sama sekali. WiFi (Plan 20) sudah membuktikan
+Palanu belum punya sistem Bluetooth sama sekali. WiFi (Plan 20) sudah membuktikan
 pola yang benar untuk konektivitas: **driver di platform**, **app di thread
 sendiri** (`WifiApp` via AppHost), kerja blocking di **TaskRunner worker**, event
 balik via **AsyncEventPoster**. Bluetooth mengikuti pola yang sama persis.
@@ -154,15 +154,15 @@ Tidak ada operasi BLE yang membekukan UI.
 
 ---
 
-## 3. HAL (`core/include/kairo/hal/bluetooth.h`) — BARU
+## 3. HAL (`core/include/palanu/hal/bluetooth.h`) — BARU
 
 ```cpp
 #pragma once
-#include "kairo/hal/driver.h"
+#include "nema/hal/driver.h"
 #include <cstdint>
 #include <cstddef>
 
-namespace kairo {
+namespace nema {
 
 enum class BtMode : uint8_t { Off, Ble, Classic, Dual };
 
@@ -239,7 +239,7 @@ struct IClassicAdapter : IDriver {
     virtual void stopDiscoverable()  = 0;
 };
 
-} // namespace kairo
+} // namespace nema
 ```
 
 **Catatan threading (jujur, sama kontrak WiFi):** `enable()` boleh blocking →
@@ -250,7 +250,7 @@ lewat **AsyncEventPoster** ke main task sebelum menyentuh UI/Canvas.
 
 ---
 
-## 4. Events (`core/include/kairo/event/event.h`)
+## 4. Events (`core/include/palanu/event/event.h`)
 
 ```cpp
 inline constexpr const char* BtEnabled       = "BtEnabled";       // {}
@@ -315,7 +315,7 @@ konsumen lain (mis. ikon BT di status bar).
 
 ```cpp
 class BluetoothApp : public ComponentApp {
-    const char* id()   const override { return "com.kairo.bluetooth"; }
+    const char* id()   const override { return "com.palanu.bluetooth"; }
     const char* name() const override { return "Bluetooth"; }
 protected:
     ui::UiNode* build(ui::NodeArena& a, AppContext& ctx) override;
@@ -371,7 +371,7 @@ Medium konektivitas kedua: **native USB ESP32-S3 sebagai composite device**
 Bagian di bawah fokus ke **CDC** (yang dibutuhkan remote). MSC/HID = penambahan
 class pada composite yang sama, bukan rombak.
 
-### HAL (`core/include/kairo/hal/usb_cdc.h`) — minimal
+### HAL (`core/include/palanu/hal/usb_cdc.h`) — minimal
 
 ```cpp
 struct IUsbCdc : IDriver {
@@ -397,7 +397,7 @@ struct IUsbCdc : IDriver {
   `isOpen()`.
 
 > **Status USB (jujur, per implementasi sekarang):**
-> - ✅ Transport KLP generik **selesai**: `core/include/kairo/link/usb_cdc_link_transport.h`
+> - ✅ Transport KLP generik **selesai**: `core/include/palanu/link/usb_cdc_link_transport.h`
 >   (`UsbCdcLinkTransport` membungkus `IUsbCdc` → `ILinkTransport`). Board apa pun
 >   yang menyediakan `IUsbCdc` langsung dapat KLP-over-USB tanpa kode tambahan.
 > - ⏸️ **`Esp32UsbCdc` (device-side) DEFERRED di skyrizz-e32.** Alasan hardware
@@ -415,12 +415,12 @@ struct IUsbCdc : IDriver {
 
 | File | Aksi |
 |---|---|
-| `core/include/kairo/hal/bluetooth.h` | **baru** — controller + BLE/Classic adapters |
-| `core/include/kairo/hal/usb_cdc.h` | **baru** — IUsbCdc byte pipe |
+| `core/include/palanu/hal/bluetooth.h` | **baru** — controller + BLE/Classic adapters |
+| `core/include/palanu/hal/usb_cdc.h` | **baru** — IUsbCdc byte pipe |
 | `platforms/esp32/.../esp32_usb_cdc.{h,cpp}` | **baru** — TinyUSB CDC-ACM |
 | `core/src/hal/bluetooth.cpp` | **baru** — helper emit (bila perlu) |
-| `core/include/kairo/event/event.h` | + Bt* events |
-| `core/include/kairo/apps/bluetooth_app.h` (+`.cpp`) | **baru** — state machine |
+| `core/include/palanu/event/event.h` | + Bt* events |
+| `core/include/palanu/apps/bluetooth_app.h` (+`.cpp`) | **baru** — state machine |
 | `core/src/screens/settings_screen.cpp` | + item "Bluetooth" (gated capability) |
 | `core/CMakeLists.txt` | + sources baru |
 | `platforms/simulator/.../sim_ble_adapter.{h,cpp}` | **baru** — controller+adapter sim |

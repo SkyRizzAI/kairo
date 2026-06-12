@@ -1,8 +1,8 @@
-#include "kairo/log/console_sink.h"
+#include "nema/log/console_sink.h"
 #include <cstdio>
 #include <ctime>
 
-namespace kairo {
+namespace nema {
 
 static const char* levelLabel(LogLevel lvl) {
     switch (lvl) {
@@ -39,4 +39,4 @@ void ConsoleSink::write(const LogEntry& entry) {
     std::fflush(stdout);
 }
 
-} // namespace kairo
+} // namespace nema

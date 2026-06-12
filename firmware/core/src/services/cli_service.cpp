@@ -1,17 +1,17 @@
-#include "kairo/services/cli_service.h"
-#include "kairo/services/profile_service.h"
-#include "kairo/runtime.h"
-#include "kairo/board.h"
-#include "kairo/system/system_info.h"
-#include "kairo/system/hardware_registry.h"
-#include "kairo/system/capability_registry.h"
-#include "kairo/service/service_container.h"
-#include "kairo/hal/wifi.h"
-#include "kairo/hal/bluetooth.h"
-#include "kairo/hal/filesystem.h"
+#include "nema/services/cli_service.h"
+#include "nema/services/profile_service.h"
+#include "nema/runtime.h"
+#include "nema/board.h"
+#include "nema/system/system_info.h"
+#include "nema/system/hardware_registry.h"
+#include "nema/system/capability_registry.h"
+#include "nema/service/service_container.h"
+#include "nema/hal/wifi.h"
+#include "nema/hal/bluetooth.h"
+#include "nema/hal/filesystem.h"
 #include <cctype>
 
-namespace kairo {
+namespace nema {
 
 void CliService::add(std::string name, std::string help, Handler handler) {
     for (auto& c : cmds_) {
@@ -205,4 +205,4 @@ void registerCoreCliCommands(CliService& cli, Runtime& rt) {
         });
 }
 
-} // namespace kairo
+} // namespace nema

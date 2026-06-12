@@ -5,16 +5,16 @@
 //    next frame ("installed at runtime by an app"),
 //  - stopOne/removeService cleanly retire it,
 //  - startOne is idempotent, addService is idempotent.
-#include "kairo/service/service_manager.h"
-#include "kairo/service/service_container.h"
-#include "kairo/service.h"
-#include "kairo/event/event_bus.h"
-#include "kairo/log/logger.h"
-#include "kairo/clock.h"
+#include "nema/service/service_manager.h"
+#include "nema/service/service_container.h"
+#include "nema/service.h"
+#include "nema/event/event_bus.h"
+#include "nema/log/logger.h"
+#include "nema/clock.h"
 #include <cassert>
 #include <cstdio>
 
-using namespace kairo;
+using namespace nema;
 
 namespace {
 

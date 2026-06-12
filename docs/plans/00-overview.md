@@ -1,29 +1,29 @@
 # 00 — MVP Plan Overview
 
-> Index & ground rules untuk seri perencanaan **Kairo MVP**.
+> Index & ground rules untuk seri perencanaan **Palanu MVP**.
 > Master plan lengkap ada di [`../concept_plan.md`](../concept_plan.md). Dokumen di folder ini memecah master plan menjadi stage-stage kecil yang bisa dikerjakan satu per satu.
 
 ---
 
 ## 0. Tier Hardware (penamaan resmi — biar tidak bingung)
 
-Kairo punya **3 tier** hardware. Penamaan ini dipakai konsisten di seluruh docs & kode:
+Palanu punya **3 tier** hardware. Penamaan ini dipakai konsisten di seluruh docs & kode:
 
 | Tier | Nama | Apa itu | Board id (`IBoard::name()`) | Status |
 |---|---|---|---|---|
 | 1 | **Simulator** | Virtual — jalan di host/web, dummy driver. Tidak ada hardware. | `simulator` | ✅ jalan |
-| 2 | **Kairo Dev Board** | Hardware testing **sementara**: ESP32-S3-WROOM-1 + e-ink 2.7" 264×176 + 6 tombol TCA9534. Ini **device bekas projek sebelumnya** yang kebetulan dimiliki developer — dipakai untuk uji firmware di hardware nyata sampai V1 ada. Pinout/tombol = ref [`kairo-test-concept-esp32-s3-wroom-1-eink`](../../refs/kairo-test-concept-esp32-s3-wroom-1-eink). | `dev-board` | 🔜 plan 16–18 |
-| 3 | **Kairo Board V1** | **PCB custom buatan sendiri** — target produk akhir Kairo. Belum didesain. Akan reuse platform `esp32` + Core yang sama; cuma beda board layer (pin/komponen). | `kairo-board-v1` | ⏳ future (post-M6) |
+| 2 | **Palanu Dev Board** | Hardware testing **sementara**: ESP32-S3-WROOM-1 + e-ink 2.7" 264×176 + 6 tombol TCA9534. Ini **device bekas projek sebelumnya** yang kebetulan dimiliki developer — dipakai untuk uji firmware di hardware nyata sampai V1 ada. Pinout/tombol = ref [`palanu-test-concept-esp32-s3-wroom-1-eink`](../../refs/palanu-test-concept-esp32-s3-wroom-1-eink). | `dev-board` | 🔜 plan 16–18 |
+| 3 | **Palanu Board V1** | **PCB custom buatan sendiri** — target produk akhir Palanu. Belum didesain. Akan reuse platform `esp32` + Core yang sama; cuma beda board layer (pin/komponen). | `palanu-board-v1` | ⏳ future (post-M6) |
 
 **Prinsip penting:** Core & platform `esp32` **tidak peduli** board mana. Yang beda antar Dev Board ↔ V1 hanya **board layer** (pin map, komponen terpasang). Jadi semua kerja di Dev Board sekarang langsung kepakai di V1 nanti — tinggal ganti board.
 
-> Catatan: master plan (`concept_plan.md`) menyebut "DevKit S3 Board". Itu **disederhanakan** jadi **Kairo Dev Board** di sini, karena developer pakai device ESP32-S3-WROOM-1 + e-ink yang sudah ada (bukan devkit terpisah).
+> Catatan: master plan (`concept_plan.md`) menyebut "DevKit S3 Board". Itu **disederhanakan** jadi **Palanu Dev Board** di sini, karena developer pakai device ESP32-S3-WROOM-1 + e-ink yang sudah ada (bukan devkit terpisah).
 
 ---
 
 ## 1. Tujuan MVP
 
-> **Core Runtime (C++) yang bisa boot & berjalan di dalam Kairo Simulator, lengkap dengan dummy driver — tanpa hardware sama sekali.**
+> **Core Runtime (C++) yang bisa boot & berjalan di dalam Palanu Simulator, lengkap dengan dummy driver — tanpa hardware sama sekali.**
 
 Yang **masuk** MVP:
 
@@ -33,7 +33,7 @@ Yang **masuk** MVP:
 
 Yang **DITUNDA** (bukan MVP, jangan dikerjakan dulu):
 
-- Kairo Dev Board & Kairo Board V1, platform ESP32, driver hardware asli (lihat §0 Tier Hardware).
+- Palanu Dev Board & Palanu Board V1, platform ESP32, driver hardware asli (lihat §0 Tier Hardware).
 - UI Runtime, Screen System, Status Bar, Home Screen (display rendering).
 - Plugin Runtime, Notification Manager, OTA.
 - Radio/NFC/RFID/IR/Audio nyata. Panel Display / Hardware Registry / Capability Registry di web (data model boleh disiapkan, panel-nya nanti).
@@ -47,7 +47,7 @@ Pemetaan ke milestone master plan (§32): MVP ≈ **Milestone 1 (Core Foundation
 | Topik | Keputusan |
 |---|---|
 | Bahasa Core | **C++17**, hardware-agnostic, dipakai ulang persis di firmware ESP32 nanti. |
-| Build | **CMake**, build native host (clang di macOS) → executable `kairo-sim`. |
+| Build | **CMake**, build native host (clang di macOS) → executable `palanu-sim`. |
 | Cara core "jalan di simulator" | Target `simulator` di-build sebagai **binary native host** + dummy driver. |
 | Bridge core ↔ web | **Tidak pakai WebSocket di C++.** Binary baca command dari **stdin** & tulis telemetry ke **stdout** sebagai **JSON-lines**. Proses Bun yang **spawn** binary itu lalu relay stdio ↔ WebSocket ke browser. |
 | Web UI | `packages/simulator` (dipertahankan, **tidak** di-rename ke `simulator-web`). Bun + `Bun.serve` (WebSocket) + React, tanpa Vite/Express/ws. |
@@ -63,7 +63,7 @@ Pemetaan ke milestone master plan (§32): MVP ≈ **Milestone 1 (Core Foundation
 │                          │ stdin (commands)  ▲ stdout (telemetry)
 └──────────────────────────┼───────────────────┼───────────────┘
                            ▼                   │  JSON-lines
-                  ┌──────────────── kairo-sim (C++ native) ─────┐
+                  ┌──────────────── palanu-sim (C++ native) ─────┐
                   │  Target simulator → Board simulator →        │
                   │  Platform simulator (dummy drivers) → Core   │
                   └──────────────────────────────────────────────┘
@@ -74,10 +74,10 @@ Pemetaan ke milestone master plan (§32): MVP ≈ **Milestone 1 (Core Foundation
 ## 3. Struktur repo (target akhir MVP)
 
 ```text
-kairo/
+palanu/
 ├─ firmware/
 │  ├─ core/                     # C++ runtime, TIDAK kenal platform/hardware apapun
-│  │  ├─ include/kairo/         # public headers (interface)
+│  │  ├─ include/palanu/         # public headers (interface)
 │  │  ├─ src/
 │  │  └─ CMakeLists.txt
 │  ├─ platforms/
@@ -134,17 +134,17 @@ Kerjakan **berurutan**; tiap dok punya `Depends on`. Centang status di sini saat
 | 14b | — | Built-in components: Label/Button/Row/Col/MenuItem/HRule + size (xs..2xl) + React mirror | 13,14 | ✅ |
 | 15 | [`15-status-bar-home-screen.md`](15-status-bar-home-screen.md) | StatusBar 1 baris + HomeScreen ASCII art + app list (Flipper Zero style) | 12,13,14 | ✅ |
 
-### Phase 4 — Kairo Dev Board (ESP32-S3 + e-ink, M6)
+### Phase 4 — Palanu Dev Board (ESP32-S3 + e-ink, M6)
 
 > Tier 2 hardware (§0). Testing real sementara di ESP32-S3-WROOM-1 + e-ink. Semua ini reuse di V1 nanti — beda cuma board layer.
 
 | # | Dokumen | Fitur / Stage | Depends on | Status |
 |---|---|---|---|---|
 | 16 | [`16-esp32-platform.md`](16-esp32-platform.md) | Esp32Platform, Esp32Clock, Esp32WifiDriver, ESP-IDF dual-build (battery di-skip, tak ada HW) | 01–11 | ✅ |
-| 17 | [`17-dev-board.md`](17-dev-board.md) | Kairo Dev Board (`dev-board`): board_config.h pinout, TCA9534 6-button → Key | 16 | ✅ |
+| 17 | [`17-dev-board.md`](17-dev-board.md) | Palanu Dev Board (`dev-board`): board_config.h pinout, TCA9534 6-button → Key | 16 | ✅ |
 | 18 | [`18-esp32-eink-display.md`](18-esp32-eink-display.md) | EinkDisplay (GxEPD2 GDEY027T91 264×176 1-bit), full refresh | 13,16,17 | ✅ |
 
-> Pinout & button map dari ref `kairo-test-concept-esp32-s3-wroom-1-eink/firmware/main/badge_pins.h`. Tombol pakai `Key` enum yang **sama** dengan simulator. Arduino libs (GxEPD2/Adafruit) di-vendor dari `refs/oniondao-badge/software/components` ke `firmware/vendor/arduino-libs/`.
+> Pinout & button map dari ref `palanu-test-concept-esp32-s3-wroom-1-eink/firmware/main/badge_pins.h`. Tombol pakai `Key` enum yang **sama** dengan simulator. Arduino libs (GxEPD2/Adafruit) di-vendor dari `refs/oniondao-badge/software/components` ke `firmware/vendor/arduino-libs/`.
 > Status ✅ = `idf.py build` sukses (binary 1.05 MB) **dan firmware sudah di-flash + jalan di perangkat fisik** (dikonfirmasi 2026-05-31). Flash: `bun run flash:esp32`.
 
 ### Phase 5 — Nema Kernel, App Model & Connectivity (M6.5–M7)
@@ -169,9 +169,9 @@ Kerjakan **berurutan**; tiap dok punya `Depends on`. Centang status di sini saat
 | 21 | [`21-screen-sleep-lock.md`](21-screen-sleep-lock.md) | Screen sleep otomatis + lock screen | 14,15,18 | ☐ |
 | 22 | [`22-app-pause-resume.md`](22-app-pause-resume.md) | Pause/resume app (hold Cancel), "Continue: <app>" di launcher | 19.6,15 | ☐ |
 
-### Phase 7 — Kairo Board V1 (PCB custom, future)
+### Phase 7 — Palanu Board V1 (PCB custom, future)
 
-> Tier 3 hardware (§0). PCB buatan sendiri — belum didesain. Reuse platform `esp32` + Core; hanya board layer baru (`kairo-board-v1`).
+> Tier 3 hardware (§0). PCB buatan sendiri — belum didesain. Reuse platform `esp32` + Core; hanya board layer baru (`palanu-board-v1`).
 
 | # | Dokumen | Fitur / Stage | Depends on | Status |
 |---|---|---|---|---|
@@ -179,19 +179,19 @@ Kerjakan **berurutan**; tiap dok punya `Depends on`. Centang status di sini saat
 
 ### Phase 8 — Board Profile & Ecosystem Foundation (M9)
 
-> Fondasi data model untuk ekosistem tooling (Kairo Forge / Studio). Board mendeskripsikan layout fisik komponen, device render ASCII visualization, JSON export untuk web tooling.
+> Fondasi data model untuk ekosistem tooling (Palanu Forge / Studio). Board mendeskripsikan layout fisik komponen, device render ASCII visualization, JSON export untuk web tooling.
 
 | # | Dokumen | Fitur / Stage | Depends on | Status |
 |---|---|---|---|---|
 | 33 | [`33-board-profile.md`](33-board-profile.md) | BoardProfile data model + AsciiRenderer + About visualization + JSON export | 08,14,27 | ☐ |
-| 35 | [`35-kairo-link-forge-remote.md`](35-kairo-link-forge-remote.md) | **Remote Layer (Layer 2, device-side)**: KLP codec + ILinkTransport (BLE/USB/virtual-cable) + RemoteService (screen-tap/input/log/system) + WASM firmware target | 34,13,19.5 | ☐ (codec TS ✓) |
-| 36 | [`36-forge-foundation.md`](36-forge-foundation.md) | **Kairo Forge (Layer 3, web client)**: SvelteKit+Tailwind+shadcn+tRPC, simulator (→WASM), RemoteSession (Web Bluetooth/Serial/virtual-cable), /remote (remote device ATAU sim), /flash, OTA | 35,34,09,10,26,33 | 🚧 Fase 1–3 ✓ |
+| 35 | [`35-palanu-link-forge-remote.md`](35-palanu-link-forge-remote.md) | **Remote Layer (Layer 2, device-side)**: KLP codec + ILinkTransport (BLE/USB/virtual-cable) + RemoteService (screen-tap/input/log/system) + WASM firmware target | 34,13,19.5 | ☐ (codec TS ✓) |
+| 36 | [`36-forge-foundation.md`](36-forge-foundation.md) | **Palanu Forge (Layer 3, web client)**: SvelteKit+Tailwind+shadcn+tRPC, simulator (→WASM), RemoteSession (Web Bluetooth/Serial/virtual-cable), /remote (remote device ATAU sim), /flash, OTA | 35,34,09,10,26,33 | 🚧 Fase 1–3 ✓ |
 
 ---
 
 ## 5. Konvensi
 
-- **Bahasa C++**: C++17, namespace root `kairo::`. Header di `firmware/core/include/kairo/...`, impl di `firmware/core/src/...`.
+- **Bahasa C++**: C++17, namespace root `nema::`. Header di `firmware/core/include/palanu/...`, impl di `firmware/core/src/...`.
 - **Hardware-agnostic**: file di `firmware/core/**` **dilarang** `#include` apapun yang spesifik platform (no `<Arduino.h>`, no ESP-IDF, no `Bun`, dst). Core hanya kenal interface abstrak.
 - **No `printf` langsung** — selalu lewat Logger (master plan §7).
 - **Capability-driven** — cek `capabilities.has("wifi")`, bukan `isEsp32()` (master plan §3).

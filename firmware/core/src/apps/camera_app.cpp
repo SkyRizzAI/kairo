@@ -1,16 +1,16 @@
-#include "kairo/apps/camera_app.h"
-#include "kairo/runtime.h"
-#include "kairo/clock.h"
-#include "kairo/ui/canvas.h"
-#include "kairo/ui/ui_constants.h"
-#include "kairo/ui/view_dispatcher.h"
-#include "kairo/services/camera_service.h"
-#include "kairo/hal/camera.h"
-#include "kairo/input/input_action.h"
+#include "nema/apps/camera_app.h"
+#include "nema/runtime.h"
+#include "nema/clock.h"
+#include "nema/ui/canvas.h"
+#include "nema/ui/ui_constants.h"
+#include "nema/ui/view_dispatcher.h"
+#include "nema/services/camera_service.h"
+#include "nema/hal/camera.h"
+#include "nema/input/input_action.h"
 #include <cstring>
 #include <cstdio>
 
-namespace kairo {
+namespace nema {
 
 CameraApp::CameraApp(Runtime& rt) : rt_(rt) {}
 
@@ -104,4 +104,4 @@ void CameraApp::draw(Canvas& c) {
     c.drawText(4, ui::footerY(c.height()), hint, true);
 }
 
-} // namespace kairo
+} // namespace nema

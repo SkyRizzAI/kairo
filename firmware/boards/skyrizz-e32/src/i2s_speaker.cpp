@@ -1,7 +1,7 @@
-#include "kairo/skyrizze32/i2s_speaker.h"
-#include "kairo/skyrizze32/es7243e_mic.h"
-#include "kairo/runtime.h"
-#include "kairo/log/logger.h"
+#include "nema/skyrizze32/i2s_speaker.h"
+#include "nema/skyrizze32/es7243e_mic.h"
+#include "nema/runtime.h"
+#include "nema/log/logger.h"
 #include <driver/i2s.h>   // legacy I2S API — shared I2S0 with Es7243eMic
 #include <esp_err.h>
 #include <freertos/FreeRTOS.h>
@@ -9,7 +9,7 @@
 #include <cstdio>
 #include <string>
 
-namespace kairo::skyrizze32 {
+namespace nema::skyrizze32 {
 
 void I2sSpeaker::start() {
     if (rt_) rt_->log().info("I2sSpeaker", "NS4168 ready (shared I2S0 TX, GPIO45)");
@@ -99,4 +99,4 @@ void I2sSpeaker::playTone(uint16_t freqHz, uint16_t ms) {
     }
 }
 
-} // namespace kairo::skyrizze32
+} // namespace nema::skyrizze32

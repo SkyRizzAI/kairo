@@ -1,6 +1,6 @@
-#include "kairo/link/link_service.h"
+#include "nema/link/link_service.h"
 
-namespace kairo {
+namespace nema {
 
 void LinkService::attach(ILinkTransport* t, Role role) {
     t_ = t;
@@ -63,4 +63,4 @@ void LinkService::send(klp::Channel ch, const uint8_t* data, size_t len, uint8_t
     t_->send(buf.data(), buf.size());
 }
 
-} // namespace kairo
+} // namespace nema

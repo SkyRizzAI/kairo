@@ -1,6 +1,6 @@
-#include "kairo/ui/hit_test.h"
+#include "nema/ui/hit_test.h"
 
-namespace kairo::ui {
+namespace nema::ui {
 
 static UiNode* hit(UiNode* n, int16_t x, int16_t y) {
     UiNode* found = nullptr;
@@ -16,4 +16,4 @@ UiNode* hitTest(UiNode& root, int16_t x, int16_t y) {
     return hit(&root, x, y);
 }
 
-} // namespace kairo::ui
+} // namespace nema::ui

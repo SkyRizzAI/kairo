@@ -1,6 +1,6 @@
-#include "kairo/devboard/dev_board_key_map.h"
+#include "nema/devboard/dev_board_key_map.h"
 
-namespace kairo {
+namespace nema {
 
 using namespace input;
 
@@ -79,4 +79,4 @@ Action DevBoardKeyMap::idToAction(uint8_t id) {
     }
 }
 
-} // namespace kairo
+} // namespace nema

@@ -1,6 +1,6 @@
-#include "kairo/ui/widgets.h"
+#include "nema/ui/widgets.h"
 
-namespace kairo::ui {
+namespace nema::ui {
 
 NodeArena::NodeArena(size_t capacity) : cap_(capacity) {
     pool_ = new UiNode[capacity];
@@ -200,4 +200,4 @@ UiNode* Modal(NodeArena& a, std::initializer_list<UiNode*> children) {
     return View(a, s, children);
 }
 
-} // namespace kairo::ui
+} // namespace nema::ui

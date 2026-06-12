@@ -1,11 +1,11 @@
-#include "kairo/esp32/esp32_wifi_driver.h"
-#include "kairo/runtime.h"
-#include "kairo/log/logger.h"
-#include "kairo/event/async_event_poster.h"
-#include "kairo/event/event.h"
-#include "kairo/system/hardware_registry.h"
-#include "kairo/system/capability_registry.h"
-#include "kairo/service/service_container.h"
+#include "nema/esp32/esp32_wifi_driver.h"
+#include "nema/runtime.h"
+#include "nema/log/logger.h"
+#include "nema/event/async_event_poster.h"
+#include "nema/event/event.h"
+#include "nema/system/hardware_registry.h"
+#include "nema/system/capability_registry.h"
+#include "nema/service/service_container.h"
 #include <esp_wifi.h>
 #include <esp_event.h>
 #include <esp_netif.h>
@@ -13,10 +13,10 @@
 #include <nvs.h>
 #include <cstring>
 
-namespace kairo {
+namespace nema {
 
 static esp_netif_t* s_sta_netif = nullptr;
-static const char* NVS_NS = "kairo_wifi";
+static const char* NVS_NS = "palanu_wifi";
 
 void Esp32WifiDriver::onRegister(Runtime& rt) {
     log_    = &rt.log();
@@ -157,4 +157,4 @@ void Esp32WifiDriver::loadCredentials() {
     }
 }
 
-} // namespace kairo
+} // namespace nema

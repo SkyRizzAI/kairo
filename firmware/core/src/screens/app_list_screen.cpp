@@ -1,9 +1,9 @@
-#include "kairo/screens/app_list_screen.h"
-#include "kairo/runtime.h"
-#include "kairo/ui/view_dispatcher.h"
-#include "kairo/app/app_registry.h"
+#include "nema/screens/app_list_screen.h"
+#include "nema/runtime.h"
+#include "nema/ui/view_dispatcher.h"
+#include "nema/app/app_registry.h"
 
-namespace kairo {
+namespace nema {
 
 using namespace ui;
 
@@ -55,4 +55,4 @@ UiNode* AppListScreen::build(NodeArena& a, Runtime& rt) {
     });
 }
 
-} // namespace kairo
+} // namespace nema

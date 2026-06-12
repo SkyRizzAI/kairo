@@ -1,12 +1,12 @@
-#include "kairo/ui/status_bar.h"
-#include "kairo/ui/canvas.h"
-#include "kairo/ui/ui_constants.h"
+#include "nema/ui/status_bar.h"
+#include "nema/ui/canvas.h"
+#include "nema/ui/ui_constants.h"
 #include <cstdio>
 
-namespace kairo {
+namespace nema {
 
 void StatusBar::draw(Canvas& c, const StatusBarData& d) {
-    using namespace kairo::ui;
+    using namespace nema::ui;
 
     // Clock — left
     char clk[6];
@@ -27,4 +27,4 @@ void StatusBar::draw(Canvas& c, const StatusBarData& d) {
     c.fillRect(0, SEP1_Y + 1, c.width(), 1);
 }
 
-} // namespace kairo
+} // namespace nema

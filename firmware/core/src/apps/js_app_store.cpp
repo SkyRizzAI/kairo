@@ -1,10 +1,10 @@
-#include "kairo/apps/js_app_store.h"
-#include "kairo/apps/embedded_apps.h"
-#include "kairo/app/app_registry.h"
-#include "kairo/runtime.h"
+#include "nema/apps/js_app_store.h"
+#include "nema/apps/embedded_apps.h"
+#include "nema/app/app_registry.h"
+#include "nema/runtime.h"
 #include <utility>
 
-namespace kairo {
+namespace nema {
 
 JsAppStore& JsAppStore::instance() {
     static JsAppStore s;
@@ -59,4 +59,4 @@ void loadEmbeddedJsApps(Runtime& rt) {
     }
 }
 
-} // namespace kairo
+} // namespace nema

@@ -1,6 +1,6 @@
-#include "kairo/ui/canvas.h"
+#include "nema/ui/canvas.h"
 
-namespace kairo {
+namespace nema {
 
 // Classic 5×8 bitmap pixel font — 95 glyphs covering ASCII 0x20..0x7E.
 // Format: 5 bytes per glyph (one per column, left→right).
@@ -113,4 +113,4 @@ const BitmapFont FONT_5X8 = {
     1,    // spacing between chars
 };
 
-} // namespace kairo
+} // namespace nema

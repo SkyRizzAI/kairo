@@ -1,7 +1,7 @@
 # Plan 32 — Media Hardware: Mic, Speaker, Camera
 
 Adds microphone input (ES7243E ADC), speaker output (stub for future hardware), and
-camera (GC2145 DVP) to the Kairo firmware. Delivers:
+camera (GC2145 DVP) to the Palanu firmware. Delivers:
 
 - Core HAL interfaces (`IAudioInput`, `IAudioOutput`, `ICamera`)
 - `AudioService` + `CameraService` manager objects wired into Runtime
@@ -21,17 +21,17 @@ Gathered from codebase. Allowed API summary:
 ### Core patterns
 | Artifact | File | Key facts |
 |---|---|---|
-| `IService` | `core/include/kairo/service.h` | `name()`, `start()`, `stop()`, `tick(uint64_t nowMs)` |
-| `IDriver` | `core/include/kairo/hal/driver.h` | `name()`, `kind()`, `onRegister(Runtime&)`; `DriverKind` enum |
-| `IDisplayDriver` | `core/include/kairo/hal/display.h` | Pattern for new HAL interfaces |
-| `Runtime` accessors | `core/include/kairo/runtime.h` | Add `audio()`, `camera()` as value members |
-| `ServiceContainer` | `core/include/kairo/service/service_container.h` | `registerService<T>()`, `registerAs<I,T>()`, `resolve<I>()` |
-| `IScreen` | `core/include/kairo/ui/screen.h` | `enter()`, `update(Key)`, `draw(Canvas&)`, `tick(uint64_t)` |
-| `IPlugin` | `core/include/kairo/plugin/plugin.h` | `id()`, `name()`, `version()`, `onLoad()`, `onSelect()` |
-| `PluginContext` | `core/include/kairo/plugin/plugin_context.h` | `runtime()`, `pushScreen()`, `log()` |
-| `ClockPlugin` | `core/include/kairo/plugins/clock_plugin.h` | Pattern: plugin owns app + `unique_ptr<AppHost> host_` |
-| `SettingsScreen` | `core/include/kairo/screens/settings_screen.h` | Dynamic `items_` vector with capability checks |
-| `SleepSettingsScreen` | `core/include/kairo/screens/sleep_settings_screen.h` | Pattern: `cursor_`, `invertRect` highlight, footer hint |
+| `IService` | `core/include/palanu/service.h` | `name()`, `start()`, `stop()`, `tick(uint64_t nowMs)` |
+| `IDriver` | `core/include/palanu/hal/driver.h` | `name()`, `kind()`, `onRegister(Runtime&)`; `DriverKind` enum |
+| `IDisplayDriver` | `core/include/palanu/hal/display.h` | Pattern for new HAL interfaces |
+| `Runtime` accessors | `core/include/palanu/runtime.h` | Add `audio()`, `camera()` as value members |
+| `ServiceContainer` | `core/include/palanu/service/service_container.h` | `registerService<T>()`, `registerAs<I,T>()`, `resolve<I>()` |
+| `IScreen` | `core/include/palanu/ui/screen.h` | `enter()`, `update(Key)`, `draw(Canvas&)`, `tick(uint64_t)` |
+| `IPlugin` | `core/include/palanu/plugin/plugin.h` | `id()`, `name()`, `version()`, `onLoad()`, `onSelect()` |
+| `PluginContext` | `core/include/palanu/plugin/plugin_context.h` | `runtime()`, `pushScreen()`, `log()` |
+| `ClockPlugin` | `core/include/palanu/plugins/clock_plugin.h` | Pattern: plugin owns app + `unique_ptr<AppHost> host_` |
+| `SettingsScreen` | `core/include/palanu/screens/settings_screen.h` | Dynamic `items_` vector with capability checks |
+| `SleepSettingsScreen` | `core/include/palanu/screens/sleep_settings_screen.h` | Pattern: `cursor_`, `invertRect` highlight, footer hint |
 
 ### SkyRizz E32 patterns
 | Artifact | File | Key facts |
@@ -54,17 +54,17 @@ Gathered from codebase. Allowed API summary:
 ## Phase 1 — Core HAL Interfaces
 
 **Files to create:**
-- `firmware/core/include/kairo/hal/audio_input.h`
-- `firmware/core/include/kairo/hal/audio_output.h`
-- `firmware/core/include/kairo/hal/camera.h`
+- `firmware/core/include/palanu/hal/audio_input.h`
+- `firmware/core/include/palanu/hal/audio_output.h`
+- `firmware/core/include/palanu/hal/camera.h`
 
 ### `audio_input.h`
 
 ```cpp
 #pragma once
-#include "kairo/hal/driver.h"
+#include "nema/hal/driver.h"
 
-namespace kairo {
+namespace nema {
 
 // IAudioInput — microphone / line-in abstraction.
 // Drivers update peakLevel() in their tick() (IService).
@@ -76,16 +76,16 @@ struct IAudioInput {
     virtual void        stopCapture()       = 0;
 };
 
-} // namespace kairo
+} // namespace nema
 ```
 
 ### `audio_output.h`
 
 ```cpp
 #pragma once
-#include "kairo/hal/driver.h"
+#include "nema/hal/driver.h"
 
-namespace kairo {
+namespace nema {
 
 struct IAudioOutput {
     virtual ~IAudioOutput() = default;
@@ -95,7 +95,7 @@ struct IAudioOutput {
     virtual void        playTone(uint16_t freqHz, uint16_t ms)     = 0;  // test beep
 };
 
-} // namespace kairo
+} // namespace nema
 ```
 
 ### `camera.h`
@@ -104,7 +104,7 @@ struct IAudioOutput {
 #pragma once
 #include <cstdint>
 
-namespace kairo {
+namespace nema {
 
 // ICamera — camera abstraction. Drivers implement IService + ICamera.
 // captureFrame() returns a pointer to an internal RGB565 buffer (big-endian,
@@ -121,12 +121,12 @@ struct ICamera {
     virtual const uint8_t* captureFrame()       = 0;  // blocks until next frame
 };
 
-} // namespace kairo
+} // namespace nema
 ```
 
 **Verification:**
 ```bash
-grep -r "IAudioInput\|IAudioOutput\|ICamera" firmware/core/include/kairo/hal/
+grep -r "IAudioInput\|IAudioOutput\|ICamera" firmware/core/include/palanu/hal/
 # → 3 new header files found
 ```
 
@@ -135,13 +135,13 @@ grep -r "IAudioInput\|IAudioOutput\|ICamera" firmware/core/include/kairo/hal/
 ## Phase 2 — AudioService and CameraService
 
 **Files to create:**
-- `firmware/core/include/kairo/services/audio_service.h`
+- `firmware/core/include/palanu/services/audio_service.h`
 - `firmware/core/src/services/audio_service.cpp`
-- `firmware/core/include/kairo/services/camera_service.h`
+- `firmware/core/include/palanu/services/camera_service.h`
 - `firmware/core/src/services/camera_service.cpp`
 
 **Files to modify:**
-- `firmware/core/include/kairo/runtime.h` — add `audio()`, `camera()` accessors + members
+- `firmware/core/include/palanu/runtime.h` — add `audio()`, `camera()` accessors + members
 - `firmware/core/src/runtime.cpp` — add includes
 - `firmware/core/CMakeLists.txt` — add new source files
 
@@ -152,11 +152,11 @@ Holds up to 8 inputs and 8 outputs.
 
 ```cpp
 #pragma once
-#include "kairo/hal/audio_input.h"
-#include "kairo/hal/audio_output.h"
+#include "nema/hal/audio_input.h"
+#include "nema/hal/audio_output.h"
 #include <cstdint>
 
-namespace kairo {
+namespace nema {
 
 class AudioService {
 public:
@@ -184,17 +184,17 @@ private:
     int         outputCount_ = 0;
 };
 
-} // namespace kairo
+} // namespace nema
 ```
 
 ### `camera_service.h`
 
 ```cpp
 #pragma once
-#include "kairo/hal/camera.h"
+#include "nema/hal/camera.h"
 #include <cstdint>
 
-namespace kairo {
+namespace nema {
 
 class CameraService {
 public:
@@ -212,7 +212,7 @@ private:
     int   count_ = 0;
 };
 
-} // namespace kairo
+} // namespace nema
 ```
 
 ### Runtime integration
@@ -220,8 +220,8 @@ private:
 In `runtime.h` — add includes and accessors:
 ```cpp
 // Add to includes:
-#include "kairo/services/audio_service.h"
-#include "kairo/services/camera_service.h"
+#include "nema/services/audio_service.h"
+#include "nema/services/camera_service.h"
 
 // Add to public accessors:
 AudioService&  audio();
@@ -246,7 +246,7 @@ In `firmware/core/CMakeLists.txt` — add to SRCS:
 
 **Verification:**
 ```bash
-grep -n "audio\(\)\|camera\(\)" firmware/core/include/kairo/runtime.h
+grep -n "audio\(\)\|camera\(\)" firmware/core/include/palanu/runtime.h
 # → 2 new accessors found
 ```
 
@@ -256,7 +256,7 @@ grep -n "audio\(\)\|camera\(\)" firmware/core/include/kairo/runtime.h
 
 ### 3a — `board_config.h` additions
 
-Append to `firmware/boards/skyrizz-e32/include/kairo/skyrizze32/board_config.h`:
+Append to `firmware/boards/skyrizz-e32/include/palanu/skyrizze32/board_config.h`:
 
 ```cpp
 // ── I2S Audio (ES7243E ADC, FPC2) ─────────────────────────────────────────
@@ -287,7 +287,7 @@ constexpr uint8_t I2C_ADDR_GC2145  = 0x3C;   // Camera SCCB
 
 ### 3b — `Es7243eMic` driver
 
-**Files:** `include/kairo/skyrizze32/es7243e_mic.h`, `src/es7243e_mic.cpp`
+**Files:** `include/palanu/skyrizze32/es7243e_mic.h`, `src/es7243e_mic.cpp`
 
 ```cpp
 // es7243e_mic.h
@@ -336,7 +336,7 @@ private:
 
 ### 3c — `I2sSpeaker` stub driver
 
-**Files:** `include/kairo/skyrizze32/i2s_speaker.h`, `src/i2s_speaker.cpp`
+**Files:** `include/palanu/skyrizze32/i2s_speaker.h`, `src/i2s_speaker.cpp`
 
 ```cpp
 class I2sSpeaker : public IAudioOutput, public IService {
@@ -359,7 +359,7 @@ private:
 
 ### 3d — `Gc2145Camera` driver
 
-**Files:** `include/kairo/skyrizze32/gc2145_camera.h`, `src/gc2145_camera.cpp`
+**Files:** `include/palanu/skyrizze32/gc2145_camera.h`, `src/gc2145_camera.cpp`
 
 > **Dependency note:** Uses `esp_driver_cam` — **built into IDF 5.5.4**, no `idf_component.yml`
 > or `idf.py add-dependency` needed. Headers: `esp_cam_ctlr.h`, `esp_cam_ctlr_dvp.h`,
@@ -542,7 +542,7 @@ grep -n "audio\.input\|audio\.output\|camera" \
 # → 3 capability declarations found
 
 grep -n "Es7243eMic\|I2sSpeaker\|Gc2145Camera" \
-    firmware/boards/skyrizz-e32/include/kairo/skyrizze32/skyrizz_e32.h
+    firmware/boards/skyrizz-e32/include/palanu/skyrizze32/skyrizz_e32.h
 # → 3 member declarations found
 ```
 
@@ -553,7 +553,7 @@ grep -n "Es7243eMic\|I2sSpeaker\|Gc2145Camera" \
 ### 4a — `SoundsSettingsScreen`
 
 **Files:**
-- `firmware/core/include/kairo/screens/sounds_settings_screen.h`
+- `firmware/core/include/palanu/screens/sounds_settings_screen.h`
 - `firmware/core/src/screens/sounds_settings_screen.cpp`
 
 **Layout (canvas 240×320):**
@@ -624,7 +624,7 @@ if (rt_.audio().outputCount() > 0)
 ### 4b — `CameraSettingsScreen`
 
 **Files:**
-- `firmware/core/include/kairo/screens/camera_settings_screen.h`
+- `firmware/core/include/palanu/screens/camera_settings_screen.h`
 - `firmware/core/src/screens/camera_settings_screen.cpp`
 
 **Layout:**
@@ -662,7 +662,7 @@ private:
 
 ### 4c — Wire into `SettingsScreen`
 
-**Modify `firmware/core/include/kairo/screens/settings_screen.h`:**
+**Modify `firmware/core/include/palanu/screens/settings_screen.h`:**
 
 Add private members:
 ```cpp
@@ -672,8 +672,8 @@ CameraSettingsScreen  cameraSettings_;
 
 Add includes:
 ```cpp
-#include "kairo/screens/sounds_settings_screen.h"
-#include "kairo/screens/camera_settings_screen.h"
+#include "nema/screens/sounds_settings_screen.h"
+#include "nema/screens/camera_settings_screen.h"
 ```
 
 **Modify `settings_screen.cpp` `buildMenu()`:**
@@ -715,7 +715,7 @@ grep -n "Sounds\|Camera\|SoundsSettings\|CameraSettings" \
 ### 5a — `CameraApp`
 
 **Files:**
-- `firmware/core/include/kairo/apps/camera_app.h`
+- `firmware/core/include/palanu/apps/camera_app.h`
 - `firmware/core/src/apps/camera_app.cpp`
 
 Uses `IScreen` (not `ComponentApp`) because it needs `drawBitmap` for raw frame data.
@@ -802,7 +802,7 @@ void CameraApp::buildDitherBuf(const uint8_t* rgb, uint16_t fw, uint16_t fh) {
 ### 5b — `CameraPlugin`
 
 **Files:**
-- `firmware/core/include/kairo/plugins/camera_plugin.h`
+- `firmware/core/include/palanu/plugins/camera_plugin.h`
 - `firmware/core/src/plugins/camera_plugin.cpp`
 
 Copy `ClockPlugin` pattern exactly:
@@ -810,7 +810,7 @@ Copy `ClockPlugin` pattern exactly:
 ```cpp
 class CameraPlugin : public IPlugin {
 public:
-    PluginId    id()      const override { return "com.kairo.camera"; }
+    PluginId    id()      const override { return "com.palanu.camera"; }
     const char* name()    const override { return "Camera"; }
     const char* version() const override { return "1.0.0"; }
 
@@ -843,9 +843,9 @@ void CameraPlugin::onSelect(PluginContext& ctx) {
 
 In `firmware/targets/skyrizz-e32/main/main.cpp`, add:
 ```cpp
-#include "kairo/plugins/camera_plugin.h"
+#include "nema/plugins/camera_plugin.h"
 // ...
-kairo::CameraPlugin cameraPlugin;
+nema::CameraPlugin cameraPlugin;
 // in setup(), after rt.start():
 rt.plugins().load(cameraPlugin);
 ```
@@ -862,7 +862,7 @@ grep -n "CameraPlugin\|cameraPlugin" \
     firmware/targets/skyrizz-e32/main/main.cpp
 # → plugin declared and loaded
 
-grep -n "com.kairo.camera" \
+grep -n "com.palanu.camera" \
     firmware/core/src/plugins/camera_plugin.cpp
 # → plugin ID found
 ```
@@ -873,13 +873,13 @@ grep -n "com.kairo.camera" \
 
 ```bash
 # 1. All new HAL files exist
-ls firmware/core/include/kairo/hal/audio_input.h \
-   firmware/core/include/kairo/hal/audio_output.h \
-   firmware/core/include/kairo/hal/camera.h
+ls firmware/core/include/palanu/hal/audio_input.h \
+   firmware/core/include/palanu/hal/audio_output.h \
+   firmware/core/include/palanu/hal/camera.h
 
 # 2. Services registered in Runtime
-grep "audioService_\|cameraService_" firmware/core/include/kairo/runtime.h
-grep "audio()\|camera()" firmware/core/include/kairo/runtime.h
+grep "audioService_\|cameraService_" firmware/core/include/palanu/runtime.h
+grep "audio()\|camera()" firmware/core/include/palanu/runtime.h
 
 # 3. Board drivers present
 ls firmware/boards/skyrizz-e32/src/es7243e_mic.cpp \
@@ -912,15 +912,15 @@ bun build:skyrizz-e32
 
 ### New files — `firmware/core/`
 ```
-include/kairo/hal/audio_input.h
-include/kairo/hal/audio_output.h
-include/kairo/hal/camera.h
-include/kairo/services/audio_service.h
-include/kairo/services/camera_service.h
-include/kairo/screens/sounds_settings_screen.h
-include/kairo/screens/camera_settings_screen.h
-include/kairo/apps/camera_app.h
-include/kairo/plugins/camera_plugin.h
+include/palanu/hal/audio_input.h
+include/palanu/hal/audio_output.h
+include/palanu/hal/camera.h
+include/palanu/services/audio_service.h
+include/palanu/services/camera_service.h
+include/palanu/screens/sounds_settings_screen.h
+include/palanu/screens/camera_settings_screen.h
+include/palanu/apps/camera_app.h
+include/palanu/plugins/camera_plugin.h
 src/services/audio_service.cpp
 src/services/camera_service.cpp
 src/screens/sounds_settings_screen.cpp
@@ -931,9 +931,9 @@ src/plugins/camera_plugin.cpp
 
 ### New files — `firmware/boards/skyrizz-e32/`
 ```
-include/kairo/skyrizze32/es7243e_mic.h
-include/kairo/skyrizze32/i2s_speaker.h
-include/kairo/skyrizze32/gc2145_camera.h
+include/palanu/skyrizze32/es7243e_mic.h
+include/palanu/skyrizze32/i2s_speaker.h
+include/palanu/skyrizze32/gc2145_camera.h
 src/es7243e_mic.cpp
 src/i2s_speaker.cpp
 src/gc2145_camera.cpp
@@ -941,7 +941,7 @@ src/gc2145_camera.cpp
 
 ### Modified files
 ```
-firmware/core/include/kairo/runtime.h          (+ audio()/camera() accessors + members)
+firmware/core/include/palanu/runtime.h          (+ audio()/camera() accessors + members)
 firmware/core/src/runtime.cpp                  (+ accessor impls)
 firmware/core/CMakeLists.txt                   (+ 5 new sources)
 firmware/boards/skyrizz-e32/include/.../board_config.h   (+ audio/camera pins)
@@ -949,7 +949,7 @@ firmware/boards/skyrizz-e32/include/.../skyrizz_e32.h    (+ 3 driver members)
 firmware/boards/skyrizz-e32/src/skyrizz_e32.cpp          (+ 3 driver registrations)
 firmware/boards/skyrizz-e32/CMakeLists.txt               (+ 3 sources + 2 REQUIRES)
 firmware/core/src/screens/settings_screen.cpp            (+ Sounds/Camera items)
-firmware/core/include/kairo/screens/settings_screen.h    (+ 2 screen members)
+firmware/core/include/palanu/screens/settings_screen.h    (+ 2 screen members)
 firmware/targets/skyrizz-e32/main/main.cpp               (+ CameraPlugin)
 ```
 

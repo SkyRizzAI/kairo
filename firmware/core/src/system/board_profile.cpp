@@ -1,7 +1,7 @@
-#include "kairo/system/board_profile.h"
+#include "nema/system/board_profile.h"
 #include <cstdio>
 
-namespace kairo {
+namespace nema {
 
 namespace {
 
@@ -67,4 +67,4 @@ std::string serializeBoardProfile(const BoardProfile& p) {
     return s;
 }
 
-} // namespace kairo
+} // namespace nema

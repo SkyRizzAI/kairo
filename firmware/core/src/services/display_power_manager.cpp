@@ -1,10 +1,10 @@
-#include "kairo/services/display_power_manager.h"
-#include "kairo/screens/lock_screen.h"
-#include "kairo/ui/view_dispatcher.h"
-#include "kairo/hal/display.h"
-#include "kairo/clock.h"
+#include "nema/services/display_power_manager.h"
+#include "nema/screens/lock_screen.h"
+#include "nema/ui/view_dispatcher.h"
+#include "nema/hal/display.h"
+#include "nema/clock.h"
 
-namespace kairo {
+namespace nema {
 
 void DisplayPowerManager::init(ViewDispatcher& vd, IDisplayDriver* display,
                                 IClock& clock, LockScreen& lockScreen,
@@ -90,4 +90,4 @@ void DisplayPowerManager::wake(uint64_t nowMs) {
     if (vd_) vd_->requestRedraw();
 }
 
-} // namespace kairo
+} // namespace nema

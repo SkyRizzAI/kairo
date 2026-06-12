@@ -1,12 +1,12 @@
-add_executable(kairo main.cpp)
-target_link_libraries(kairo PRIVATE kairo_core kairo_platform_wasm kairo_board_sim)
+add_executable(nema main.cpp)
+target_link_libraries(nema PRIVATE nema_core nema_platform_wasm nema_board_sim)
 
-# Emit a CLASSIC script (kairo.js + kairo.wasm). Loaded via a <script> tag on the
+# Emit a CLASSIC script (nema.js + nema.wasm). Loaded via a <script> tag on the
 # page (outside Vite's ESM transform, which would mangle import.meta.url and break
 # pthread workers). emscripten manages its own pthread pool from the page thread.
-set_target_properties(kairo PROPERTIES SUFFIX ".js")
+set_target_properties(nema PROPERTIES SUFFIX ".js")
 
-target_link_options(kairo PRIVATE
+target_link_options(nema PRIVATE
     -sENVIRONMENT=web,worker
     # Kairo stays multi-threaded in WASM (pthreads = Web Workers). Fixed shared
     # memory (NO growth): growable SharedArrayBuffer + pthreads is buggy and is a
@@ -15,6 +15,12 @@ target_link_options(kairo PRIVATE
     # service worker startup (no PROXY → exports remain callable for the cable).
     -sINITIAL_MEMORY=536870912
     -sPTHREAD_POOL_SIZE=12
-    "SHELL:-s EXPORTED_FUNCTIONS=['_main','_kairo_klp_recv','_malloc','_free']"
+    # Emscripten's default thread stack is only 64 KB (STACK_SIZE) — far too small
+    # for the QuickJS JS-app engine, which needs a few hundred KB to load+run a
+    # module. Give every pthread a 1 MB stack so the app worker has room; JsApp
+    # keeps QuickJS's overflow guard well below this (clean error, never a crash).
+    -sDEFAULT_PTHREAD_STACK_SIZE=1048576
+    -sSTACK_SIZE=1048576
+    "SHELL:-s EXPORTED_FUNCTIONS=['_main','_nema_nlp_recv','_malloc','_free']"
     "SHELL:-s EXPORTED_RUNTIME_METHODS=['HEAPU8','ccall','cwrap']"
 )

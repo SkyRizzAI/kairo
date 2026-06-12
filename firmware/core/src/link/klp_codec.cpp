@@ -1,6 +1,6 @@
-#include "kairo/link/klp_codec.h"
+#include "nema/link/klp_codec.h"
 
-namespace kairo::klp {
+namespace nema::klp {
 
 static constexpr size_t HEADER = 5; // magic + chan + flags + len(2)
 
@@ -78,4 +78,4 @@ std::vector<uint8_t> rleDecode(const uint8_t* data, size_t len) {
     return out;
 }
 
-} // namespace kairo::klp
+} // namespace nema::klp

@@ -1,20 +1,20 @@
-#include "kairo/js/js_engine.h"
-#include "kairo/runtime.h"
-#include "kairo/log/logger.h"
-#include "kairo/system/capability_registry.h"
-#include "kairo/system/system_info.h"
-#include "kairo/service/service_container.h"
-#include "kairo/config/config_store.h"
-#include "kairo/hal/http_client.h"
-#include "kairo/services/profile_service.h"
+#include "nema/js/js_engine.h"
+#include "nema/runtime.h"
+#include "nema/log/logger.h"
+#include "nema/system/capability_registry.h"
+#include "nema/system/system_info.h"
+#include "nema/service/service_container.h"
+#include "nema/config/config_store.h"
+#include "nema/hal/http_client.h"
+#include "nema/services/profile_service.h"
 #include <string>
 #include <utility>
 
-// The `kairo` system API exposed to custom JS apps (Plan 37 Fase 4). Host C
+// The `nema` system API exposed to custom JS apps (Plan 37 Fase 4). Host C
 // functions retrieve the engine (and thus Runtime) via the context opaque. All
 // capability-gated: a method is only present if the board supports it. Blocking
 // calls (http) run on the app thread (off the UI thread) — fine for apps.
-namespace kairo::js {
+namespace nema::js {
 
 static JsEngine* self(JSContext* ctx) { return static_cast<JsEngine*>(JS_GetContextOpaque(ctx)); }
 
@@ -24,7 +24,7 @@ static std::string argStr(JSContext* ctx, JSValueConst v) {
     return r;
 }
 
-// kairo.log(level, tag, msg)
+// nema.log(level, tag, msg)
 static JSValue api_log(JSContext* ctx, JSValueConst, int argc, JSValueConst* argv) {
     auto* e = self(ctx); if (!e || !e->host() || argc < 3) return JS_UNDEFINED;
     std::string lvl = argStr(ctx, argv[0]), tag = argStr(ctx, argv[1]), msg = argStr(ctx, argv[2]);
@@ -37,13 +37,13 @@ static JSValue api_log(JSContext* ctx, JSValueConst, int argc, JSValueConst* arg
     return JS_UNDEFINED;
 }
 
-// kairo.device.has(cap)
+// nema.device.has(cap)
 static JSValue api_has(JSContext* ctx, JSValueConst, int argc, JSValueConst* argv) {
     auto* e = self(ctx); if (!e || !e->host() || argc < 1) return JS_FALSE;
     return JS_NewBool(ctx, e->host()->capabilities().has(argStr(ctx, argv[0])));
 }
 
-// kairo.storage.get/set/remove — per-app namespace in the config store.
+// nema.storage.get/set/remove — per-app namespace in the config store.
 static JSValue api_store_get(JSContext* ctx, JSValueConst, int argc, JSValueConst* argv) {
     auto* e = self(ctx); if (!e || !e->host() || argc < 1) return JS_NULL;
     std::string v;
@@ -62,7 +62,7 @@ static JSValue api_store_remove(JSContext* ctx, JSValueConst, int argc, JSValueC
     return JS_UNDEFINED;
 }
 
-// kairo.profile.* — read-only identity + verify API for custom apps (Plan 40).
+// nema.profile.* — read-only identity + verify API for custom apps (Plan 40).
 // Setters are intentionally absent: apps cannot change the owner's identity.
 static JSValue api_profile_userName(JSContext* ctx, JSValueConst, int, JSValueConst*) {
     auto* e = self(ctx); if (!e || !e->host()) return JS_NULL;
@@ -85,7 +85,7 @@ static JSValue api_profile_verifyPassword(JSContext* ctx, JSValueConst, int argc
     return p ? JS_NewBool(ctx, p->verifyPassword(argStr(ctx, argv[0]))) : JS_FALSE;
 }
 
-// kairo.http.get(url) → { status, body }. Blocking on the app thread (off UI).
+// nema.http.get(url) → { status, body }. Blocking on the app thread (off UI).
 static JSValue api_http_get(JSContext* ctx, JSValueConst, int argc, JSValueConst* argv) {
     auto* e = self(ctx); if (!e || !e->host() || argc < 1) return JS_NULL;
     auto* client = e->host()->container().resolve<IHttpClient>();
@@ -101,7 +101,7 @@ static void setFn(JSContext* ctx, JSValue obj, const char* name, JSCFunction* fn
     JS_SetPropertyStr(ctx, obj, name, JS_NewCFunction(ctx, fn, name, argc));
 }
 
-void JsEngine::setHost(kairo::Runtime* rt, std::string appId) {
+void JsEngine::setHost(nema::Runtime* rt, std::string appId) {
     host_  = rt;
     appId_ = std::move(appId);
     if (ok()) installApi();
@@ -152,8 +152,8 @@ void JsEngine::installApi() {
         JS_SetPropertyStr(ctx, api, "profile", prof);
     }
 
-    JS_SetPropertyStr(ctx, g, "kairo", api);
+    JS_SetPropertyStr(ctx, g, "nema", api);
     JS_FreeValue(ctx, g);
 }
 
-} // namespace kairo::js
+} // namespace nema::js

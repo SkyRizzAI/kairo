@@ -1,15 +1,15 @@
-#include "kairo/apps/ticker_app.h"
-#include "kairo/app/app_context.h"
-#include "kairo/runtime.h"
-#include "kairo/clock.h"
-#include "kairo/service/service_container.h"
-#include "kairo/hal/http_client.h"
-#include "kairo/nema/task_runner.h"
-#include "kairo/ui/widgets.h"
+#include "nema/apps/ticker_app.h"
+#include "nema/app/app_context.h"
+#include "nema/runtime.h"
+#include "nema/clock.h"
+#include "nema/service/service_container.h"
+#include "nema/hal/http_client.h"
+#include "nema/task_runner.h"
+#include "nema/ui/widgets.h"
 #include <string>
 #include <cstdio>
 
-namespace kairo {
+namespace nema {
 
 using namespace ui;
 
@@ -93,4 +93,4 @@ UiNode* TickerApp::build(NodeArena& a, AppContext&) {
     });
 }
 
-} // namespace kairo
+} // namespace nema

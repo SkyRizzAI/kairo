@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(kairo LANGUAGES C CXX)
+project(nema LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -14,8 +14,8 @@ if(EMSCRIPTEN)
 endif()
 
 # Header-only vendor (nlohmann/json) — only used by platform/target, never by core
-add_library(kairo_vendor INTERFACE)
-target_include_directories(kairo_vendor INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/vendor)
+add_library(nema_vendor INTERFACE)
+target_include_directories(nema_vendor INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/vendor)
 
 enable_testing()   # root-level so `ctest` discovers host tests (npm run test)
 
@@ -30,6 +30,6 @@ if(EMSCRIPTEN)
     add_subdirectory(targets/wasm)
 else()
     # Native host build = host unit tests only. The simulator is WASM (Plan 36);
-    # the old native `kairo-sim` CLI + stdio platform were removed.
+    # the old native `nema-sim` CLI + stdio platform were removed.
     add_subdirectory(tests)
 endif()

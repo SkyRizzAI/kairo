@@ -1,10 +1,10 @@
-#include "kairo/apps/bluetooth_app.h"
-#include "kairo/app/app_context.h"
-#include "kairo/runtime.h"
-#include "kairo/service/service_container.h"
+#include "nema/apps/bluetooth_app.h"
+#include "nema/app/app_context.h"
+#include "nema/runtime.h"
+#include "nema/service/service_container.h"
 #include <cstdio>
 
-namespace kairo {
+namespace nema {
 
 using namespace ui;
 
@@ -102,7 +102,7 @@ UiNode* BluetoothApp::build(NodeArena& a, AppContext&) {
         std::snprintf(status_, sizeof(status_), "Connected: %s", p.name);
     } else if (ble_ && ble_->isAdvertising())
         std::snprintf(status_, sizeof(status_), "Discoverable as %s",
-                      ctrl_ ? ctrl_->deviceName() : "Kairo");
+                      ctrl_ ? ctrl_->deviceName() : "Palanu");
     else std::snprintf(status_, sizeof(status_), "Status: Idle");
 
     Style root; root.dir = FlexDir::Col; root.flexGrow = 1; root.padding = 3; root.gap = 2;
@@ -141,4 +141,4 @@ UiNode* BluetoothApp::build(NodeArena& a, AppContext&) {
     return rootN;
 }
 
-} // namespace kairo
+} // namespace nema

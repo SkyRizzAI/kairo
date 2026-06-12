@@ -1,37 +1,31 @@
-#include "kairo/runtime.h"
-#include "kairo/platform.h"
-#include "kairo/board.h"
-#include "kairo/clock.h"
-#include "kairo/log/logger.h"
-#include "kairo/log/console_sink.h"
-#include "kairo/log/memory_sink.h"
-#include "kairo/event/event_bus.h"
-#include "kairo/event/event.h"
-#include "kairo/service/service_container.h"
-#include "kairo/service/service_manager.h"
-#include "kairo/system/system_info.h"
-#include "kairo/system/hardware_registry.h"
-#include "kairo/system/capability_registry.h"
-#include "kairo/app/app_registry.h"
-#include "kairo/app/app_host_manager.h"
-#include "kairo/ui/view_dispatcher.h"
-#include "kairo/ui/screen.h"
-#include "kairo/ui/canvas.h"
-#include "kairo/event/async_event_poster.h"
-#include "kairo/services/gui_service.h"
-#include "kairo/services/display_power_manager.h"
-#include "kairo/config/config_store.h"
-#include "kairo/hal/display.h"
+#include "nema/runtime.h"
+#include "nema/platform.h"
+#include "nema/board.h"
+#include "nema/clock.h"
+#include "nema/log/logger.h"
+#include "nema/log/console_sink.h"
+#include "nema/log/memory_sink.h"
+#include "nema/event/event_bus.h"
+#include "nema/event/event.h"
+#include "nema/service/service_container.h"
+#include "nema/service/service_manager.h"
+#include "nema/system/system_info.h"
+#include "nema/system/hardware_registry.h"
+#include "nema/system/capability_registry.h"
+#include "nema/app/app_registry.h"
+#include "nema/app/app_host_manager.h"
+#include "nema/ui/view_dispatcher.h"
+#include "nema/ui/screen.h"
+#include "nema/ui/canvas.h"
+#include "nema/event/async_event_poster.h"
+#include "nema/services/gui_service.h"
+#include "nema/services/display_power_manager.h"
+#include "nema/config/config_store.h"
+#include "nema/hal/display.h"
+#include "nema/version.h"
 #include <cassert>
 
-#ifndef KAIRO_BUILD_VERSION
-  #define KAIRO_BUILD_VERSION "dev"
-#endif
-#ifndef KAIRO_FW_VERSION
-  #define KAIRO_FW_VERSION "dev"
-#endif
-
-namespace kairo {
+namespace nema {
 
 Runtime::~Runtime() = default;
 
@@ -66,8 +60,8 @@ void Runtime::initCore() {
     hardware_     = std::make_unique<HardwareRegistry>();
     capabilities_ = std::make_unique<CapabilityRegistry>();
     systemInfo_   = std::make_unique<SystemInfo>();
-    systemInfo_->buildVersion    = KAIRO_BUILD_VERSION;
-    systemInfo_->firmwareVersion = KAIRO_FW_VERSION;
+    systemInfo_->buildVersion    = NEMA_BUILD_HASH;
+    systemInfo_->firmwareVersion = NEMA_FULL_VERSION;
     systemInfo_->platformName    = platform_->name();
     systemInfo_->boardName       = board_->name();
 
@@ -214,4 +208,4 @@ void                Runtime::setShowFps(bool on) { if (gui_) gui_->setShowFps(on
 BootPhase           Runtime::phase()   const { return phase_; }
 int                 Runtime::exitCode() const { return exitCode_; }
 
-} // namespace kairo
+} // namespace nema

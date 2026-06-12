@@ -1,7 +1,7 @@
-#include "kairo/event/async_event_poster.h"
-#include "kairo/event/event_bus.h"
+#include "nema/event/async_event_poster.h"
+#include "nema/event/event_bus.h"
 
-namespace kairo {
+namespace nema {
 
 void AsyncEventPoster::post(Event e) {
     queue_.send(std::move(e));
@@ -17,4 +17,4 @@ void AsyncEventPoster::flush(EventBus& bus) {
     }
 }
 
-} // namespace kairo
+} // namespace nema

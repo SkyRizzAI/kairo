@@ -1,11 +1,11 @@
-#include "kairo/ui/component_screen.h"
-#include "kairo/ui/canvas.h"
-#include "kairo/ui/text_style.h"
-#include "kairo/ui/ui_constants.h"
-#include "kairo/ui/view_dispatcher.h"
-#include "kairo/runtime.h"
+#include "nema/ui/component_screen.h"
+#include "nema/ui/canvas.h"
+#include "nema/ui/text_style.h"
+#include "nema/ui/ui_constants.h"
+#include "nema/ui/view_dispatcher.h"
+#include "nema/runtime.h"
 
-namespace kairo {
+namespace nema {
 
 void ComponentScreen::requestRedraw() { rt_.view().requestRedraw(); }
 
@@ -61,4 +61,4 @@ void ComponentScreen::tick(uint64_t) {
         if (ui::tickMomentum(state_)) requestRedraw();
 }
 
-} // namespace kairo
+} // namespace nema

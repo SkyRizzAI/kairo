@@ -19,4 +19,4 @@ set(EXTRA_COMPONENT_DIRS
 )
 
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
-project(kairo-dev-board)
+project(nema-dev-board)

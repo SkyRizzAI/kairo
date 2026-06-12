@@ -1,12 +1,12 @@
-#include "kairo/screens/close_and_open_modal.h"
-#include "kairo/app/app_host_manager.h"
-#include "kairo/app/app.h"
-#include "kairo/runtime.h"
-#include "kairo/ui/canvas.h"
-#include "kairo/ui/view_dispatcher.h"
+#include "nema/screens/close_and_open_modal.h"
+#include "nema/app/app_host_manager.h"
+#include "nema/app/app.h"
+#include "nema/runtime.h"
+#include "nema/ui/canvas.h"
+#include "nema/ui/view_dispatcher.h"
 #include <cstdio>
 
-namespace kairo {
+namespace nema {
 
 CloseAndOpenModal::CloseAndOpenModal(Runtime& rt, AppHostManager& mgr, IApp& target)
     : rt_(rt), mgr_(mgr), target_(target) {}
@@ -60,4 +60,4 @@ void CloseAndOpenModal::draw(Canvas& c) {
     }
 }
 
-} // namespace kairo
+} // namespace nema

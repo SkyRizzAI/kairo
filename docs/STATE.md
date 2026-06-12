@@ -1,4 +1,4 @@
-# Kairo — Current State
+# Palanu — Current State
 
 > Living snapshot keadaan proyek. Baca ini dulu sebelum lanjut kerja.
 > Detail per-stage ada di [`plans/`](plans/00-overview.md). Master plan: [`concept_plan.md`](concept_plan.md).
@@ -9,7 +9,7 @@
 
 ## TL;DR
 
-Kairo = platform handheld bergaya Flipper Zero, **1-bit retro/pixel UI**, dengan Core Runtime C++ portable yang jalan di **simulator** (web) dan **hardware ESP32-S3 + e-ink**.
+Palanu = platform handheld bergaya Flipper Zero, **1-bit retro/pixel UI**, dengan Core Runtime C++ portable yang jalan di **simulator** (web) dan **hardware ESP32-S3 + e-ink**.
 
 **Status: MVP + App Registry (Flipper-style apps/services, eks-Plugin) + UI Runtime + ESP32 dev board + Nema kernel (multi-thread) + App-model + WiFi + HTTP + Virtual Keyboard + networked apps.** Firmware **berhasil di-flash & jalan di device fisik** sampai Fase B app-model (dikonfirmasi developer). Fitur konektivitas (WiFi/Ticker/keyboard) sudah build dual-target + terverifikasi di simulator; **belum diverifikasi di hardware**.
 
@@ -22,7 +22,7 @@ Kairo = platform handheld bergaya Flipper Zero, **1-bit retro/pixel UI**, dengan
 | Core Runtime (boot, logger, event bus, services, introspection) | ✅ HW | jalan di sim + esp32 |
 | App Registry (AppManifest, AppRegistry — built-in/custom apps + services; menggantikan Plugin Runtime) | ✅ HW | install/list/launch |
 | UI Runtime retro (Canvas 1-bit, font 5×8, ViewDispatcher) | ✅ HW | semua screen render |
-| Kairo Dev Board (ESP32-S3 + e-ink GxEPD2 + 6 tombol TCA9534) | ✅ HW | build + flash + jalan |
+| Palanu Dev Board (ESP32-S3 + e-ink GxEPD2 + 6 tombol TCA9534) | ✅ HW | build + flash + jalan |
 | **Async display** (e-ink flush di task terpisah, dirty-rect, latest-wins) | ✅ HW | tombol tak freeze saat refresh |
 | **Nema kernel** (`nema::Thread`, `MessageQueue`, `TaskRunner`) | ✅ HW | F0–1 + TaskRunner di board |
 | **Input thread** (TCA9534 poll di thread sendiri → InputService) | ✅ HW | fix "pencet hilang/loncat" |
@@ -35,7 +35,7 @@ Kairo = platform handheld bergaya Flipper Zero, **1-bit retro/pixel UI**, dengan
 | **Ticker app** (BTC/USD via Binance, fetch di worker, UI tak freeze) | ✅ build | sim ✓ (HW pending) |
 | **Sim WiFi "router"** interaktif (network list, password, RSSI, online toggle) | ✅ | web panel + 4-skenario ✓ |
 
-**Pilar arsitektur "tidak pernah freeze" terbukti:** scan WiFi (1-3s) dan HTTP fetch (1-3s) jalan di `TaskRunner` worker thread sementara UI tetap render & responsif. Reference firmware-nya sendiri komentar "freezes UI during fetch" — Kairo tidak.
+**Pilar arsitektur "tidak pernah freeze" terbukti:** scan WiFi (1-3s) dan HTTP fetch (1-3s) jalan di `TaskRunner` worker thread sementara UI tetap render & responsif. Reference firmware-nya sendiri komentar "freezes UI during fetch" — Palanu tidak.
 
 ---
 
@@ -56,7 +56,7 @@ GuiService thread            TaskRunner worker           rt.step():
 
 **Race-free by design:** state lintas-thread cuma pixel buffer (mutex) + queue. Nol shared model. App tak pernah sentuh Canvas/ViewDispatcher langsung.
 
-Nama kernel: **Nema** (νῆμα = "benang/thread"), namespace `kairo::nema`. "Furi" hanya istilah pembanding Flipper.
+Nama kernel: **Nema** (νῆμα = "benang/thread"), namespace `nema::nema`. "Furi" hanya istilah pembanding Flipper.
 
 ---
 
@@ -75,8 +75,8 @@ Home (Apps / Logs / Settings)
 ## Tier hardware (penamaan resmi)
 
 1. **Simulator** (`board=simulator`) — virtual, host/web. Dummy driver + "router" WiFi sim.
-2. **Kairo Dev Board** (`board=dev-board`) — ESP32-S3-WROOM-1 + e-ink 264×176 + TCA9534. **← sekarang di sini.**
-3. **Kairo Board V1** (`board=kairo-board-v1`) — PCB custom. **Belum didesain.**
+2. **Palanu Dev Board** (`board=dev-board`) — ESP32-S3-WROOM-1 + e-ink 264×176 + TCA9534. **← sekarang di sini.**
+3. **Palanu Board V1** (`board=palanu-board-v1`) — PCB custom. **Belum didesain.**
 
 ---
 
@@ -88,8 +88,8 @@ bun install
 bun run forge:wasm     # build core C++ → WASM → Forge (/simulator)
 bun run test           # host unit tests (layout/KLP/link) via ctest
 
-# Kairo Dev Board (ESP32-S3) — ESP-IDF v5.5 di ~/esp/esp-idf
-bun run build:esp32    # → build/kairo-dev-board.bin (~1.3 MB, 59% free)
+# Palanu Dev Board (ESP32-S3) — ESP-IDF v5.5 di ~/esp/esp-idf
+bun run build:esp32    # → build/palanu-dev-board.bin (~1.3 MB, 59% free)
 bun run flash:esp32    # flash + serial monitor
 ```
 
@@ -98,7 +98,7 @@ bun run flash:esp32    # flash + serial monitor
 ## Peta repo (tambahan dari sesi konektivitas)
 
 ```
-firmware/core/include/kairo/
+firmware/core/include/palanu/
   nema/        thread.h, message_queue.h, task_runner.h, input_event.h   # kernel
   app/         app.h, app_context.h, app_host.h                          # app-model
   apps/        counter_app, clock_app, stopwatch_app, task_demo_app,
@@ -143,4 +143,4 @@ packages/forge/          SvelteKit web client: /simulator (WASM), /remote, /flas
 - **Plan 22** (app pause/resume) — butuh 19.6 Fase C/D tuntas.
 - **Fase 19.6 D**: per-core tuning + crash isolation demo.
 - WiFi: static IP apply (esp_netif), multiple saved networks (NVS profiles).
-- **Kairo Board V1**: desain PCB + board layer (reuse platform esp32).
+- **Palanu Board V1**: desain PCB + board layer (reuse platform esp32).

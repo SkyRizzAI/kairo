@@ -1,6 +1,6 @@
-# Kairo — Project Overview
+# Palanu — Project Overview
 
-> **A single-file snapshot of the whole project.** Read this and you should understand what Kairo
+> **A single-file snapshot of the whole project.** Read this and you should understand what Palanu
 > is, how it is built, what works today, how the code is organized, and where it is going — without
 > opening any other file.
 >
@@ -10,7 +10,7 @@
 
 ## Table of Contents
 
-1. [What is Kairo](#1-what-is-kairo)
+1. [What is Palanu](#1-what-is-palanu)
 2. [Current status (verified)](#2-current-status-verified)
 3. [Architecture at a glance](#3-architecture-at-a-glance)
 4. [Hardware tiers](#4-hardware-tiers)
@@ -33,9 +33,9 @@
 
 ---
 
-## 1. What is Kairo
+## 1. What is Palanu
 
-Kairo is a **handheld device platform** in the spirit of Flipper Zero, built around a **portable C++17
+Palanu is a **handheld device platform** in the spirit of Flipper Zero, built around a **portable C++17
 Core Runtime** with a **1-bit retro/pixel UI**. The same Core runs unchanged in two environments:
 
 - a **web simulator** (no hardware needed), and
@@ -67,7 +67,7 @@ development**.
 | Built-in components (Label/Button/Row/Col/MenuItem/HRule, sizes xs–2xl) | ✅ | C++ + React mirror |
 | Built-in screens (Home, AppList, Logs, Settings, About) | ✅ | navigable on sim + device |
 | Simulator (native binary + Bun relay + React web UI) | ✅ | `bun run sim` |
-| **Kairo Dev Board** (ESP32-S3 + e-ink GxEPD2 + 6 TCA9534 buttons) | ✅ | **builds, flashes, runs on physical device** |
+| **Palanu Dev Board** (ESP32-S3 + e-ink GxEPD2 + 6 TCA9534 buttons) | ✅ | **builds, flashes, runs on physical device** |
 | Modal dialogs, fullscreen screens | ✅ | CounterApp reset confirm, StopwatchApp |
 | Non-blocking e-ink (`AsyncDisplayDriver` task + dirty-rect + latest-wins) | ✅ HW | no input freeze during refresh |
 | **Nema kernel** (`nema::Thread`, `MessageQueue`, `TaskRunner`) | ✅ HW | F0–1 + TaskRunner on board |
@@ -86,13 +86,13 @@ contract** drive both the web canvas and the e-ink panel, so UI renders identica
 
 **The "never freeze" pillar is real:** WiFi scan (1–3s) and HTTP fetch (1–3s) run on a `TaskRunner`
 worker thread while the UI keeps rendering and stays responsive. The reference firmware's own ticker
-comment says it "freezes UI during fetch" — Kairo's does not.
+comment says it "freezes UI during fetch" — Palanu's does not.
 
 ---
 
 ## 3. Architecture at a glance
 
-Kairo is built in four layers. Each layer only depends on the one above it through abstract interfaces.
+Palanu is built in four layers. Each layer only depends on the one above it through abstract interfaces.
 
 ```
    Core         portable C++17 runtime — knows NOTHING about hardware
@@ -102,7 +102,7 @@ Kairo is built in four layers. Each layer only depends on the one above it throu
     ▲           (simulator | esp32)
     │ provides
   Board          physical hardware definition: pins, attached chips
-    ▲           (simulator | dev-board | kairo-board-v1*)
+    ▲           (simulator | dev-board | palanu-board-v1*)
     │ assembled by
  Target          firmware entry point — main() / setup()+loop()
                 (simulator | dev-board)
@@ -120,15 +120,15 @@ new *board layer* — the Core and the `esp32` platform are reused untouched.
 
 ## 4. Hardware tiers
 
-Kairo officially recognizes three hardware tiers; the names are used consistently across code and docs.
+Palanu officially recognizes three hardware tiers; the names are used consistently across code and docs.
 
 | Tier | Name | `IBoard::name()` | What it is | Status |
 |---|---|---|---|---|
 | 1 | **Simulator** | `simulator` | Virtual; runs on host/web with dummy drivers. No hardware. | ✅ running |
-| 2 | **Kairo Dev Board** | `dev-board` | *Temporary* real-hardware test rig: ESP32-S3-WROOM-1 (8 MB flash / 8 MB PSRAM) + 2.7″ e-ink 264×176 + 6 buttons via TCA9534. A repurposed prior-project device. | ✅ running on device |
-| 3 | **Kairo Board V1** | `kairo-board-v1` | Custom in-house PCB — the final product target. Reuses the `esp32` platform + Core; only a new board layer needed. | ⏳ not yet designed |
+| 2 | **Palanu Dev Board** | `dev-board` | *Temporary* real-hardware test rig: ESP32-S3-WROOM-1 (8 MB flash / 8 MB PSRAM) + 2.7″ e-ink 264×176 + 6 buttons via TCA9534. A repurposed prior-project device. | ✅ running on device |
+| 3 | **Palanu Board V1** | `palanu-board-v1` | Custom in-house PCB — the final product target. Reuses the `esp32` platform + Core; only a new board layer needed. | ⏳ not yet designed |
 
-> The master plan calls Tier 2 the "DevKit S3 Board"; in practice it is the **Kairo Dev Board**
+> The master plan calls Tier 2 the "DevKit S3 Board"; in practice it is the **Palanu Dev Board**
 > (an existing ESP32-S3-WROOM-1 + e-ink device).
 
 ---
@@ -138,7 +138,7 @@ Kairo officially recognizes three hardware tiers; the names are used consistentl
 This is a Bun monorepo (`bun` workspaces). `firmware/` is C++; `packages/` is the TypeScript/React web simulator.
 
 ```
-kairo/
+palanu/
 ├─ package.json              # bun workspaces + top-level scripts (sim, build:esp32, flash:esp32)
 ├─ bun.lock
 ├─ tsconfig.json             # strict ESNext, bundler mode, react-jsx
@@ -147,7 +147,7 @@ kairo/
 │  ├─ CMakeLists.txt         # top-level HOST build (C++17, -Wall -Wextra -Wpedantic)
 │  │
 │  ├─ core/                  # HARDWARE-AGNOSTIC runtime (dual-build: host + ESP-IDF), ~4.6k LOC
-│  │  ├─ include/kairo/
+│  │  ├─ include/palanu/
 │  │  │  ├─ runtime.h, board.h, platform.h, types.h, clock.h, service.h
 │  │  │  ├─ log/        logger.h, log_entry.h, log_sink.h, console_sink.h, memory_sink.h
 │  │  │  ├─ event/      event.h, event_bus.h, async_event_poster.h
@@ -162,7 +162,7 @@ kairo/
 │  │  │  └─ screens/    home_screen.h, app_list_screen.h, logs_screen.h,
 │  │  │                 settings_screen.h, about_screen.h
 │  │  ├─ src/...         (mirror of include/, plus ui/font_5x8.cpp)
-│  │  └─ CMakeLists.txt  # dual: idf_component_register() OR add_library(kairo_core STATIC)
+│  │  └─ CMakeLists.txt  # dual: idf_component_register() OR add_library(nema_core STATIC)
 │  │
 │  ├─ platforms/
 │  │  ├─ simulator/      HostClock, SimDisplay, SimWifiDriver, SimBatteryDriver,
@@ -187,7 +187,7 @@ kairo/
 │
 ├─ packages/
 │  └─ simulator/         # ── Bun relay + React web UI ──
-│     ├─ index.ts        # Bun.serve: spawns kairo-sim, relays stdio ↔ WebSocket
+│     ├─ index.ts        # Bun.serve: spawns palanu-sim, relays stdio ↔ WebSocket
 │     ├─ frontend.tsx, index.html
 │     ├─ lib/useSimSocket.ts      # WebSocket hook + state reducer
 │     ├─ components/     DisplayPanel, ControlsPanel, LogsPanel, EventsPanel, ServicesPanel
@@ -208,7 +208,7 @@ kairo/
 
 ## 6. Core Runtime
 
-`Runtime` (`core/include/kairo/runtime.h`) is the heart of the system. It owns every subsystem and
+`Runtime` (`core/include/palanu/runtime.h`) is the heart of the system. It owns every subsystem and
 drives the main loop. It is created via a static factory and assembled by the target.
 
 ### Boot flow
@@ -273,7 +273,7 @@ Control: `requestShutdown()`, `requestRestart(exitCode=75)` (the simulator relay
 - `subscribe(name, handler) → SubscriptionId` (name `"*"` = wildcard / all events), `unsubscribe(id)`, `publish(event)`.
 - **Synchronous dispatch** using a snapshot copy of the subscriber list, so handlers may
   subscribe/unsubscribe during dispatch without corrupting iteration.
-- **Known event names** (`kairo::events`): `SystemBoot`, `SystemReady`, `ServiceStarted`,
+- **Known event names** (`nema::events`): `SystemBoot`, `SystemReady`, `ServiceStarted`,
   `ServiceStopped`, `ServiceFailed`, `ClockTick` (`{uptimeMs}`), `BatteryChanged`,
   `NetworkConnected`, `NetworkDisconnected`; reserved future: `PluginLoaded`, `PluginUnloaded`,
   `NotificationCreated`.
@@ -304,7 +304,7 @@ Control: `requestShutdown()`, `requestRestart(exitCode=75)` (the simulator relay
 
 ## 8. HAL — driver interfaces
 
-All in `core/include/kairo/hal/`. Concrete implementations live in platform/board layers.
+All in `core/include/palanu/hal/`. Concrete implementations live in platform/board layers.
 
 ```cpp
 enum class DriverKind { Battery, Wifi, Bluetooth, Display, Storage, Other };
@@ -399,7 +399,7 @@ These are **mirrored 1:1 in React** (`packages/simulator/ui/`) so the web UI loo
 ### Built-in screens (`screens/`)
 | Screen | Purpose | Navigation |
 |---|---|---|
-| **HomeScreen** | Root hub: big "KAIRO" logo + menu (Apps / Logs / Settings). Owns the three sub-screens. | Up/Down cycle, Select pushes the chosen screen. Never popped. |
+| **HomeScreen** | Root hub: big "PALANU" logo + menu (Apps / Logs / Settings). Owns the three sub-screens. | Up/Down cycle, Select pushes the chosen screen. Never popped. |
 | **AppListScreen** | Lists loaded plugins from `plugins().plugins()`; 8 visible rows, scrolls. | Up/Down scroll, Select → `selectPlugin(id)`, Cancel → back. |
 | **LogsScreen** | Shows uptime + app count (full log viewer is a placeholder). | Cancel → back. |
 | **SettingsScreen** | Capability-driven menu: WiFi (if cap), Bluetooth (if cap), About. Owns AboutScreen. | Up/Down, Select, Cancel. |
@@ -414,7 +414,7 @@ Plugins are the unit of extensibility (`plugin/`).
 ### Interfaces
 ```cpp
 struct IPlugin {
-  PluginId id();   // e.g. "com.kairo.clock"
+  PluginId id();   // e.g. "com.palanu.clock"
   const char* name(); const char* version();
   void onLoad(PluginContext&);            // subscribe events, register services, create screens
   void onUnload(PluginContext&);          // cleanup
@@ -432,10 +432,10 @@ plus `pushScreen()/popScreen()` (guarded by the `display` capability), `requestR
 ### Built-in plugins (`plugins/`)
 | Plugin | id | What it demonstrates |
 |---|---|---|
-| **HelloPlugin** | `com.kairo.hello` | Minimal reference: subscribes to `ClockTick`, logs every 10s. |
-| **ClockPlugin** | `com.kairo.clock` | A `Normal` screen showing `HH:MM:SS` + date; refreshes every 1s. |
-| **CounterPlugin** | `com.kairo.counter` | Stateful counter + a **Modal** confirm dialog (Yes/No, defaults to No); inter-screen state sharing. |
-| **StopwatchPlugin** | `com.kairo.stopwatch` | A **Fullscreen** timer; Select start/stop, Up reset; redraws every 50ms while running. |
+| **HelloPlugin** | `com.palanu.hello` | Minimal reference: subscribes to `ClockTick`, logs every 10s. |
+| **ClockPlugin** | `com.palanu.clock` | A `Normal` screen showing `HH:MM:SS` + date; refreshes every 1s. |
+| **CounterPlugin** | `com.palanu.counter` | Stateful counter + a **Modal** confirm dialog (Yes/No, defaults to No); inter-screen state sharing. |
+| **StopwatchPlugin** | `com.palanu.stopwatch` | A **Fullscreen** timer; Select start/stop, Up reset; redraws every 50ms while running. |
 
 Plugins are currently **statically instantiated** in the target's `main.cpp`. Dynamic loading from
 SD/SPIFFS is future work.
@@ -464,7 +464,7 @@ struct IClock { uint64_t millis(); uint64_t epochMs(); };  // monotonic + wall-c
 - **`SimBatteryDriver`** — starts at 100%, drains 1% every 5s, publishes `BatteryChanged`.
 - **`TelemetryBridge` + `JsonStdoutSink`** — outbound JSON lines (logs/events/services/snapshots/frames).
 - **`CommandReader`** — non-blocking `poll()` on stdin; parses inbound JSON commands.
-- `outputMode()` is `Json` when env `KAIRO_SIM_JSON` is set (the web relay sets it), else `Human` (CLI).
+- `outputMode()` is `Json` when env `PALANU_SIM_JSON` is set (the web relay sets it), else `Human` (CLI).
 - `idle()` polls stdin (JSON mode) then sleeps 5ms.
 
 ### ESP32 platform (`platforms/esp32/`)
@@ -519,7 +519,7 @@ The target is the firmware entry point that assembles platform + board + core.
 Plain `int main()`: create platform/board → `loadPlatform`/`loadBoard` → `initCore` →
 register `ClockService` → `registerServices` → `start` → load the 4 plugins → push `HomeScreen` →
 `rt.run()` (blocking loop, reads stdin in JSON mode) → return `rt.exitCode()`.
-Built by CMake, links `kairo_core` + `kairo_platform_sim` + `kairo_board_sim`.
+Built by CMake, links `nema_core` + `nema_platform_sim` + `nema_board_sim`.
 
 ### Dev-board target (`targets/dev-board/`)
 An ESP-IDF project using **Arduino-as-component**. Globals hold the platform/board/runtime; Arduino
@@ -537,12 +537,12 @@ An ESP-IDF project using **Arduino-as-component**. Globals hold the platform/boa
 `packages/simulator/` is a Bun + React app. There is **no WebSocket in C++** — instead:
 
 ```
-Browser (React) ──WebSocket /ws──► Bun.serve relay ──spawn + stdio──► kairo-sim (native C++)
+Browser (React) ──WebSocket /ws──► Bun.serve relay ──spawn + stdio──► palanu-sim (native C++)
        ▲                                  │   stdin: JSON commands
        └────────── WebSocket broadcast ───┘   stdout: JSON-lines telemetry
 ```
 
-`index.ts` spawns `firmware/build/targets/simulator/kairo-sim` with `KAIRO_SIM_JSON=1`, line-parses
+`index.ts` spawns `firmware/build/targets/simulator/palanu-sim` with `PALANU_SIM_JSON=1`, line-parses
 its stdout, and broadcasts to all WebSocket clients on a `"sim"` channel; browser commands are
 relayed to the binary's stdin. Exit code 75 triggers an auto-restart. No Vite/Express/ws — pure Bun
 (`bun --hot`) with `index.html` importing `frontend.tsx`.
@@ -577,13 +577,13 @@ relayed to the binary's stdin. Exit code 75 triggers an auto-restart. No Vite/Ex
 - **EventsPanel** — event timeline with payloads (caps at 500).
 - **ServicesPanel** — per-service state dots.
 - **`ui/`** — React mirror of the native components (Label, Button, Row, Col, MenuItem, HRule) sharing
-  the same 1-bit retro look via `--kairo-fg`/`--kairo-bg` CSS variables.
+  the same 1-bit retro look via `--palanu-fg`/`--palanu-bg` CSS variables.
 
 ---
 
 ## 15. Threading & concurrency model
 
-The ESP32-S3 is **dual-core** with FreeRTOS always running underneath. Kairo's main loop runs on one
+The ESP32-S3 is **dual-core** with FreeRTOS always running underneath. Palanu's main loop runs on one
 task/core; ESP-IDF callbacks (WiFi/IP events) run on the `sys_evt` task on the other core. Three
 real data races were identified and fixed:
 
@@ -614,15 +614,15 @@ bun install
 bun run sim          # build core C++ → start Bun relay + web → open URL, click Boot
 bun run sim:cli      # human-readable CLI mode (no web)
 bun run sim:web      # just the web dev server (expects an existing binary)
-bun run build:firmware   # only build kairo-sim
+bun run build:firmware   # only build palanu-sim
 
-# ── Kairo Dev Board (ESP32-S3) ──
-bun run build:esp32  # idf.py build → kairo-dev-board.bin (~1.05 MB)
+# ── Palanu Dev Board (ESP32-S3) ──
+bun run build:esp32  # idf.py build → palanu-dev-board.bin (~1.05 MB)
 bun run flash:esp32  # flash + serial monitor (board connected via USB)
 ```
 
 What the scripts do (`firmware/tools/`): `build-sim.sh` configures CMake (`firmware/build`) and builds
-the `kairo-sim` target; `run-sim.sh` execs the binary; `build-esp32.sh` sources ESP-IDF,
+the `palanu-sim` target; `run-sim.sh` execs the binary; `build-esp32.sh` sources ESP-IDF,
 `idf.py set-target esp32s3` + `build`; `flash-esp32.sh` runs `idf.py -p <port> flash monitor`.
 
 ---
@@ -631,7 +631,7 @@ the `kairo-sim` target; `run-sim.sh` execs the binary; `build-esp32.sh` sources 
 
 | Topic | Decision |
 |---|---|
-| Core language | **C++17**, namespace `kairo::`; no platform-specific includes in `core/**`. |
+| Core language | **C++17**, namespace `nema::`; no platform-specific includes in `core/**`. |
 | Build | **CMake** for host (clang), **ESP-IDF** for device; `core/` is a dual-build component. |
 | Sim ↔ web bridge | **No WebSocket in C++.** Binary speaks JSON-lines over stdin/stdout; Bun spawns it and relays to a WebSocket. |
 | Web stack | `packages/simulator`, **Bun + React** (no Vite/Express/ws). |
@@ -652,19 +652,19 @@ The master vision is in `docs/concept_plan.md`; per-stage plans are in `docs/pla
 | **M1–M3 — Core + Observability + Simulator (MVP)** | 01 repo/build · 02 runtime/boot · 03 logger · 04 event bus · 05 service container/manager · 06 HAL+sim platform · 07 board/target · 08 introspection · 09 stdio bridge · 10 web UI · 11 integration | ✅ all done |
 | **M4 — Plugin Runtime** | 12 plugin runtime | ✅ |
 | **M5 — UI Runtime** | 13 display HAL+sim · 14 UI runtime (Key/Screen/ViewDispatcher) · 14b components · 15 status bar + home screen | ✅ |
-| **M6 — Kairo Dev Board (ESP32-S3 + e-ink)** | 16 esp32 platform · 17 dev board · 18 e-ink display | ✅ builds, flashes, runs |
+| **M6 — Palanu Dev Board (ESP32-S3 + e-ink)** | 16 esp32 platform · 17 dev board · 18 e-ink display | ✅ builds, flashes, runs |
 | **M6.5 — Async Display & Event Foundation** | 19 (`AsyncEventPoster` + `AsyncDisplayDriver`, generic) | ✅ done, on HW |
 | **M6.7 — Nema Kernel** | 19.5 (`nema::Thread`/`MessageQueue`/`TaskRunner` + Input thread) | ✅ F0–1 + TaskRunner on HW |
 | **M6.8 — App Model** | 19.6 (GuiService thread + `IApp`/`AppHost`/`AppContext`, all apps migrated) | ✅ build; HW: Fase A,B |
 | **M7 — Connectivity** | 20 wifi (`WifiApp` scan/connect non-blocking, sim "router", esp32 NVS) · 23 http+keyboard+ticker | ✅ build + sim; HW pending |
 | **M7 — UX Polish** | 21 screen-sleep-lock · 22 app pause/resume | ☐ not started |
-| **Future — Kairo Board V1 (custom PCB)** | schematic, board_config, bring-up, validation | ⏳ not designed |
+| **Future — Palanu Board V1 (custom PCB)** | schematic, board_config, bring-up, validation | ⏳ not designed |
 
 ### Strong candidates for next work
 - **Flash & verify on HW** — WiFi end-to-end (scan → keyboard → connect), Ticker over real WiFi, keyboard on e-ink.
 - **Plan 21** (screen sleep + lock) and **plan 22** (app pause/resume) — UX polish.
 - **Nema 19.6 Fase D** — per-core tuning + crash-isolation demo.
-- **Kairo Board V1** — design the PCB + a new board layer (reusing the `esp32` platform). The product direction.
+- **Palanu Board V1** — design the PCB + a new board layer (reusing the `esp32` platform). The product direction.
 - WiFi: static IP apply (esp_netif), multiple saved networks (NVS profiles).
 
 ---
@@ -694,7 +694,7 @@ The master vision is in `docs/concept_plan.md`; per-stage plans are in `docs/pla
 |---|---|
 | **Core** | The portable, hardware-agnostic C++ runtime (`firmware/core`). |
 | **Platform** | Concrete runtime environment: clock + drivers (`simulator`, `esp32`). |
-| **Board** | A physical hardware definition: pins + attached chips (`simulator`, `dev-board`, future `kairo-board-v1`). |
+| **Board** | A physical hardware definition: pins + attached chips (`simulator`, `dev-board`, future `palanu-board-v1`). |
 | **Target** | The firmware entry point (`main()` / `setup()+loop()`) that assembles Platform + Board + Core. |
 | **Driver** | A concrete hardware implementation behind a HAL interface (e.g. `EinkDisplay`, `Esp32WifiDriver`). |
 | **Bridge** | The stdio↔WebSocket link between the native simulator binary and the web UI. |

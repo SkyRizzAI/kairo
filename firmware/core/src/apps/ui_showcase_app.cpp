@@ -1,8 +1,8 @@
-#include "kairo/apps/ui_showcase_app.h"
-#include "kairo/ui/widgets.h"
+#include "nema/apps/ui_showcase_app.h"
+#include "nema/ui/widgets.h"
 #include <cstdio>
 
-namespace kairo {
+namespace nema {
 
 using namespace ui;
 
@@ -108,4 +108,4 @@ UiNode* UiShowcaseApp::build(NodeArena& a, AppContext&) {
     }
 }
 
-} // namespace kairo
+} // namespace nema

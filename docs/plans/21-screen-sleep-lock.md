@@ -80,7 +80,7 @@ GuiService::loop() [nema_gui thread]
 ### 1. `DisplayPowerManager`
 
 ```
-firmware/core/include/kairo/services/display_power_manager.h
+firmware/core/include/palanu/services/display_power_manager.h
 firmware/core/src/services/display_power_manager.cpp
 ```
 
@@ -156,7 +156,7 @@ private:
 ### 2. `LockScreen`
 
 ```
-firmware/core/include/kairo/screens/lock_screen.h
+firmware/core/include/palanu/screens/lock_screen.h
 firmware/core/src/screens/lock_screen.cpp
 ```
 

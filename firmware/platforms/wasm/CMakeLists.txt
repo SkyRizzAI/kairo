@@ -1,4 +1,4 @@
-add_library(kairo_platform_wasm STATIC
+add_library(nema_platform_wasm STATIC
     src/wasm_platform.cpp
     src/wasm_cable_transport.cpp
     # Virtual WiFi router (pure C++, no stdio): the browser device gets a working
@@ -7,7 +7,7 @@ add_library(kairo_platform_wasm STATIC
     src/sim_wifi_driver.cpp
 )
 
-target_include_directories(kairo_platform_wasm PUBLIC
+target_include_directories(nema_platform_wasm PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
-target_link_libraries(kairo_platform_wasm PUBLIC kairo_core)
+target_link_libraries(nema_platform_wasm PUBLIC nema_core)

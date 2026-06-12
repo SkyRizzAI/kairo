@@ -50,7 +50,7 @@ jalan di GUI thread via `ViewDispatcher`. Kita **tidak** mau bikin tiap screen
 jadi thread. Solusi: ekstrak loop jadi helper yang dipakai keduanya.
 
 ```cpp
-namespace kairo::ui {
+namespace nema::ui {
 
 // Stateless-ish driver of one component frame + input dispatch.
 // Owned by the caller (AppHost for apps; ViewDispatcher for screens).
@@ -75,7 +75,7 @@ private:
     InputModality modality_ = InputModality::Button;
 };
 
-} // namespace kairo::ui
+} // namespace nema::ui
 ```
 
 - `ComponentApp::run()` refactored to use `ComponentRuntime` internally (no
@@ -131,7 +131,7 @@ yang return tree pakai builder yang ada (`Header`, `Menu`, `Button`, `Text`,
 
 | Screen | Bentuk component |
 |---|---|
-| **HomeScreen** | `Container(Header("KAIRO"), Menu([Apps, Logs, Settings]))` — Menu item = Pressable → push screen |
+| **HomeScreen** | `Container(Header("PALANU"), Menu([Apps, Logs, Settings]))` — Menu item = Pressable → push screen |
 | **SettingsScreen** | `Container(Header("SETTINGS"), Menu([WiFi?, Display, Controls, About]))` capability-gated |
 | **AppListScreen** | `Container(Header("APPS"), ScrollView(Menu(plugins)))` → Pressable launch |
 | **LogsScreen** | `Container(Header("LOGS"), ScrollView(Text per line))` |
@@ -156,9 +156,9 @@ Catatan penting:
 
 ```
 firmware/core/
-├─ include/kairo/ui/component_runtime.h   # ComponentRuntime
+├─ include/palanu/ui/component_runtime.h   # ComponentRuntime
 ├─ src/ui/component_runtime.cpp
-├─ include/kairo/ui/screen.h              ← + build(), legacy marked deprecated
+├─ include/palanu/ui/screen.h              ← + build(), legacy marked deprecated
 ├─ src/services/gui_service.cpp           ← component path vs legacy path
 ├─ src/app/component_app.cpp              ← use ComponentRuntime internally
 └─ src/screens/*.cpp                      ← all 8 rewritten as build()

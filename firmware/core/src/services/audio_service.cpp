@@ -1,6 +1,6 @@
-#include "kairo/services/audio_service.h"
+#include "nema/services/audio_service.h"
 
-namespace kairo {
+namespace nema {
 
 void AudioService::addInput(IAudioInput* drv, const char* id, const char* desc) {
     if (inputCount_ >= kMaxDevices) return;
@@ -20,4 +20,4 @@ const char* AudioService::outputId (int i) const { return (i >= 0 && i < outputC
 const char* AudioService::inputDesc(int i) const { return (i >= 0 && i < inputCount_)  ? inputs_[i].desc : nullptr; }
 const char* AudioService::outputDesc(int i) const { return (i >= 0 && i < outputCount_) ? outputs_[i].desc : nullptr; }
 
-} // namespace kairo
+} // namespace nema

@@ -1,0 +1,7 @@
+{
+  "id": "com.palanu.example.sysinfo",
+  "name": "Sys Info",
+  "version": "1.0.0",
+  "entry": "App.tsx",
+  "needs": []
+}

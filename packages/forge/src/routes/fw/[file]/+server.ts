@@ -3,7 +3,7 @@ import { resolve } from 'node:path';
 import { error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 
-// Serve the WASM firmware (kairo.js / kairo.wasm) with the headers emscripten
+// Serve the WASM firmware (nema.js / nema.wasm) with the headers emscripten
 // pthread workers REQUIRE under cross-origin isolation. Creating a Worker from a
 // script that lacks Cross-Origin-Resource-Policy fails opaquely on a COI page
 // (worker never replies → onRuntimeInitialized never fires → "loading-workers"
@@ -11,7 +11,7 @@ import type { RequestHandler } from './$types';
 // we serve through this endpoint — guaranteed headers in BOTH dev and prod.
 export const GET: RequestHandler = ({ params }) => {
 	const file = params.file ?? '';
-	if (!/^kairo\.(js|wasm)$/.test(file)) throw error(404, 'not found');
+	if (!/^nema.(js|wasm)$/.test(file)) throw error(404, 'not found');
 
 	const candidates = [
 		`static/wasm/${file}`, // dev (cwd = packages/forge)

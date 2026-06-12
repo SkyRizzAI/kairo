@@ -3,7 +3,7 @@
 > Setiap board mendefinisikan **BoardProfile** — structured data yang mendeskripsikan
 > layout fisik komponen (display, tombol, LED, sensor, dll.) dalam koordinat
 > ternormalisasi. Profile ini di-render secara dinamis menjadi **ASCII art** di
-> device (About screen) dan nantinya menjadi **SVG/HTML** di Kairo Forge (web).
+> device (About screen) dan nantinya menjadi **SVG/HTML** di Palanu Forge (web).
 > Satu sumber data, banyak renderer — posisi dijamin konsisten.
 
 - Status: ☐ Not started
@@ -40,13 +40,13 @@ eksternal.
 
 ### Mengapa ini penting
 
-Kairo adalah **open-source firmware** yang berjalan di banyak board berbeda —
+Palanu adalah **open-source firmware** yang berjalan di banyak board berbeda —
 bukan satu device fixed seperti Flipper Zero. Setiap board punya layout fisik unik.
-Ekosistem Kairo butuh:
+Ekosistem Palanu butuh:
 
 1. **Device** — About screen menampilkan visualisasi board sendiri (ASCII art +
    legend tombol dengan mapping keymap).
-2. **Kairo Forge** (web app, future) — menerima BoardProfile via USB/BLE,
+2. **Palanu Forge** (web app, future) — menerima BoardProfile via USB/BLE,
    render visualisasi interaktif, remote control dengan button positions yang
    akurat, flashing tools, dll.
 3. **Komunitas** — board maker bisa mendefinisikan profile board mereka sendiri
@@ -60,9 +60,9 @@ Ekosistem Kairo butuh:
 | **Arduino** | Board definition file (JSON) | Tidak ada | IDE board manager |
 | **Zephyr RTOS** | Devicetree (.dts) | Tidak ada | Build system |
 | **ESPHome** | YAML config | Tidak ada | Dashboard auto-generate |
-| **Kairo (Plan 33)** | `BoardProfile` (C++ struct) | ✓ normalized x,y,w,h | JSON → Forge web |
+| **Palanu (Plan 33)** | `BoardProfile` (C++ struct) | ✓ normalized x,y,w,h | JSON → Forge web |
 
-Kairo unik karena membutuhkan **layout fisik** yang bisa di-render — bukan hanya
+Palanu unik karena membutuhkan **layout fisik** yang bisa di-render — bukan hanya
 deklarasi komponen.
 
 ---
@@ -72,9 +72,9 @@ deklarasi komponen.
 ### Data model
 
 ```cpp
-// firmware/core/include/kairo/system/board_profile.h
+// firmware/core/include/palanu/system/board_profile.h
 
-namespace kairo {
+namespace nema {
 
 enum class ComponentType : uint8_t {
     Display,
@@ -104,7 +104,7 @@ struct BoardProfile {
     uint8_t              component_count;
 };
 
-} // namespace kairo
+} // namespace nema
 ```
 
 ### Koordinat ternormalisasi
@@ -133,7 +133,7 @@ Board fisik (approx 80mm × 55mm):
 ```
 
 ```cpp
-// firmware/boards/skyrizz-e32/include/kairo/skyrizze32/board_config.h
+// firmware/boards/skyrizz-e32/include/palanu/skyrizze32/board_config.h
 
 constexpr ComponentDef kE32Components[] = {
     // id  label      type               x      y      w      h
@@ -165,7 +165,7 @@ Board fisik (approx 90mm × 55mm):
 ```
 
 ```cpp
-// firmware/boards/dev-board/include/kairo/devboard/board_config.h
+// firmware/boards/dev-board/include/palanu/devboard/board_config.h
 
 constexpr ComponentDef kDevComponents[] = {
     // id  label      type               x      y      w      h
@@ -179,7 +179,7 @@ constexpr ComponentDef kDevComponents[] = {
 };
 
 constexpr BoardProfile kDevProfile = {
-    "dev-board", "Kairo Dev Board",
+    "dev-board", "Palanu Dev Board",
     90.0f, 55.0f,
     kDevComponents, 7
 };
@@ -196,7 +196,7 @@ constexpr ComponentDef kSimComponents[] = {
 };
 
 constexpr BoardProfile kSimProfile = {
-    "simulator", "Kairo Simulator",
+    "simulator", "Palanu Simulator",
     16.0f, 9.0f,
     kSimComponents, 4
 };
@@ -209,7 +209,7 @@ constexpr BoardProfile kSimProfile = {
 `IBoard` mendapat method baru untuk expose profile:
 
 ```cpp
-// firmware/core/include/kairo/board.h
+// firmware/core/include/palanu/board.h
 
 struct IBoard {
     virtual ~IBoard() = default;
@@ -243,7 +243,7 @@ const BoardProfile& profile() const override { return kSimProfile; }
 
 ### 1.1 Buat `board_profile.h`
 
-File baru di `firmware/core/include/kairo/system/board_profile.h`.
+File baru di `firmware/core/include/palanu/system/board_profile.h`.
 Berisi `ComponentType`, `ComponentDef`, `BoardProfile` seperti di atas.
 
 ### 1.2 Extend `IBoard`
@@ -276,9 +276,9 @@ cmake --build build
 ### 2.1 Desain AsciiRenderer
 
 ```cpp
-// firmware/core/include/kairo/ui/ascii_board_renderer.h
+// firmware/core/include/palanu/ui/ascii_board_renderer.h
 
-namespace kairo::ui {
+namespace nema::ui {
 
 class AsciiBoardRenderer {
 public:
@@ -299,7 +299,7 @@ public:
     );
 };
 
-} // namespace kairo::ui
+} // namespace nema::ui
 ```
 
 ### 2.2 Algoritma rendering
@@ -506,7 +506,7 @@ Implementasi default iterate entries, match label, return action string.
 
 ```bash
 # Build + run simulator
-cmake --build build && ./build/kairo-sim
+cmake --build build && ./build/palanu-sim
 
 # Navigate: Settings → About
 # Verify: ASCII art muncul, posisi komponen benar
@@ -522,7 +522,7 @@ bun run flash:esp32
 
 ## Phase 4 — JSON Serialization (untuk Forge)
 
-> **Goal:** BoardProfile bisa di-serialize ke JSON untuk dikonsumsi Kairo Forge
+> **Goal:** BoardProfile bisa di-serialize ke JSON untuk dikonsumsi Palanu Forge
 > via USB/BLE bridge.
 
 ### 4.1 JSON schema
@@ -559,9 +559,9 @@ bun run flash:esp32
 ### 4.2 Serializer
 
 ```cpp
-// firmware/core/include/kairo/system/board_profile_json.h
+// firmware/core/include/palanu/system/board_profile_json.h
 
-namespace kairo {
+namespace nema {
 
 // Serialize BoardProfile ke JSON string (nlohmann::json)
 std::string boardProfileToJson(const BoardProfile& profile);
@@ -570,7 +570,7 @@ std::string boardProfileToJson(const BoardProfile& profile);
 // untuk Forge "board info" endpoint
 std::string boardInfoToJson(Runtime& rt);
 
-} // namespace kairo
+} // namespace nema
 ```
 
 ### 4.3 Stdio bridge command
@@ -589,7 +589,7 @@ Extend stdio bridge protocol (Plan 09) dengan command baru:
 
 ```bash
 # Send command via stdio bridge
-echo '{"cmd":"board.profile"}' | ./build/kairo-sim
+echo '{"cmd":"board.profile"}' | ./build/palanu-sim
 
 # Verify: JSON output matches schema
 # Verify: all components present with correct coordinates
@@ -604,10 +604,10 @@ echo '{"cmd":"board.profile"}' | ./build/kairo-sim
 
 ```
 firmware/core/
-├─ include/kairo/system/
+├─ include/palanu/system/
 │  ├─ board_profile.h           # ComponentType, ComponentDef, BoardProfile
 │  └─ board_profile_json.h      # boardProfileToJson(), boardInfoToJson()
-├─ include/kairo/ui/
+├─ include/palanu/ui/
 │  └─ ascii_board_renderer.h    # AsciiBoardRenderer
 ├─ src/system/
 │  └─ board_profile_json.cpp    # JSON serialization
@@ -619,8 +619,8 @@ firmware/core/
 
 ```
 firmware/core/
-├─ include/kairo/board.h        # tambah profile() pure virtual
-├─ include/kairo/input/i_key_map.h  # tambah actionForLabel()
+├─ include/palanu/board.h        # tambah profile() pure virtual
+├─ include/palanu/input/i_key_map.h  # tambah actionForLabel()
 ├─ src/screens/about_screen.cpp # integrate AsciiBoardRenderer
 ├─ CMakeLists.txt               # tambah new sources
 
@@ -705,7 +705,7 @@ firmware/boards/
 ## Non-Goals
 
 - **Interactive Forge UI** — plan ini hanya data model + device-side rendering.
-  Forge web app adalah project terpisah (`@kairo/forge` atau `@kairo/studio`).
+  Forge web app adalah project terpisah (`@palanu/forge` atau `@palanu/studio`).
 - **Touch/tap pada visualisasi** — Forge bisa interactive nanti, bukan scope firmware.
 - **3D rendering** — hanya 2D top-down view.
 - **Board editor** — user tidak bisa edit layout dari device. Profile di-define

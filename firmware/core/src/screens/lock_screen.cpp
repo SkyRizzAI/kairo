@@ -1,9 +1,9 @@
-#include "kairo/screens/lock_screen.h"
-#include "kairo/runtime.h"
-#include "kairo/ui/view_dispatcher.h"
-#include "kairo/services/display_power_manager.h"
+#include "nema/screens/lock_screen.h"
+#include "nema/runtime.h"
+#include "nema/ui/view_dispatcher.h"
+#include "nema/services/display_power_manager.h"
 
-namespace kairo {
+namespace nema {
 
 using namespace ui;
 
@@ -39,4 +39,4 @@ UiNode* LockScreen::build(NodeArena& a, Runtime&) {
     });
 }
 
-} // namespace kairo
+} // namespace nema

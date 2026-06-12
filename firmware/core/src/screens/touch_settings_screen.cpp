@@ -1,9 +1,9 @@
-#include "kairo/screens/touch_settings_screen.h"
-#include "kairo/runtime.h"
-#include "kairo/ui/view_dispatcher.h"
-#include "kairo/app/app_host_manager.h"
+#include "nema/screens/touch_settings_screen.h"
+#include "nema/runtime.h"
+#include "nema/ui/view_dispatcher.h"
+#include "nema/app/app_host_manager.h"
 
-namespace kairo {
+namespace nema {
 
 using namespace ui;
 
@@ -28,4 +28,4 @@ UiNode* TouchSettingsScreen::build(NodeArena& a, Runtime&) {
     });
 }
 
-} // namespace kairo
+} // namespace nema

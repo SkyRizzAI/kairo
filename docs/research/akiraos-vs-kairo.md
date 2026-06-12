@@ -1,8 +1,8 @@
-# AkiraOS vs Kairo — Perbandingan & Rekomendasi Adopsi
+# AkiraOS vs Palanu — Perbandingan & Rekomendasi Adopsi
 
-> Studi banding antara **AkiraOS** (`refs/AkiraOS`, v1.4.9 "Gl1tch") dan **Kairo**.
+> Studi banding antara **AkiraOS** (`refs/AkiraOS`, v1.4.9 "Gl1tch") dan **Palanu**.
 > Tujuannya: tahu kelebihan/kekurangan masing-masing, lalu pilih apa yang layak
-> kita serap ke Kairo. Sumber: baca langsung source `refs/AkiraOS/` +
+> kita serap ke Palanu. Sumber: baca langsung source `refs/AkiraOS/` +
 > <https://docs.akiraos.dev/>, dibandingkan dengan `firmware/` kita.
 >
 > **Kenapa relevan:** goals-nya mirip — bikin OS embedded yang **dinamis**. Tapi
@@ -19,7 +19,7 @@
   enforced di setiap native call). Kuat di: keamanan, isolasi crash, OTA,
   portabilitas chip (ESP32/nRF/STM32/RISC-V). Lemah di: berat (Zephyr+WAMR+MCUboot),
   UI primitif (9 widget, gambar via framebuffer low-level), toolchain curam.
-- **Kairo = C++17 runtime native + (Forge web ecosystem).** App **statis**
+- **Palanu = C++17 runtime native + (Forge web ecosystem).** App **statis**
   (di-compile-in) atau JS embedded (QuickJS). Kuat di: UI modern (flex layout,
   resolution-independent, declarative ComponentApp), arsitektur bersih
   (core/platform/board/target, runtime capability check), simulator WASM di
@@ -36,7 +36,7 @@
 
 ## 1. Positioning
 
-| | **AkiraOS** | **Kairo** |
+| | **AkiraOS** | **Palanu** |
 |---|---|---|
 | Tagline | "WebAssembly Runtime for Microcontrollers" | "Hardware-agnostic embedded firmware runtime" |
 | Basis | Zephyr RTOS 4.3 + WAMR 2.x | C++17 di atas ESP-IDF/Arduino (no RTOS framework wajib) |
@@ -49,37 +49,37 @@
 | Dynamism via | Modul `.wasm` + OTA | QuickJS JS app (embedded) + Plan 37 (.kapp, belum jadi) |
 
 > Ironi menarik: **dua-duanya pakai WASM, tapi untuk hal berbeda.** AkiraOS
-> menjalankan *app* sebagai WASM di atas MCU. Kairo menjalankan *seluruh firmware*
-> sebagai WASM di browser (simulator). Jalur dinamis Kairo saat ini bukan WASM,
+> menjalankan *app* sebagai WASM di atas MCU. Palanu menjalankan *seluruh firmware*
+> sebagai WASM di browser (simulator). Jalur dinamis Palanu saat ini bukan WASM,
 > tapi **QuickJS** (interpreter JS embedded).
 
 ---
 
 ## 2. Perbandingan Arsitektur (per subsistem)
 
-| Subsistem | AkiraOS | Kairo | Catatan |
+| Subsistem | AkiraOS | Palanu | Catatan |
 |---|---|---|---|
-| **App model** | Dinamis: `.wasm` di-load dari `/lfs/apps/`, thread-per-app, max 8 installed / 2 running | **Statis**: app di-compile-in; JS app embedded string; `AppHostManager` single-slot | Gap terbesar. Kairo Plan 37 Fase 6 mau ke arah dinamis tapi belum ada. |
+| **App model** | Dinamis: `.wasm` di-load dari `/lfs/apps/`, thread-per-app, max 8 installed / 2 running | **Statis**: app di-compile-in; JS app embedded string; `AppHostManager` single-slot | Gap terbesar. Palanu Plan 37 Fase 6 mau ke arah dinamis tapi belum ada. |
 | **Isolasi & sandbox** | WASM linear-memory sandbox; fault app ditangkap di boundary; device tetap up | Native app jalan di Nema thread → fault native bisa nge-crash firmware. JS app lebih aman (QuickJS) | AkiraOS jauh lebih kuat untuk app tak-terpercaya. |
-| **Capability** | Bitmask 26-bit per app, **di-enforce inline** tiap native call (~60ns), `-EACCES` kalau nolak, audit log | `CapabilityRegistry` (board → kapabilitas), tapi **advisory**: app cuma `has()`-cek, tak ada penolakan | Kairo perlu enforcement begitu app dinamis. |
-| **Manifest** | JSON di custom section `.akira.manifest` (name, version, capabilities, memory_quota, restart policy) | `embedded_apps.h`: cuma `{id, name, js}` | Kairo butuh manifest yang lebih kaya. |
+| **Capability** | Bitmask 26-bit per app, **di-enforce inline** tiap native call (~60ns), `-EACCES` kalau nolak, audit log | `CapabilityRegistry` (board → kapabilitas), tapi **advisory**: app cuma `has()`-cek, tak ada penolakan | Palanu perlu enforcement begitu app dinamis. |
+| **Manifest** | JSON di custom section `.akira.manifest` (name, version, capabilities, memory_quota, restart policy) | `embedded_apps.h`: cuma `{id, name, js}` | Palanu butuh manifest yang lebih kaya. |
 | **Memory** | Quota per app (atomic `memory_used` vs `memory_quota`), alloc PSRAM-first, chunked load | Tidak ada akuntansi memori per-app | — |
-| **Storage** | `fs_manager`: SD→LittleFS→RAM fallback + **per-app storage isolation** (`/data/apps/<name>/`) | `IConfigStore` (NVS key-value) saja | Kairo belum punya FS abstraction / app-scoped storage. |
-| **OTA** | App via HTTP `/upload`; firmware via MCUboot dual-slot + SHA-256 + signature + **rollback** | Forge `/flash` (esptool-js, full firmware) + registry `firmware.*`; **tak ada secure-boot/rollback**, tak ada "install app ke device hidup" | Kairo punya pipa transport bagus (KLP) tapi belum dipakai buat app-install. |
-| **UI framework** | Custom retained-mode, **9 widget**, dirty-flag; app umumnya gambar via primitive framebuffer low-level (RGB565); LVGL opsional | **Flex layout + declarative `ComponentApp`/UiNode tree**, resolution-independent (Canvas logical scale), renderer + ViewDispatcher | **Kairo menang telak** di UI: lebih modern & portabel lintas resolusi. |
-| **Input** | Tombol gaming (bitmask), diproses di shell/UI | **Action intent layer** (Prev/Next/Activate/Back), IKeyMap + gesture (short/long/double/chord), `validateFloor()` | Kairo lebih matang. |
-| **HAL / board abstraction** | Compile-time `#if CONFIG_SOC_*` + Zephyr devicetree + driver registry | **Runtime capability check** ("never branch on board type"), layering core/platform/board/target | Pendekatan Kairo lebih bersih & dinamis; devicetree Zephyr lebih powerful tapi curam. |
-| **Konektivitas** | HTTP server, BLE, USB, RF/LoRa/sub-GHz, "AkiraMesh", Matter/Thread (scaffolding) | KLP (BLE/USB-CDC/virtual-cable) + WiFi; RemoteService channel router | AkiraOS lebih luas (RF/mesh); Kairo lebih rapi (1 protokol KLP, banyak transport). |
-| **Logging** | Zephyr log + shell | **Logger multi-sink** (Console+Memory) + Logs screen on-device + stream via KLP | Kairo lebih observable. |
-| **Shell** | CLI lengkap (Zephyr shell, 2189 baris) — diagnostics, hw control | Tidak ada CLI shell (UI-driven) | AkiraOS punya, Kairo tidak (by design UI-first). |
-| **Toolchain** | west + Zephyr SDK + WASI SDK (curam) | ESP-IDF/Arduino + CMake + bun (Forge) | Kairo lebih ringan untuk di-setup. |
+| **Storage** | `fs_manager`: SD→LittleFS→RAM fallback + **per-app storage isolation** (`/data/apps/<name>/`) | `IConfigStore` (NVS key-value) saja | Palanu belum punya FS abstraction / app-scoped storage. |
+| **OTA** | App via HTTP `/upload`; firmware via MCUboot dual-slot + SHA-256 + signature + **rollback** | Forge `/flash` (esptool-js, full firmware) + registry `firmware.*`; **tak ada secure-boot/rollback**, tak ada "install app ke device hidup" | Palanu punya pipa transport bagus (KLP) tapi belum dipakai buat app-install. |
+| **UI framework** | Custom retained-mode, **9 widget**, dirty-flag; app umumnya gambar via primitive framebuffer low-level (RGB565); LVGL opsional | **Flex layout + declarative `ComponentApp`/UiNode tree**, resolution-independent (Canvas logical scale), renderer + ViewDispatcher | **Palanu menang telak** di UI: lebih modern & portabel lintas resolusi. |
+| **Input** | Tombol gaming (bitmask), diproses di shell/UI | **Action intent layer** (Prev/Next/Activate/Back), IKeyMap + gesture (short/long/double/chord), `validateFloor()` | Palanu lebih matang. |
+| **HAL / board abstraction** | Compile-time `#if CONFIG_SOC_*` + Zephyr devicetree + driver registry | **Runtime capability check** ("never branch on board type"), layering core/platform/board/target | Pendekatan Palanu lebih bersih & dinamis; devicetree Zephyr lebih powerful tapi curam. |
+| **Konektivitas** | HTTP server, BLE, USB, RF/LoRa/sub-GHz, "AkiraMesh", Matter/Thread (scaffolding) | KLP (BLE/USB-CDC/virtual-cable) + WiFi; RemoteService channel router | AkiraOS lebih luas (RF/mesh); Palanu lebih rapi (1 protokol KLP, banyak transport). |
+| **Logging** | Zephyr log + shell | **Logger multi-sink** (Console+Memory) + Logs screen on-device + stream via KLP | Palanu lebih observable. |
+| **Shell** | CLI lengkap (Zephyr shell, 2189 baris) — diagnostics, hw control | Tidak ada CLI shell (UI-driven) | AkiraOS punya, Palanu tidak (by design UI-first). |
+| **Toolchain** | west + Zephyr SDK + WASI SDK (curam) | ESP-IDF/Arduino + CMake + bun (Forge) | Palanu lebih ringan untuk di-setup. |
 | **Footprint** | Berat (Zephyr+WAMR+MCUboot) | Ringan (bisa bare ESP-IDF/Arduino) | — |
 
 ---
 
-## 3. Kairo — Kelebihan & Kekurangan
+## 3. Palanu — Kelebihan & Kekurangan
 
-### ✅ Kelebihan Kairo (yang JANGAN ditiru-mundur)
+### ✅ Kelebihan Palanu (yang JANGAN ditiru-mundur)
 1. **UI jauh lebih modern.** Flex layout, declarative `ComponentApp`, `UiNode` tree,
    resolution-independent (`Canvas` logical scale). AkiraOS cuma 9 widget +
    framebuffer primitive. Ini aset besar — pertahankan.
@@ -93,7 +93,7 @@
 6. **Ringan & gampang di-setup** (ESP-IDF/Arduino + bun), tanpa Zephyr.
 7. **Sudah punya jalur dinamis JS** (QuickJS `JsApp` + pipeline `embedded_apps.h`).
 
-### ❌ Kekurangan Kairo (gap nyata vs AkiraOS)
+### ❌ Kekurangan Palanu (gap nyata vs AkiraOS)
 1. **App masih statis.** Belum bisa install app ke device yang lagi jalan; semua
    di-compile-in / embed string. (Plan 37 Fase 6 = niat, belum kode.)
 2. **Capability tidak di-enforce** — cuma advisory. Bahaya begitu ada app pihak ke-3.
@@ -122,7 +122,7 @@
 ### ❌ Kekurangan AkiraOS (yang JANGAN ditiru)
 1. **Berat**: Zephyr + WAMR + MCUboot = footprint flash/RAM besar.
 2. **UI primitif**: 9 widget retained + framebuffer low-level; tak ada flex/responsive
-   layout, tak resolution-independent. (Kairo unggul jauh.)
+   layout, tak resolution-independent. (Palanu unggul jauh.)
 3. **HAL compile-time gating** (`#if SOC`) — kurang dinamis dibanding capability runtime.
 4. **Rapuh di beberapa titik**: JSON parser hand-rolled, multipart HTTP manual.
 5. **Toolchain curam** (west/Zephyr SDK/WASI SDK).
@@ -134,7 +134,7 @@
 ## 5. Rekomendasi Adopsi (prioritas)
 
 > Urut dari "murah & berdampak" → "besar & strategis". Tiap item dipetakan ke
-> file/plan Kairo yang relevan.
+> file/plan Palanu yang relevan.
 
 ### 🥇 P1 — App Manifest + Capability **Enforcement** (murah, wajib sebelum app dinamis)
 - **Apa:** definisikan manifest per-app (`id, name, version, capabilities[],
@@ -143,9 +143,9 @@
 - **Kenapa:** begitu app bisa di-install dari luar (Plan 37), advisory capability
   tidak cukup — app jahat/buggy bisa pegang WiFi/storage tanpa izin. AkiraOS
   membuktikan enforcement inline murah (~60ns).
-- **Di Kairo:** perluas `embedded_apps.h`/`.kapp` → tambah field manifest. Untuk
-  `JsApp` (QuickJS), enforcement gampang: bridge JS→native (mis. `kairo.wifi.*`,
-  `kairo.storage.*`) cek mask app sebelum eksekusi. Petakan ke
+- **Di Palanu:** perluas `embedded_apps.h`/`.kapp` → tambah field manifest. Untuk
+  `JsApp` (QuickJS), enforcement gampang: bridge JS→native (mis. `palanu.wifi.*`,
+  `palanu.storage.*`) cek mask app sebelum eksekusi. Petakan ke
   `apps/js_app.h`, `system/capability_registry.h`, Plan 37.
 - **Effort:** S–M. **Dampak:** tinggi (fondasi keamanan app dinamis).
 
@@ -155,7 +155,7 @@
 - **Kenapa:** syarat OS "dinamis tapi stabil". QuickJS sudah meng-isolasi JS
   (exception ke-catch), jadi separuh jalan untuk jalur JS. Yang kurang: kebijakan
   restart + guard thread.
-- **Di Kairo:** untuk `JsApp` bungkus eksekusi dengan try/catch + restart policy di
+- **Di Palanu:** untuk `JsApp` bungkus eksekusi dengan try/catch + restart policy di
   `AppHostManager`. Untuk native app (Nema thread), tambah watchdog + supervisor.
   Petakan ke `app/app_host_manager.h`, `nema/task_runner.h`.
 - **Effort:** M. **Dampak:** tinggi.
@@ -163,9 +163,9 @@
 ### 🥉 P3 — OTA "install app ke device yang lagi jalan" (lewat KLP / HTTP)
 - **Apa:** push satu bundle app (.kapp/JS/wasm) ke device hidup, simpan ke storage,
   launch tanpa reflash — persis `/upload` AkiraOS.
-- **Kenapa:** inti "dynamic OS". Kairo **sudah punya transport** (KLP +
+- **Kenapa:** inti "dynamic OS". Palanu **sudah punya transport** (KLP +
   RemoteService EXT channel + Forge). Tinggal tambah channel/endpoint "app install".
-- **Di Kairo:** tambah `ExtOp::AppInstall` di `services/remote_service.h` (terima
+- **Di Palanu:** tambah `ExtOp::AppInstall` di `services/remote_service.h` (terima
   bundle via KLP), simpan ke storage, daftarkan sbg `JsAppPlugin`. Atau endpoint
   HTTP di sisi device. Forge dapat halaman "Apps" untuk push. Petakan ke Plan 35/36
   + Plan 37 Fase 6.
@@ -176,7 +176,7 @@
 - **Apa:** `IFileSystem` (mirror `fs_manager`: SD→internal→RAM fallback) + storage
   per-app (`/apps/<id>/...`) + akuntansi memori per app.
 - **Kenapa:** app dinamis butuh tempat simpan bundle + data, dengan batas.
-- **Di Kairo:** baru — `hal/filesystem.h` + impl LittleFS/SD (esp32) & memfs (host/wasm).
+- **Di Palanu:** baru — `hal/filesystem.h` + impl LittleFS/SD (esp32) & memfs (host/wasm).
   Quota: hook alokasi di JsApp/native bridge. Petakan ke `hal/`, Plan 24 (Config).
 - **Effort:** M–L. **Dampak:** sedang-tinggi (enabler P3).
 
@@ -184,14 +184,14 @@
 - **Apa:** verifikasi tanda tangan firmware, dual-slot A/B, rollback kalau boot gagal.
 - **Kenapa:** keandalan di lapangan (update tidak nge-brick). `/flash` sekarang
   tulis raw bin tanpa verifikasi.
-- **Di Kairo:** ESP-IDF punya `app_update`/secure boot v2 + OTA partition. Tambah di
+- **Di Palanu:** ESP-IDF punya `app_update`/secure boot v2 + OTA partition. Tambah di
   `platforms/esp32` + manifest registry Forge tandatangani build. Petakan ke
   Plan 34/36.
 - **Effort:** L. **Dampak:** sedang (penting kalau mau produksi).
 
 ### P6 — Settings terenkripsi untuk rahasia
 - **Apa:** enkripsi value sensitif (wifi psk, token) — AES-GCM seperti AkiraOS.
-- **Di Kairo:** layer enkripsi di `IConfigStore`/NVS (mbedtls ada di esp32).
+- **Di Palanu:** layer enkripsi di `IConfigStore`/NVS (mbedtls ada di esp32).
 - **Effort:** S–M. **Dampak:** sedang.
 
 ### P7 (opsional, strategis) — WAMR sebagai runtime app kedua
@@ -203,7 +203,7 @@
 
 Ini fork-in-the-road terpenting. Dua-duanya valid; pilih sadar.
 
-| Aspek | **QuickJS (jalur Kairo sekarang)** | **WAMR (jalur AkiraOS)** |
+| Aspek | **QuickJS (jalur Palanu sekarang)** | **WAMR (jalur AkiraOS)** |
 |---|---|---|
 | Bahasa app | JavaScript saja | C/C++/Rust/AssemblyScript → `.wasm` (multi-bahasa) |
 | Sandbox memori | Lewat interpreter (aman-ish) | **Linear memory sejati** (isolasi kuat) |
@@ -211,7 +211,7 @@ Ini fork-in-the-road terpenting. Dua-duanya valid; pilih sadar.
 | Performa | Interpreter JS | Interpreter ~1x, **AOT 10–50x** |
 | Capability di ABI | Bridge JS→native (kita yang buat) | NativeSymbol + cek mask di boundary |
 | Ergonomi developer | Tinggi (JS, hot-reload via string) | Perlu WASI SDK + build step |
-| Sudah ada di Kairo | ✅ `JsApp`, `embedded_apps.h` | ❌ (tapi kita sudah paham emscripten) |
+| Sudah ada di Palanu | ✅ `JsApp`, `embedded_apps.h` | ❌ (tapi kita sudah paham emscripten) |
 
 **Rekomendasi:** untuk sekarang, **lanjutkan QuickJS** sebagai jalur app dinamis
 utama (sudah ada, ringan, ergonomis), tapi **serap pola keamanan AkiraOS di
@@ -221,10 +221,10 @@ mengadopsi Zephyr+WAMR.
 
 Pertimbangkan **WAMR sebagai runtime kedua (P7)** nanti, hanya jika muncul kebutuhan
 nyata: app berperforma tinggi, app non-JS, atau isolasi memori tingkat-produksi.
-Arsitektur Kairo (`IApp`/`AppHost`) cukup fleksibel untuk menampung dua runtime app
+Arsitektur Palanu (`IApp`/`AppHost`) cukup fleksibel untuk menampung dua runtime app
 berdampingan (JsApp + WasmApp) — keduanya hanya `IApp`.
 
-> Catatan: **jangan adopsi Zephyr.** Itu akan membuang keunggulan Kairo (ringan, UI
+> Catatan: **jangan adopsi Zephyr.** Itu akan membuang keunggulan Palanu (ringan, UI
 > modern, layering bersih, Forge). Yang kita tiru dari AkiraOS adalah **pola**
 > (manifest, capability enforcement, isolasi, OTA, secure boot) — bukan stack-nya.
 
@@ -281,6 +281,6 @@ Plan 39 (firmware OTA) ── independen, paralel setelah layout partisi disepak
   `manifest_parser.c`, `api/akira_export_api.c` (NativeSymbol),
   `connectivity/ota/web_server.c` (`/upload`), `ota/ota_manager.c` (MCUboot),
   `storage/fs_manager.c`, `ui/ui_framework.c`.
-- **Kairo:** `firmware/core/include/kairo/app/{app,app_host,app_host_manager,component_app}.h`,
+- **Palanu:** `firmware/core/include/palanu/app/{app,app_host,app_host_manager,component_app}.h`,
   `apps/js_app.h`, `apps/embedded_apps.h`, `system/capability_registry.h`,
   `services/remote_service.h`, `link/*`, `ui/{node,layout,renderer,canvas}.h`.

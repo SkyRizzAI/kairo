@@ -1,12 +1,12 @@
-#include "kairo/app/component_app.h"
-#include "kairo/app/app_context.h"
-#include "kairo/ui/canvas.h"
-#include "kairo/ui/component_runtime.h"
-#include "kairo/ui/text_style.h"
-#include "kairo/ui/ui_constants.h"
-#include "kairo/nema/input_event.h"
+#include "nema/app/component_app.h"
+#include "nema/app/app_context.h"
+#include "nema/ui/canvas.h"
+#include "nema/ui/component_runtime.h"
+#include "nema/ui/text_style.h"
+#include "nema/ui/ui_constants.h"
+#include "nema/input_event.h"
 
-namespace kairo {
+namespace nema {
 
 // Map a physical Key to component navigation; returns true if it moved focus or
 // activated. Up/Left = Prev, Down/Right = Next, Select = Activate.
@@ -129,4 +129,4 @@ void ComponentApp::run(AppContext& ctx) {
     }
 }
 
-} // namespace kairo
+} // namespace nema

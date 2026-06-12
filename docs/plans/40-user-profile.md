@@ -54,8 +54,8 @@ adalah pekerjaan terpisah nanti. Ini sengaja, sesuai permintaan.
 Boot pertama (key belum ada di NVS) → seed:
 | Field | Default |
 |---|---|
-| `user`   (nama user)   | `"Kairor"` |
-| `device` (nama device) | `"My Kairo"` |
+| `user`   (nama user)   | `"Palaner"` |
+| `device` (nama device) | `"My Palanu"` |
 | password               | **undefined** (tidak di-set) |
 
 Boot berikutnya **tidak menimpa** — nilai yang sudah diubah user tetap.
@@ -75,7 +75,7 @@ Boot berikutnya **tidak menimpa** — nilai yang sudah diubah user tetap.
    - `verifyPassword(input)` → bool (false bila password tak di-set)
 4. **CLI**: `whoami`, `profile` (tampil), `profile set user|device <nilai>`,
    `profile passwd <baru>` / `profile passwd --clear`, `profile verify <input>`.
-5. **Custom-app (JS) API** read+verify (lihat 2.4): `kairo.profile.userName()`,
+5. **Custom-app (JS) API** read+verify (lihat 2.4): `palanu.profile.userName()`,
    `deviceName()`, `hasPassword()`, `verifyPassword(input)`. **App tidak bisa men-set**
    profile/password (hindari app jahat mengubah identitas) — set hanya via CLI/Settings.
 6. **Nama device dipakai**: saat start, set nama advertised BLE/USB dari
@@ -89,7 +89,7 @@ remote/CLI, multi-user/akun, flash encryption.
 
 ## 2. Arsitektur
 
-### 2.1 Service (`firmware/core/include/kairo/services/profile_service.h`)
+### 2.1 Service (`firmware/core/include/palanu/services/profile_service.h`)
 ```cpp
 class ProfileService : public IService {
 public:
@@ -128,17 +128,17 @@ anti-rainbow-table). Teruji dengan test vector standar di host.
 - `rt.capabilities().add("profile")`.
 
 ### 2.4 Expose ke custom app (`firmware/core/src/js/js_api.cpp`)
-Tambah objek `kairo.profile` (read + verify saja):
+Tambah objek `palanu.profile` (read + verify saja):
 ```js
-kairo.profile.userName()            // -> "Kairor"
-kairo.profile.deviceName()          // -> "My Kairo"
-kairo.profile.hasPassword()         // -> bool
-kairo.profile.verifyPassword(input) // -> bool  (use-case utama)
+palanu.profile.userName()            // -> "Palaner"
+palanu.profile.deviceName()          // -> "My Palanu"
+palanu.profile.hasPassword()         // -> bool
+palanu.profile.verifyPassword(input) // -> bool  (use-case utama)
 ```
 Implementasi `api_profile_*` resolve `ProfileService` via `e->host()->container()`.
 **Sengaja tanpa setter** — app tak boleh mengubah identitas/owner. Contoh pakai:
 app kustom yang ingin "kunci" dirinya sendiri tinggal panggil
-`kairo.profile.hasPassword()` lalu minta input dan `verifyPassword(input)`.
+`palanu.profile.hasPassword()` lalu minta input dan `verifyPassword(input)`.
 
 ### 2.5 CLI (`firmware/core/src/services/cli_service.cpp`)
 Tambah command (resolve `ProfileService` dari container):
@@ -156,14 +156,14 @@ profile verify <input>       -> "ok" / "no" (uji manual API verify)
 
 ## 3. Fase pengerjaan
 
-- [x] **Fase 1 — Core service + hash.** `firmware/core/include/kairo/crypto/sha256.h`,
+- [x] **Fase 1 — Core service + hash.** `firmware/core/include/palanu/crypto/sha256.h`,
       `firmware/core/src/crypto/sha256.cpp` (XorShift32 PRNG salt + FIPS 180-4 SHA-256).
       `ProfileService` (load/seed/get/set/verify + constant-time compare). Core CMake updated.
 - [x] **Fase 2 — Registrasi platform + nama device.** Wired di esp32 & wasm; BLE adv name
       diset dari `profile_.deviceName()` setelah remote init; capability `"profile"` ditambah.
 - [x] **Fase 3 — CLI.** `whoami` (user + device name) dan `profile` (set user|device,
       passwd, verify) di `registerCoreCliCommands`.
-- [x] **Fase 4 — Custom-app API.** `kairo.profile.userName/deviceName/hasPassword/verifyPassword`
+- [x] **Fase 4 — Custom-app API.** `palanu.profile.userName/deviceName/hasPassword/verifyPassword`
       di `js_api.cpp`; gated dengan capability check; setters sengaja tidak ada.
 - [ ] **Fase 5 — Forge (opsional).** Tampilkan device/user name di header sesi;
       panel Settings "Profile" untuk lihat/ubah (lewat CLI atau channel System).

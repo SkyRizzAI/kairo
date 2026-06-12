@@ -11,7 +11,7 @@
 
 ## Latar Belakang & Masalah
 
-ESP32-S3 adalah **dual-core**. FreeRTOS selalu running di bawah. Tapi arsitektur Kairo saat ini:
+ESP32-S3 adalah **dual-core**. FreeRTOS selalu running di bawah. Tapi arsitektur Palanu saat ini:
 
 ```
 Core 0 (loopTask):     rt.step() → EventBus::publish() → iterasi subs_[]
@@ -68,7 +68,7 @@ Driver **tidak perlu tahu** tentang threading. Framework yang urus.
 
 ### 1. `AsyncEventPoster` (core, baru)
 
-**File:** `firmware/core/include/kairo/event/async_event_poster.h`
+**File:** `firmware/core/include/palanu/event/async_event_poster.h`
 
 ```cpp
 // Thread-safe event poster untuk background task (WiFi, BLE, HTTP, dll).
@@ -99,7 +99,7 @@ asyncPoster_.flush(events());   // drain semua pending events
 
 ### 2. `AsyncDisplayDriver` (core, baru)
 
-**File:** `firmware/core/include/kairo/hal/async_display.h`
+**File:** `firmware/core/include/palanu/hal/async_display.h`
 
 ```cpp
 // Wrapper yang membuat IDisplayDriver apapun menjadi non-blocking.
@@ -222,11 +222,11 @@ wifi_.init(rt.log(), rt.asyncPoster());
 
 | File | Action | Keterangan |
 |---|---|---|
-| `core/include/kairo/event/async_event_poster.h` | **Buat baru** | Thread-safe event queue |
+| `core/include/palanu/event/async_event_poster.h` | **Buat baru** | Thread-safe event queue |
 | `core/src/event/async_event_poster.cpp` | **Buat baru** | |
-| `core/include/kairo/hal/async_display.h` | **Buat baru** | Non-blocking display wrapper |
+| `core/include/palanu/hal/async_display.h` | **Buat baru** | Non-blocking display wrapper |
 | `core/src/hal/async_display.cpp` | **Buat baru** | ESP32: FreeRTOS; else: passthrough |
-| `core/include/kairo/runtime.h` | Modify | Tambah `asyncPoster_`, `asyncPoster()` method |
+| `core/include/palanu/runtime.h` | Modify | Tambah `asyncPoster_`, `asyncPoster()` method |
 | `core/src/runtime.cpp` | Modify | Drain asyncPoster_ di step() |
 | `core/CMakeLists.txt` | Modify | Tambah source baru |
 | `platforms/esp32/include/.../esp32_wifi_driver.h` | Refactor | Hapus queue lama, pakai `AsyncEventPoster*` |
@@ -277,7 +277,7 @@ wifi_.init(rt.log(), rt.asyncPoster());
 
 **Opsi B — Platform provides task abstraction** (bersih, recommended):
 ```cpp
-// core/include/kairo/os/task.h
+// core/include/palanu/os/task.h
 #ifdef ESP_PLATFORM
     // wraps xTaskCreate
 #else
@@ -329,4 +329,4 @@ class FutureDriver : public ISomeDriver, public IService {
 // Driver tidak perlu tahu FreeRTOS.
 ```
 
-Ini adalah **kontrak** yang harus diikuti semua driver di Kairo — tidak ada FreeRTOS primitif langsung di driver, semua lewat abstraksi yang disediakan framework.
+Ini adalah **kontrak** yang harus diikuti semua driver di Palanu — tidak ada FreeRTOS primitif langsung di driver, semua lewat abstraksi yang disediakan framework.

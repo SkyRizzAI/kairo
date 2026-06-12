@@ -1,16 +1,16 @@
-#include "kairo/services/remote_service.h"
-#include "kairo/services/cli_service.h"
-#include "kairo/services/input_service.h"
-#include "kairo/hal/filesystem.h"
-#include "kairo/log/logger.h"
-#include "kairo/event/event_bus.h"
-#include "kairo/event/event.h"
-#include "kairo/ui/key.h"
+#include "nema/services/remote_service.h"
+#include "nema/services/cli_service.h"
+#include "nema/services/input_service.h"
+#include "nema/hal/filesystem.h"
+#include "nema/log/logger.h"
+#include "nema/event/event_bus.h"
+#include "nema/event/event.h"
+#include "nema/ui/key.h"
 #include <cstring>
 #include <string>
 #include <vector>
 
-namespace kairo {
+namespace nema {
 
 void RemoteService::init(LinkService& link, InputService& input) {
     link_ = &link;
@@ -172,4 +172,4 @@ void RemoteService::LinkLogSink::write(const LogEntry& e) {
     link->send(klp::Channel::Log, p.data(), p.size());
 }
 
-} // namespace kairo
+} // namespace nema

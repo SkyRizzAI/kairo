@@ -1,7 +1,7 @@
-# 35 — Kairo Link Protocol & Remote Layer (device-side)
+# 35 — Nema Link Protocol & Remote Layer (device-side)
 
 > **LAYER 2 dari 3** (Foundation (34) → **Remote Layer** → Forge (36)). Satu
-> protokol, banyak transport. **Kairo Link Protocol (KLP)** — framing + channel
+> protokol, banyak transport. **Nema Link Protocol (KLP)** — framing + channel
 > multiplexing + handshake aman — berjalan di atas `ILinkTransport`, yang
 > membungkus pipa byte dari Layer 1: **BLE**, **USB-CDC**, atau **virtual-cable**
 > (WASM, postMessage). Di atasnya, **RemoteService** men-stream framebuffer 1-bit
@@ -11,7 +11,7 @@
 - Status: ✅ Device-side selesai (host + WASM + ESP32-S3). KLP codec C++ (`core/link/klp_codec`, mirror codec.ts) + `ILinkTransport`/Loopback + `LinkService` (handshake+channel gate) + `RemoteScreenTap` (IDisplayDriver decorator, RLE screen stream) + `RemoteService` (input/log/event/system/ext dispatch). Tests `klp_test` + `link_test` PASS. **Transport lengkap: `WasmCableTransport` (WASM virtual-cable, terverifikasi di Chrome), `BleLinkTransport` (`core/link/ble_link_transport.h`, bungkus `IBleAdapter` + KLP GATT service di `Esp32Ble`), `UsbCdcLinkTransport` (`core/link/usb_cdc_link_transport.h`, bungkus `IUsbCdc`).** `Esp32Platform::postRegister` mewire RemoteService over BLE (screen-tap men-decorate display board) — `idf.py build` hijau. Verifikasi BLE fisik (HP/Forge Web Bluetooth) menunggu device terhubung. USB device-side esp32 deferred (lihat Plan 34 §6 — port USB dipakai console). **(+Plan 37, aditif)** Channel `Ext` punya opcode baru `ExtOp::AppInstall = 0x03` (host kirim `.kapp` mentah → device `JsAppStore::installKapp`), di-handle lewat `controlFn_` platform (wasm/esp32) — dispatch inti tidak berubah.
 - Milestone: M9 (Board Profile & Ecosystem Foundation)
 - Depends on: **34 (Connectivity Foundation: BLE + USB)**, 13 (Display HAL 1-bit + Canvas), 19.5 (Nema/TaskRunner)
-- Blocks: **36 (Kairo Forge — web client)**, OTA
+- Blocks: **36 (Palanu Forge — web client)**, OTA
 
 > Kontrak kejujuran: KLP codec ada di DUA sisi (C++ device + TS Forge) dan itu
 > kontraknya, diikat **test vector bersama**. Remote layer bisa diuji penuh lewat
@@ -142,7 +142,7 @@ firmware/targets/wasm/        # rakit: WasmPlatform + board simulator + RemoteSe
   input dari `RemoteInputSource`. **Tak perlu** display/input WASM khusus — jalurnya
   = jalur remote.
 - EXT channel: extra WASM-only (pause/step/time-scale). Device fisik abaikan.
-- Build: Emscripten (`emcmake`) → `kairo.wasm` + glue → di-copy ke
+- Build: Emscripten (`emcmake`) → `nema.wasm` + glue → di-copy ke
   `packages/forge/static/` (dipakai Plan 36). **Prasyarat: emsdk terinstal.**
 
 > Inilah jembatan ke "remote me-remote simulator": WASM = device yang expose KLP
@@ -189,7 +189,7 @@ firmware/targets/wasm/        # rakit: WasmPlatform + board simulator + RemoteSe
 3. **RemoteScreenTap + RemoteInputSource + LinkLogSink** — di host/sim: frame
    ter-encode, input ter-inject, log ter-stream lewat loopback.
 4. **WASM target + WasmCableTransport** — firmware-wasm + virtual cable. *(emsdk)*.
-   Output `kairo.wasm`. Siap dikonsumsi Forge (Plan 36).
+   Output `nema.wasm`. Siap dikonsumsi Forge (Plan 36).
 5. **BleLinkTransport** — bungkus IBleAdapter (34). Flash + tes KLP lewat BLE nyata.
 6. **UsbCdcTransport** — bungkus IUsbCdc (34). Tes lewat USB. *(opsional bila CDC siap)*.
 
@@ -213,7 +213,7 @@ Fase 1–4 tanpa hardware (loopback + WASM); 5–6 dengan hardware.
 ## 9. Non-Goals (v1)
 - **Web client / UI** (RemoteSession, /remote, /flash) — Plan 36.
 - Multi-client simultan pada satu device — v1 satu session (LinkHub fan-out = Forge, Plan 36).
-- Video/grayscale stream — v1 1-bit (UI Kairo mono).
+- Video/grayscale stream — v1 1-bit (UI Palanu mono).
 - Semantic mirroring — v1 pixel streaming (app-agnostic).
 - OTA partition logic mendalam — channel didefinisikan; tulis-partisi menyusul.
 
@@ -221,7 +221,7 @@ Fase 1–4 tanpa hardware (loopback + WASM); 5–6 dengan hardware.
 
 ## 10. Hubungan dengan plan lain
 - **34** menyediakan pipa byte (BLE/USB) yang dibungkus `ILinkTransport` di sini.
-- **36** mengonsumsi: KLP codec TS (sudah ada di Forge), `kairo.wasm`, dan
+- **36** mengonsumsi: KLP codec TS (sudah ada di Forge), `nema.wasm`, dan
   meng-attach RemoteSession ke transport (Web Bluetooth/Web Serial/virtual-cable).
 - **13** = sumber framebuffer 1-bit (di-tap sebelum RGB565).
 - **33** = BoardProfile JSON (dikirim via SYSTEM channel → render device di Forge).

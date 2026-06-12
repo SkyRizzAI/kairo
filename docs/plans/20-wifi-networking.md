@@ -126,7 +126,7 @@ Tetap ada untuk konsumen lain (mis. status bar / log), TAPI WifiApp sendiri **ti
 
 ```cpp
 class WifiApp : public IApp {
-    const char* id()   const override { return "com.kairo.wifi"; }
+    const char* id()   const override { return "com.palanu.wifi"; }
     const char* name() const override { return "WiFi"; }
     // Normal mode (status bar tampil) — default fullscreen()==false
     void run(AppContext& ctx) override;
@@ -150,7 +150,7 @@ Semua menggambar di `ctx.canvas()` + `ctx.present()`. Input via `ctx.waitInput()
 Karena bukan lagi IScreen, jadikan **helper state kecil** yang app pakai (DRY untuk app lain: WiFi, nanti login form, dll):
 
 ```cpp
-namespace kairo::ui {
+namespace nema::ui {
 struct TextInput {
     char     buf[64] = {};
     uint8_t  len     = 0;
@@ -198,11 +198,11 @@ tetap ada untuk skrip CLI.
 
 | File | Aksi |
 |---|---|
-| `core/include/kairo/hal/wifi.h` | extend (WifiNetwork, WifiIpConfig, scan/ip/ipConfig) |
-| `core/include/kairo/event/event.h` | +WifiScanComplete |
-| `core/include/kairo/ui/text_input.h` (+.cpp) | **baru** — char-picker helper |
-| `core/include/kairo/apps/wifi_app.h` (+.cpp) | **baru** — WifiApp state machine |
-| `core/include/kairo/plugins/wifi_plugin.h` (+.cpp) | **baru** — thin launcher (atau langsung dari Settings) |
+| `core/include/palanu/hal/wifi.h` | extend (WifiNetwork, WifiIpConfig, scan/ip/ipConfig) |
+| `core/include/palanu/event/event.h` | +WifiScanComplete |
+| `core/include/palanu/ui/text_input.h` (+.cpp) | **baru** — char-picker helper |
+| `core/include/palanu/apps/wifi_app.h` (+.cpp) | **baru** — WifiApp state machine |
+| `core/include/palanu/plugins/wifi_plugin.h` (+.cpp) | **baru** — thin launcher (atau langsung dari Settings) |
 | `core/src/screens/settings_screen.cpp` | WiFi → launch WifiApp |
 | `core/CMakeLists.txt` | +sources baru |
 | `platforms/simulator/.../sim_wifi_driver.{h,cpp}` | scan/ip/ipConfig + state inject |

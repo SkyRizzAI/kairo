@@ -9,4 +9,4 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$SCRIPT_DIR/../targets/skyrizz-audiotest"
 if [[ ! -f sdkconfig ]]; then idf.py set-target esp32s3; fi
 idf.py build
-echo "Build OK → $(pwd)/build/kairo-skyrizz-audiotest.bin"
+echo "Build OK → $(pwd)/build/nema-skyrizz-audiotest.bin"

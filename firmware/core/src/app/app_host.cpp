@@ -1,20 +1,22 @@
-#include "kairo/app/app_host.h"
-#include "kairo/app/app.h"
-#include "kairo/runtime.h"
-#include "kairo/ui/canvas.h"
-#include "kairo/ui/ui_constants.h"
-#include "kairo/ui/view_dispatcher.h"
-#include "kairo/hal/buffer_display.h"
-#include "kairo/hal/display.h"
-#include "kairo/service/service_container.h"
+#include "nema/app/app_host.h"
+#include "nema/app/app.h"
+#include "nema/runtime.h"
+#include "nema/log/logger.h"
+#include "nema/ui/canvas.h"
+#include "nema/ui/ui_constants.h"
+#include "nema/ui/view_dispatcher.h"
+#include "nema/hal/buffer_display.h"
+#include "nema/hal/display.h"
+#include "nema/service/service_container.h"
 #include <cstdlib>
 #include <cstring>
+#include <string>
 
 #ifdef ESP_PLATFORM
   #include <esp_heap_caps.h>
 #endif
 
-namespace kairo {
+namespace nema {
 
 // preferInternal: put hot buffers (read every frame during blit) in fast
 // internal SRAM — reading a frame buffer out of PSRAM 76,800×/frame is a major
@@ -71,6 +73,7 @@ void AppHost::enter() {
 
     started_  = true;
     finished_ = false;
+    rt_.log().info("AppHost", "enter", {{"w", std::to_string(w_)}, {"h", std::to_string(h_)}});
     // App thread on core 0 (off the GUI/core-1). May block freely.
     // Stack size comes from the app: JS apps need more (QuickJS recurses deeply).
     thread_.start({"nema_app", app_.stackBytes(), 5, 0}, &AppHost::threadEntry, this);
@@ -100,7 +103,13 @@ ScreenMode AppHost::mode() const {
 
 void AppHost::draw(Canvas& c) {
     std::lock_guard<std::mutex> lk(frameMtx_);
+    if (dbgDraw_ < 6) {
+        rt_.log().info("AppHost", "draw", {{"n", std::to_string(dbgDraw_)},
+                                           {"hasFrame", hasFrame_ ? "1" : "0"}});
+        dbgDraw_++;
+    }
     if (!hasFrame_) return;
+    drawnSeq_ = frameSeq_.load(std::memory_order_acquire);   // this frame is being drawn
 
     // Fullscreen fast path: push the whole frame straight to the panel in one
     // pass (skips 76,800 per-pixel drawPixel calls). Only valid when the app
@@ -135,7 +144,14 @@ void AppHost::tick(uint64_t) {
         finished_ = true;
         thread_.join();
         rt_.view().pop();    // app exited → return to previous screen
+        return;
     }
+    // Safety net: if the app published a newer frame than we've drawn, make sure
+    // the GUI loop renders again. Covers the case where the present()-time
+    // requestRedraw raced ahead of the first draw (seen on WASM: a freshly loaded
+    // app stayed blank until some other event forced a redraw).
+    if (started_ && frameSeq_.load(std::memory_order_acquire) != drawnSeq_)
+        rt_.view().requestRedraw();
 }
 
 // ── App thread ──────────────────────────────────────────────────────────────
@@ -152,6 +168,11 @@ void AppHost::present() {
         std::lock_guard<std::mutex> lk(frameMtx_);
         std::memcpy(readyBuf_, drawBuf_, size_);
         hasFrame_ = true;
+    }
+    frameSeq_.fetch_add(1, std::memory_order_release);
+    if (dbgPresent_ < 4) {
+        rt_.log().info("AppHost", "present", {{"n", std::to_string(dbgPresent_)}});
+        dbgPresent_++;
     }
     rt_.view().requestRedraw();   // ask GUI thread to re-blit
 }
@@ -175,4 +196,4 @@ void AppHost::requestExit()      { thread_.requestStop(); paused_.store(false); 
 bool AppHost::shouldExit() const { return thread_.shouldStop(); }
 Runtime& AppHost::runtime()      { return rt_; }
 
-} // namespace kairo
+} // namespace nema

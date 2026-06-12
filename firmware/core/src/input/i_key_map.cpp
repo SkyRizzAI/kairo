@@ -1,8 +1,8 @@
-#include "kairo/input/i_key_map.h"
-#include "kairo/services/input_service.h"
-#include "kairo/nema/input_event.h"
+#include "nema/input/i_key_map.h"
+#include "nema/services/input_service.h"
+#include "nema/input_event.h"
 
-namespace kairo::input {
+namespace nema::input {
 
 bool IKeyMap::validateFloor() const {
     return canReach(Action::Prev)
@@ -24,4 +24,4 @@ void IKeyMap::emitEvent(Code code, Action action, Gesture gesture, uint64_t /*no
     input_->post(e);
 }
 
-} // namespace kairo::input
+} // namespace nema::input

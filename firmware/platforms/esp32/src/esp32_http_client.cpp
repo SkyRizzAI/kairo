@@ -1,13 +1,13 @@
-#include "kairo/esp32/esp32_http_client.h"
-#include "kairo/runtime.h"
-#include "kairo/log/logger.h"
-#include "kairo/service/service_container.h"
-#include "kairo/system/capability_registry.h"
+#include "nema/esp32/esp32_http_client.h"
+#include "nema/runtime.h"
+#include "nema/log/logger.h"
+#include "nema/service/service_container.h"
+#include "nema/system/capability_registry.h"
 #include <esp_http_client.h>
 #include <esp_crt_bundle.h>
 #include <string>
 
-namespace kairo {
+namespace nema {
 
 void Esp32HttpClient::onRegister(Runtime& rt) {
     log_ = &rt.log();
@@ -49,4 +49,4 @@ HttpResponse Esp32HttpClient::get(const char* url, bool insecure) {
     return r;
 }
 
-} // namespace kairo
+} // namespace nema

@@ -15,7 +15,7 @@
 
 ## Latar belakang
 
-Kairo sudah punya component system lengkap (`widgets.h`, `layout.h`, `focus.h`,
+Palanu sudah punya component system lengkap (`widgets.h`, `layout.h`, `focus.h`,
 `renderer.h`) yang dipakai **100% oleh apps** via `ComponentApp`. Setiap
 `Pressable` setelah `layout()` punya **hit-rect (x/y/w/h)** + **`onPress`**.
 
@@ -64,7 +64,7 @@ Touch controller (FT6336U / TSC2007 / …)
 ### 1. `PointerEvent` (core)
 
 ```cpp
-namespace kairo::input {
+namespace nema::input {
 
 struct PointerEvent {
     enum class Phase : uint8_t { Down, Move, Up };
@@ -76,13 +76,13 @@ struct PointerEvent {
 
 enum class InputModality : uint8_t { Button, Pointer };
 
-} // namespace kairo::input
+} // namespace nema::input
 ```
 
 ### 2. `ITouchDriver` (core HAL)
 
 ```cpp
-namespace kairo {
+namespace nema {
 
 struct ITouchDriver : IDriver {
     DriverKind kind() const override { return DriverKind::Other; }
@@ -100,7 +100,7 @@ protected:
     InputService* input_ = nullptr;
 };
 
-} // namespace kairo
+} // namespace nema
 ```
 
 The driver is responsible for ALL board-specific concerns:
@@ -192,7 +192,7 @@ orientasi LCD MADCTL `0x48`, jadi transform-nya minimal (clamp + scale Plan 25).
 Jika ternyata sumbu kebalik/mirror saat bring-up, koreksi flip di driver.
 
 ```cpp
-namespace kairo::skyrizze32 {
+namespace nema::skyrizze32 {
 class Ft6336Touch : public ITouchDriver {
 public:
     void init(Runtime& rt, Xl9535& expander);
@@ -224,21 +224,21 @@ rt.capabilities().add("input.touch");
 
 ```
 firmware/core/
-├─ include/kairo/input/
+├─ include/palanu/input/
 │  ├─ pointer_event.h        # PointerEvent, InputModality
 │  └─ i_touch_driver.h       # ITouchDriver HAL
 ├─ src/input/
 │  └─ i_touch_driver.cpp     # emitPointer()
-├─ include/kairo/services/input_service.h   ← + postPointer/nextPointer
+├─ include/palanu/services/input_service.h   ← + postPointer/nextPointer
 ├─ src/services/input_service.cpp
-├─ include/kairo/ui/hit_test.h              # hitTest(), handlePointer()
+├─ include/palanu/ui/hit_test.h              # hitTest(), handlePointer()
 ├─ src/ui/hit_test.cpp
 ├─ src/ui/renderer.cpp        ← render() takes InputModality (ring only on Button)
 ├─ src/ui/focus.h/.cpp        ← FocusState keeps modality-agnostic
 └─ src/app/component_app.cpp  ← drain pointer + dispatch + modality
 
 firmware/boards/skyrizz-e32/
-├─ include/kairo/skyrizze32/ft6336_touch.h
+├─ include/palanu/skyrizze32/ft6336_touch.h
 └─ src/ft6336_touch.cpp
 ```
 

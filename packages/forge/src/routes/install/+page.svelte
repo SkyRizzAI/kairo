@@ -16,7 +16,7 @@
 	function install() {
 		if (!text.trim().startsWith('KAPP1')) {
 			toast.error('Not a .kapp', {
-				description: 'Expected a KAPP1 header. Build one first with `kairo-build`.'
+				description: 'Expected a KAPP1 header. Build one first with `nema-build`.'
 			});
 			return;
 		}

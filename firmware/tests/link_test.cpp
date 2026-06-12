@@ -1,19 +1,19 @@
 // Host test for the remote layer (Plan 35): LinkService handshake + channel
 // routing + RemoteScreenTap streaming, all over a loopback "virtual cable".
-#include "kairo/link/link_service.h"
-#include "kairo/link/transport.h"
-#include "kairo/link/klp_codec.h"
-#include "kairo/hal/remote_screen_tap.h"
-#include "kairo/hal/display.h"
-#include "kairo/services/remote_service.h"
-#include "kairo/services/input_service.h"
-#include "kairo/log/logger.h"
-#include "kairo/clock.h"
+#include "nema/link/link_service.h"
+#include "nema/link/transport.h"
+#include "nema/link/klp_codec.h"
+#include "nema/hal/remote_screen_tap.h"
+#include "nema/hal/display.h"
+#include "nema/services/remote_service.h"
+#include "nema/services/input_service.h"
+#include "nema/log/logger.h"
+#include "nema/clock.h"
 #include <cassert>
 #include <cstdio>
 #include <vector>
 
-using namespace kairo;
+using namespace nema;
 
 // Minimal inner display for the tap to wrap.
 class DummyDisplay : public IDisplayDriver {

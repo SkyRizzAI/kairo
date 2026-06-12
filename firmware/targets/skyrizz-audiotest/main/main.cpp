@@ -2,7 +2,7 @@
 // Schematic-confirmed pins (page 6): NS4168 CTRL=3V3 always-on,
 //   BCLK=GPIO0(BOOT), LRCLK=GPIO38, SDATA=GPIO45(I2S_SDI), MCLK=GPIO3.
 //   ES7243E mic SDOUT=GPIO39(I2S_SDO). Speaker on SP1 (VOP/VON).
-// Raw Serial is intentional: no Kairo runtime/logger here.
+// Raw Serial is intentional: no Palanu runtime/logger here.
 #include <Arduino.h>
 #include <Wire.h>
 #include <driver/i2s.h>   // legacy I2S API — matches proven factory HW test (.ino)

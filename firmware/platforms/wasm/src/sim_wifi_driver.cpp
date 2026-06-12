@@ -1,12 +1,12 @@
-#include "kairo/sim/sim_wifi_driver.h"
-#include "kairo/log/logger.h"
-#include "kairo/event/event_bus.h"
-#include "kairo/event/event.h"
-#include "kairo/event/async_event_poster.h"
-#include "kairo/nema/thread.h"
+#include "nema/sim/sim_wifi_driver.h"
+#include "nema/log/logger.h"
+#include "nema/event/event_bus.h"
+#include "nema/event/event.h"
+#include "nema/event/async_event_poster.h"
+#include "nema/thread.h"
 #include <cstring>
 
-namespace kairo {
+namespace nema {
 
 void SimWifiDriver::init(Logger& log, EventBus& events, AsyncEventPoster* poster) {
     log_    = &log;
@@ -94,4 +94,4 @@ void SimWifiDriver::scan() {
 
 void SimWifiDriver::tick(uint64_t /*nowMs*/) {}
 
-} // namespace kairo
+} // namespace nema

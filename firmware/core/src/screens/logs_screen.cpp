@@ -1,11 +1,11 @@
-#include "kairo/screens/logs_screen.h"
-#include "kairo/runtime.h"
-#include "kairo/ui/view_dispatcher.h"
-#include "kairo/app/app_registry.h"
-#include "kairo/clock.h"
+#include "nema/screens/logs_screen.h"
+#include "nema/runtime.h"
+#include "nema/ui/view_dispatcher.h"
+#include "nema/app/app_registry.h"
+#include "nema/clock.h"
 #include <cstdio>
 
-namespace kairo {
+namespace nema {
 
 using namespace ui;
 
@@ -55,4 +55,4 @@ UiNode* LogsScreen::build(NodeArena& a, Runtime& rt) {
     });
 }
 
-} // namespace kairo
+} // namespace nema

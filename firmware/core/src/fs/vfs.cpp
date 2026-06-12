@@ -1,6 +1,6 @@
-#include "kairo/fs/vfs.h"
+#include "nema/fs/vfs.h"
 
-namespace kairo {
+namespace nema {
 
 namespace {
 
@@ -124,4 +124,4 @@ bool Vfs::remove(const std::string& path) {
     return m && m->fs->remove(sub);
 }
 
-} // namespace kairo
+} // namespace nema

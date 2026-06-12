@@ -1,7 +1,7 @@
-#include "kairo/services/input_service.h"
-#include "kairo/input/i_key_map.h"
+#include "nema/services/input_service.h"
+#include "nema/input/i_key_map.h"
 
-namespace kairo {
+namespace nema {
 
 void InputService::post(Key k, InputEvent::Type t) {
     InputEvent e;
@@ -48,4 +48,4 @@ bool InputService::validateFloor() const {
     return true;  // simulator: all actions reachable
 }
 
-} // namespace kairo
+} // namespace nema

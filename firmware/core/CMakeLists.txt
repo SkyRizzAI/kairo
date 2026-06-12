@@ -1,7 +1,9 @@
-# Kairo Core — hardware-agnostic C++ runtime.
+# Nema Core — hardware-agnostic C++ runtime.
 # Dual-build: host (plain CMake, for simulator) and ESP-IDF (idf_component_register).
 
-set(KAIRO_CORE_SRCS
+include("${CMAKE_CURRENT_LIST_DIR}/../cmake/nema_version.cmake")
+
+set(NEMA_CORE_SRCS
     src/link/klp_codec.cpp
 src/link/link_service.cpp
 src/services/remote_service.cpp
@@ -83,18 +85,20 @@ src/input/gesture.cpp
 
 if(ESP_PLATFORM)
     # --- ESP-IDF component build ---
-    list(APPEND KAIRO_CORE_SRCS src/nema/thread_esp32.cpp)
+    list(APPEND NEMA_CORE_SRCS src/nema/thread_esp32.cpp)
     idf_component_register(
-        SRCS ${KAIRO_CORE_SRCS}
-        INCLUDE_DIRS "include"
+        SRCS ${NEMA_CORE_SRCS}
+        INCLUDE_DIRS "include" "${CMAKE_BINARY_DIR}/nema_generated"
         REQUIRES quickjs
     )
 else()
     # --- Host build (simulator) ---
-    list(APPEND KAIRO_CORE_SRCS src/nema/thread_host.cpp)
-    add_library(kairo_core STATIC ${KAIRO_CORE_SRCS})
-    target_include_directories(kairo_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
-    target_compile_features(kairo_core PUBLIC cxx_std_17)
+    list(APPEND NEMA_CORE_SRCS src/nema/thread_host.cpp)
+    add_library(nema_core STATIC ${NEMA_CORE_SRCS})
+    target_include_directories(nema_core PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_BINARY_DIR}/nema_generated)
+    target_compile_features(nema_core PUBLIC cxx_std_17)
     find_package(Threads REQUIRED)
-    target_link_libraries(kairo_core PUBLIC Threads::Threads quickjs)
+    target_link_libraries(nema_core PUBLIC Threads::Threads quickjs)
 endif()

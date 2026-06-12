@@ -1,6 +1,6 @@
-#include "kairo/nema/task_runner.h"
+#include "nema/task_runner.h"
 
-namespace kairo::nema {
+namespace nema {
 
 void TaskRunner::start(uint32_t stackBytes) {
     // Worker on core 0 (with WiFi/TLS), priority below UI. Jobs are I/O-bound
@@ -39,4 +39,4 @@ void TaskRunner::drainCompletions() {
     }
 }
 
-} // namespace kairo::nema
+} // namespace nema

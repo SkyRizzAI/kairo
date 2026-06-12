@@ -1,8 +1,8 @@
-#include "kairo/apps/counter_app.h"
-#include "kairo/ui/widgets.h"
+#include "nema/apps/counter_app.h"
+#include "nema/ui/widgets.h"
 #include <cstdio>
 
-namespace kairo {
+namespace nema {
 
 using namespace ui;
 
@@ -50,4 +50,4 @@ UiNode* CounterApp::build(NodeArena& a, AppContext&) {
     });
 }
 
-} // namespace kairo
+} // namespace nema

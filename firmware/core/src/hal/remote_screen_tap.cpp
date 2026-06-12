@@ -1,7 +1,7 @@
-#include "kairo/hal/remote_screen_tap.h"
+#include "nema/hal/remote_screen_tap.h"
 #include <cstring>
 
-namespace kairo {
+namespace nema {
 
 void RemoteScreenTap::init(IDisplayDriver& inner, LinkService& link) {
     inner_ = &inner;
@@ -78,4 +78,4 @@ void RemoteScreenTap::streamFrame() {
 void RemoteScreenTap::sleep() { if (inner_) inner_->sleep(); }
 void RemoteScreenTap::wake()  { if (inner_) inner_->wake();  }
 
-} // namespace kairo
+} // namespace nema

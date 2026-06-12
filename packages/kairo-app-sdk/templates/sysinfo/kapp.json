@@ -1,7 +1,0 @@
-{
-  "id": "com.kairo.example.sysinfo",
-  "name": "Sys Info",
-  "version": "1.0.0",
-  "entry": "App.tsx",
-  "needs": []
-}

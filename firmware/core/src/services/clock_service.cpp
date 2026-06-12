@@ -1,9 +1,9 @@
-#include "kairo/services/clock_service.h"
-#include "kairo/log/logger.h"
-#include "kairo/event/event_bus.h"
-#include "kairo/event/event.h"
+#include "nema/services/clock_service.h"
+#include "nema/log/logger.h"
+#include "nema/event/event_bus.h"
+#include "nema/event/event.h"
 
-namespace kairo {
+namespace nema {
 
 ClockService::ClockService(Logger& log, EventBus& bus)
     : log_(log), bus_(bus) {}
@@ -23,4 +23,4 @@ void ClockService::tick(uint64_t nowMs) {
     }
 }
 
-} // namespace kairo
+} // namespace nema

@@ -1,6 +1,6 @@
 # 27 — Input Abstraction & Board Keymap Registry
 
-> Sistem input Kairo menjadi hardware-agnostic: screen/app diprogram terhadap
+> Sistem input Palanu menjadi hardware-agnostic: screen/app diprogram terhadap
 > **Intent (Action)**, bukan tombol fisik. Board baru cukup menyediakan satu
 > keymap untuk langsung berfungsi — termasuk device 2-tombol gaya Ledger.
 
@@ -32,7 +32,7 @@ Semua screen diprogram langsung ke arah fisik. Akibatnya:
 | **Godot / Unity** | `Input.get_key(KEY_UP)` | `InputAction` ("ui_accept", "ui_cancel") | — |
 | **Ledger cold wallet** | 2 tombol fisik | Next / Activate / Back | chord (kiri+kanan) = Activate |
 | **Flipper Zero** | 5-button D-pad | — (hardcoded per screen) | — |
-| **Kairo (Plan 27)** | `InputCode` (registry terbuka) | `InputAction` (floor guaranteed) | short/long/double/chord |
+| **Palanu (Plan 27)** | `InputCode` (registry terbuka) | `InputAction` (floor guaranteed) | short/long/double/chord |
 
 ---
 
@@ -65,7 +65,7 @@ Menggantikan / memperluas `Key` enum. Kode **geometris / fisik-ish**; bisa absen
 di suatu board.
 
 ```cpp
-namespace kairo::input {
+namespace nema::input {
 
 // Core codes — alias spasial dari intent
 enum class Code : uint16_t {
@@ -88,7 +88,7 @@ enum class Code : uint16_t {
 // Board register via InputRegistry::registerCode(uint16_t id, const char* name)
 // id harus >= Custom (0x8000)
 
-} // namespace kairo::input
+} // namespace nema::input
 ```
 
 Backward compat: `Key` enum lama di `key.h` dipetakan ke `InputCode` via
@@ -100,7 +100,7 @@ Intent navigasi — **tidak bergantung hardware**. Board WAJIB bisa menghasilkan
 4 action inti (`Prev, Next, Activate, Back`) — divalidasi saat board init.
 
 ```cpp
-namespace kairo::input {
+namespace nema::input {
 
 enum class Action : uint8_t {
     // === FLOOR WAJIB (4 ini harus selalu terjangkau) ===
@@ -121,7 +121,7 @@ enum class Action : uint8_t {
 //   Next + Activate saja sudah cukup untuk device 1-tombol / 2-button minimal
 //   Prev / Back boleh degradasi ke menu item UI jika benar-benar tidak tersedia
 
-} // namespace kairo::input
+} // namespace nema::input
 ```
 
 ### Reduksi default: Code → Action
@@ -182,7 +182,7 @@ Setiap board mengimplementasikan interface ini. Inilah "satu file per board" yan
 memegang semua kerumitan gesture + mapping.
 
 ```cpp
-namespace kairo::input {
+namespace nema::input {
 
 struct PhysicalEvent {
     uint8_t  button_id;  // board-defined button index
@@ -224,7 +224,7 @@ protected:
     friend class InputService;
 };
 
-} // namespace kairo::input
+} // namespace nema::input
 ```
 
 ### Contoh keymap 6-tombol (dev board 0)
@@ -413,7 +413,7 @@ Layar informatif yang tampilkan apa yang terdaftar. Masuk di Settings → Contro
 
 ```
 firmware/core/
-├─ include/kairo/input/
+├─ include/palanu/input/
 │  ├─ input_code.h        # InputCode enum + codeFromKey() compat
 │  ├─ input_action.h      # InputAction enum
 │  ├─ input_event.h       # InputEvent struct (extended: code+action+gesture)  ← extend existing
@@ -426,11 +426,11 @@ firmware/core/
 │  ├─ gesture.cpp         # GestureEngine state machine
 │  ├─ i_key_map.cpp       # validateFloor() implementation
 │  └─ input_registry.cpp  # InputRegistry
-├─ include/kairo/services/
+├─ include/palanu/services/
 │  └─ input_service.h     ← minor extend: setKeyMap(), hintFor() passthrough
 ├─ src/services/
 │  └─ input_service.cpp
-├─ include/kairo/ui/
+├─ include/palanu/ui/
 │  └─ screen.h            ← tambah onAction() + onCode() dengan default forward
 ├─ src/screens/
 │  └─ controls_screen.cpp # Input Info screen (read-only)
@@ -440,7 +440,7 @@ firmware/core/
 
 Existing:
 - `firmware/boards/dev-board/src/tca9534_buttons.cpp` → wrap dengan keymap baru
-- `firmware/core/include/kairo/ui/key.h` → tetap ada, `Key` alias ke `InputCode`
+- `firmware/core/include/palanu/ui/key.h` → tetap ada, `Key` alias ke `InputCode`
 
 ---
 

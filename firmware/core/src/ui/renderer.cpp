@@ -1,8 +1,8 @@
-#include "kairo/ui/renderer.h"
-#include "kairo/ui/text_style.h"
-#include "kairo/ui/canvas.h"
+#include "nema/ui/renderer.h"
+#include "nema/ui/text_style.h"
+#include "nema/ui/canvas.h"
 
-namespace kairo::ui {
+namespace nema::ui {
 
 static void paint(const UiNode* n, Canvas& c, const UiNode* focused) {
     const Style& s = n->style;
@@ -88,4 +88,4 @@ void render(const UiNode& root, Canvas& c, const UiNode* focused) {
     c.clearClip();
 }
 
-} // namespace kairo::ui
+} // namespace nema::ui

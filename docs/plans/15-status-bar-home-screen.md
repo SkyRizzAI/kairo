@@ -13,7 +13,7 @@
 
 ```
 ┌────────────────────────────────────────────┐  ← border frame
-│ 12:34  ▒▒▒▒░  W              KAIRO v0.1   │  ← status bar (y=0..8)
+│ 12:34  ▒▒▒▒░  W              PALANU v0.1   │  ← status bar (y=0..8)
 ├────────────────────────────────────────────┤  ← separator line
 │  ██╗ ██╗  █████╗ ██╗██████╗  ██████╗      │
 │  ██║ ██║ ██╔══██╗██║██╔══██╗██╔═══██╗     │  ← ASCII art logo
@@ -39,7 +39,7 @@
 ### In scope
 
 - `StatusBar` struct: draw satu baris di y=0, dipanggil tiap `draw()` dari screen mana pun.
-- `HomeScreen : IScreen` — ASCII art KAIRO + app list + cursor.
+- `HomeScreen : IScreen` — ASCII art PALANU + app list + cursor.
 - Navigasi Up/Down scroll list, Ok = launch app, Back = nothing (home is base).
 - Battery indicator: blok ASCII (▓▓▓▓░ = 80%).
 - WiFi indicator: `W` jika connected, `-` jika tidak.
@@ -61,8 +61,8 @@
 StatusBar bukan plugin terpisah — lebih simpel sebagai helper yang di-call dari `draw()` tiap screen.
 
 ```cpp
-// firmware/core/include/kairo/ui/status_bar.h
-namespace kairo {
+// firmware/core/include/palanu/ui/status_bar.h
+namespace nema {
 struct StatusBarData {
     int      hour, minute;
     int      batteryPct;  // 0–100
@@ -118,7 +118,7 @@ private:
 };
 ```
 
-### ASCII art logo "KAIRO"
+### ASCII art logo "PALANU"
 
 Dibuat dengan font ASCII besar (manual atau dari figlet). Contoh 5 baris × 32 kolom:
 
@@ -200,7 +200,7 @@ rt.view().requestRedraw();
 
 - [ ] `StatusBar::draw()` + `drawBattery()`.
 - [ ] `HomeScreen` (enter/update/draw/tick + buildAppList).
-- [ ] ASCII art KAIRO di `draw()` (hardcoded string array, centering).
+- [ ] ASCII art PALANU di `draw()` (hardcoded string array, centering).
 - [ ] App list render dengan `invertRect` cursor highlight.
 - [ ] Key navigation (Up/Down scroll, Ok = push screen).
 - [ ] EventBus subscriptions di `enter()` (ClockTick, BatteryChanged, Network*).
@@ -221,9 +221,9 @@ rt.view().requestRedraw();
 ## Visual spec ringkas
 
 ```
-[0  ] Status bar:  "HH:MM ▓▓▓░░ W          KAIRO v0.1"
+[0  ] Status bar:  "HH:MM ▓▓▓░░ W          PALANU v0.1"
 [9  ] Separator:   horizontal line full width
-[10 ] Logo:        ASCII art "KAIRO" ~5 baris, centered
+[10 ] Logo:        ASCII art "PALANU" ~5 baris, centered
 [55 ] Spacer:      1 baris kosong
 [64 ] App list:    ">" + nama, ~10 item visible, invertRect cursor
 [168] Separator:   horizontal line full width

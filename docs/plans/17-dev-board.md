@@ -1,6 +1,6 @@
-# 17 — Kairo Dev Board (ESP32-S3 + e-ink)
+# 17 — Palanu Dev Board (ESP32-S3 + e-ink)
 
-> Board layer tier 2 (overview §0): **Kairo Dev Board** (`dev-board`) — hardware testing sementara. Secara fisik = ESP32-S3-WROOM-1 + e-ink 2.7" 264×176 + 6 tombol TCA9534, yaitu device bekas projek sebelumnya yang dimiliki developer. Pinout = single source of truth dari ref `kairo-test-concept-esp32-s3-wroom-1-eink/firmware/main/badge_pins.h`. Saat Kairo Board V1 (PCB custom) jadi, cukup tambah board layer baru — platform `esp32` & Core tidak berubah.
+> Board layer tier 2 (overview §0): **Palanu Dev Board** (`dev-board`) — hardware testing sementara. Secara fisik = ESP32-S3-WROOM-1 + e-ink 2.7" 264×176 + 6 tombol TCA9534, yaitu device bekas projek sebelumnya yang dimiliki developer. Pinout = single source of truth dari ref `palanu-test-concept-esp32-s3-wroom-1-eink/firmware/main/badge_pins.h`. Saat Palanu Board V1 (PCB custom) jadi, cukup tambah board layer baru — platform `esp32` & Core tidak berubah.
 
 - Status: ☐ Not started
 - Milestone: M6 (ESP32 Dev Hardware)
@@ -11,7 +11,7 @@
 
 ## Goal
 
-- `DevBoard : IBoard` (`name() == "dev-board"`) mendeklarasikan hardware Kairo Dev Board.
+- `DevBoard : IBoard` (`name() == "dev-board"`) mendeklarasikan hardware Palanu Dev Board.
 - `board_config.h` — pin map persis dari `badge_pins.h` (single source of truth).
 - **Button driver** TCA9534 (6 tombol) → map ke `Key` enum → `ViewDispatcher::handleKey()`.
 - Mengisi HardwareRegistry + CapabilityRegistry (display, wifi, buttons, battery).
@@ -30,7 +30,7 @@
 
 - E-ink display driver (plan 18).
 - ATECC608B secure element, sub-GHz, audio.
-- Kairo Board V1 (produksi).
+- Palanu Board V1 (produksi).
 
 ---
 
@@ -73,7 +73,7 @@
 
 ```text
 firmware/boards/dev-board/
-├─ include/kairo/devboard/
+├─ include/palanu/devboard/
 │  ├─ board_config.h       # pin constants (mirror badge_pins.h dari ref)
 │  └─ dev_board.h
 ├─ src/
@@ -86,7 +86,7 @@ firmware/boards/dev-board/
 
 ```cpp
 #pragma once
-namespace kairo::devboard {
+namespace nema::devboard {
 // Power
 constexpr int PIN_PWR    = 18;
 constexpr int PIN_SE_EN  = 8;

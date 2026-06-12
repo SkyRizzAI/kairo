@@ -26,7 +26,7 @@
 
 ### Out of scope
 
-- Kairo Dev Board (ESP32-S3) / Kairo Board V1 (non-MVP).
+- Palanu Dev Board (ESP32-S3) / Palanu Board V1 (non-MVP).
 - Home screen / UI (non-MVP).
 - Driver baru (sudah di stage 06).
 
@@ -38,10 +38,10 @@
 
 ```text
 firmware/boards/simulator/
-├─ include/kairo/sim/simulator_board.h
+├─ include/palanu/sim/simulator_board.h
 ├─ src/simulator_board.cpp
 └─ CMakeLists.txt
-firmware/core/include/kairo/services/clock_service.h   # contoh background service
+firmware/core/include/palanu/services/clock_service.h   # contoh background service
 firmware/core/src/services/clock_service.cpp
 firmware/targets/simulator/main.cpp                     # final wiring
 ```

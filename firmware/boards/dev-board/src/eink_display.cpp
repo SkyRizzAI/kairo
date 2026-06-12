@@ -1,13 +1,13 @@
-#include "kairo/devboard/eink_display.h"
-#include "kairo/devboard/board_config.h"
-#include "kairo/log/logger.h"
+#include "nema/devboard/eink_display.h"
+#include "nema/devboard/board_config.h"
+#include "nema/log/logger.h"
 #include <GxEPD2_BW.h>
 #include <gdey/GxEPD2_270_GDEY027T91.h>
 #include <SPI.h>
 #include <esp_heap_caps.h>
 #include <cstring>
 
-namespace kairo {
+namespace nema {
 
 using namespace devboard;
 
@@ -115,4 +115,4 @@ void EinkDisplay::flushBuffer(const uint8_t* buf, uint16_t w, uint16_t h) {
     std::memcpy(prev_buf_, buf, (size_t)w * h);
 }
 
-} // namespace kairo
+} // namespace nema

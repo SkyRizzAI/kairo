@@ -1,13 +1,13 @@
 // Host unit test for the KLP codec (Plan 35). Mirrors the TS test vectors in
 // packages/forge/src/lib/klp/codec.test.ts so both codecs stay byte-exact.
-#include "kairo/link/klp_codec.h"
-#include "kairo/link/transport.h"
+#include "nema/link/klp_codec.h"
+#include "nema/link/transport.h"
 #include <cassert>
 #include <cstdio>
 #include <vector>
 
-using namespace kairo;
-using namespace kairo::klp;
+using namespace nema;
+using namespace nema::klp;
 
 static std::vector<uint8_t> enc(uint8_t ch, std::vector<uint8_t> p, uint8_t fl = 0) {
     std::vector<uint8_t> out;

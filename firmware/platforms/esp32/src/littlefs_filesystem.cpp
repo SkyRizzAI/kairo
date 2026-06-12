@@ -1,11 +1,11 @@
-#include "kairo/esp32/littlefs_filesystem.h"
+#include "nema/esp32/littlefs_filesystem.h"
 #include "esp_littlefs.h"
 #include <dirent.h>
 #include <sys/stat.h>
 #include <cstdio>
 #include <unistd.h>
 
-namespace kairo {
+namespace nema {
 
 bool LittleFsFileSystem::begin(const char* partitionLabel, const char* basePath) {
     base_ = basePath;
@@ -96,4 +96,4 @@ bool LittleFsFileSystem::remove(const std::string& path) {
     return S_ISDIR(st.st_mode) ? (rmdir(rp.c_str()) == 0) : (unlink(rp.c_str()) == 0);
 }
 
-} // namespace kairo
+} // namespace nema

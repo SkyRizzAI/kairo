@@ -1,15 +1,15 @@
-#include "kairo/devboard/tca9534_buttons.h"
-#include "kairo/devboard/board_config.h"
-#include "kairo/devboard/dev_board_key_map.h"
-#include "kairo/runtime.h"
-#include "kairo/log/logger.h"
-#include "kairo/services/input_service.h"
-#include "kairo/input/i_key_map.h"
+#include "nema/devboard/tca9534_buttons.h"
+#include "nema/devboard/board_config.h"
+#include "nema/devboard/dev_board_key_map.h"
+#include "nema/runtime.h"
+#include "nema/log/logger.h"
+#include "nema/services/input_service.h"
+#include "nema/input/i_key_map.h"
 #include <Wire.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 
-namespace kairo {
+namespace nema {
 
 using namespace devboard;
 
@@ -100,4 +100,4 @@ Key TCA9534Buttons::bitToKey(uint8_t bit) {
     }
 }
 
-} // namespace kairo
+} // namespace nema

@@ -44,14 +44,14 @@
 ### File
 
 ```text
-firmware/core/include/kairo/plugin/
+firmware/core/include/palanu/plugin/
 ├─ plugin.h           # IPlugin, PluginId
 ├─ plugin_context.h   # PluginContext
 └─ plugin_manager.h   # PluginManager
 firmware/core/src/plugin/
 ├─ plugin_context.cpp
 └─ plugin_manager.cpp
-firmware/core/include/kairo/plugins/
+firmware/core/include/palanu/plugins/
 └─ hello_plugin.h     # sample plugin
 firmware/core/src/plugins/
 └─ hello_plugin.cpp
@@ -60,12 +60,12 @@ firmware/core/src/plugins/
 ### IPlugin
 
 ```cpp
-namespace kairo {
+namespace nema {
 using PluginId = const char*;
 
 struct IPlugin {
     virtual ~IPlugin() = default;
-    virtual PluginId    id()      const = 0;  // "com.kairo.hello"
+    virtual PluginId    id()      const = 0;  // "com.palanu.hello"
     virtual const char* name()    const = 0;  // "Hello Plugin"
     virtual const char* version() const = 0;  // "1.0.0"
     virtual void onLoad(PluginContext& ctx)   = 0;
@@ -80,7 +80,7 @@ struct IPlugin {
 Plugin hanya boleh akses sistem melalui ini — bukan langsung ke Runtime.
 
 ```cpp
-namespace kairo {
+namespace nema {
 class PluginContext {
 public:
     PluginContext(Runtime& rt, IPlugin& plugin);
@@ -102,7 +102,7 @@ public:
 ### PluginManager
 
 ```cpp
-namespace kairo {
+namespace nema {
 class PluginManager {
 public:
     PluginManager(Runtime& rt);
@@ -127,7 +127,7 @@ private:
 
 ```cpp
 class HelloPlugin : public IPlugin {
-    PluginId    id()      const override { return "com.kairo.hello"; }
+    PluginId    id()      const override { return "com.palanu.hello"; }
     const char* name()    const override { return "Hello Plugin"; }
     const char* version() const override { return "1.0.0"; }
 
@@ -155,7 +155,7 @@ class HelloPlugin : public IPlugin {
 - `main.cpp`: load `HelloPlugin` setelah `rt.start()`.
 - Controls panel tambah tombol "Load Hello" / "Unload Hello".
 - Web UI: panel **Plugins** listing `id`, `name`, `version`, status.
-- Command bridge baru: `{"cmd":"load_plugin","id":"com.kairo.hello"}` / `{"cmd":"unload_plugin","id":"..."}`.
+- Command bridge baru: `{"cmd":"load_plugin","id":"com.palanu.hello"}` / `{"cmd":"unload_plugin","id":"..."}`.
 
 ---
 

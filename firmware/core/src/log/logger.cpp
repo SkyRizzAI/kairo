@@ -1,6 +1,6 @@
-#include "kairo/log/logger.h"
+#include "nema/log/logger.h"
 
-namespace kairo {
+namespace nema {
 
 Logger::Logger(IClock& clock) : clock_(clock) {}
 
@@ -29,4 +29,4 @@ void Logger::log(LogLevel lvl, const char* component, std::string msg,
     }
 }
 
-} // namespace kairo
+} // namespace nema

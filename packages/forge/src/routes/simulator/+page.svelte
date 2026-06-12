@@ -43,7 +43,7 @@
 	let showCli = $state(false);
 	let showFiles = $state(false);
 
-	const AUTOBOOT = 'kairo:autoboot';
+	const AUTOBOOT = 'nema:autoboot';
 
 	// Power controls. The WASM firmware can only load once per page lifetime, so:
 	//  Boot     = load + boot the firmware in place (off → on).

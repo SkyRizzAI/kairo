@@ -1,9 +1,9 @@
-#include "kairo/ui/canvas.h"
+#include "nema/ui/canvas.h"
 #include <cstdlib>  // abs
 #include <cstring>
 #include <cmath>    // roundf
 
-namespace kairo {
+namespace nema {
 
 Canvas::Canvas(IDisplayDriver& driver, float scale)
     : driver_(driver), scale_(scale >= 1.0f ? scale : 1.0f) {}
@@ -199,4 +199,4 @@ bool Canvas::supportsRgb565() const {
     return true;
 }
 
-} // namespace kairo
+} // namespace nema

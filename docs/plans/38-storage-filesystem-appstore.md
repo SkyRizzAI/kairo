@@ -2,13 +2,13 @@
 
 > **Filesystem layer** untuk **persistensi** & file besar: simpan app `.kapp` yang
 > ter-install supaya **tahan reboot**, data per-app yang ter-sandbox, file user, dan
-> nanti dasar **firmware-OTA staging** (Plan 39). Sekarang Kairo cuma punya
+> nanti dasar **firmware-OTA staging** (Plan 39). Sekarang Palanu cuma punya
 > `IConfigStore` (NVS: key-value, namespace ≤15 char, value ~4KB) — tak cukup untuk
 > menyimpan bundle app. Plan ini memberi **`IFileSystem`** + backend (LittleFS
 > internal flash, microSD) + **persistence layer untuk `JsAppStore`** + **per-app
 > storage sandbox + quota**.
 >
-> Asal-usul: rekomendasi **P4** di `docs/research/akiraos-vs-kairo.md` (pola
+> Asal-usul: rekomendasi **P4** di `docs/research/akiraos-vs-palanu.md` (pola
 > `fs_manager` AkiraOS: SD→internal→RAM fallback + isolasi storage per-app).
 
 > ⚠️ **KOREKSI SCOPE (2026-06-09, setelah Plan 37 maju ke Fase 6/8):**
@@ -53,7 +53,7 @@
 > Cukup besar untuk ratusan `.kapp`. Plan ini me-mount partisi itu sebagai LittleFS
 > (ganti subtype/`littlefs` atau pakai partisi data generik). microSD = FAT.
 
-### 0.2 Satu interface, banyak backend (pola Kairo: capability, bukan board)
+### 0.2 Satu interface, banyak backend (pola Palanu: capability, bukan board)
 `IFileSystem` adalah HAL (di `hal/`), bukan board-spesifik. Backend dipilih saat
 runtime via capability/registrasi platform — **bukan** `#ifdef board`. Mengikuti
 prinsip `CLAUDE.md` ("check capabilities, never board type") dan pola `fs_manager`
@@ -61,7 +61,7 @@ AkiraOS yang **graceful fallback** (SD → internal → RAM).
 
 ### 0.3 Mount table + sandbox path per-app
 Path absolut dengan prefix mount: `/flash/...`, `/sd/...`, `/ram/...`. App JS (Plan
-37) **tidak** dapat path absolut bebas — `kairo.storage` & `IAppStore` memetakan ke
+37) **tidak** dapat path absolut bebas — `palanu.storage` & `IAppStore` memetakan ke
 `/flash/apps/<app-id>/...`. App tak bisa keluar dari sandbox-nya (path traversal
 ditolak). Tambah **quota** byte per app.
 
@@ -80,7 +80,7 @@ ditolak). Tambah **quota** byte per app.
    `/flash/apps/*.kapp` → `JsAppStore::registerApp`; saat `installKapp` (OTA),
    tulis juga `.kapp` ke `/flash/apps/<id>.kapp`. → app ter-install **tahan reboot**
    (tanpa ini, install Plan 37 cuma volatile). microSD opsional (bulk libraries).
-5. **Per-app sandbox + quota**: `kairo.storage` (Plan 37) routing ke
+5. **Per-app sandbox + quota**: `palanu.storage` (Plan 37) routing ke
    `/flash/apps/<id>/`; tolak path di luar sandbox; batasi byte per app.
 6. Semua teruji **host + WASM dulu**, baru device (build-only kalau device tak ada).
 
@@ -88,7 +88,7 @@ ditolak). Tambah **quota** byte per app.
 
 ## 2. Arsitektur
 
-### 2.1 HAL (`firmware/core/include/kairo/hal/filesystem.h`)
+### 2.1 HAL (`firmware/core/include/palanu/hal/filesystem.h`)
 ```cpp
 struct FileStat { uint32_t size; bool isDir; uint32_t mtime; };
 
@@ -116,7 +116,7 @@ biar call-site ringkas (pola sama `RemoteScreenTap`/transport kita).
 ```
 firmware/platforms/esp32/.../esp32_littlefs.{h,cpp}   // esp_littlefs di partisi data
 firmware/platforms/esp32/.../esp32_sd.{h,cpp}         // sdspi (SPI3 skyrizz) + FATFS
-firmware/platforms/host/.../host_fs.{h,cpp}           // POSIX, root = $TMPDIR/kairo
+firmware/platforms/host/.../host_fs.{h,cpp}           // POSIX, root = $TMPDIR/palanu
 firmware/platforms/wasm/.../mem_fs.{h,cpp}            // in-memory (juga fallback)
 firmware/core/src/hal/mount_table.{h,cpp}             // resolve "/flash/.." → backend
 ```
@@ -125,7 +125,7 @@ firmware/core/src/hal/mount_table.{h,cpp}             // resolve "/flash/.." →
 - WASM/host: MemFs/HostFs → `/flash` (biar Plan 37 jalan di sim tanpa hardware).
 
 ### 2.3 Persistensi `JsAppStore` (bukan IAppStore baru)
-Plan 37 **sudah** punya `JsAppStore` (RAM registry, `firmware/core/include/kairo/
+Plan 37 **sudah** punya `JsAppStore` (RAM registry, `firmware/core/include/palanu/
 plugins/js_app_store.h`) dengan `registerApp()` + `installKapp()`. Plan 38 cuma
 menambah **persistensi** lewat `IFileSystem` — tak perlu interface store baru:
 ```
@@ -141,7 +141,7 @@ bool removePersisted(id);          // hapus file + unregister
 - microSD: scan `/sd/apps/*.kapp` juga (Fase 7) — sumber yang sama, mount beda.
 
 ### 2.4 Sandbox & quota
-- `kairo.storage` (Plan 37 host-function) → namespace `/flash/apps/<id>/data/`.
+- `palanu.storage` (Plan 37 host-function) → namespace `/flash/apps/<id>/data/`.
 - `AppFsSandbox` wrapper: normalisasi path, tolak `..`/absolut, prefix paksa,
   cek quota (`usedBytes(appDir) + n <= quotaBytes`).
 
@@ -154,7 +154,7 @@ bool removePersisted(id);          // hapus file + unregister
 | **0. HAL + MemFs/HostFs** | `IFileSystem`, `MemFsBackend`, `HostFsBackend`, mount table | `fs_test` host: write→read→list→stat→remove; path-traversal ditolak |
 | **1. LittleFS esp32** | `esp_littlefs` mount partisi data → `/flash`; capability `storage.fs` | esp32 build hijau; (device) tulis file survive reboot |
 | **2. Persistensi JsAppStore** | `JsAppStore::loadPersisted` (boot scan) + tulis `.kapp` saat `installKapp`; pakai `IFileSystem` | sim+device: install app via OTA (Plan 37) → reboot → app **masih ada** & launch |
-| **3. Sandbox + quota** | `AppFsSandbox`; `kairo.storage` route per-app; quota byte | sim: app A tak bisa baca dir app B; tulis > quota ditolak |
+| **3. Sandbox + quota** | `AppFsSandbox`; `palanu.storage` route per-app; quota byte | sim: app A tak bisa baca dir app B; tulis > quota ditolak |
 | **4. microSD (skyrizz)** | `SdFatBackend` SPI3 + FATFS → `/sd`; `SdAppStore`; fallback bila absen | device: app load dari `/sd/apps`; cabut SD → degrade aman |
 | **5. WASM persistence (opsional)** | MemFs → IndexedDB di Forge sim biar app install persist di browser | Forge: install app di sim, reload, app masih ada |
 

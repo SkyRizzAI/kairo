@@ -1,14 +1,14 @@
-#include "kairo/screens/about_screen.h"
-#include "kairo/runtime.h"
-#include "kairo/board.h"
-#include "kairo/ui/view_dispatcher.h"
-#include "kairo/ui/ascii_board_renderer.h"
-#include "kairo/system/system_info.h"
-#include "kairo/system/capability_registry.h"
-#include "kairo/clock.h"
+#include "nema/screens/about_screen.h"
+#include "nema/runtime.h"
+#include "nema/board.h"
+#include "nema/ui/view_dispatcher.h"
+#include "nema/ui/ascii_board_renderer.h"
+#include "nema/system/system_info.h"
+#include "nema/system/capability_registry.h"
+#include "nema/clock.h"
 #include <cstdio>
 
-namespace kairo {
+namespace nema {
 
 using namespace ui;
 
@@ -84,4 +84,4 @@ UiNode* AboutScreen::build(NodeArena& a, Runtime& rt) {
     });
 }
 
-} // namespace kairo
+} // namespace nema

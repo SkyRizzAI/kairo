@@ -1,9 +1,9 @@
-#include "kairo/apps/clock_app.h"
-#include "kairo/ui/widgets.h"
+#include "nema/apps/clock_app.h"
+#include "nema/ui/widgets.h"
 #include <ctime>
 #include <cstdio>
 
-namespace kairo {
+namespace nema {
 
 using namespace ui;
 
@@ -43,4 +43,4 @@ UiNode* ClockApp::build(NodeArena& a, AppContext&) {
     });
 }
 
-} // namespace kairo
+} // namespace nema

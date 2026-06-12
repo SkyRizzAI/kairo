@@ -40,24 +40,24 @@
 ### File
 
 ```text
-firmware/core/include/kairo/hal/
+firmware/core/include/palanu/hal/
 ├─ driver.h           # IDriver (base): name(), kind()
 ├─ battery.h          # IBatteryDriver: level(), isCharging()
 └─ wifi.h             # IWifiDriver: connect(ssid), disconnect(), isConnected()
 firmware/platforms/simulator/
-├─ include/kairo/sim/simulator_platform.h
+├─ include/palanu/sim/simulator_platform.h
 ├─ src/simulator_platform.cpp
 ├─ src/host_clock.cpp           # IClock via std::chrono
 ├─ src/sim_battery_driver.cpp
 ├─ src/sim_wifi_driver.cpp
-└─ CMakeLists.txt               # add_library(kairo_platform_sim) link kairo_core, kairo_vendor
+└─ CMakeLists.txt               # add_library(nema_platform_sim) link nema_core, nema_vendor
 ```
 
 ### HAL interface (core, agnostic)
 
 ```cpp
 // driver.h
-namespace kairo {
+namespace nema {
 enum class DriverKind { Battery, Wifi, Bluetooth, Display, Storage, /* ... */ Other };
 struct IDriver {
   virtual ~IDriver() = default;
@@ -111,7 +111,7 @@ private:
 ### Update target & CMake
 
 - `targets/simulator/main.cpp`: ganti stub platform jadi `SimulatorPlatform` nyata.
-- `targets/simulator/CMakeLists.txt`: link `kairo_platform_sim`.
+- `targets/simulator/CMakeLists.txt`: link `nema_platform_sim`.
 
 ---
 

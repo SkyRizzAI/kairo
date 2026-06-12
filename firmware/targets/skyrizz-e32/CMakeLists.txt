@@ -11,4 +11,4 @@ set(EXTRA_COMPONENT_DIRS
 )
 
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
-project(kairo-skyrizz-e32)
+project(nema-skyrizz-e32)

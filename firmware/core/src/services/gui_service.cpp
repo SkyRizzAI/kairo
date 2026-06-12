@@ -1,22 +1,22 @@
-#include "kairo/services/gui_service.h"
-#include "kairo/runtime.h"
-#include "kairo/clock.h"
-#include "kairo/service/service_container.h"
-#include "kairo/config/config_store.h"
-#include "kairo/ui/canvas.h"
-#include "kairo/ui/screen.h"
-#include "kairo/ui/status_bar.h"
-#include "kairo/ui/ui_constants.h"
-#include "kairo/ui/view_dispatcher.h"
-#include "kairo/services/input_service.h"
-#include "kairo/app/app_host_manager.h"
-#include "kairo/input/input_action.h"
-#include "kairo/system/capability_registry.h"
-#include "kairo/nema/task_runner.h"
+#include "nema/services/gui_service.h"
+#include "nema/runtime.h"
+#include "nema/clock.h"
+#include "nema/service/service_container.h"
+#include "nema/config/config_store.h"
+#include "nema/ui/canvas.h"
+#include "nema/ui/screen.h"
+#include "nema/ui/status_bar.h"
+#include "nema/ui/ui_constants.h"
+#include "nema/ui/view_dispatcher.h"
+#include "nema/services/input_service.h"
+#include "nema/app/app_host_manager.h"
+#include "nema/input/input_action.h"
+#include "nema/system/capability_registry.h"
+#include "nema/task_runner.h"
 #include <ctime>
 #include <cstdio>
 
-namespace kairo {
+namespace nema {
 
 void GuiService::start() {
     display_ = rt_.container().resolve<IDisplayDriver>();
@@ -170,4 +170,4 @@ void GuiService::loop() {
     }
 }
 
-} // namespace kairo
+} // namespace nema

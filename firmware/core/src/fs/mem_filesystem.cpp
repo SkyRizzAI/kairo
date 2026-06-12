@@ -1,6 +1,6 @@
-#include "kairo/fs/mem_filesystem.h"
+#include "nema/fs/mem_filesystem.h"
 
-namespace kairo {
+namespace nema {
 
 namespace {
 
@@ -90,4 +90,4 @@ void MemFileSystem::seed(const std::string& path, const std::string& text) {
     write(path, (const uint8_t*)text.data(), text.size());
 }
 
-} // namespace kairo
+} // namespace nema

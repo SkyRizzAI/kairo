@@ -37,7 +37,7 @@
 ### File
 
 ```text
-firmware/core/include/kairo/event/
+firmware/core/include/palanu/event/
 ├─ event.h        # Event, EventName konstanta
 └─ event_bus.h    # EventBus
 firmware/core/src/event/
@@ -48,7 +48,7 @@ firmware/core/src/event/
 
 ```cpp
 // event.h
-namespace kairo {
+namespace nema {
 struct Event {
   const char* name;                       // gunakan konstanta di bawah
   std::vector<Field> payload;             // reuse Field dari log_entry.h (key/value)
@@ -69,7 +69,7 @@ namespace events {
 }
 
 // event_bus.h
-namespace kairo {
+namespace nema {
 using EventHandler = std::function<void(const Event&)>;
 using SubscriptionId = uint32_t;
 

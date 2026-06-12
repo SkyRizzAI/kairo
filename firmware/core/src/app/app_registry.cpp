@@ -1,15 +1,15 @@
-#include "kairo/app/app_registry.h"
-#include "kairo/app/app.h"
-#include "kairo/app/app_host_manager.h"
-#include "kairo/service.h"
-#include "kairo/ui/view_dispatcher.h"
-#include "kairo/runtime.h"
-#include "kairo/log/logger.h"
-#include "kairo/event/event_bus.h"
-#include "kairo/event/event.h"
+#include "nema/app/app_registry.h"
+#include "nema/app/app.h"
+#include "nema/app/app_host_manager.h"
+#include "nema/service.h"
+#include "nema/ui/view_dispatcher.h"
+#include "nema/runtime.h"
+#include "nema/log/logger.h"
+#include "nema/event/event_bus.h"
+#include "nema/event/event.h"
 #include <cstring>
 
-namespace kairo {
+namespace nema {
 
 AppRegistry::AppRegistry(Runtime& rt) : rt_(rt) {}
 
@@ -99,4 +99,4 @@ bool AppRegistry::launch(const char* id) {
     return false;
 }
 
-} // namespace kairo
+} // namespace nema

@@ -26,7 +26,7 @@
 - Spesifikasi protokol (di bawah) — **sumber kebenaran** untuk stage 10.
 - Implementasi emit telemetry & baca command di platform/target simulator.
 - Non-blocking stdin read di host (POSIX `poll`/`read` pada fd 0) — diletakkan di platform sim (bukan core).
-- Mode output: human-readable (ConsoleSink) vs JSON-lines (JsonStdoutSink). Pilih via env/flag (mis. `KAIRO_SIM_JSON=1` atau argv `--json`) supaya `run-sim.sh` manual tetap enak dibaca, dan Bun pakai mode JSON.
+- Mode output: human-readable (ConsoleSink) vs JSON-lines (JsonStdoutSink). Pilih via env/flag (mis. `PALANU_SIM_JSON=1` atau argv `--json`) supaya `run-sim.sh` manual tetap enak dibaca, dan Bun pakai mode JSON.
 
 ### Out of scope
 
@@ -74,7 +74,7 @@ firmware/platforms/simulator/
 ├─ src/json_stdout_sink.cpp      # ILogSink → JSON line
 ├─ src/telemetry_bridge.cpp      # subscribe event/service → JSON line
 ├─ src/command_reader.cpp        # non-blocking stdin → parse → dispatch
-└─ include/kairo/sim/bridge.h
+└─ include/palanu/sim/bridge.h
 ```
 
 > Semua pakai `nlohmann/json` (vendored) — boleh karena ini **platform**, bukan core. Core tetap bersih.
@@ -105,7 +105,7 @@ void CommandReader::poll(Runtime& rt) {
 
 - `initCore()` pasang sink berdasarkan mode:
   - default / `--human`: `ConsoleSink`.
-  - `--json` atau `KAIRO_SIM_JSON=1`: `JsonStdoutSink` (+ MemorySink tetap).
+  - `--json` atau `PALANU_SIM_JSON=1`: `JsonStdoutSink` (+ MemorySink tetap).
 - Saat mode JSON, transisi service & event juga di-emit sebagai JSON line (telemetry_bridge aktif), dan snapshot system/hardware/capability + `ready` dikirim setelah `start()`.
 
 ---
@@ -121,8 +121,8 @@ void CommandReader::poll(Runtime& rt) {
 
 ## Acceptance criteria
 
-- `KAIRO_SIM_JSON=1 ./kairo-sim` mengeluarkan JSON-lines valid (tiap baris parse OK) untuk log, event, service, snapshot, dan `ready`.
-- `echo '{"cmd":"shutdown"}' | KAIRO_SIM_JSON=1 ./kairo-sim` → proses shutdown bersih (services Stopped) lalu exit 0.
+- `PALANU_SIM_JSON=1 ./palanu-sim` mengeluarkan JSON-lines valid (tiap baris parse OK) untuk log, event, service, snapshot, dan `ready`.
+- `echo '{"cmd":"shutdown"}' | PALANU_SIM_JSON=1 ./palanu-sim` → proses shutdown bersih (services Stopped) lalu exit 0.
 - `inject_event` menghasilkan event yang muncul kembali di stream telemetry.
 - `wifi_connect` → emit `event NetworkConnected`.
 - Tanpa command, proses tetap hidup (tidak auto-exit) — menunggu `shutdown`.
@@ -130,10 +130,10 @@ void CommandReader::poll(Runtime& rt) {
 ## How to verify
 
 ```bash
-BIN=firmware/build/targets/simulator/kairo-sim
+BIN=firmware/build/targets/simulator/palanu-sim
 # stream telemetry + kirim shutdown setelah 2 detik
 ( printf '{"cmd":"wifi_connect","ssid":"Office"}\n'; sleep 2; printf '{"cmd":"shutdown"}\n' ) \
-  | KAIRO_SIM_JSON=1 "$BIN" | head -40
+  | PALANU_SIM_JSON=1 "$BIN" | head -40
 # tiap baris harus JSON valid; ada type=event name=NetworkConnected; diakhiri services Stopped
 ```
 

@@ -17,7 +17,7 @@
 |-------|--------|
 | `SimDisplay` W, H | `static constexpr W=264, H=176` di header — hardcoded |
 | Buffer display | `uint8_t buf_[W * H]` — stack array 46 KB, tidak bisa resize |
-| Binary spawn | Hanya `KAIRO_SIM_JSON=1` env var, tidak ada dimensi |
+| Binary spawn | Hanya `PALANU_SIM_JSON=1` env var, tidak ada dimensi |
 | Frontend layout | Grid `570px \| 1fr`. Left: display + kontrol campur aduk |
 | Controls | WiFi networks, buttons, runtime controls semua di satu panel panjang |
 | Tombol hardware | Grid CSS biasa, tidak visual seperti D-pad fisik |
@@ -29,7 +29,7 @@
 
 Preset yang akan ditawarkan di panel Display:
 
-### E-ink / E-paper (prioritas utama untuk Kairo)
+### E-ink / E-paper (prioritas utama untuk Palanu)
 
 | Label | Resolusi | Perangkat |
 |-------|----------|-----------|
@@ -60,7 +60,7 @@ User input `width` × `height` bebas (min 64×32, max 1024×768).
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
-│  Kairo Simulator  ● running   simulator/simulator · v.dev         │
+│  Palanu Simulator  ● running   simulator/simulator · v.dev         │
 ├─────────────────────┬──────────────────────┬─────────────────────┤
 │                     │                      │                     │
 │   DEVICE            │   SETTINGS           │   LOGS / EVENTS     │
@@ -154,8 +154,8 @@ void SimDisplay::init(Logger& log, TelemetryBridge& bridge) {
     log_    = &log;
     bridge_ = &bridge;
 
-    const char* envW = std::getenv("KAIRO_SIM_W");
-    const char* envH = std::getenv("KAIRO_SIM_H");
+    const char* envW = std::getenv("PALANU_SIM_W");
+    const char* envH = std::getenv("PALANU_SIM_H");
     w_ = envW ? (uint16_t)std::atoi(envW) : 264;
     h_ = envH ? (uint16_t)std::atoi(envH) : 176;
 
@@ -181,9 +181,9 @@ function bootSim() {
     proc = Bun.spawn([BIN_PATH], {
         env: {
             ...process.env,
-            KAIRO_SIM_JSON: "1",
-            KAIRO_SIM_W: String(simResolution.w),
-            KAIRO_SIM_H: String(simResolution.h),
+            PALANU_SIM_JSON: "1",
+            PALANU_SIM_W: String(simResolution.w),
+            PALANU_SIM_H: String(simResolution.h),
         },
         // ...
     });
@@ -345,7 +345,7 @@ Scale factor: 2× (logical = 264×176)
 
 Header bar yang sudah ada — tambahkan info resolusi aktif:
 ```
-Kairo Simulator  ● running   simulator/simulator · vdev   264×176
+Palanu Simulator  ● running   simulator/simulator · vdev   264×176
 ```
 
 ---
@@ -355,7 +355,7 @@ Kairo Simulator  ● running   simulator/simulator · vdev   264×176
 ### Firmware (C++)
 | File | Perubahan |
 |------|-----------|
-| `platforms/simulator/include/kairo/sim/sim_display.h` | W/H jadi instance members, buf_ jadi pointer |
+| `platforms/simulator/include/palanu/sim/sim_display.h` | W/H jadi instance members, buf_ jadi pointer |
 | `platforms/simulator/src/sim_display.cpp` | Baca env vars, dynamic alloc, ganti semua W→w_, H→h_ |
 
 ### Server (TypeScript)
@@ -405,7 +405,7 @@ Kairo Simulator  ● running   simulator/simulator · vdev   264×176
 ## Non-Goals
 
 - Landscape/portrait toggle di simulator (plan terpisah)
-- Color display simulation (Kairo is 1-bit only saat ini)
+- Color display simulation (Palanu is 1-bit only saat ini)
 - Recording/replay session
 - Multiple display panels sekaligus
 - Mobile-responsive simulator (desktop-only tool)

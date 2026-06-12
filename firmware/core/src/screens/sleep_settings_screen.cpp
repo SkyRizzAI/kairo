@@ -1,11 +1,11 @@
-#include "kairo/screens/sleep_settings_screen.h"
-#include "kairo/runtime.h"
-#include "kairo/ui/canvas.h"
-#include "kairo/ui/view_dispatcher.h"
-#include "kairo/services/display_power_manager.h"
-#include "kairo/config/config_store.h"
+#include "nema/screens/sleep_settings_screen.h"
+#include "nema/runtime.h"
+#include "nema/ui/canvas.h"
+#include "nema/ui/view_dispatcher.h"
+#include "nema/services/display_power_manager.h"
+#include "nema/config/config_store.h"
 
-namespace kairo {
+namespace nema {
 
 using namespace ui;
 
@@ -96,4 +96,4 @@ UiNode* SleepSettingsScreen::build(NodeArena& a, Runtime&) {
     });
 }
 
-} // namespace kairo
+} // namespace nema

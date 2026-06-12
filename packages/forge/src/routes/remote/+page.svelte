@@ -112,7 +112,7 @@
 		<div>
 			<h1 class="text-lg font-semibold">Remote — Discovery</h1>
 			<p class="text-muted-foreground text-sm">
-				Pick a target. Same Kairo Link Protocol, different transport.
+				Pick a target. Same Nema Link Protocol, different transport.
 			</p>
 		</div>
 

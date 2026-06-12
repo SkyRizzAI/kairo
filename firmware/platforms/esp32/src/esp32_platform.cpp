@@ -1,14 +1,14 @@
-#include "kairo/esp32/esp32_platform.h"
-#include "kairo/runtime.h"
-#include "kairo/board.h"
-#include "kairo/config/config_store.h"
-#include "kairo/service/service_container.h"
-#include "kairo/system/capability_registry.h"
-#include "kairo/hal/display.h"
-#include "kairo/log/logger.h"
-#include "kairo/services/remote_service.h"
-#include "kairo/services/cli_service.h"
-#include "kairo/apps/js_app_store.h"
+#include "nema/esp32/esp32_platform.h"
+#include "nema/runtime.h"
+#include "nema/board.h"
+#include "nema/config/config_store.h"
+#include "nema/service/service_container.h"
+#include "nema/system/capability_registry.h"
+#include "nema/hal/display.h"
+#include "nema/log/logger.h"
+#include "nema/services/remote_service.h"
+#include "nema/services/cli_service.h"
+#include "nema/apps/js_app_store.h"
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 #include <esp_system.h>
@@ -16,7 +16,7 @@
 #include <string>
 #include <vector>
 
-namespace kairo {
+namespace nema {
 
 void Esp32Platform::registerDrivers(Runtime& rt) {
     rt_ = &rt;
@@ -93,7 +93,7 @@ void Esp32Platform::postRegister(Runtime& rt) {
         rootFs_.mkdir("/data");
         std::vector<uint8_t> probe;
         if (!rootFs_.read("/readme.txt", probe)) {
-            std::string msg = "Kairo filesystem (LittleFS — persistent across reboots).\n";
+            std::string msg = "Palanu filesystem (LittleFS — persistent across reboots).\n";
             rootFs_.write("/readme.txt", (const uint8_t*)msg.data(), msg.size());
         }
     }
@@ -128,4 +128,4 @@ void Esp32Platform::idle() {
     vTaskDelay(pdMS_TO_TICKS(5));
 }
 
-} // namespace kairo
+} // namespace nema

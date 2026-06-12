@@ -14,7 +14,7 @@
 - `EinkDisplay : IDisplayDriver` membungkus GxEPD2 (`GxEPD2_BW<GxEPD2_270_GDEY027T91, ...>`).
 - Resolusi 264×176, rotation 1 (landscape) — **identik dengan SimDisplay** sehingga Canvas/Screen tidak berubah.
 - Event-driven flush: `flush()` = full refresh (~1s), partial-window untuk cursor update.
-- 1-bit buffer Kairo (0=bg/putih, 1=ink/hitam) → GxEPD2 drawPixel.
+- 1-bit buffer Palanu (0=bg/putih, 1=ink/hitam) → GxEPD2 drawPixel.
 
 ## Scope
 
@@ -22,7 +22,7 @@
 
 - `EinkDisplay` implement `IDisplayDriver`: drawPixel, fillRect, clear, flush, invertRect.
 - GxEPD2 init (SPI pins dari `board_config.h`).
-- Mapping: Kairo `on=true` (ink) → GxEPD2 `GxEPD_BLACK`; `on=false` → `GxEPD_WHITE`.
+- Mapping: Palanu `on=true` (ink) → GxEPD2 `GxEPD_BLACK`; `on=false` → `GxEPD_WHITE`.
 - Full refresh on `flush()`; opsional partial refresh untuk update kecil.
 - E-ink prewarm setelah full refresh (seperti ref `screen_prewarm`).
 
@@ -41,12 +41,12 @@
 - `arduino-esp32` v3.3.8 (component registry).
 - `GxEPD2` + `Adafruit_GFX` + `Adafruit_BusIO` — sebagai EXTRA_COMPONENT_DIRS (vendor di `firmware/vendor/arduino-libs/` atau pakai component manager).
 
-> Catatan: ref menaruh lib ini di `software/components` di luar repo. Untuk Kairo, **vendor sources** di `firmware/vendor/arduino-libs/{GxEPD2,Adafruit_GFX,Adafruit_BusIO}` agar build self-contained.
+> Catatan: ref menaruh lib ini di `software/components` di luar repo. Untuk Palanu, **vendor sources** di `firmware/vendor/arduino-libs/{GxEPD2,Adafruit_GFX,Adafruit_BusIO}` agar build self-contained.
 
 ### File
 
 ```text
-firmware/platforms/esp32/include/kairo/esp32/eink_display.h
+firmware/platforms/esp32/include/palanu/esp32/eink_display.h
 firmware/platforms/esp32/src/eink_display.cpp
 ```
 
@@ -88,7 +88,7 @@ private:
 
 ### flush() — full refresh
 
-GxEPD2 pakai paged drawing. Karena Kairo Canvas menggambar ke shadow `buf_` dulu, `flush()` tinggal mem-blit buffer:
+GxEPD2 pakai paged drawing. Karena Palanu Canvas menggambar ke shadow `buf_` dulu, `flush()` tinggal mem-blit buffer:
 
 ```cpp
 void EinkDisplay::flush() {
@@ -158,7 +158,7 @@ Runtime membuat `Canvas` dari `IDisplayDriver` (sudah ada di plan 13/14) — **t
 ## Acceptance criteria
 
 - `clear(false); flush()` → panel putih bersih.
-- HomeScreen render di e-ink (logo KAIRO + status bar + app list) — visual sama dengan simulator.
+- HomeScreen render di e-ink (logo PALANU + status bar + app list) — visual sama dengan simulator.
 - Tekan UP/DOWN → cursor pindah, e-ink refresh.
 - Frame buffer identik dengan SimDisplay (bisa cross-check: dump buf_ vs frame JSON simulator).
 

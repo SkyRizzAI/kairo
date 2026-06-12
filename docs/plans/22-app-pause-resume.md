@@ -90,7 +90,7 @@ App **tidak perlu kode tambahan** — `ctx.input().receive()` yang menangani pau
 ### 1. Long-press detection di `InputService`
 
 ```
-firmware/core/include/kairo/services/input_service.h (modify)
+firmware/core/include/palanu/services/input_service.h (modify)
 firmware/core/src/services/input_service.cpp (modify)
 ```
 
@@ -116,7 +116,7 @@ KeyState keyState_[/* Key::Count */];
 `InputEvent` tambah `Edge::LongPress`:
 
 ```cpp
-// kairo/nema/input_event.h (modify)
+// palanu/nema/input_event.h (modify)
 enum class Edge : uint8_t { Press, Release, LongPress };
 ```
 
@@ -125,7 +125,7 @@ Threshold `longPressMs_` = 2000ms (configurable di constructor).
 ### 2. `AppLoader::pause()` dan `resume()`
 
 ```
-firmware/core/include/kairo/app/app_loader.h (modify)
+firmware/core/include/palanu/app/app_loader.h (modify)
 firmware/core/src/app/app_loader.cpp (modify)
 ```
 
@@ -219,7 +219,7 @@ Modal ini ditangani `HomeScreen` via `ScreenMode::Modal` yang sudah ada di arsit
 ### 3. `AppContext::setPauseRequested()` + `signalInput()`
 
 ```
-firmware/core/include/kairo/app/app_context.h (modify)
+firmware/core/include/palanu/app/app_context.h (modify)
 firmware/core/src/app/app_context.cpp (modify)
 ```
 

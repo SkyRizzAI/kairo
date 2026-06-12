@@ -1,12 +1,12 @@
-# Kairo Master Plan v0.5
+# Palanu Master Plan v0.5
 
-> Single source of truth untuk seluruh perencanaan Kairo Runtime, Kairo Simulator, dan Kairo Board.
+> Single source of truth untuk seluruh perencanaan Palanu Runtime, Palanu Simulator, dan Palanu Board.
 
 ---
 
 # 1. Vision
 
-Kairo adalah platform handheld device yang berfokus pada:
+Palanu adalah platform handheld device yang berfokus pada:
 
 - Hardware hacking
 - Wireless experimentation
@@ -31,15 +31,15 @@ Tujuan jangka panjang adalah membangun sebuah platform yang memiliki:
 
 ## Runtime
 
-Kairo Runtime
+Palanu Runtime
 
-Core operating/runtime layer yang berjalan pada seluruh perangkat Kairo.
+Core operating/runtime layer yang berjalan pada seluruh perangkat Palanu.
 
 ---
 
 ## SDK
 
-Kairo SDK
+Palanu SDK
 
 Framework untuk mengembangkan:
 
@@ -51,7 +51,7 @@ Framework untuk mengembangkan:
 
 ## Simulator
 
-Kairo Simulator
+Palanu Simulator
 
 Environment development dan debugging berbasis web.
 
@@ -59,15 +59,15 @@ Environment development dan debugging berbasis web.
 
 ## Hardware
 
-Kairo Board
+Palanu Board
 
-Nama resmi hardware Kairo.
+Nama resmi hardware Palanu.
 
 Contoh:
 
-- Kairo Board DevKit S3
-- Kairo Board V1
-- Kairo Board V2
+- Palanu Board DevKit S3
+- Palanu Board V1
+- Palanu Board V2
 
 ---
 
@@ -122,7 +122,7 @@ if (isEsp32())
 # 4. Repository Structure
 
 ```text
-kairo/
+palanu/
 
 firmware/
 ├─ core/
@@ -462,7 +462,7 @@ Purpose:
 
 ---
 
-## Kairo Board V1
+## Palanu Board V1
 
 Production hardware target.
 
@@ -504,14 +504,14 @@ Platform
 
 ---
 
-## Kairo Board V1 Target
+## Palanu Board V1 Target
 
 ```text
 Target
-  kairo-board-v1
+  palanu-board-v1
 
 Board
-  kairo-board-v1
+  palanu-board-v1
 
 Platform
   esp32
@@ -577,7 +577,7 @@ Hardware
 
 # 14. UI Runtime
 
-Standar UI resmi Kairo.
+Standar UI resmi Palanu.
 
 Plugin tidak boleh menggambar pixel secara langsung.
 
@@ -668,14 +668,14 @@ Simulator bukan emulator hardware.
 
 Simulator menjalankan:
 
-- Kairo Runtime
+- Palanu Runtime
 - Plugin Runtime
 - UI Runtime
 - Mock Drivers
 
 ---
 
-# 19. Kairo Simulator
+# 19. Palanu Simulator
 
 Location:
 
@@ -759,7 +759,7 @@ Actions:
 
 ---
 
-# 21. Kairo Board V1
+# 21. Palanu Board V1
 
 ## Goal
 
@@ -769,7 +769,7 @@ Dengan runtime dan plugin ecosystem yang lebih modern.
 
 ---
 
-# 22. Kairo Board V1 Hardware Targets
+# 22. Palanu Board V1 Hardware Targets
 
 ## Processing
 
@@ -962,7 +962,7 @@ Potential future modules:
 
 # 31. Mandatory Capabilities
 
-Kairo Board V1 wajib memiliki:
+Palanu Board V1 wajib memiliki:
 
 - WiFi
 - Bluetooth
@@ -1050,7 +1050,7 @@ ESP32-S3-WROOM-1-N8R8
 
 ## Milestone 7
 
-Kairo Board V1
+Palanu Board V1
 
 - Hardware Design
 - PCB Design
@@ -1063,7 +1063,7 @@ Kairo Board V1
 
 Board:
 
-Kairo Board DevKit S3
+Palanu Board DevKit S3
 
 MCU:
 
@@ -1084,4 +1084,4 @@ Purpose:
 - Integration Testing
 - Simulator Validation
 
-Before Kairo Board V1 exists.
+Before Palanu Board V1 exists.

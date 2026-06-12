@@ -1,11 +1,11 @@
 # 16 — ESP32 Platform
 
-> Implementasi `IPlatform` untuk ESP32 menggunakan ESP-IDF. Mengganti semua stub/dummy driver dengan driver hardware nyata. Target: **Kairo Dev Board** = ESP32-S3-WROOM-1 + e-ink (tier 2, lihat overview §0 — device testing sementara). Platform `esp32` ini nanti dipakai ulang oleh Kairo Board V1 tanpa berubah.
+> Implementasi `IPlatform` untuk ESP32 menggunakan ESP-IDF. Mengganti semua stub/dummy driver dengan driver hardware nyata. Target: **Palanu Dev Board** = ESP32-S3-WROOM-1 + e-ink (tier 2, lihat overview §0 — device testing sementara). Platform `esp32` ini nanti dipakai ulang oleh Palanu Board V1 tanpa berubah.
 
 - Status: ☐ Not started
 - Milestone: M6 (ESP32 Dev Hardware)
 - Depends on: 06 (HAL interface), 08 (registries), plan 01–11 (core stable)
-- Blocks: 17 (Kairo Dev Board), 18 (e-ink display driver)
+- Blocks: 17 (Palanu Dev Board), 18 (e-ink display driver)
 
 ---
 
@@ -17,7 +17,7 @@
 - Build system: CMake + ESP-IDF component model (`idf_component_register`).
 - Binary di-flash ke ESP32-S3 dan boot runtime penuh.
 
-> **Catatan implementasi:** `Esp32BatteryDriver` **tidak** dibuat untuk Kairo Dev Board — `badge_pins.h` (ref) tidak punya pin battery ADC, jadi hardware-nya memang tidak ada. Capability `"battery"` tidak didaftarkan di dev board (capability-driven: UI cukup tidak menampilkan baterai). Battery monitoring menyusul di Kairo Board V1 yang PCB-nya didesain dengan pembagi tegangan baterai.
+> **Catatan implementasi:** `Esp32BatteryDriver` **tidak** dibuat untuk Palanu Dev Board — `badge_pins.h` (ref) tidak punya pin battery ADC, jadi hardware-nya memang tidak ada. Capability `"battery"` tidak didaftarkan di dev board (capability-driven: UI cukup tidak menampilkan baterai). Battery monitoring menyusul di Palanu Board V1 yang PCB-nya didesain dengan pembagi tegangan baterai.
 
 ## Scope
 
@@ -49,7 +49,7 @@
 firmware/
 ├─ platforms/
 │  └─ esp32/
-│     ├─ include/kairo/esp32/
+│     ├─ include/palanu/esp32/
 │     │  ├─ esp32_platform.h
 │     │  ├─ esp32_clock.h
 │     │  ├─ esp32_wifi_driver.h
@@ -153,7 +153,7 @@ set(EXTRA_COMPONENT_DIRS
     ${CMAKE_CURRENT_SOURCE_DIR}/../../boards/dev-board
 )
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
-project(kairo-dev-board)
+project(nema-dev-board)
 ```
 
 Core component `idf_component_register`:
@@ -174,8 +174,8 @@ idf_component_register(
 if(ESP_PLATFORM)
     idf_component_register(SRCS ... INCLUDE_DIRS ...)
 else()
-    add_library(kairo_core STATIC ...)
-    target_include_directories(kairo_core PUBLIC include)
+    add_library(nema_core STATIC ...)
+    target_include_directories(nema_core PUBLIC include)
 endif()
 ```
 

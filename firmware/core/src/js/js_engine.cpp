@@ -1,16 +1,16 @@
-#include "kairo/js/js_engine.h"
-#include "kairo/js/kairo_runtime_js.h"
-#include "kairo/runtime.h"
-#include "kairo/log/logger.h"
-#include "kairo/ui/node.h"
-#include "kairo/ui/widgets.h"
+#include "nema/js/js_engine.h"
+#include "nema/js/nema_runtime_js.h"
+#include "nema/runtime.h"
+#include "nema/log/logger.h"
+#include "nema/ui/node.h"
+#include "nema/ui/widgets.h"
 #include <chrono>
 #include <cstring>
 #include <deque>
 
-namespace kairo::js {
+namespace nema::js {
 
-using namespace kairo::ui;
+using namespace nema::ui;
 
 static uint64_t nowMs() {
     using namespace std::chrono;
@@ -36,24 +36,24 @@ int JsEngine::interruptCheck() {
     return (nowMs() - startMs_) > deadlineMs_ ? 1 : 0;
 }
 
-// ── module loader: resolve `kairo` / `kairo/jsx-runtime` → embedded runtime ──
+// ── module loader: resolve `nema` / `nema/jsx-runtime` → embedded runtime ──
 static char* module_normalize(JSContext* ctx, const char*, const char* name, void*) {
     return js_strdup(ctx, name);
 }
 static JSModuleDef* module_loader(JSContext* ctx, const char* name, void* opaque) {
     auto* self = static_cast<JsEngine*>(opaque);
-    if (std::strcmp(name, "kairo") == 0 || std::strcmp(name, "kairo/jsx-runtime") == 0 ||
-        std::strcmp(name, "kairo/jsx-dev-runtime") == 0) {
-        if (self->kairoModuleDef()) return self->kairoModuleDef();
-        JSValue v = JS_Eval(ctx, KAIRO_RUNTIME_JS, std::strlen(KAIRO_RUNTIME_JS),
-                            "kairo", JS_EVAL_TYPE_MODULE | JS_EVAL_FLAG_COMPILE_ONLY);
+    if (std::strcmp(name, "nema") == 0 || std::strcmp(name, "nema/jsx-runtime") == 0 ||
+        std::strcmp(name, "nema/jsx-dev-runtime") == 0) {
+        if (self->nemaModuleDef()) return self->nemaModuleDef();
+        JSValue v = JS_Eval(ctx, NEMA_RUNTIME_JS, std::strlen(NEMA_RUNTIME_JS),
+                            "nema", JS_EVAL_TYPE_MODULE | JS_EVAL_FLAG_COMPILE_ONLY);
         if (JS_IsException(v)) return nullptr;
         JSModuleDef* def = static_cast<JSModuleDef*>(JS_VALUE_GET_PTR(v));
         JS_FreeValue(ctx, v);   // module is registered in the runtime now
-        self->setKairoModuleDef(def);
+        self->setNemaModuleDef(def);
         return def;
     }
-    JS_ThrowReferenceError(ctx, "module '%s' not found (only 'kairo' is provided)", name);
+    JS_ThrowReferenceError(ctx, "module '%s' not found (only 'nema' is provided)", name);
     return nullptr;
 }
 
@@ -66,14 +66,9 @@ JsEngine::JsEngine() {
     JS_SetContextOpaque(ctx_, this);
     JS_SetInterruptHandler(rt_, interrupt_trampoline, this);
     JS_SetModuleLoaderFunc(rt_, module_normalize, module_loader, this);
-    // On-device: keep the JS recursion limit below the FreeRTOS task stack
-    // (64 KB). Native C frames are 32-bit / ~half the size of the 64-bit host,
-    // so 48 KB comfortably fits within 64 KB once C overhead is subtracted.
-    // On host tests the stack is effectively unlimited; leave QuickJS at its
-    // default (256 KB) so tests aren't artificially constrained.
-#ifdef ESP_PLATFORM
-    JS_SetMaxStackSize(rt_, 48 * 1024);
-#endif
+    // The recursion guard (JS_SetMaxStackSize) is set by the owner (JsApp) once it
+    // knows the thread stack — see JsApp::onStart. QuickJS's 1 MB default is left
+    // in place only until then; nothing deep runs before the owner overrides it.
     scheduleFn_ = JS_NewCFunction(ctx_, schedule_cfn, "schedule", 0);
 }
 
@@ -89,6 +84,7 @@ JsEngine::~JsEngine() {
 }
 
 void JsEngine::setMemoryLimit(size_t bytes) { if (rt_ && bytes) JS_SetMemoryLimit(rt_, bytes); }
+void JsEngine::setMaxStackSize(size_t bytes) { if (rt_) JS_SetMaxStackSize(rt_, bytes); }
 void JsEngine::setDeadlineMs(uint32_t ms)   { deadlineMs_ = ms; }
 bool JsEngine::takeDirty()                  { bool d = dirty_; dirty_ = false; return d; }
 
@@ -112,6 +108,20 @@ void JsEngine::pumpJobs() {
     while (JS_ExecutePendingJob(rt_, &pctx) > 0) { /* microtasks */ }
 }
 
+bool JsEngine::settleEval(JSValue res) {
+    if (JS_IsException(res)) { captureError(); JS_FreeValue(ctx_, res); return false; }
+    pumpJobs();   // let the module-eval promise settle
+    bool ok = true;
+    if (JS_IsObject(res) && JS_PromiseState(ctx_, res) == JS_PROMISE_REJECTED) {
+        JSValue reason = JS_PromiseResult(ctx_, res);
+        JS_Throw(ctx_, reason);   // make captureError() read this as the exception
+        captureError();
+        ok = false;
+    }
+    JS_FreeValue(ctx_, res);
+    return ok;
+}
+
 bool JsEngine::eval(const char* code, const char* filename, bool asModule) {
     if (!ok()) return false;
     err_.clear();
@@ -124,22 +134,41 @@ bool JsEngine::eval(const char* code, const char* filename, bool asModule) {
     return true;
 }
 
+// Compile + evaluate the embedded `nema` runtime module up-front, at shallow C
+// stack depth. Without this, the module loader compiles the (large, deeply-nested
+// minified) runtime *while already deep inside the app module's instantiation* —
+// so the peak native stack during loadApp is app-depth + runtime-parse-depth.
+// Doing it here collapses that to max(runtime-parse, app-depth), which is what
+// makes constrained stacks (WASM workers, ESP FreeRTOS task) survive.
+bool JsEngine::preloadRuntime() {
+    if (!ok() || nemaDef_) return nemaDef_ != nullptr;
+    err_.clear();
+    startMs_ = nowMs();
+    JSValue mod = JS_Eval(ctx_, NEMA_RUNTIME_JS, std::strlen(NEMA_RUNTIME_JS),
+                          "nema", JS_EVAL_TYPE_MODULE | JS_EVAL_FLAG_COMPILE_ONLY);
+    if (JS_IsException(mod)) { captureError(); JS_FreeValue(ctx_, mod); return false; }
+    nemaDef_ = static_cast<JSModuleDef*>(JS_VALUE_GET_PTR(mod));
+    JSValue res = JS_EvalFunction(ctx_, JS_DupValue(ctx_, mod));   // instantiate+eval (shallow)
+    JS_FreeValue(ctx_, mod);
+    if (!settleEval(res)) { nemaDef_ = nullptr; return false; }
+    return true;
+}
+
 bool JsEngine::loadApp(const char* js, const char* name) {
     if (!ok()) return false;
     err_.clear();
     startMs_ = nowMs();
+    preloadRuntime();   // shallow-compile the runtime before descending into the app
     if (host_) host_->log().debug("JsEngine", "compile", {{"app", name}});
-    // Compile the app as a module, then evaluate the graph (resolves `kairo`).
+    // Compile the app as a module, then evaluate the graph (resolves `nema`).
     JSValue mod = JS_Eval(ctx_, js, std::strlen(js), name,
                           JS_EVAL_TYPE_MODULE | JS_EVAL_FLAG_COMPILE_ONLY);
     if (JS_IsException(mod)) { captureError(); JS_FreeValue(ctx_, mod); return false; }
     JSModuleDef* appDef = static_cast<JSModuleDef*>(JS_VALUE_GET_PTR(mod));
     if (host_) host_->log().debug("JsEngine", "eval", {{"app", name}});
     JSValue res = JS_EvalFunction(ctx_, JS_DupValue(ctx_, mod));
-    if (JS_IsException(res)) { captureError(); JS_FreeValue(ctx_, res); JS_FreeValue(ctx_, mod); return false; }
-    JS_FreeValue(ctx_, res);
+    if (!settleEval(res)) { JS_FreeValue(ctx_, mod); return false; }
     if (host_) host_->log().debug("JsEngine", "jobs", {{"app", name}});
-    pumpJobs();
 
     JSValue ns = JS_GetModuleNamespace(ctx_, appDef);
     appComponent_ = JS_GetPropertyStr(ctx_, ns, "default");
@@ -147,12 +176,12 @@ bool JsEngine::loadApp(const char* js, const char* name) {
     JS_FreeValue(ctx_, mod);
     if (!JS_IsFunction(ctx_, appComponent_)) { err_ = "app has no default-exported component"; return false; }
 
-    if (kairoDef_) {
-        JSValue kns = JS_GetModuleNamespace(ctx_, kairoDef_);
+    if (nemaDef_) {
+        JSValue kns = JS_GetModuleNamespace(ctx_, nemaDef_);
         renderFn_ = JS_GetPropertyStr(ctx_, kns, "renderToTree");
         JS_FreeValue(ctx_, kns);
     }
-    if (!JS_IsFunction(ctx_, renderFn_)) { err_ = "kairo runtime missing renderToTree"; return false; }
+    if (!JS_IsFunction(ctx_, renderFn_)) { err_ = "nema runtime missing renderToTree"; return false; }
     return true;
 }
 
@@ -312,4 +341,4 @@ bool JsEngine::callHandler(int id) {
     return dirty_;
 }
 
-} // namespace kairo::js
+} // namespace nema::js

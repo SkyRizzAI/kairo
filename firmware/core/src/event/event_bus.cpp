@@ -1,7 +1,7 @@
-#include "kairo/event/event_bus.h"
+#include "nema/event/event_bus.h"
 #include <algorithm>
 
-namespace kairo {
+namespace nema {
 
 SubscriptionId EventBus::subscribe(const char* name, EventHandler handler) {
     SubscriptionId id = nextId_++;
@@ -28,4 +28,4 @@ void EventBus::publish(const Event& event) {
     publishing_ = false;
 }
 
-} // namespace kairo
+} // namespace nema

@@ -1,8 +1,8 @@
-#include "kairo/ui/text_style.h"
-#include "kairo/ui/canvas.h"   // BitmapFont, FONT_5X8
+#include "nema/ui/text_style.h"
+#include "nema/ui/canvas.h"   // BitmapFont, FONT_5X8
 #include <cstring>
 
-namespace kairo::ui {
+namespace nema::ui {
 
 static TextSize g_size = TextSize::Normal;
 
@@ -43,4 +43,4 @@ TextMetrics roleMetrics() {
     return TextMetrics{ metricsW, metricsH, nullptr };
 }
 
-} // namespace kairo::ui
+} // namespace nema::ui

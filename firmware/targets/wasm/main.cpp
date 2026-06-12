@@ -1,24 +1,24 @@
 #include <emscripten.h>
-#include "kairo/runtime.h"
-#include "kairo/log/logger.h"
-#include "kairo/wasm/wasm_platform.h"
-#include "kairo/sim/simulator_board.h"
-#include "kairo/services/clock_service.h"
-#include "kairo/app/app_registry.h"
-#include "kairo/apps/clock_app.h"
-#include "kairo/apps/counter_app.h"
-#include "kairo/apps/stopwatch_app.h"
-#include "kairo/apps/task_demo_app.h"
-#include "kairo/apps/ticker_app.h"
-#include "kairo/apps/ui_showcase_app.h"
-#include "kairo/apps/js_app_store.h"
-#include "kairo/screens/home_screen.h"
-#include "kairo/ui/view_dispatcher.h"
+#include "nema/runtime.h"
+#include "nema/log/logger.h"
+#include "nema/wasm/wasm_platform.h"
+#include "nema/sim/simulator_board.h"
+#include "nema/services/clock_service.h"
+#include "nema/app/app_registry.h"
+#include "nema/apps/clock_app.h"
+#include "nema/apps/counter_app.h"
+#include "nema/apps/stopwatch_app.h"
+#include "nema/apps/task_demo_app.h"
+#include "nema/apps/ticker_app.h"
+#include "nema/apps/ui_showcase_app.h"
+#include "nema/apps/js_app_store.h"
+#include "nema/screens/home_screen.h"
+#include "nema/ui/view_dispatcher.h"
 
 namespace {
-    kairo::WasmPlatform           platform;
-    kairo::SimulatorBoard         board;
-    kairo::Runtime                rt = kairo::Runtime::create();
+    nema::WasmPlatform           platform;
+    nema::SimulatorBoard         board;
+    nema::Runtime                rt = nema::Runtime::create();
 }
 
 static void loop() { rt.step(); }
@@ -32,28 +32,28 @@ int main() {
     // Background service shipped via the same registry as apps (AppType::
     // Service, hidden from the launcher). Installed before start() → boots
     // with the system.
-    static kairo::ClockService clockSvc(rt.log(), rt.events());
-    rt.apps().installService(clockSvc, "com.kairo.svc.clock");
+    static nema::ClockService clockSvc(rt.log(), rt.events());
+    rt.apps().installService(clockSvc, "com.palanu.svc.clock");
 
     rt.start();
 
     // Install the built-in apps (shown in the launcher; selecting spawns the
     // app on its own thread).
-    static kairo::ClockApp      clockApp;
-    static kairo::CounterApp    counterApp;
-    static kairo::StopwatchApp  stopwatchApp;
-    static kairo::TaskDemoApp   taskDemoApp;
-    static kairo::TickerApp     tickerApp;
-    static kairo::UiShowcaseApp uiShowcaseApp;
+    static nema::ClockApp      clockApp;
+    static nema::CounterApp    counterApp;
+    static nema::StopwatchApp  stopwatchApp;
+    static nema::TaskDemoApp   taskDemoApp;
+    static nema::TickerApp     tickerApp;
+    static nema::UiShowcaseApp uiShowcaseApp;
     rt.apps().install(clockApp);
     rt.apps().install(counterApp);
     rt.apps().install(stopwatchApp);
     rt.apps().install(taskDemoApp);
     rt.apps().install(tickerApp);
     rt.apps().install(uiShowcaseApp);
-    kairo::loadEmbeddedJsApps(rt);   // built-in JS (custom) apps (Plan 37)
+    nema::loadEmbeddedJsApps(rt);   // built-in JS (custom) apps (Plan 37)
 
-    static kairo::HomeScreen homeScreen(rt);
+    static nema::HomeScreen homeScreen(rt);
     rt.view().push(homeScreen);
 
     rt.log().info("Boot", "wasm ready");

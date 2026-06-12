@@ -1,10 +1,10 @@
-#include "kairo/screens/home_screen.h"
-#include "kairo/ui/view_dispatcher.h"
-#include "kairo/app/app_host_manager.h"
-#include "kairo/runtime.h"
+#include "nema/screens/home_screen.h"
+#include "nema/ui/view_dispatcher.h"
+#include "nema/app/app_host_manager.h"
+#include "nema/runtime.h"
 #include <cstdio>
 
-namespace kairo {
+namespace nema {
 
 using namespace ui;
 
@@ -44,9 +44,9 @@ UiNode* HomeScreen::build(NodeArena& a, Runtime& rt) {
     add(ListRow(a, "Settings", onSettings, this));
 
     return View(a, root, {
-        Row(a, titleRow, { Text(a, "KAIRO", TextRole::Title) }),
+        Row(a, titleRow, { Text(a, "PALANU", TextRole::Title) }),
         menuNode,
     });
 }
 
-} // namespace kairo
+} // namespace nema

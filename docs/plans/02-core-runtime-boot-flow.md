@@ -13,7 +13,7 @@
 
 Menyediakan "tulang punggung" runtime yang hardware-agnostic:
 
-- Interface inti (`IService`, `IPlatform`, `IBoard`, `IClock`) di `firmware/core/include/kairo/`.
+- Interface inti (`IService`, `IPlatform`, `IBoard`, `IClock`) di `firmware/core/include/palanu/`.
 - Objek `Runtime` yang menyimpan referensi ke Platform, Board, dan registry service.
 - Implementasi **Boot Flow** sesuai master plan §12 (sampai "Start Runtime"; "Launch Home Screen" di-skip karena UI Runtime di luar MVP).
 - `targets/simulator/main.cpp` dirombak memanggil boot flow (masih pakai platform/board stub minimal sampai stage 06/07 mengisinya).
@@ -53,7 +53,7 @@ main()
 ### File baru
 
 ```text
-firmware/core/include/kairo/
+firmware/core/include/palanu/
 ├─ types.h            # LogLevel, ServiceState, BootPhase, dsb
 ├─ clock.h            # IClock (now(), monotonic millis)
 ├─ service.h          # IService
@@ -68,14 +68,14 @@ firmware/core/src/
 
 ```cpp
 // types.h
-namespace kairo {
+namespace nema {
 enum class LogLevel { Trace, Debug, Info, Warn, Error, Fatal };
 enum class ServiceState { Created, Starting, Running, Stopping, Stopped, Failed };
 enum class BootPhase { None, PlatformLoaded, BoardLoaded, ServicesRegistered, CoreReady, Running };
 }
 
 // clock.h — core tak pakai std::chrono langsung; platform yang sediakan
-namespace kairo {
+namespace nema {
 struct IClock {
   virtual ~IClock() = default;
   virtual uint64_t millis() = 0;          // monotonic ms sejak boot
@@ -84,7 +84,7 @@ struct IClock {
 }
 
 // service.h
-namespace kairo {
+namespace nema {
 struct IService {
   virtual ~IService() = default;
   virtual const char* name() const = 0;
@@ -95,7 +95,7 @@ struct IService {
 }
 
 // platform.h — abstraksi environment (simulator/esp32)
-namespace kairo {
+namespace nema {
 class Runtime;
 struct IPlatform {
   virtual ~IPlatform() = default;
@@ -106,7 +106,7 @@ struct IPlatform {
 }
 
 // board.h
-namespace kairo {
+namespace nema {
 struct IBoard {
   virtual ~IBoard() = default;
   virtual const char* name() const = 0;   // "simulator"
@@ -115,7 +115,7 @@ struct IBoard {
 }
 
 // runtime.h
-namespace kairo {
+namespace nema {
 class Runtime {
 public:
   static Runtime create();
@@ -165,13 +165,13 @@ Masih pakai stub platform/board inline (akan diganti `SimulatorPlatform`/`Simula
 - [ ] Tulis header interface: `types.h`, `clock.h`, `service.h`, `platform.h`, `board.h`.
 - [ ] Tulis `runtime.h` + `runtime.cpp` (boot flow + `run()` loop kosong).
 - [ ] Sediakan stub `IClock`/`IPlatform`/`IBoard` minimal (di target, bukan core) untuk uji boot.
-- [ ] Update `core/CMakeLists.txt` → `add_library(kairo_core ...)` dengan source nyata + `target_include_directories(... PUBLIC include)`.
+- [ ] Update `core/CMakeLists.txt` → `add_library(nema_core ...)` dengan source nyata + `target_include_directories(... PUBLIC include)`.
 - [ ] Rombak `main.cpp` memanggil boot flow, cetak transisi `BootPhase` sementara.
 - [ ] Pastikan tidak ada include platform-spesifik di `core/`.
 
 ## Acceptance criteria
 
-- `kairo-sim` build & jalan, mencetak transisi fase: `PlatformLoaded → BoardLoaded → ServicesRegistered → CoreReady → Running`, lalu shutdown bersih (mis. setelah N tick).
+- `palanu-sim` build & jalan, mencetak transisi fase: `PlatformLoaded → BoardLoaded → ServicesRegistered → CoreReady → Running`, lalu shutdown bersih (mis. setelah N tick).
 - `firmware/core/**` tidak meng-include header platform/OS-spesifik (cek manual / grep).
 - Boot flow gagal-aman: kalau platform null saat `initCore`, error jelas (assert/log), bukan crash diam.
 

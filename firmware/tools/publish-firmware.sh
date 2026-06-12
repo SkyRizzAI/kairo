@@ -17,7 +17,7 @@ ENTRIES=()
 
 for t in "${TARGETS[@]}"; do
     BUILD="$ROOT/firmware/targets/$t/build"
-    APP="$BUILD/kairo-$t.bin"
+    APP="$BUILD/nema-$t.bin"
     BOOT="$BUILD/bootloader/bootloader.bin"
     PART="$BUILD/partition_table/partition-table.bin"
     if [[ ! -f "$APP" || ! -f "$BOOT" || ! -f "$PART" ]]; then

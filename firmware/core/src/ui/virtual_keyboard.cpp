@@ -1,11 +1,11 @@
-#include "kairo/ui/virtual_keyboard.h"
-#include "kairo/ui/canvas.h"
-#include "kairo/ui/ui_constants.h"
-#include "kairo/input/input_action.h"
+#include "nema/ui/virtual_keyboard.h"
+#include "nema/ui/canvas.h"
+#include "nema/ui/ui_constants.h"
+#include "nema/input/input_action.h"
 #include <cstring>
 #include <cstdio>
 
-namespace kairo {
+namespace nema {
 namespace ui {
 
 // ── Char grid (rows 0-2) ──────────────────────────────────────────────────
@@ -246,4 +246,4 @@ void VirtualKeyboard::draw(Canvas& c, const char* prompt) const {
 }
 
 } // namespace ui
-} // namespace kairo
+} // namespace nema

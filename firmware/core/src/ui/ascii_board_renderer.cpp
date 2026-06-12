@@ -1,9 +1,9 @@
-#include "kairo/ui/ascii_board_renderer.h"
+#include "nema/ui/ascii_board_renderer.h"
 #include <cstring>
 #include <algorithm>
 #include <cmath>
 
-namespace kairo::ui {
+namespace nema::ui {
 
 namespace {
 
@@ -132,4 +132,4 @@ std::vector<std::string> AsciiBoardRenderer::renderLegend(
     return lines;
 }
 
-} // namespace kairo::ui
+} // namespace nema::ui

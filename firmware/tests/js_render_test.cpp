@@ -1,23 +1,23 @@
 // Host test for the JS→UiNode bridge (Plan 37 Fase 2): load a JS app module,
 // render its component to a native UiNode tree, and fire an onPress back into JS.
-#include "kairo/js/js_engine.h"
-#include "kairo/ui/node.h"
-#include "kairo/ui/widgets.h"
+#include "nema/js/js_engine.h"
+#include "nema/ui/node.h"
+#include "nema/ui/widgets.h"
 #include <cstdio>
 #include <cstring>
 
-using namespace kairo;
-using namespace kairo::ui;
+using namespace nema;
+using namespace nema::ui;
 
 static int fail = 0;
 #define CHECK(c, m) do { if (!(c)) { std::printf("  FAIL: %s\n", m); fail++; } \
                          else std::printf("  ok:   %s\n", m); } while (0)
 
-// A reactive counter authored against the `kairo` runtime using jsx() directly
+// A reactive counter authored against the `nema` runtime using jsx() directly
 // (the TSX→jsx transform happens at build time; here we hand-write the calls).
 // Exercises both the bridge (Fase 2) and hooks/re-render (Fase 3).
 static const char* APP =
-    "import { View, Text, Pressable, useState, jsx } from 'kairo';\n"
+    "import { View, Text, Pressable, useState, jsx } from 'nema';\n"
     "export default function App() {\n"
     "  const [n, setN] = useState(0);\n"
     "  return jsx(View, { style:{flexDirection:'column',padding:4}, children: [\n"
@@ -36,7 +36,7 @@ int main() {
     CHECK(eng.ok(), "engine init");
     bool loaded = eng.loadApp(APP);
     if (!loaded) std::printf("  loadApp error: %s\n", eng.lastError().c_str());
-    CHECK(loaded, "loadApp (resolves `kairo`, gets default export)");
+    CHECK(loaded, "loadApp (resolves `nema`, gets default export)");
 
     NodeArena arena(256);
     UiNode* root = eng.render(arena);

@@ -1,6 +1,6 @@
-#include "kairo/log/memory_sink.h"
+#include "nema/log/memory_sink.h"
 
-namespace kairo {
+namespace nema {
 
 MemorySink::MemorySink(std::size_t capacity) : capacity_(capacity) {}
 
@@ -19,4 +19,4 @@ void MemorySink::clear() {
     entries_.clear();
 }
 
-} // namespace kairo
+} // namespace nema

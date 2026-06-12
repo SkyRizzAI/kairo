@@ -1,11 +1,11 @@
-#include "kairo/ui/component_runtime.h"
-#include "kairo/ui/renderer.h"
-#include "kairo/ui/hit_test.h"
-#include "kairo/ui/canvas.h"
-#include "kairo/ui/key.h"
+#include "nema/ui/component_runtime.h"
+#include "nema/ui/renderer.h"
+#include "nema/ui/hit_test.h"
+#include "nema/ui/canvas.h"
+#include "nema/ui/key.h"
 #include <cstdlib>   // abs
 
-namespace kairo::ui {
+namespace nema::ui {
 
 // Gesture tuning.
 static constexpr int   DRAG_THRESH = 6;     // px of movement before a tap → drag
@@ -236,4 +236,4 @@ bool tickMomentum(ComponentState& st) {
     return true;
 }
 
-} // namespace kairo::ui
+} // namespace nema::ui

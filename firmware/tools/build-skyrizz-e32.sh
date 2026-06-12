@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Build Kairo firmware for SkyRizz E32 (ESP32-S3-N16R8 + TFT LCD + XL9535 3-button).
+# Build nema firmware for SkyRizz E32 (ESP32-S3-N16R8 + TFT LCD + XL9535 3-button).
 set -euo pipefail
 
 IDF="${IDF_PATH:-$HOME/esp/esp-idf}"
@@ -18,4 +18,4 @@ if [[ ! -f sdkconfig ]]; then
 fi
 
 idf.py build
-echo "Build OK → $(pwd)/build/kairo-skyrizz-e32.bin"
+echo "Build OK → $(pwd)/build/nema-skyrizz-e32.bin"

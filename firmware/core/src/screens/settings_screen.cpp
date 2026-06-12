@@ -1,10 +1,10 @@
-#include "kairo/screens/settings_screen.h"
-#include "kairo/runtime.h"
-#include "kairo/ui/view_dispatcher.h"
-#include "kairo/app/app_host_manager.h"
-#include "kairo/system/capability_registry.h"
+#include "nema/screens/settings_screen.h"
+#include "nema/runtime.h"
+#include "nema/ui/view_dispatcher.h"
+#include "nema/app/app_host_manager.h"
+#include "nema/system/capability_registry.h"
 
-namespace kairo {
+namespace nema {
 
 using namespace ui;
 
@@ -71,4 +71,4 @@ UiNode* SettingsScreen::build(NodeArena& a, Runtime& rt) {
     });
 }
 
-} // namespace kairo
+} // namespace nema
