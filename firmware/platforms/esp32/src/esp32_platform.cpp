@@ -38,13 +38,12 @@ void Esp32Platform::registerDrivers(Runtime& rt) {
 }
 
 void Esp32Platform::postRegister(Runtime& rt) {
-    // Wire the KLP remote layer (Plan 35/37) over a MUX of transports: USB-CDC
-    // (always — the native USB) + BLE (if the radio is present). The host reaches
-    // the device over whichever connects. Requires a display to mirror.
-    if (!rt.capabilities().has(caps::Display)) return;
-    auto* disp = rt.container().resolve<IDisplayDriver>();
-    if (!disp) return;
-
+    // --- SUBSTRATE (Plan 42 Fase 3): the KLP transport + CLI + VFS come up
+    // UNCONDITIONALLY, independent of any display. A headless board (no display
+    // capability) is still fully usable over USB-CDC/BLE via the CLI — the
+    // console is the substrate, the screen is just an optional consumer on top.
+    // KLP rides a MUX of transports: USB-CDC (always — native USB) + BLE (if the
+    // radio is present). The host reaches the device over whichever connects.
     usbCdc_.start();                 // reader task on the USB-CDC (Serial)
     usbLink_.init(usbCdc_);
     mux_.add(&usbLink_);             // USB cable
@@ -54,8 +53,6 @@ void Esp32Platform::postRegister(Runtime& rt) {
         mux_.add(&cable_);          // BLE cable
     }
     link_.attach(&mux_, LinkService::Role::Device);
-    tap_.init(*disp, link_);                            // decorate board display
-    rt.container().registerAs<IDisplayDriver>(&tap_);   // Canvas now renders into tap
 
     remote_.init(link_, rt.input());                    // INPUT/SYSTEM dispatch
     remote_.attachLog(rt.log());                        // stream logs on LOG channel
@@ -101,11 +98,23 @@ void Esp32Platform::postRegister(Runtime& rt) {
     rt.log().info("Esp32Platform", "filesystem", {{"root", fsOk ? "littlefs" : "FAILED"}});
     remote_.attachFs(vfs_);
 
-    link_.onReady(&Esp32Platform::readyThunk, this);    // push screen on connect
+    // --- DISPLAY-ONLY: mirror the screen to the host (RemoteScreenTap). Only
+    // wired when the board actually has a display; otherwise the substrate above
+    // stands alone (headless = CLI over USB/BLE, no screen channel).
+    auto* disp = rt.capabilities().has(caps::Display)
+                     ? rt.container().resolve<IDisplayDriver>()
+                     : nullptr;
+    if (disp) {
+        tap_.init(*disp, link_);                            // decorate board display
+        rt.container().registerAs<IDisplayDriver>(&tap_);   // Canvas renders into tap
+        link_.onReady(&Esp32Platform::readyThunk, this);    // push screen on connect
+    }
 
     remoteWired_ = true;
     rt.log().info("Esp32Platform", "KLP remote wired",
-                  {{"usb", "1"}, {"ble", rt.capabilities().has(caps::BtBle) ? "1" : "0"}});
+                  {{"usb", "1"},
+                   {"ble", rt.capabilities().has(caps::BtBle) ? "1" : "0"},
+                   {"screen", disp ? "1" : "0"}});
 }
 
 void Esp32Platform::readyThunk(void* user) {
