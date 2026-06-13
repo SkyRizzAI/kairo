@@ -1,0 +1,32 @@
+# Kairo firmware C++ style. Matches the existing hand-maintained style:
+# 4-space indent, un-indented namespaces, K&R braces, left-aligned pointers,
+# switch cases aligned with `switch`, aligned consecutive assignments.
+Language:        Cpp
+BasedOnStyle:    LLVM
+Standard:        c++17
+
+ColumnLimit:     90
+IndentWidth:     4
+TabWidth:        4
+UseTab:          Never
+AccessModifierOffset: -4
+
+NamespaceIndentation: None
+IndentCaseLabels: false
+PointerAlignment: Left
+DerivePointerAlignment: false
+
+BreakBeforeBraces: Attached
+AllowShortIfStatementsOnASingleLine: WithoutElse
+AllowShortFunctionsOnASingleLine: Inline
+AllowShortCaseLabelsOnASingleLine: false
+AllowShortLoopsOnASingleLine: false
+
+AlignConsecutiveAssignments: Consecutive
+AlignAfterOpenBracket: Align
+AlignTrailingComments: true
+
+SpaceBeforeParens: ControlStatements
+SortIncludes: false
+KeepEmptyLinesAtTheStartOfBlocks: false
+MaxEmptyLinesToKeep: 1

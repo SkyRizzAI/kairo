@@ -197,6 +197,16 @@ docs/
 
 ---
 
+## Contributing
+
+Contributions are welcome — new boards and drivers, apps, core features, fixes,
+and docs. Start with [`CONTRIBUTING.md`](CONTRIBUTING.md) for the build, the
+layering rules, and the PR flow. All participants are expected to follow our
+[Code of Conduct](CODE_OF_CONDUCT.md). To report a security issue, see
+[`SECURITY.md`](SECURITY.md).
+
 ## License
 
-See [`LICENSE`](LICENSE).
+Kairo is free software licensed under the **GNU General Public License v3.0** —
+see [`LICENSE`](LICENSE). You may use, study, share, and modify it; derivative
+works that you distribute must also be released under the GPLv3.
