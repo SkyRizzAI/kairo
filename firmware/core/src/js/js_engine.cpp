@@ -277,7 +277,6 @@ UiNode* JsEngine::reify(JSValueConst node, NodeArena& arena) {
     } else if (type == "Slider") {
         n->type = NodeType::Slider;
         n->focusable = true;
-        if (scrollCursor_ >= 0) {}  // (no-op; sliders use their own pool below)
         // Persist the slider value in an engine-owned int (JS owns the source of
         // truth; we mirror it each frame). Reuse the scroll cursor pattern.
         if (sliderCursor_ >= (int)sliderVals_.size()) sliderVals_.push_back(0);

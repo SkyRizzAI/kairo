@@ -77,11 +77,11 @@ void SkyRizzE32::describeHardware(Runtime& rt) {
     rt.hardware().add({"audio.input", DriverKind::Other, "ES7243E @0x11"});
     rt.capabilities().add("audio.input");
 
-    // Audio output — stub for future I2S DAC
+    // Audio output — NS4168 I2S amplifier (shares I2S0 TX with the mic)
     speaker_.init(rt, mic_);
     rt.container().registerService(&speaker_);
     rt.audio().addOutput(&speaker_, "spk0", "NS4168 I2S Amp");
-    rt.hardware().add({"audio.output", DriverKind::Other, "I2S DAC (stub)"});
+    rt.hardware().add({"audio.output", DriverKind::Other, "NS4168 I2S Amp"});
     rt.capabilities().add("audio.output");
 
     // Camera — GC2145 DVP

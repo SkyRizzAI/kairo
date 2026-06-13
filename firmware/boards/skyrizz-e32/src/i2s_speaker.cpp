@@ -6,7 +6,6 @@
 #include <esp_err.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
-#include <cstdio>
 #include <string>
 
 namespace nema::skyrizze32 {
@@ -60,11 +59,12 @@ static void beepTask(void* arg) {
         if (lastErr != ESP_OK) break;
         framesWritten += chunk;
     }
-    // Bring-up diagnostic (temporary): err=0 + full bytesOut means the data
-    // shifted out of I2S0/GPIO45 OK. Remove once speaker output is confirmed.
-    std::printf("[SPK] i2s_write err=%d (%s) bytesOut=%u/%u\n",
-                (int)lastErr, esp_err_to_name(lastErr), (unsigned)totalOut,
-                (unsigned)(totalFrames * 2 * sizeof(int32_t)));
+    // I2S write diagnostic: err=0 + full bytesOut means the data shifted out
+    // of I2S0/GPIO45 OK.
+    if (rt_) rt_->log().debug("I2sSpeaker", "i2s_write",
+                              {{"err", esp_err_to_name(lastErr)},
+                               {"bytesOut", std::to_string(totalOut)},
+                               {"bytesTotal", std::to_string(totalFrames * 2 * sizeof(int32_t))}});
 
     // Write a short silence so NS4168 doesn't end on a DC offset
     int32_t silence[64] = {};
