@@ -102,6 +102,27 @@ void registerCoreCliCommands(CliService& cli, Runtime& rt) {
             for (auto& c : r->capabilities().list()) out(c);
         });
 
+    cli.add("display", "display server: display [list | start <backend>]",
+        [r](const std::vector<std::string>& args, const CliService::Out& out) {
+            if (args.empty()) {
+                out(std::string("active: ") + r->displayServerName());
+                out("backends:");
+                for (auto* n : r->displayServerList()) out(std::string("  ") + n);
+                out("usage: display start <backend>  (e.g. pixelate | fbcon)");
+                return;
+            }
+            if (args[0] == "list") {
+                for (auto* n : r->displayServerList()) out(n);
+                return;
+            }
+            // `display start X` and the shorthand `display X` both switch to X.
+            const std::string& target =
+                (args[0] == "start" && args.size() > 1) ? args[1] : args[0];
+            out(r->switchDisplayServer(target.c_str())
+                    ? "switched to " + target
+                    : "unknown backend: " + target);
+        });
+
     cli.add("power", "power control: power restart|shutdown",
         [r](const std::vector<std::string>& args, const CliService::Out& out) {
             if (args.empty()) { out("usage: power restart|shutdown"); return; }

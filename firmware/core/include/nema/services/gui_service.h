@@ -2,10 +2,13 @@
 #include "nema/thread.h"
 #include "nema/ui/status_bar.h"
 #include "nema/ui/pixelate_server.h"
+#include "nema/ui/fbcon_server.h"
 #include "nema/screens/lock_screen.h"
 #include "nema/services/display_power_manager.h"
+#include <atomic>
 #include <cstdint>
 #include <memory>
+#include <vector>
 
 namespace nema {
 
@@ -40,6 +43,13 @@ public:
 
     DisplayPowerManager& dpm() { return dpm_; }
 
+    // Display server control (Plan 43). Thread-safe: requestServer() may be
+    // called from any thread (e.g. the CLI/KLP task); the swap is applied on the
+    // GUI thread at the top of the next loop iteration.
+    bool                       requestServer(const char* name);  // false = unknown name
+    const char*                activeServerName() const;
+    std::vector<const char*>   serverNames() const;
+
     // FPS API — forwarded to the active display server (PixelateServer owns the
     // rolling 1s flush-count window + the overlay toggle).
     uint16_t fps()         const { return pixelate_ ? pixelate_->fps() : 0; }
@@ -56,10 +66,13 @@ private:
     StatusBarData         status_;
     uint64_t              lastStatusMs_ = 0;
 
-    // Pluggable renderer (Plan 43). Default = PixelateServer (the 1-bit canvas
-    // UI). server_ points at the active backend; created in start().
+    // Pluggable renderers (Plan 43). Backends are owned here; server_ points at
+    // the active one (touched only on the GUI thread). pendingServer_ is the
+    // thread-safe hand-off slot for a runtime swap requested from another thread.
     std::unique_ptr<PixelateServer> pixelate_;
-    IDisplayServer*                 server_ = nullptr;
+    std::unique_ptr<FbconServer>    fbcon_;
+    IDisplayServer*                 server_  = nullptr;
+    std::atomic<IDisplayServer*>    pendingServer_{nullptr};
 
     LockScreen            lockScreen_;
     DisplayPowerManager   dpm_;

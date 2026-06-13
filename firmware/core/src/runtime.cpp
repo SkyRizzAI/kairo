@@ -207,6 +207,11 @@ IConfigStore&        Runtime::config()       { auto* c = container_->resolve<ICo
 uint16_t            Runtime::fps()     const { return gui_ ? gui_->fps() : 0; }
 bool                Runtime::showFps() const { return gui_ ? gui_->showFps() : false; }
 void                Runtime::setShowFps(bool on) { if (gui_) gui_->setShowFps(on); }
+bool Runtime::switchDisplayServer(const char* name) { return gui_ && gui_->requestServer(name); }
+const char* Runtime::displayServerName() const { return gui_ ? gui_->activeServerName() : "none"; }
+std::vector<const char*> Runtime::displayServerList() const {
+    return gui_ ? gui_->serverNames() : std::vector<const char*>{};
+}
 BootPhase           Runtime::phase()   const { return phase_; }
 int                 Runtime::exitCode() const { return exitCode_; }
 

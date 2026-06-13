@@ -6,6 +6,7 @@
 #include "nema/services/camera_service.h"
 #include "nema/task_runner.h"
 #include <memory>
+#include <vector>
 
 namespace nema {
 
@@ -75,6 +76,12 @@ public:
     uint16_t fps()         const;
     bool     showFps()     const;
     void     setShowFps(bool on);
+
+    // Display server control (Plan 43) — forwarded to GuiService. Used by the
+    // CLI `display` command to switch the rendering backend at runtime.
+    bool                     switchDisplayServer(const char* name);
+    const char*              displayServerName() const;
+    std::vector<const char*> displayServerList() const;
     AudioService&        audio();
     CameraService&       camera();
 

@@ -22,9 +22,11 @@ namespace nema {
 void GuiService::start() {
     display_ = rt_.container().resolve<IDisplayDriver>();
 
-    // Default display server = PixelateServer (1-bit canvas UI). server_ is the
-    // swap point for future backends (fbcon, LVGL) — Plan 43.
+    // Display servers (Plan 43). Default = PixelateServer (1-bit canvas UI);
+    // FbconServer is the swappable text-console backend. server_ is the active
+    // one; switch at runtime via requestServer()/the CLI `display` command.
     pixelate_ = std::make_unique<PixelateServer>(rt_.clock());
+    fbcon_    = std::make_unique<FbconServer>(rt_);
     server_   = pixelate_.get();
 
     // Load saved timeouts — fall back to 15s defaults if not set yet
@@ -45,6 +47,26 @@ void GuiService::start() {
 void GuiService::stop() {
     thread_.requestStop();
     thread_.join();
+}
+
+bool GuiService::requestServer(const char* name) {
+    IDisplayServer* target = nullptr;
+    if (pixelate_ && std::string(pixelate_->name()) == name) target = pixelate_.get();
+    else if (fbcon_ && std::string(fbcon_->name()) == name)  target = fbcon_.get();
+    if (!target) return false;
+    pendingServer_.store(target);   // GUI thread applies it next iteration
+    return true;
+}
+
+const char* GuiService::activeServerName() const {
+    return server_ ? server_->name() : "none";
+}
+
+std::vector<const char*> GuiService::serverNames() const {
+    std::vector<const char*> v;
+    if (pixelate_) v.push_back(pixelate_->name());
+    if (fbcon_)    v.push_back(fbcon_->name());
+    return v;
 }
 
 void GuiService::threadEntry(void* self) {
@@ -68,6 +90,14 @@ void GuiService::loop() {
     while (!thread_.shouldStop()) {
         uint64_t now = rt_.clock().millis();
         auto& vd = rt_.view();
+
+        // 0. Apply a pending display-server swap (requested from another thread,
+        //    e.g. the CLI). Done here so server_ is only ever touched by this
+        //    thread. Force a redraw so the new backend paints immediately.
+        if (auto* next = pendingServer_.exchange(nullptr)) {
+            server_ = next;
+            vd.requestRedraw();
+        }
 
         // 1. Input — DPM intercepts; only forwarded to the screen if not consumed.
         InputEvent ie;
