@@ -22,12 +22,17 @@ namespace nema {
 void GuiService::start() {
     display_ = rt_.container().resolve<IDisplayDriver>();
 
+    // Default display server = PixelateServer (1-bit canvas UI). server_ is the
+    // swap point for future backends (fbcon, LVGL) — Plan 43.
+    pixelate_ = std::make_unique<PixelateServer>(rt_.clock());
+    server_   = pixelate_.get();
+
     // Load saved timeouts — fall back to 15s defaults if not set yet
     uint64_t sleepMs = 15000, lockMs = 15000;
     if (auto* cfg = rt_.container().resolve<IConfigStore>()) {
         sleepMs = (uint64_t)cfg->getIntOr("dpm", "sleep_ms", (int64_t)sleepMs);
         lockMs  = (uint64_t)cfg->getIntOr("dpm", "lock_ms",  (int64_t)lockMs);
-        showFps_ = cfg->getIntOr("debug", "fps", 0) != 0;  // toggle in Settings → Display
+        pixelate_->setShowFps(cfg->getIntOr("debug", "fps", 0) != 0);  // Settings → Display
     }
 
     dpm_.init(rt_.view(), display_, rt_.clock(), lockScreen_, sleepMs, lockMs);
@@ -58,70 +63,11 @@ void GuiService::refreshStatus(uint64_t now) {
     rt_.view().requestRedraw();
 }
 
-void GuiService::renderOnce(Canvas& c) {
-    auto& vd = rt_.view();
-    fpsFrames_++;   // count actual display flushes
-    uint64_t tDraw0 = rt_.clock().millis();
-    c.clear();
-    if (auto* s = vd.active()) {
-        switch (s->mode()) {
-        case ScreenMode::Normal:
-            StatusBar::draw(c, status_);
-            break;
-        case ScreenMode::Modal: {
-            if (auto* bg = vd.previous()) {
-                if (bg->mode() == ScreenMode::Normal) StatusBar::draw(c, status_);
-                bg->draw(c);
-            }
-            uint16_t mw = s->modalWidth();
-            uint16_t mh = s->modalHeight();
-            uint16_t mx = (c.width()  - mw) / 2;
-            uint16_t my = (c.height() - mh) / 2;
-            c.fillRect(mx, my, mw, mh, false);
-            c.drawRect(mx, my, mw, mh, true);
-            break;
-        }
-        case ScreenMode::Fullscreen:
-            break;
-        }
-        s->draw(c);
-
-        // Fullscreen screens that use direct color rendering (blitRgb565) need
-        // to suppress the 1-bit canvas flush — it would overwrite their content.
-        if (s->mode() == ScreenMode::Fullscreen && s->suppressCanvasFlush())
-            return;
-    }
-    lastDrawMs_ = (uint16_t)(rt_.clock().millis() - tDraw0);
-
-    // FPS + timing overlay (top-right): "<fps> d<drawMs>/f<flushMs>" so you can
-    // see exactly where a slow frame goes (screen draw vs LCD flush).
-    if (showFps_) {
-        char fb[24];
-        std::snprintf(fb, sizeof(fb), "%u d%u/f%u",
-                      (unsigned)fps_, (unsigned)lastDrawMs_, (unsigned)lastFlushMs_);
-        uint16_t tw = c.textWidth(fb);
-        uint16_t bx = (uint16_t)(c.width() > tw + 4 ? c.width() - tw - 4 : 0);
-        c.fillRect(bx, 0, (uint16_t)(tw + 4), ui::CHAR_H + 1, false);  // clear bg
-        c.drawText((uint16_t)(bx + 2), 1, fb, true);
-    }
-
-    uint64_t tFlush0 = rt_.clock().millis();
-    c.flush();
-    lastFlushMs_ = (uint16_t)(rt_.clock().millis() - tFlush0);
-}
-
 void GuiService::loop() {
     const bool hasDisplay = rt_.capabilities().has(caps::Display);
     while (!thread_.shouldStop()) {
         uint64_t now = rt_.clock().millis();
         auto& vd = rt_.view();
-
-        // FPS window: snapshot flush count once per second.
-        if (now - fpsLastMs_ >= 1000) {
-            fps_ = (uint16_t)fpsFrames_;
-            fpsFrames_ = 0;
-            fpsLastMs_ = now;
-        }
 
         // 1. Input — DPM intercepts; only forwarded to the screen if not consumed.
         InputEvent ie;
@@ -163,7 +109,7 @@ void GuiService::loop() {
                 rt_.canvas().clear(false);
                 rt_.canvas().flush();
             } else if (!dpm_.isSleeping() && vd.takeRedraw()) {
-                renderOnce(rt_.canvas());
+                server_->renderFrame(rt_.canvas(), vd, status_);
             }
         }
 

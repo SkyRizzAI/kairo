@@ -1,15 +1,18 @@
 #pragma once
 #include "nema/thread.h"
 #include "nema/ui/status_bar.h"
+#include "nema/ui/pixelate_server.h"
 #include "nema/screens/lock_screen.h"
 #include "nema/services/display_power_manager.h"
 #include <cstdint>
+#include <memory>
 
 namespace nema {
 
 class Runtime;
 class Canvas;
 struct IDisplayDriver;
+struct IDisplayServer;
 
 // GuiService — owns the UI loop on its OWN thread (Nema kernel, core 1).
 //
@@ -37,15 +40,15 @@ public:
 
     DisplayPowerManager& dpm() { return dpm_; }
 
-    // FPS API — actual display flushes per second (rolling 1s window).
-    uint16_t fps()         const { return fps_; }
-    bool     showFps()     const { return showFps_; }
-    void     setShowFps(bool b)  { showFps_ = b; }
+    // FPS API — forwarded to the active display server (PixelateServer owns the
+    // rolling 1s flush-count window + the overlay toggle).
+    uint16_t fps()         const { return pixelate_ ? pixelate_->fps() : 0; }
+    bool     showFps()     const { return pixelate_ && pixelate_->showFps(); }
+    void     setShowFps(bool b)  { if (pixelate_) pixelate_->setShowFps(b); }
 
 private:
     static void threadEntry(void* self);
     void        loop();
-    void        renderOnce(Canvas& c);
     void        refreshStatus(uint64_t now);
 
     Runtime&              rt_;
@@ -53,14 +56,10 @@ private:
     StatusBarData         status_;
     uint64_t              lastStatusMs_ = 0;
 
-    // On-screen FPS overlay — counts actual display flushes/sec, so you can tell
-    // whether lag is GUI render throughput. Enabled via config key "debug/fps".
-    bool                  showFps_   = false;
-    uint32_t              fpsFrames_ = 0;
-    uint64_t              fpsLastMs_ = 0;
-    uint16_t              fps_       = 0;
-    uint16_t              lastDrawMs_  = 0;   // time in active screen draw()
-    uint16_t              lastFlushMs_ = 0;   // time in canvas/LCD flush()
+    // Pluggable renderer (Plan 43). Default = PixelateServer (the 1-bit canvas
+    // UI). server_ points at the active backend; created in start().
+    std::unique_ptr<PixelateServer> pixelate_;
+    IDisplayServer*                 server_ = nullptr;
 
     LockScreen            lockScreen_;
     DisplayPowerManager   dpm_;
