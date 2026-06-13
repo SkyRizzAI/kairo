@@ -3,11 +3,17 @@
 namespace nema {
 
 void LinkService::attach(ILinkTransport* t, Role role) {
+    markDisconnected();          // tear down any prior session cleanly first
     t_ = t;
     role_ = role;
     ready_ = false;
     parser_.reset();
     if (t_) t_->onRecv(&LinkService::recvThunk, this);
+}
+
+void LinkService::markDisconnected() {
+    if (!ready_.exchange(false)) return;   // was not ready → nothing to tear down
+    if (disconnectFn_) disconnectFn_(disconnectUser_);
 }
 
 void LinkService::begin() {

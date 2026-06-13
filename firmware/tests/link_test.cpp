@@ -110,6 +110,19 @@ int main() {
         assert(sawLog);
     }
 
+    // Disconnect mechanism (Plan 42): markDisconnected fires once, clears ready.
+    {
+        static int hits = 0;
+        hits = 0;
+        device.onDisconnect([](void*) { hits++; }, nullptr);
+        assert(device.ready());
+        device.markDisconnected();
+        assert(!device.ready());          // session torn down
+        assert(hits == 1);                // callback fired
+        device.markDisconnected();        // idempotent — no second fire
+        assert(hits == 1);
+    }
+
     std::printf("link_test OK\n");
     return 0;
 }
