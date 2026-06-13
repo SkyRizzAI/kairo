@@ -62,7 +62,22 @@ review:
   raw `Serial`, `printf`/`std::cout`, or `ESP_LOGx`. Use a stable component tag
   and structured fields: `rt.log().info("Xl9535", "started", {{"addr", "0x20"}})`.
 - **Hardware abstraction** — check capabilities, never board type. Use
-  `rt.capabilities().has("wifi")`, not `#ifdef ESP32` or board-name branches.
+  `rt.capabilities().has(caps::NetWifi)`, not `#ifdef ESP32` or board-name
+  branches. Capabilities are a two-axis model (Plan 42):
+  - Identity is a **string from the catalog** `nema/system/capabilities.h`
+    (`caps::Display`, `caps::Camera`, …) — never a raw string literal.
+  - `has(cap)` → **static**: "this box was built able to do X" (never changes).
+    Use it for boot gates and for showing/hiding a settings entry (the WiFi
+    entry should appear even when disconnected, so the user can connect).
+  - `available(cap)` → **dynamic**: "X is up and usable *right now*". Use it
+    when a resource can detach/fault (remote screen, storage, network).
+  - Inside running code, prefer `container().resolve<IFoo>()` to get the driver
+    and act on it — don't double-gate with `has()` *and* `resolve()`.
+  - The owner of a resource reports liveness via
+    `capabilities().setState(cap, ResourceState::…)`, which publishes
+    `events::ResourceChanged`. **`setState` is main-thread-only** (it touches the
+    single-threaded EventBus); from a background driver callback, route the
+    change through the async event path instead.
 - **Input** — screens program against `input::Action` (Prev/Next/Activate/Back),
   not raw physical keys. Each board provides one `IKeyMap` that passes
   `validateFloor()`. Footer labels come from `rt.input().hintFor(Action)`.
