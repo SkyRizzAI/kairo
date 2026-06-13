@@ -1,3 +1,4 @@
+#include "nema/system/capabilities.h"
 #include "nema/esp32/esp32_platform.h"
 #include "nema/runtime.h"
 #include "nema/board.h"
@@ -33,22 +34,22 @@ void Esp32Platform::registerDrivers(Runtime& rt) {
     // Owner profile: load from NVS (or seed defaults on first boot).
     profile_.init(config_);
     rt.container().registerService(&profile_);
-    rt.capabilities().add("profile");
+    rt.capabilities().add(caps::Profile);
 }
 
 void Esp32Platform::postRegister(Runtime& rt) {
     // Wire the KLP remote layer (Plan 35/37) over a MUX of transports: USB-CDC
     // (always — the native USB) + BLE (if the radio is present). The host reaches
     // the device over whichever connects. Requires a display to mirror.
-    if (!rt.capabilities().has("display")) return;
+    if (!rt.capabilities().has(caps::Display)) return;
     auto* disp = rt.container().resolve<IDisplayDriver>();
     if (!disp) return;
 
     usbCdc_.start();                 // reader task on the USB-CDC (Serial)
     usbLink_.init(usbCdc_);
     mux_.add(&usbLink_);             // USB cable
-    rt.capabilities().add("remote.usb");
-    if (rt.capabilities().has("bluetooth.ble")) {
+    rt.capabilities().add(caps::RemoteUsb);
+    if (rt.capabilities().has(caps::BtBle)) {
         cable_.init(ble_);          // KLP GATT TX/RX on the radio
         mux_.add(&cable_);          // BLE cable
     }
@@ -85,7 +86,7 @@ void Esp32Platform::postRegister(Runtime& rt) {
     vfs_.mount("/", &rootFs_);
     vfs_.mount("/tmp", &tmpFs_);
     rt.container().registerAs<IFileSystem>(&vfs_);
-    rt.capabilities().add("storage");
+    rt.capabilities().add(caps::Storage);
     if (fsOk) {
         // Seed once on a fresh filesystem; never clobber the user's files on later
         // boots (this is the whole point of persistence).
@@ -104,7 +105,7 @@ void Esp32Platform::postRegister(Runtime& rt) {
 
     remoteWired_ = true;
     rt.log().info("Esp32Platform", "KLP remote wired",
-                  {{"usb", "1"}, {"ble", rt.capabilities().has("bluetooth.ble") ? "1" : "0"}});
+                  {{"usb", "1"}, {"ble", rt.capabilities().has(caps::BtBle) ? "1" : "0"}});
 }
 
 void Esp32Platform::readyThunk(void* user) {

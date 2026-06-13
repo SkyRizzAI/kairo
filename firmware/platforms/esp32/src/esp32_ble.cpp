@@ -1,3 +1,4 @@
+#include "nema/system/capabilities.h"
 #include "nema/esp32/esp32_ble.h"
 #include "nema/runtime.h"
 #include "nema/log/logger.h"
@@ -22,8 +23,7 @@ void Esp32Ble::onRegister(Runtime& rt) {
     rt.container().registerAs<IBluetoothController>(this);
     rt.container().registerAs<IBleAdapter>(this);
     rt.hardware().add({"bluetooth", DriverKind::Bluetooth, "ESP32-S3 BLE (NimBLE)"});
-    rt.capabilities().add("bluetooth");
-    rt.capabilities().add("bluetooth.ble");
+    rt.capabilities().add(caps::BtBle);
 }
 
 } // namespace nema

@@ -1,3 +1,4 @@
+#include "nema/system/capabilities.h"
 #include "nema/sim/simulator_board.h"
 #include "nema/runtime.h"
 #include "nema/log/logger.h"
@@ -11,7 +12,7 @@ void SimulatorBoard::describeHardware(Runtime& rt) {
     rt.log().info("SimulatorBoard", "Hardware described");
 
     // Demo: capability-driven pattern check
-    if (rt.capabilities().has("wifi")) {
+    if (rt.capabilities().has(caps::NetWifi)) {
         rt.log().debug("SimulatorBoard", "wifi capability confirmed");
     }
     if (rt.capabilities().has("nfc")) {

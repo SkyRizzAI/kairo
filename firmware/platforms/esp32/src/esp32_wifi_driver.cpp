@@ -1,3 +1,4 @@
+#include "nema/system/capabilities.h"
 #include "nema/esp32/esp32_wifi_driver.h"
 #include "nema/runtime.h"
 #include "nema/log/logger.h"
@@ -24,8 +25,7 @@ void Esp32WifiDriver::onRegister(Runtime& rt) {
     rt.container().registerService(this);
     rt.container().registerAs<IWifiDriver>(this);
     rt.hardware().add({"wifi", DriverKind::Wifi, "ESP32-S3 built-in"});
-    rt.capabilities().add("wifi");
-    rt.capabilities().add("networking");
+    rt.capabilities().add(caps::NetWifi);
 }
 
 void Esp32WifiDriver::start() {

@@ -1,3 +1,4 @@
+#include "nema/system/capabilities.h"
 #include "nema/wasm/wasm_platform.h"
 #include "nema/runtime.h"
 #include "nema/service/service_container.h"
@@ -30,7 +31,7 @@ void WasmPlatform::registerDrivers(Runtime& rt) {
     // Owner profile: load from config (or seed defaults).
     profile_.init(config_);
     rt.container().registerService(&profile_);
-    rt.capabilities().add("profile");
+    rt.capabilities().add(caps::Profile);
 
     // WiFi (virtual router) — same SimWifiDriver as the native sim, so the
     // device's WiFi app works and Forge's WiFi panel can inject networks.
@@ -38,8 +39,7 @@ void WasmPlatform::registerDrivers(Runtime& rt) {
     rt.container().registerService(&wifi_);
     rt.container().registerAs<IWifiDriver>(&wifi_);
     rt.hardware().add({"wifi", DriverKind::Wifi, "virtual"});
-    rt.capabilities().add("wifi");
-    rt.capabilities().add("networking");
+    rt.capabilities().add(caps::NetWifi);
 
     remote_.init(link_, rt.input());
     remote_.attachLog(rt.log());
@@ -60,7 +60,7 @@ void WasmPlatform::registerDrivers(Runtime& rt) {
     vfs_.mount("/", &rootFs_);
     vfs_.mount("/sd", &sdFs_);
     rt.container().registerAs<IFileSystem>(&vfs_);
-    rt.capabilities().add("storage");
+    rt.capabilities().add(caps::Storage);
     rootFs_.seed("/readme.txt", "Palanu virtual filesystem (in-RAM, volatile).\n"
                                 "Browse, edit, upload and delete here or via `fs` in the terminal.\n");
     rootFs_.seed("/apps/hello.kapp", "// a placeholder app bundle\n");
@@ -71,8 +71,8 @@ void WasmPlatform::registerDrivers(Runtime& rt) {
     link_.onReady(&WasmPlatform::readyThunk, this);   // push current screen on connect
 
     rt.hardware().add({"display", DriverKind::Display, "wasm 1-bit (remote)"});
-    rt.capabilities().add("display");
-    rt.capabilities().add("input");
+    rt.capabilities().add(caps::Display);
+    rt.capabilities().add(caps::Input);
 }
 
 void WasmPlatform::controlThunk(void* user, uint8_t op, const uint8_t* data, size_t len) {

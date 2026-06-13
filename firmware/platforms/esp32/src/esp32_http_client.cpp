@@ -1,3 +1,4 @@
+#include "nema/system/capabilities.h"
 #include "nema/esp32/esp32_http_client.h"
 #include "nema/runtime.h"
 #include "nema/log/logger.h"
@@ -13,7 +14,7 @@ void Esp32HttpClient::onRegister(Runtime& rt) {
     log_ = &rt.log();
     rt.container().registerService(this);
     rt.container().registerAs<IHttpClient>(this);
-    rt.capabilities().add("http");
+    rt.capabilities().add(caps::NetHttp);
 }
 
 // Body collector — esp_http_client streams the response in chunks.

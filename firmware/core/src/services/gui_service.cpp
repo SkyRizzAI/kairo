@@ -1,3 +1,4 @@
+#include "nema/system/capabilities.h"
 #include "nema/services/gui_service.h"
 #include "nema/runtime.h"
 #include "nema/clock.h"
@@ -53,7 +54,7 @@ void GuiService::refreshStatus(uint64_t now) {
         status_.hour   = tm->tm_hour;
         status_.minute = tm->tm_min;
     }
-    status_.wifi = rt_.capabilities().has("wifi");
+    status_.wifi = rt_.capabilities().has(caps::NetWifi);
     rt_.view().requestRedraw();
 }
 
@@ -110,7 +111,7 @@ void GuiService::renderOnce(Canvas& c) {
 }
 
 void GuiService::loop() {
-    const bool hasDisplay = rt_.capabilities().has("display");
+    const bool hasDisplay = rt_.capabilities().has(caps::Display);
     while (!thread_.shouldStop()) {
         uint64_t now = rt_.clock().millis();
         auto& vd = rt_.view();

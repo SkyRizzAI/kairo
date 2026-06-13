@@ -1,3 +1,4 @@
+#include "nema/system/capabilities.h"
 #include "nema/js/js_engine.h"
 #include "nema/runtime.h"
 #include "nema/log/logger.h"
@@ -134,7 +135,7 @@ void JsEngine::installApi() {
     JS_SetPropertyStr(ctx, api, "storage", st);
 
     // http (gated): present only if the board can do networked requests.
-    if (host_->capabilities().has("http") || host_->capabilities().has("wifi")) {
+    if (host_->capabilities().has(caps::NetHttp) || host_->capabilities().has(caps::NetWifi)) {
         JSValue http = JS_NewObject(ctx);
         setFn(ctx, http, "get", api_http_get, 1);
         JS_SetPropertyStr(ctx, api, "http", http);
@@ -142,7 +143,7 @@ void JsEngine::installApi() {
 
     // profile (always present when capability "profile" is available — safe to
     // expose unconditionally: functions return null/false if service is absent)
-    if (host_->capabilities().has("profile") ||
+    if (host_->capabilities().has(caps::Profile) ||
         host_->container().resolve<ProfileService>()) {
         JSValue prof = JS_NewObject(ctx);
         setFn(ctx, prof, "userName",       api_profile_userName,       0);

@@ -1,3 +1,4 @@
+#include "nema/system/capabilities.h"
 #include "nema/skyrizze32/skyrizz_e32.h"
 #include "nema/skyrizze32/board_config.h"
 #include "nema/runtime.h"
@@ -39,57 +40,57 @@ void SkyRizzE32::describeHardware(Runtime& rt) {
     rt.container().registerService(&lcd_);
     rt.container().registerAs<IDisplayDriver>(&lcd_);
     rt.hardware().add({"display", DriverKind::Display, "TFT LCD (FPC1 SPI)"});
-    rt.capabilities().add("display");
+    rt.capabilities().add(caps::Display);
 
     // Button capabilities (3-button, no native 2D)
     rt.hardware().add({"buttons", DriverKind::Other, "XL9535 3-button (SW1/PB1/SW2)"});
-    rt.capabilities().add("input");
-    rt.capabilities().add("input.prev");
-    rt.capabilities().add("input.next");
-    rt.capabilities().add("input.activate");
-    rt.capabilities().add("input.back");
-    rt.capabilities().add("input.adjust");
+    rt.capabilities().add(caps::Input);
+    rt.capabilities().add(caps::InputPrev);
+    rt.capabilities().add(caps::InputNext);
+    rt.capabilities().add(caps::InputActivate);
+    rt.capabilities().add(caps::InputBack);
+    rt.capabilities().add(caps::InputAdjust);
     // 5 buttons give 4 distinct arrows (Up/Down on side, Left/Right below) →
     // full 2D directional input, so the virtual keyboard uses grid mode.
-    rt.capabilities().add("input.2d");
+    rt.capabilities().add(caps::Input2D);
 
     // Touch (FT6336U capacitive) — pointer HAL (Plan 29)
     touch_.init(rt, expander_);
     touch_.attachInput(&rt.input());
     rt.container().registerService(&touch_);
     rt.hardware().add({"touch", DriverKind::Other, "FT6336U capacitive @0x38"});
-    rt.capabilities().add("input.touch");
+    rt.capabilities().add(caps::InputTouch);
 
     // RGB LEDs
     rt.hardware().add({"rgb", DriverKind::Other, "WS2812 x2 GPIO46"});
-    rt.capabilities().add("rgb");
+    rt.capabilities().add(caps::Rgb);
 
     // Sensors (init-only; data via events or service in future plans)
     rt.hardware().add({"sensors", DriverKind::Other, "AHT20, LTR-303ALS, SC7A20"});
-    rt.capabilities().add("sensors.environment");
-    rt.capabilities().add("sensors.light");
-    rt.capabilities().add("sensors.motion");
+    rt.capabilities().add(caps::SensorsEnv);
+    rt.capabilities().add(caps::SensorsLight);
+    rt.capabilities().add(caps::SensorsMotion);
 
     // Audio input — ES7243E mic ADC
     mic_.init(rt, expander_);
     rt.container().registerService(&mic_);
     rt.audio().addInput(&mic_, "mic0", "I2S Built-in");
     rt.hardware().add({"audio.input", DriverKind::Other, "ES7243E @0x11"});
-    rt.capabilities().add("audio.input");
+    rt.capabilities().add(caps::AudioInput);
 
     // Audio output — NS4168 I2S amplifier (shares I2S0 TX with the mic)
     speaker_.init(rt, mic_);
     rt.container().registerService(&speaker_);
     rt.audio().addOutput(&speaker_, "spk0", "NS4168 I2S Amp");
     rt.hardware().add({"audio.output", DriverKind::Other, "NS4168 I2S Amp"});
-    rt.capabilities().add("audio.output");
+    rt.capabilities().add(caps::AudioOutput);
 
     // Camera — GC2145 DVP
     camera_.init(rt, expander_);
     rt.container().registerService(&camera_);
     rt.camera().add(&camera_, "cam0", "GC2145 2MP DVP");
     rt.hardware().add({"camera", DriverKind::Other, "GC2145 2MP @0x3C"});
-    rt.capabilities().add("camera");
+    rt.capabilities().add(caps::Camera);
 
     rt.log().info("SkyRizzE32", "hardware described",
         {{"mcu", "ESP32-S3-WROOM-1-N16R8"}, {"flash", "16MB"}, {"psram", "8MB"}});

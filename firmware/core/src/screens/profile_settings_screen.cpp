@@ -1,3 +1,4 @@
+#include "nema/system/capabilities.h"
 #include "nema/screens/profile_settings_screen.h"
 #include "nema/services/profile_service.h"
 #include "nema/runtime.h"
@@ -35,7 +36,7 @@ void ProfileSettingsScreen::startEdit(Field f) {
     }
 
     kbd_.clear();
-    kbd_.linear = !rt_.capabilities().has("input.2d");
+    kbd_.linear = !rt_.capabilities().has(caps::Input2D);
 
     switch (f) {
     case Field::UserName:
@@ -70,7 +71,7 @@ void ProfileSettingsScreen::onAction(input::Action a) {
     if (!editing_) { ComponentScreen::onAction(a); return; }
 
     bool done = false, cancel = false;
-    if (rt_.capabilities().has("input.2d"))
+    if (rt_.capabilities().has(caps::Input2D))
         kbd_.handle(input::keyFromAction(a), done, cancel);
     else
         kbd_.handleAction(a, done, cancel);

@@ -1,3 +1,4 @@
+#include "nema/system/capabilities.h"
 #include "nema/screens/settings_screen.h"
 #include "nema/runtime.h"
 #include "nema/ui/view_dispatcher.h"
@@ -40,15 +41,15 @@ void SettingsScreen::launch(Kind k) {
 UiNode* SettingsScreen::build(NodeArena& a, Runtime& rt) {
     items_.clear();
     auto& caps = rt.capabilities();
-    if (caps.has("wifi"))                                items_.push_back({this, WiFi,      "WiFi"});
+    if (caps.has(caps::NetWifi))                                items_.push_back({this, WiFi,      "WiFi"});
     if (caps.has("bluetooth"))                           items_.push_back({this, Bluetooth, "Bluetooth"});
     items_.push_back({this, Display,  "Display"});
     items_.push_back({this, Controls, "Controls"});
-    if (caps.has("input.touch"))                         items_.push_back({this, Touch,    "Touch"});
-    if (caps.has("audio.input") || caps.has("audio.output"))
+    if (caps.has(caps::InputTouch))                         items_.push_back({this, Touch,    "Touch"});
+    if (caps.has(caps::AudioInput) || caps.has(caps::AudioOutput))
                                                           items_.push_back({this, Sounds,   "Sounds"});
-    if (caps.has("camera"))                              items_.push_back({this, Camera,   "Camera"});
-    if (caps.has("profile"))                               items_.push_back({this, Profile,  "Profile"});
+    if (caps.has(caps::Camera))                              items_.push_back({this, Camera,   "Camera"});
+    if (caps.has(caps::Profile))                               items_.push_back({this, Profile,  "Profile"});
     items_.push_back({this, About,    "About"});
 
     Style root; root.dir = FlexDir::Col; root.flexGrow = 1; root.padding = 3; root.gap = 1;

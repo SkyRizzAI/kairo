@@ -1,3 +1,4 @@
+#include "nema/system/capabilities.h"
 #include "nema/runtime.h"
 #include "nema/platform.h"
 #include "nema/board.h"
@@ -93,7 +94,7 @@ void Runtime::registerServices() {
     // Logical scale: prefer config "display/scale", else the driver's dpi() hint,
     // else 1. A scale>1 makes a high-res panel present a logical surface so all
     // UI layout stays resolution-independent.
-    if (capabilities_->has("display")) {
+    if (capabilities_->has(caps::Display)) {
         if (auto* disp = container_->resolve<IDisplayDriver>()) {
             float scale = 0.0f;
             if (auto* cfg = container_->resolve<IConfigStore>()) {

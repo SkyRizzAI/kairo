@@ -1,3 +1,4 @@
+#include "nema/system/capabilities.h"
 #include "nema/devboard/dev_board.h"
 #include "nema/runtime.h"
 #include "nema/log/logger.h"
@@ -31,7 +32,7 @@ void DevBoard::describeHardware(Runtime& rt) {
     rt.container().registerService(&display_);          // start() → display task
     rt.container().registerAs<IDisplayDriver>(&display_); // Canvas binds to wrapper
     rt.hardware().add({"display", DriverKind::Display, "e-ink GDEY027T91 264x176"});
-    rt.capabilities().add("display");
+    rt.capabilities().add(caps::Display);
 
     // Input keymap — install before buttons so TCA9534 posts enriched events.
     rt.input().setKeyMap(&keyMap_);
@@ -42,13 +43,13 @@ void DevBoard::describeHardware(Runtime& rt) {
     buttons_.init(rt);
     rt.container().registerService(&buttons_);
     rt.hardware().add({"buttons", DriverKind::Other, "TCA9534 6-button"});
-    rt.capabilities().add("input");
-    rt.capabilities().add("input.prev");
-    rt.capabilities().add("input.next");
-    rt.capabilities().add("input.activate");
-    rt.capabilities().add("input.back");
-    rt.capabilities().add("input.adjust");
-    rt.capabilities().add("input.2d");
+    rt.capabilities().add(caps::Input);
+    rt.capabilities().add(caps::InputPrev);
+    rt.capabilities().add(caps::InputNext);
+    rt.capabilities().add(caps::InputActivate);
+    rt.capabilities().add(caps::InputBack);
+    rt.capabilities().add(caps::InputAdjust);
+    rt.capabilities().add(caps::Input2D);
 
     rt.log().info("DevBoard", "hardware described",
         {{"mcu", "ESP32-S3-WROOM-1"}, {"flash", "8MB"}, {"psram", "8MB"}});
