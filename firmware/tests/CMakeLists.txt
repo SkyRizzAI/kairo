@@ -32,3 +32,7 @@ add_test(NAME js_dualimport_test COMMAND js_dualimport_test)
 add_executable(js_graceful_test js_graceful_test.cpp)
 target_link_libraries(js_graceful_test PRIVATE nema_core)
 add_test(NAME js_graceful_test COMMAND js_graceful_test)
+
+add_executable(capability_test capability_test.cpp)
+target_link_libraries(capability_test PRIVATE nema_core)
+add_test(NAME capability_test COMMAND capability_test)

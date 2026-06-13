@@ -18,6 +18,9 @@ namespace events {
     inline constexpr const char* BatteryChanged       = "BatteryChanged";
     inline constexpr const char* NetworkConnected     = "NetworkConnected";
     inline constexpr const char* NetworkDisconnected  = "NetworkDisconnected";
+    // Resource liveness (Plan 42): a single uniform event for every resource.
+    // payload: {{"resource","<cap>"}, {"state","available"|"absent"|"fault"}}
+    inline constexpr const char* ResourceChanged      = "ResourceChanged";
     inline constexpr const char* WifiScanComplete     = "WifiScanComplete";   // {"count":"N"}
     inline constexpr const char* ClockTick            = "ClockTick";
     // Bluetooth/BLE (Plan 34)

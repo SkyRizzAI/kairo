@@ -59,6 +59,7 @@ void Runtime::initCore() {
     container_    = std::make_unique<ServiceContainer>();
     hardware_     = std::make_unique<HardwareRegistry>();
     capabilities_ = std::make_unique<CapabilityRegistry>();
+    capabilities_->setBus(eventBus_.get());   // liveness setState() → ResourceChanged
     systemInfo_   = std::make_unique<SystemInfo>();
     systemInfo_->buildVersion    = NEMA_BUILD_HASH;
     systemInfo_->firmwareVersion = NEMA_FULL_VERSION;
