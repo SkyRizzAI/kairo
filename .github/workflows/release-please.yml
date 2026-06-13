@@ -1,0 +1,67 @@
+name: Release Please
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release-please:
+    name: Release PR / publish
+    runs-on: ubuntu-latest
+    steps:
+      # 1. On every push to main: create or update the "Release PR".
+      #    When that PR is merged, this step instead creates the tag + GitHub Release.
+      - uses: googleapis/release-please-action@v4
+        id: release
+        with:
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+
+      # 2..n. Only run after a release was just cut (i.e. the Release PR was merged).
+      #       The default GITHUB_TOKEN tag push won't trigger other workflows, so we
+      #       build + attach the simulator firmware here in the same run.
+      - uses: actions/checkout@v4
+        if: ${{ steps.release.outputs.release_created }}
+
+      - name: Cache emsdk
+        if: ${{ steps.release.outputs.release_created }}
+        uses: actions/cache@v4
+        with:
+          path: ~/emsdk
+          key: emsdk-${{ hashFiles('firmware/tools/build-wasm.sh') }}
+
+      - name: Install emsdk
+        if: ${{ steps.release.outputs.release_created }}
+        run: |
+          if [ ! -d ~/emsdk ]; then
+            git clone https://github.com/emscripten-core/emsdk.git ~/emsdk
+          fi
+          ~/emsdk/emsdk install latest
+          ~/emsdk/emsdk activate latest
+
+      - name: Build simulator firmware (WASM)
+        if: ${{ steps.release.outputs.release_created }}
+        run: |
+          source ~/emsdk/emsdk_env.sh
+          bash firmware/tools/build-wasm.sh
+
+      - name: Package simulator firmware
+        if: ${{ steps.release.outputs.release_created }}
+        env:
+          TAG: ${{ steps.release.outputs.tag_name }}
+        run: |
+          mkdir -p dist
+          zip -j "dist/palanu-simulator-firmware-${TAG}.zip" \
+            packages/forge/static/wasm/nema.js \
+            packages/forge/static/wasm/nema.wasm
+
+      - name: Attach firmware to the release
+        if: ${{ steps.release.outputs.release_created }}
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.release.outputs.tag_name }}
+          files: dist/palanu-simulator-firmware-*.zip

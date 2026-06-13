@@ -4,12 +4,16 @@
 get_filename_component(_FIRMWARE_DIR "${CMAKE_CURRENT_LIST_DIR}/.." ABSOLUTE)
 
 # ── Parse VERSION file ────────────────────────────────────────────────────────
+# The file may carry a Release Please annotation, e.g. "0.1.0 # x-release-please-version".
+# Extract the leading MAJOR.MINOR.PATCH with a regex so the comment is ignored.
 file(READ "${_FIRMWARE_DIR}/VERSION" _ver_raw)
-string(STRIP "${_ver_raw}" _ver_raw)
-string(REPLACE "." ";" _ver_parts "${_ver_raw}")
-list(GET _ver_parts 0 NEMA_VERSION_MAJOR)
-list(GET _ver_parts 1 NEMA_VERSION_MINOR)
-list(GET _ver_parts 2 NEMA_VERSION_PATCH)
+if(_ver_raw MATCHES "([0-9]+)\\.([0-9]+)\\.([0-9]+)")
+    set(NEMA_VERSION_MAJOR "${CMAKE_MATCH_1}")
+    set(NEMA_VERSION_MINOR "${CMAKE_MATCH_2}")
+    set(NEMA_VERSION_PATCH "${CMAKE_MATCH_3}")
+else()
+    message(FATAL_ERROR "firmware/VERSION malformed (expected MAJOR.MINOR.PATCH): ${_ver_raw}")
+endif()
 set(NEMA_VERSION "${NEMA_VERSION_MAJOR}.${NEMA_VERSION_MINOR}.${NEMA_VERSION_PATCH}")
 
 # ── Git hash + dirty flag ────────────────────────────────────────────────────
