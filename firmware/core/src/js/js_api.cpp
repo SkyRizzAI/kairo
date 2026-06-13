@@ -38,10 +38,16 @@ static JSValue api_log(JSContext* ctx, JSValueConst, int argc, JSValueConst* arg
     return JS_UNDEFINED;
 }
 
-// nema.device.has(cap)
+// nema.device.has(cap) — static: this box was built able to do X.
 static JSValue api_has(JSContext* ctx, JSValueConst, int argc, JSValueConst* argv) {
     auto* e = self(ctx); if (!e || !e->host() || argc < 1) return JS_FALSE;
     return JS_NewBool(ctx, e->host()->capabilities().has(argStr(ctx, argv[0])));
+}
+
+// nema.device.available(cap) — dynamic: X is up and usable right now (Plan 42).
+static JSValue api_available(JSContext* ctx, JSValueConst, int argc, JSValueConst* argv) {
+    auto* e = self(ctx); if (!e || !e->host() || argc < 1) return JS_FALSE;
+    return JS_NewBool(ctx, e->host()->capabilities().available(argStr(ctx, argv[0])));
 }
 
 // nema.storage.get/set/remove — per-app namespace in the config store.
@@ -116,7 +122,8 @@ void JsEngine::installApi() {
 
     setFn(ctx, api, "log", api_log, 3);
 
-    // device { name, caps[], has() }
+    // device { name, caps[], has(), available() } — clean query API; JS apps
+    // never touch the registry directly. has() = static, available() = live.
     JSValue dev = JS_NewObject(ctx);
     JS_SetPropertyStr(ctx, dev, "name", JS_NewString(ctx, host_->info().boardName.c_str()));
     const auto& caps = host_->capabilities().list();
@@ -125,6 +132,7 @@ void JsEngine::installApi() {
         JS_SetPropertyUint32(ctx, arr, i, JS_NewString(ctx, caps[i].c_str()));
     JS_SetPropertyStr(ctx, dev, "caps", arr);
     setFn(ctx, dev, "has", api_has, 1);
+    setFn(ctx, dev, "available", api_available, 1);
     JS_SetPropertyStr(ctx, api, "device", dev);
 
     // storage (always available — config store)
@@ -141,10 +149,10 @@ void JsEngine::installApi() {
         JS_SetPropertyStr(ctx, api, "http", http);
     }
 
-    // profile (always present when capability "profile" is available — safe to
-    // expose unconditionally: functions return null/false if service is absent)
-    if (host_->capabilities().has(caps::Profile) ||
-        host_->container().resolve<ProfileService>()) {
+    // profile — expose the object iff the service is actually registered.
+    // (Inside running code, resolve<T>() is the single source of truth; the
+    // redundant has("profile") || resolve<>() gate is gone — Plan 42 Fase 5.)
+    if (host_->container().resolve<ProfileService>()) {
         JSValue prof = JS_NewObject(ctx);
         setFn(ctx, prof, "userName",       api_profile_userName,       0);
         setFn(ctx, prof, "deviceName",     api_profile_deviceName,     0);
