@@ -10,7 +10,9 @@
 > **CLI substrate dari ketergantungan display**, dan beri **JS API device yang
 > bersih** (JS tak menyentuh registry mentah).
 
-- Status: ☐ Not started
+- Status: ✅ Implemented — host (9/9 ctest) + ESP32 dev-board & skyrizz-e32 build green.
+  Deferred sub-items (low value / verification-gated): `registerDriver()` helper,
+  WASM-vs-board layer unification, background-thread net/bt/remote liveness bridge.
 - Milestone: M12 (Runtime Foundation — prasyarat Display Server)
 - Depends on: EventBus + AsyncEventPoster (Plan 04), ServiceContainer (Plan 05),
   IService lifecycle (Plan 19.5/19.6), capability/hardware registry (Plan 08)
