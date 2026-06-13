@@ -46,25 +46,17 @@ static void beepTask(void* arg) {
     }
 
     uint32_t framesWritten = 0;
-    size_t   totalOut = 0;
-    esp_err_t lastErr = ESP_OK;
     while (framesWritten < totalFrames) {
         uint32_t remaining = totalFrames - framesWritten;
         uint32_t chunk     = (remaining < samplesPerCycle) ? remaining : samplesPerCycle;
         size_t   bytesOut  = 0;
-        lastErr = i2s_write(I2S_NUM_0,
-                             buf, chunk * 2 * sizeof(int32_t),
-                             &bytesOut, pdMS_TO_TICKS(200));
-        totalOut += bytesOut;
-        if (lastErr != ESP_OK) break;
+        // beepTask is a free FreeRTOS task (no `rt_`/Logger in scope), so any
+        // diagnostics here would have to be plumbed through BeepParams; the
+        // bring-up printf has served its purpose and is intentionally gone.
+        if (i2s_write(I2S_NUM_0, buf, chunk * 2 * sizeof(int32_t),
+                      &bytesOut, pdMS_TO_TICKS(200)) != ESP_OK) break;
         framesWritten += chunk;
     }
-    // I2S write diagnostic: err=0 + full bytesOut means the data shifted out
-    // of I2S0/GPIO45 OK.
-    if (rt_) rt_->log().debug("I2sSpeaker", "i2s_write",
-                              {{"err", esp_err_to_name(lastErr)},
-                               {"bytesOut", std::to_string(totalOut)},
-                               {"bytesTotal", std::to_string(totalFrames * 2 * sizeof(int32_t))}});
 
     // Write a short silence so NS4168 doesn't end on a DC offset
     int32_t silence[64] = {};
