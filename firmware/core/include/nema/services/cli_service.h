@@ -1,5 +1,6 @@
 #pragma once
 #include <functional>
+#include <memory>
 #include <string>
 #include <vector>
 #include <cstdint>
@@ -62,6 +63,22 @@ struct CliContext {
     const std::vector<std::string>& args;     // argv after the command name
     const CliService::Out&          out;      // == session.out
     CliSession&                     session;  // history + cwd
+};
+
+// CliSessionManager (Plan 45) — owns the live CLI sessions, keyed by a 1-byte
+// session id carried in the CLI channel. Each id is an independent shell
+// (separate cwd + history), so concurrent sessions (remote A, remote B, a future
+// local TTY) never interfere. Pointers stay stable as sessions are added, so a
+// CliSession& from get() remains valid.
+class CliSessionManager {
+public:
+    CliSession& get(uint8_t sid);     // get-or-create the session for sid
+    void        remove(uint8_t sid);
+    void        clear();
+    const std::vector<std::unique_ptr<CliSession>>& sessions() const { return sessions_; }
+
+private:
+    std::vector<std::unique_ptr<CliSession>> sessions_;
 };
 
 // Register the built-in commands (help, hwinfo, ram, caps, display, power,

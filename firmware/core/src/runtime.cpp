@@ -10,6 +10,7 @@
 #include "nema/event/event.h"
 #include "nema/service/service_container.h"
 #include "nema/service/service_manager.h"
+#include "nema/services/cli_service.h"
 #include "nema/system/system_info.h"
 #include "nema/system/hardware_registry.h"
 #include "nema/system/capability_registry.h"
@@ -61,6 +62,7 @@ void Runtime::initCore() {
     hardware_     = std::make_unique<HardwareRegistry>();
     capabilities_ = std::make_unique<CapabilityRegistry>();
     capabilities_->setBus(eventBus_.get());   // liveness setState() → ResourceChanged
+    cliSessions_  = std::make_unique<CliSessionManager>();
     systemInfo_   = std::make_unique<SystemInfo>();
     systemInfo_->buildVersion    = NEMA_BUILD_HASH;
     systemInfo_->firmwareVersion = NEMA_FULL_VERSION;
@@ -199,6 +201,7 @@ EventBus&           Runtime::events()        { assert(eventBus_); return *eventB
 ServiceContainer&   Runtime::container()     { assert(container_); return *container_; }
 HardwareRegistry&   Runtime::hardware()      { assert(hardware_);  return *hardware_; }
 CapabilityRegistry& Runtime::capabilities()  { assert(capabilities_); return *capabilities_; }
+CliSessionManager&  Runtime::cliSessions()   { assert(cliSessions_); return *cliSessions_; }
 const SystemInfo&   Runtime::info()    const { assert(systemInfo_);  return *systemInfo_; }
 AppRegistry&        Runtime::apps()          { assert(appRegistry_); return *appRegistry_; }
 AppHostManager&     Runtime::appHost()       { assert(appHosts_); return *appHosts_; }

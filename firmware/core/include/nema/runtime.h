@@ -21,6 +21,7 @@ class ServiceManager;
 struct IService;
 class HardwareRegistry;
 class CapabilityRegistry;
+class CliSessionManager;
 struct SystemInfo;
 class AppRegistry;
 class AppHostManager;
@@ -54,6 +55,7 @@ public:
     ServiceContainer&   container();
     HardwareRegistry&   hardware();
     CapabilityRegistry& capabilities();
+    CliSessionManager&  cliSessions();   // live CLI shell sessions (Plan 45)
     const SystemInfo&   info() const;
     AsyncEventPoster&   asyncPoster();  // thread-safe cross-task event queue
     InputService&       input();        // single input funnel (any thread → main)
@@ -105,6 +107,7 @@ private:
     std::unique_ptr<ServiceManager>    serviceManager_;
     std::unique_ptr<HardwareRegistry>  hardware_;
     std::unique_ptr<CapabilityRegistry> capabilities_;
+    std::unique_ptr<CliSessionManager>  cliSessions_;
     std::unique_ptr<SystemInfo>        systemInfo_;
     std::unique_ptr<AppRegistry>       appRegistry_;
     std::unique_ptr<AppHostManager>    appHosts_;

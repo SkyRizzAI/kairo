@@ -19,6 +19,7 @@ export interface EventEntry {
 // device sent EOT) so the terminal can re-enable its prompt; `prompt` carries the
 // device's current working directory (Plan 44) for a shell-like prompt.
 export interface CliChunk {
+	sid?: number; // session id (Plan 45) — terminals filter to their own session
 	text?: string;
 	done?: boolean;
 	prompt?: string;
@@ -212,16 +213,20 @@ export class RemoteSession {
 			return;
 		}
 		if (f.channel === Channel.Cli) {
-			// device→host: text chunks, an 0x04 (EOT) end marker, or a prompt
-			// frame [0x01]<cwd> (Plan 44) carrying the shell working directory.
-			if (f.payload.length === 1 && f.payload[0] === 0x04) {
-				this.#emit('cli', { done: true } as CliChunk);
-			} else if (f.payload.length >= 1 && f.payload[0] === 0x01) {
-				const prompt = new TextDecoder().decode(f.payload.slice(1));
-				this.#emit('cli', { prompt } as CliChunk);
+			// device→host CLI frame: [sid][rest]. rest is an 0x04 (EOT) marker, a
+			// prompt frame [0x01]<cwd> (Plan 44), or output text. sid (Plan 45)
+			// routes the chunk to the terminal that owns that session.
+			if (f.payload.length < 1) return;
+			const sid = f.payload[0];
+			const rest = f.payload.slice(1);
+			if (rest.length === 1 && rest[0] === 0x04) {
+				this.#emit('cli', { sid, done: true } as CliChunk);
+			} else if (rest.length >= 1 && rest[0] === 0x01) {
+				const prompt = new TextDecoder().decode(rest.slice(1));
+				this.#emit('cli', { sid, prompt } as CliChunk);
 			} else {
-				const text = new TextDecoder().decode(f.payload);
-				this.#emit('cli', { text } as CliChunk);
+				const text = new TextDecoder().decode(rest);
+				this.#emit('cli', { sid, text } as CliChunk);
 			}
 			return;
 		}
@@ -267,9 +272,14 @@ export class RemoteSession {
 	sendKey(key: number) {
 		this.#t.send(encodeFrame(Channel.Input, new Uint8Array([key])));
 	}
-	// Run a CLI command line; output arrives via the 'cli' listener.
-	sendCli(line: string) {
-		this.#t.send(encodeFrame(Channel.Cli, new TextEncoder().encode(line)));
+	// Run a CLI command line in session `sid`; output arrives via 'cli' (Plan 45).
+	// Frame payload = [sid][line].
+	sendCli(sid: number, line: string) {
+		const lineBytes = new TextEncoder().encode(line);
+		const payload = new Uint8Array(1 + lineBytes.length);
+		payload[0] = sid & 0xff;
+		payload.set(lineBytes, 1);
+		this.#t.send(encodeFrame(Channel.Cli, payload));
 	}
 
 	// ── FILE channel (request/response) ──

@@ -9,11 +9,13 @@
 	let {
 		send,
 		subscribe,
-		ready = true
+		ready = true,
+		sid = 1
 	}: {
-		send: (line: string) => void;
+		send: (sid: number, line: string) => void;
 		subscribe: (fn: (c: CliChunk) => void) => () => void;
 		ready?: boolean;
+		sid?: number; // this terminal's CLI session id (Plan 45)
 	} = $props();
 
 	type Line = { kind: 'in' | 'out'; text: string };
@@ -32,6 +34,7 @@
 
 	$effect(() => {
 		const off = subscribe((c) => {
+			if (c.sid !== undefined && c.sid !== sid) return; // not our session
 			if (c.done) {
 				busy = false;
 			} else if (c.prompt !== undefined) {
@@ -52,7 +55,7 @@
 		histIdx = history.length;
 		input = '';
 		busy = true;
-		send(line);
+		send(sid, line);
 		void pin();
 	}
 

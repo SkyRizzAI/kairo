@@ -60,6 +60,21 @@ void CliService::execute(const std::string& line, const Out& out) {
     execute(line, tmp);
 }
 
+CliSession& CliSessionManager::get(uint8_t sid) {
+    for (auto& s : sessions_)
+        if (s->id == sid) return *s;
+    sessions_.push_back(std::make_unique<CliSession>());
+    sessions_.back()->id = sid;
+    return *sessions_.back();
+}
+
+void CliSessionManager::remove(uint8_t sid) {
+    for (auto it = sessions_.begin(); it != sessions_.end(); ++it)
+        if ((*it)->id == sid) { sessions_.erase(it); return; }
+}
+
+void CliSessionManager::clear() { sessions_.clear(); }
+
 namespace {
 
 const char* driverKindName(DriverKind k) {
@@ -134,6 +149,16 @@ void registerCoreCliCommands(CliService& cli, Runtime& rt) {
         [](CliContext& c) {
             for (size_t i = 0; i < c.session.history.size(); i++)
                 c.out(std::to_string(i + 1) + "  " + c.session.history[i]);
+        });
+
+    cli.add("sessions", "list active CLI sessions (id, cwd, history)",
+        [r](CliContext& c) {
+            for (auto& s : r->cliSessions().sessions()) {
+                std::string mark = (s->id == c.session.id) ? " *" : "";
+                c.out("#" + std::to_string(s->id) + mark +
+                      "  cwd=" + s->cwd +
+                      "  hist=" + std::to_string(s->history.size()));
+            }
         });
 
     cli.add("hwinfo", "board, chip and device summary",

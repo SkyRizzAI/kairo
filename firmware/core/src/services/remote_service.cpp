@@ -17,16 +17,22 @@ void RemoteService::init(LinkService& link, InputService& input) {
     input_ = &input;
     logSink_.link = &link;
     link_->onFrame(&RemoteService::onFrameThunk, this);
-    link_->onDisconnect(&RemoteService::onDisconnectThunk, this);  // fresh shell per connection
-    // The shell session streams its output back on the CLI channel for the
-    // lifetime of this device — set once (Plan 44).
-    cliSession_.out = [this](const std::string& s) {
-        if (link_) link_->send(klp::Channel::Cli, (const uint8_t*)s.data(), s.size());
-    };
+    link_->onDisconnect(&RemoteService::onDisconnectThunk, this);  // drop all sessions
 }
 
 void RemoteService::onDisconnectThunk(void* user) {
-    static_cast<RemoteService*>(user)->cliSession_.reset();  // clear cwd/history
+    auto* self = static_cast<RemoteService*>(user);
+    if (self->sessions_) self->sessions_->clear();   // tear down every shell session
+}
+
+// Send a CLI-channel frame for session `sid`: payload = [sid][text]. (Plan 45)
+void RemoteService::sendCli(uint8_t sid, const std::string& text) {
+    if (!link_) return;
+    std::vector<uint8_t> buf;
+    buf.reserve(text.size() + 1);
+    buf.push_back(sid);
+    buf.insert(buf.end(), text.begin(), text.end());
+    link_->send(klp::Channel::Cli, buf.data(), buf.size());
 }
 
 void RemoteService::attachLog(Logger& log) {
@@ -77,16 +83,17 @@ void RemoteService::dispatch(const klp::Frame& f) {
                 powerFn_(powerUser_, f.payload[0]);
             }
             break;
-        case klp::Channel::Cli: {            // host→device terminal: [command line]
-            if (!cli_ || f.payload.empty()) break;
-            std::string line((const char*)f.payload.data(), f.payload.size());
-            cli_->execute(line, cliSession_);   // persistent session: cwd + history
-            // Prompt update (Plan 44 Fase 4): [0x01]<cwd> so the host shows the
-            // current working directory in its prompt, like a real shell.
-            std::string prompt = std::string(1, (char)0x01) + cliSession_.cwd;
-            link_->send(klp::Channel::Cli, (const uint8_t*)prompt.data(), prompt.size());
-            const uint8_t eot = 0x04;        // mark end-of-output → host re-prompts
-            link_->send(klp::Channel::Cli, &eot, 1);
+        case klp::Channel::Cli: {            // host→device terminal: [sid][command line]
+            if (!cli_ || !sessions_ || f.payload.empty()) break;
+            uint8_t sid = f.payload[0];      // session id (Plan 45) — isolates shells
+            std::string line((const char*)f.payload.data() + 1, f.payload.size() - 1);
+            CliSession& s = sessions_->get(sid);
+            if (!s.out) s.out = [this, sid](const std::string& t) { sendCli(sid, t); };
+            cli_->execute(line, s);          // per-session: cwd + history
+            // Prompt update (Plan 44 Fase 4): [0x01]<cwd> so the host shows cwd.
+            sendCli(sid, std::string(1, (char)0x01) + s.cwd);
+            const uint8_t eot[2] = {sid, 0x04};   // end-of-output for this session
+            link_->send(klp::Channel::Cli, eot, 2);
             break;
         }
         case klp::Channel::File:             // host→device filesystem request

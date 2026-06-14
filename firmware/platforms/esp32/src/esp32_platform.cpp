@@ -75,6 +75,7 @@ void Esp32Platform::postRegister(Runtime& rt) {
             out("free psram: " + std::to_string(heap_caps_get_free_size(MALLOC_CAP_SPIRAM)) + " B");
         });
     remote_.attachCli(cli_);
+    remote_.attachSessions(rt.cliSessions());   // multi-session shells (Plan 45)
 
     // VFS + FILE channel. Root "/" is PERSISTENT (LittleFS on the internal flash
     // "spiffs" partition — survives reboot); "/tmp" is volatile RAM scratch. A FAT

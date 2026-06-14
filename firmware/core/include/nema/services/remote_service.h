@@ -49,6 +49,7 @@ public:
     void attachLog(Logger& log);                 // install LOG-channel sink
     void attachEvents(EventBus& bus);            // stream EventBus → EVENT channel
     void attachCli(CliService& cli) { cli_ = &cli; }   // route CLI channel here
+    void attachSessions(CliSessionManager& m) { sessions_ = &m; }  // multi-session (Plan 45)
     void attachFs(IFileSystem& fs) { fs_ = &fs; }      // route FILE channel here
     void onPower(PowerFn fn, void* user) { powerFn_ = fn; powerUser_ = user; }
     void onControl(ControlFn fn, void* user) { controlFn_ = fn; controlUser_ = user; }
@@ -65,9 +66,10 @@ private:
     };
 
     static void onFrameThunk(void* user, const klp::Frame& f);
-    static void onDisconnectThunk(void* user);         // reset the shell session
+    static void onDisconnectThunk(void* user);         // drop all shell sessions
     void dispatch(const klp::Frame& f);
     void handleFile(const std::vector<uint8_t>& in);   // FILE channel request → reply
+    void sendCli(uint8_t sid, const std::string& text);   // frame: [sid][text]
 
     LinkService*  link_   = nullptr;
     InputService* input_  = nullptr;
@@ -78,9 +80,9 @@ private:
     void*         powerUser_ = nullptr;
     ControlFn     controlFn_ = nullptr;
     void*         controlUser_ = nullptr;
-    std::string   info_   = "{\"id\":\"nema\",\"name\":\"nema\",\"components\":[]}";
-    LinkLogSink   logSink_;
-    CliSession    cliSession_;   // per-connection shell state (history + cwd)
+    std::string         info_   = "{\"id\":\"nema\",\"name\":\"nema\",\"components\":[]}";
+    LinkLogSink         logSink_;
+    CliSessionManager*  sessions_ = nullptr;   // multi-session shell state (Plan 45)
 };
 
 } // namespace nema

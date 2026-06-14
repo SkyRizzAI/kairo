@@ -284,7 +284,7 @@
 			{#if showCli}
 				<div class="border-border h-64 shrink-0 border-t">
 					<CliTerminal
-						send={(line) => simStore.sendCli(line)}
+						send={(sid, line) => simStore.sendCli(sid, line)}
 						subscribe={(fn) => simStore.onCli(fn)}
 						ready={simStore.power === 'on'}
 					/>

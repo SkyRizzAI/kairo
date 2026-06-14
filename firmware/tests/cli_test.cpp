@@ -68,6 +68,30 @@ int main() {
     CHECK(outbuf.size() == 2 && outbuf[0] == "echo: conv ",
           "execute(line,out) convenience works");
 
+    // Multi-session isolation (Plan 45): two sessions don't interfere.
+    {
+        CliSessionManager mgr;
+        std::vector<std::string> a, b;
+        CliSession& s1 = mgr.get(1);
+        s1.out = [&](const std::string& l) { a.push_back(l); };
+        CliSession& s2 = mgr.get(2);
+        s2.out = [&](const std::string& l) { b.push_back(l); };
+        CHECK(&mgr.get(1) == &s1, "get() returns the same session for an id");
+        CHECK(mgr.sessions().size() == 2, "two distinct sessions tracked");
+
+        cli.execute("setcwd /apps", s1);   // cd in session 1 only
+        a.clear();
+        cli.execute("echo z", s1);
+        cli.execute("echo z", s2);
+        CHECK(a.back() == "cwd: /apps", "session 1 sees its own cwd");
+        CHECK(b.back() == "cwd: /", "session 2 unaffected by session 1's cd");
+
+        mgr.remove(1);
+        CHECK(mgr.sessions().size() == 1, "remove() drops one session");
+        mgr.clear();
+        CHECK(mgr.sessions().empty(), "clear() drops all sessions");
+    }
+
     std::printf(fail == 0 ? "== ALL PASS ==\n" : "== FAILURES ==\n");
     return fail == 0 ? 0 : 1;
 }

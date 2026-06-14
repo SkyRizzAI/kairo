@@ -127,7 +127,7 @@
 			{#if showCli}
 				<div class="border-border h-64 shrink-0 border-t">
 					<CliTerminal
-						send={(line) => session.sendCli(line)}
+						send={(sid, line) => session.sendCli(sid, line)}
 						subscribe={(fn) => session.on('cli', fn)}
 						ready={connected}
 					/>

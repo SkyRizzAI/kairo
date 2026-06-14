@@ -52,6 +52,7 @@ void WasmPlatform::registerDrivers(Runtime& rt) {
     // need a missing driver (e.g. `ble`) report "not available" in the browser.
     registerCoreCliCommands(cli_, rt);
     remote_.attachCli(cli_);
+    remote_.attachSessions(rt.cliSessions());   // multi-session shells (Plan 45)
 
     // VFS with two in-RAM partitions to show the Linux-style mount system: root
     // at "/", plus a second backend mounted at "/sd" (a stand-in for a microSD —

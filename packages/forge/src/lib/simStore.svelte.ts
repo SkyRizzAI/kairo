@@ -65,8 +65,8 @@ class SimStore {
 		this.#s.wifiSetNetworks(nets);
 	}
 	// CLI terminal passthrough (same KLP channel as /remote).
-	sendCli(line: string) {
-		this.#s.sendCli(line);
+	sendCli(sid: number, line: string) {
+		this.#s.sendCli(sid, line);
 	}
 	onCli(fn: (c: CliChunk) => void) {
 		return this.#s.on('cli', fn);
