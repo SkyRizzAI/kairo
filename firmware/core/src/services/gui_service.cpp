@@ -7,15 +7,16 @@
 #include "nema/ui/canvas.h"
 #include "nema/ui/screen.h"
 #include "nema/ui/status_bar.h"
-#include "nema/ui/ui_constants.h"
 #include "nema/ui/view_dispatcher.h"
 #include "nema/services/input_service.h"
 #include "nema/app/app_host_manager.h"
 #include "nema/input/input_action.h"
 #include "nema/system/capability_registry.h"
+#include "nema/event/event_bus.h"
+#include "nema/event/event.h"
 #include "nema/task_runner.h"
 #include <ctime>
-#include <cstdio>
+#include <string>
 
 namespace nema {
 
@@ -35,10 +36,29 @@ void GuiService::start() {
         sleepMs = (uint64_t)cfg->getIntOr("dpm", "sleep_ms", (int64_t)sleepMs);
         lockMs  = (uint64_t)cfg->getIntOr("dpm", "lock_ms",  (int64_t)lockMs);
         pixelate_->setShowFps(cfg->getIntOr("debug", "fps", 0) != 0);  // Settings → Display
+        // Boot server policy (Plan 43): board/user picks the initial backend via
+        // config "display/boot" (pixelate | fbcon). Default pixelate keeps the UI
+        // on boot; "fbcon" gives a CLI-first console boot (launch UI via
+        // `display start pixelate`). No core default autostart beyond this.
+        if (cfg->getString("display", "boot", "pixelate") == "fbcon")
+            server_ = fbcon_.get();
     }
+
+    // Crash/fault fallback (Plan 43 Fase 4): if the display resource faults or
+    // detaches, drop to the fbcon console so the device never goes dark. Runs on
+    // the main thread (EventBus dispatch); requestServer() is thread-safe.
+    rt_.events().subscribe(events::ResourceChanged, [this](const Event& e) {
+        bool isDisplay = false, notAvailable = false;
+        for (const auto& f : e.payload) {
+            if (std::string(f.key) == "resource") isDisplay    = (f.value == caps::Display);
+            if (std::string(f.key) == "state")    notAvailable = (f.value != "available");
+        }
+        if (isDisplay && notAvailable) requestServer("fbcon");
+    });
 
     dpm_.init(rt_.view(), display_, rt_.clock(), lockScreen_, sleepMs, lockMs);
     lockScreen_.setDpm(dpm_);
+    rt_.view().requestRedraw();   // paint the boot backend immediately (esp. fbcon)
     // UI thread on core 1 (Arduino loop also core 1 but now near-idle).
     // Priority above the near-idle main loop so input/render stay snappy.
     thread_.start({"nema_gui", 8192, 6, 1}, &GuiService::threadEntry, this);

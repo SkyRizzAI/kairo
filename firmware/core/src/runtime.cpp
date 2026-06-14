@@ -113,6 +113,22 @@ void Runtime::registerServices() {
         }
     }
 
+    // Resource liveness bridge (Plan 42): net/bt are DYNAMIC — a built-in radio
+    // is not "connected" until it associates. Seed them Absent, then mirror the
+    // existing connect/disconnect events into liveness. These handlers run on the
+    // MAIN thread (EventBus dispatch happens during asyncPoster_.flush() in
+    // step()), so setState() is called safely — never from a driver's bg task.
+    if (capabilities_->has(caps::NetWifi)) capabilities_->setState(caps::NetWifi, ResourceState::Absent);
+    if (capabilities_->has(caps::BtBle))   capabilities_->setState(caps::BtBle,   ResourceState::Absent);
+    eventBus_->subscribe(events::NetworkConnected,
+        [this](const Event&) { capabilities_->setState(caps::NetWifi, ResourceState::Available); });
+    eventBus_->subscribe(events::NetworkDisconnected,
+        [this](const Event&) { capabilities_->setState(caps::NetWifi, ResourceState::Absent); });
+    eventBus_->subscribe(events::BtConnected,
+        [this](const Event&) { capabilities_->setState(caps::BtBle, ResourceState::Available); });
+    eventBus_->subscribe(events::BtDisconnected,
+        [this](const Event&) { capabilities_->setState(caps::BtBle, ResourceState::Absent); });
+
     std::string caps;
     for (const auto& c : capabilities_->list()) caps += c + " ";
     logger_->info("Runtime", "Capabilities: " + caps);
