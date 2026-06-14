@@ -138,8 +138,10 @@ void GuiService::loop() {
                     continue;
                 }
                 if (!dpm_.deliverKey(ie.key, now)) {
-                    vd.handleAction(ie.action);  // primary: Action-based dispatch
-                    vd.handleCode(ie.code);       // secondary: raw code
+                    if (!server_->onAction(ie.action)) {
+                        vd.handleAction(ie.action);  // primary: Action-based dispatch
+                        vd.handleCode(ie.code);       // secondary: raw code
+                    }
                 }
             }
         }

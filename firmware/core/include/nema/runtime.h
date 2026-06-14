@@ -22,6 +22,7 @@ struct IService;
 class HardwareRegistry;
 class CapabilityRegistry;
 class CliSessionManager;
+class CliService;
 struct SystemInfo;
 class AppRegistry;
 class AppHostManager;
@@ -88,6 +89,11 @@ public:
     AudioService&        audio();
     CameraService&       camera();
 
+    // Wire up the platform's CliService so FbconServer can execute commands
+    // from the on-device console. Called by each platform after CLI setup.
+    void         setCli(CliService& c)  { cli_ = &c; }
+    CliService*  cliService()           { return cli_; }
+
     BootPhase phase()    const;
     int       exitCode() const;
 
@@ -119,6 +125,7 @@ private:
     InputService                       inputService_;  // value member — always alive
     nema::TaskRunner                   taskRunner_;    // value member — always alive
     AudioService                       audioService_;  // value member — always alive
+    CliService*                        cli_           = nullptr;
     CameraService                      cameraService_; // value member — always alive
 };
 

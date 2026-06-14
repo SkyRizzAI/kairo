@@ -53,6 +53,7 @@ void WasmPlatform::registerDrivers(Runtime& rt) {
     registerCoreCliCommands(cli_, rt);
     remote_.attachCli(cli_);
     remote_.attachSessions(rt.cliSessions());   // multi-session shells (Plan 45)
+    rt.setCli(cli_);                            // expose to FbconServer local console
     // OTA dry-run: lets the Forge "Update firmware" flow + PLP Ota protocol be
     // exercised in-browser (no real image swap — WASM has no flash). Plan 39.
     rt.container().registerAs<IOtaUpdater>(&otaUpdater_);

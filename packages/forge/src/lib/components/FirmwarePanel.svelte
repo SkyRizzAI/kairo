@@ -104,14 +104,35 @@
 	let sent = $state(0);
 	let total = $state(0);
 	let log = $state<string[]>([]);
+	let flashStart = $state(0);
+	let now = $state(0);
+	let _ticker: ReturnType<typeof setInterval> | undefined;
+
 	const pct = $derived(total > 0 ? Math.round((sent / total) * 100) : 0);
+	const elapsed = $derived(flashStart > 0 && now > 0 ? Math.floor((now - flashStart) / 1000) : 0);
+	const eta = $derived(
+		sent > 0 && elapsed > 0 && total > sent
+			? Math.round(((total - sent) / sent) * elapsed)
+			: 0
+	);
+
+	function startTicker() {
+		flashStart = Date.now();
+		now = Date.now();
+		_ticker = setInterval(() => { now = Date.now(); }, 1000);
+	}
+	function stopTicker() {
+		clearInterval(_ticker);
+	}
 
 	async function flash(image: Uint8Array) {
 		busy = true;
 		sent = 0;
 		total = image.length;
 		log = [];
+		startTicker();
 		await update(image, (s) => (sent = s), (m) => (log = [...log, m]));
+		stopTicker();
 		busy = false;
 	}
 
@@ -121,6 +142,7 @@
 		sent = 0;
 		total = selectedAsset.size;
 		log = [`downloading ${selectedAsset.name} (${(selectedAsset.size / 1024).toFixed(0)} KB)…`];
+		startTicker();
 		try {
 			const res = await fetch(`/api/firmware-proxy?url=${encodeURIComponent(selectedAsset.browser_download_url)}`);
 			if (!res.ok) throw new Error(`download failed: HTTP ${res.status}`);
@@ -132,6 +154,7 @@
 		} catch (e) {
 			log = [...log, `error: ${e}`];
 		}
+		stopTicker();
 		busy = false;
 	}
 
@@ -252,7 +275,7 @@
 			<div class="h-full bg-sky-400 transition-all" style="width:{pct}%"></div>
 		</div>
 		<div class="text-muted-foreground tabular-nums">
-			{(sent / 1024).toFixed(0)} / {(total / 1024).toFixed(0)} KB · {pct}%
+			{(sent / 1024).toFixed(0)} / {(total / 1024).toFixed(0)} KB · {pct}% · {elapsed}s{eta > 0 ? ` · ~${eta}s left` : ''}
 		</div>
 	{/if}
 
