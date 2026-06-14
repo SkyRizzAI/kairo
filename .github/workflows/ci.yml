@@ -7,6 +7,7 @@ on:
     branches: [main]
 
 jobs:
+  # ── Host unit tests ────────────────────────────────────────────────────────────
   test:
     name: Firmware tests (host)
     runs-on: ubuntu-latest
@@ -19,6 +20,7 @@ jobs:
           cmake --build firmware/build -j$(nproc)
           ctest --test-dir firmware/build --output-on-failure
 
+  # ── WASM simulator ────────────────────────────────────────────────────────────
   wasm:
     name: WASM simulator
     runs-on: ubuntu-latest
@@ -44,11 +46,60 @@ jobs:
           source ~/emsdk/emsdk_env.sh
           bash firmware/tools/build-wasm.sh
 
-      - name: Upload WASM artifact
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: nema-wasm
+          name: palanu-simulator
           path: |
-            packages/forge/static/wasm/nema.js
-            packages/forge/static/wasm/nema.wasm
-          retention-days: 30
+            packages/forge/static/wasm/palanu.js
+            packages/forge/static/wasm/palanu.wasm
+          retention-days: 7
+
+  # ── ESP32 firmware (skyrizz-e32) ──────────────────────────────────────────────
+  esp32-skyrizz:
+    name: ESP32 firmware (skyrizz-e32)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache ESP-IDF tools
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.espressif
+            ~/esp-idf
+          key: esp-idf-v5.4-${{ runner.os }}
+
+      - name: Install system deps
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y --no-install-recommends \
+            git wget flex bison gperf python3 python3-pip python3-venv \
+            cmake ninja-build ccache libffi-dev libssl-dev dfu-util libusb-1.0-0
+
+      - name: Install ESP-IDF v5.4
+        run: |
+          if [ ! -f ~/esp-idf/export.sh ]; then
+            git clone --depth 1 --branch v5.4 https://github.com/espressif/esp-idf.git ~/esp-idf
+          fi
+          ~/esp-idf/install.sh esp32s3
+
+      - name: Cache skyrizz-e32 build
+        uses: actions/cache@v4
+        with:
+          path: firmware/targets/skyrizz-e32/build
+          key: esp32-skyrizz-${{ hashFiles('firmware/**/*.cpp', 'firmware/**/*.h', 'firmware/**/*.cmake', 'firmware/targets/skyrizz-e32/CMakeLists.txt', 'firmware/targets/skyrizz-e32/sdkconfig') }}
+          restore-keys: esp32-skyrizz-
+
+      - name: Build skyrizz-e32
+        run: |
+          source ~/esp-idf/export.sh
+          cd firmware/targets/skyrizz-e32
+          idf.py build
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: palanu-skyrizz-e32
+          path: firmware/targets/skyrizz-e32/build/palanu-skyrizz-e32.bin
+          retention-days: 7

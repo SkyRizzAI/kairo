@@ -9,33 +9,36 @@ permissions:
   pull-requests: write
 
 jobs:
+  # ── 1. Create/update the Release PR; cut the release when merged ───────────────
   release-please:
-    name: Release PR / publish
+    name: Release PR / tag
     runs-on: ubuntu-latest
+    outputs:
+      release_created: ${{ steps.release.outputs.release_created }}
+      tag_name: ${{ steps.release.outputs.tag_name }}
     steps:
-      # 1. On every push to main: create or update the "Release PR".
-      #    When that PR is merged, this step instead creates the tag + GitHub Release.
       - uses: googleapis/release-please-action@v4
         id: release
         with:
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
 
-      # 2..n. Only run after a release was just cut (i.e. the Release PR was merged).
-      #       The default GITHUB_TOKEN tag push won't trigger other workflows, so we
-      #       build + attach the simulator firmware here in the same run.
+  # ── 2. Build + attach WASM simulator firmware ─────────────────────────────────
+  release-wasm:
+    name: Release — WASM simulator
+    needs: release-please
+    if: needs.release-please.outputs.release_created == 'true'
+    runs-on: ubuntu-latest
+    steps:
       - uses: actions/checkout@v4
-        if: ${{ steps.release.outputs.release_created }}
 
       - name: Cache emsdk
-        if: ${{ steps.release.outputs.release_created }}
         uses: actions/cache@v4
         with:
           path: ~/emsdk
           key: emsdk-${{ hashFiles('firmware/tools/build-wasm.sh') }}
 
       - name: Install emsdk
-        if: ${{ steps.release.outputs.release_created }}
         run: |
           if [ ! -d ~/emsdk ]; then
             git clone https://github.com/emscripten-core/emsdk.git ~/emsdk
@@ -43,25 +46,68 @@ jobs:
           ~/emsdk/emsdk install latest
           ~/emsdk/emsdk activate latest
 
-      - name: Build simulator firmware (WASM)
-        if: ${{ steps.release.outputs.release_created }}
+      - name: Build WASM
         run: |
           source ~/emsdk/emsdk_env.sh
           bash firmware/tools/build-wasm.sh
 
       - name: Package simulator firmware
-        if: ${{ steps.release.outputs.release_created }}
         env:
-          TAG: ${{ steps.release.outputs.tag_name }}
+          TAG: ${{ needs.release-please.outputs.tag_name }}
         run: |
           mkdir -p dist
-          zip -j "dist/palanu-simulator-firmware-${TAG}.zip" \
-            packages/forge/static/wasm/nema.js \
-            packages/forge/static/wasm/nema.wasm
+          # Ship both files in one zip (the browser needs .js + .wasm together)
+          zip -j "dist/palanu-simulator-${TAG}.zip" \
+            packages/forge/static/wasm/palanu.js \
+            packages/forge/static/wasm/palanu.wasm
 
-      - name: Attach firmware to the release
-        if: ${{ steps.release.outputs.release_created }}
+      - name: Attach to release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ steps.release.outputs.tag_name }}
-          files: dist/palanu-simulator-firmware-*.zip
+          tag_name: ${{ needs.release-please.outputs.tag_name }}
+          files: dist/palanu-simulator-*.zip
+
+  # ── 3. Build + attach skyrizz-e32 firmware ────────────────────────────────────
+  release-esp32-skyrizz:
+    name: Release — ESP32 skyrizz-e32
+    needs: release-please
+    if: needs.release-please.outputs.release_created == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache ESP-IDF tools
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.espressif
+            ~/esp-idf
+          key: esp-idf-v5.4-${{ runner.os }}
+
+      - name: Install system deps
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y --no-install-recommends \
+            git wget flex bison gperf python3 python3-pip python3-venv \
+            cmake ninja-build ccache libffi-dev libssl-dev dfu-util libusb-1.0-0
+
+      - name: Install ESP-IDF v5.4
+        run: |
+          if [ ! -f ~/esp-idf/export.sh ]; then
+            git clone --depth 1 --branch v5.4 https://github.com/espressif/esp-idf.git ~/esp-idf
+          fi
+          ~/esp-idf/install.sh esp32s3
+
+      - name: Build skyrizz-e32
+        env:
+          TAG: ${{ needs.release-please.outputs.tag_name }}
+        run: |
+          source ~/esp-idf/export.sh
+          cd firmware/targets/skyrizz-e32
+          idf.py build
+
+      - name: Attach to release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.release-please.outputs.tag_name }}
+          files: firmware/targets/skyrizz-e32/build/palanu-skyrizz-e32.bin
