@@ -19,7 +19,7 @@
   already streams line-by-line; `Ctrl+C` abort needs async/long-running commands
   to abort — none exist yet, so it's infrastructure-ahead-of-need).
 - Milestone: M12 (Runtime Foundation)
-- Depends on: Plan 35 (KLP remote), Plan 38 (VFS/filesystem), Plan 42 Fase 4
+- Depends on: Plan 35 (PLP remote), Plan 38 (VFS/filesystem), Plan 42 Fase 4
   (`LinkService::onDisconnect`)
 - Catatan kode: `nema::` (rebrand `palanu` = Plan 41).
 

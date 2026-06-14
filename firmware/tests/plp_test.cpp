@@ -1,13 +1,13 @@
-// Host unit test for the KLP codec (Plan 35). Mirrors the TS test vectors in
-// packages/forge/src/lib/klp/codec.test.ts so both codecs stay byte-exact.
-#include "nema/link/klp_codec.h"
+// Host unit test for the PLP codec (Plan 35). Mirrors the TS test vectors in
+// packages/forge/src/lib/plp/codec.test.ts so both codecs stay byte-exact.
+#include "nema/link/plp_codec.h"
 #include "nema/link/transport.h"
 #include <cassert>
 #include <cstdio>
 #include <vector>
 
 using namespace nema;
-using namespace nema::klp;
+using namespace nema::plp;
 
 static std::vector<uint8_t> enc(uint8_t ch, std::vector<uint8_t> p, uint8_t fl = 0) {
     std::vector<uint8_t> out;
@@ -81,7 +81,7 @@ int main() {
         assert(e.size() < px.size()); // actually compresses
     }
 
-    // 7. virtual cable (loopback) carries KLP both ways
+    // 7. virtual cable (loopback) carries PLP both ways
     {
         LoopbackTransport a, b;
         a.setPeer(&b);
@@ -110,6 +110,6 @@ int main() {
         assert(gotInput);
     }
 
-    std::printf("klp_test OK\n");
+    std::printf("plp_test OK\n");
     return 0;
 }

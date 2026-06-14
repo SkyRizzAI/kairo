@@ -8,7 +8,7 @@
 #include "nema/service/service_container.h"
 #include "nema/system/hardware_registry.h"
 #include "nema/system/capability_registry.h"
-#include "nema/link/klp_ble.h"
+#include "nema/link/plp_ble.h"
 #include <cstdio>
 #include <cstring>
 #include <string>
@@ -45,24 +45,24 @@ namespace nema {
 
 static Esp32Ble* g_ble = nullptr;
 
-// ── KLP GATT service (see core/.../link/klp_ble.h) ──
+// ── PLP GATT service (see core/.../link/plp_ble.h) ──
 // NimBLE 128-bit UUIDs are little-endian: reverse of the canonical byte order.
 //   SERVICE a7b30001-2c4f-4b9e-9c1a-6f0e2d3a4b5c
 //   TX      a7b30002-…  (Notify, device→host)
 //   RX      a7b30003-…  (Write,  host→device)
-static const ble_uuid128_t KLP_SVC_UUID = BLE_UUID128_INIT(
+static const ble_uuid128_t PLP_SVC_UUID = BLE_UUID128_INIT(
     0x5c, 0x4b, 0x3a, 0x2d, 0x0e, 0x6f, 0x1a, 0x9c,
     0x9e, 0x4b, 0x4f, 0x2c, 0x01, 0x00, 0xb3, 0xa7);
-static const ble_uuid128_t KLP_TX_UUID = BLE_UUID128_INIT(
+static const ble_uuid128_t PLP_TX_UUID = BLE_UUID128_INIT(
     0x5c, 0x4b, 0x3a, 0x2d, 0x0e, 0x6f, 0x1a, 0x9c,
     0x9e, 0x4b, 0x4f, 0x2c, 0x02, 0x00, 0xb3, 0xa7);
-static const ble_uuid128_t KLP_RX_UUID = BLE_UUID128_INIT(
+static const ble_uuid128_t PLP_RX_UUID = BLE_UUID128_INIT(
     0x5c, 0x4b, 0x3a, 0x2d, 0x0e, 0x6f, 0x1a, 0x9c,
     0x9e, 0x4b, 0x4f, 0x2c, 0x03, 0x00, 0xb3, 0xa7);
 
-static uint16_t g_klp_tx_handle = 0;   // notify val handle, set by ble_gatts_add_svcs
+static uint16_t g_plp_tx_handle = 0;   // notify val handle, set by ble_gatts_add_svcs
 
-static int klp_gatt_access(uint16_t conn, uint16_t attr,
+static int plp_gatt_access(uint16_t conn, uint16_t attr,
                            struct ble_gatt_access_ctxt* ctxt, void* arg) {
     (void)conn; (void)attr; (void)arg;
     if (ctxt->op == BLE_GATT_ACCESS_OP_WRITE_CHR) {
@@ -75,18 +75,18 @@ static int klp_gatt_access(uint16_t conn, uint16_t attr,
     return BLE_ATT_ERR_UNLIKELY;
 }
 
-static const struct ble_gatt_chr_def KLP_CHRS[] = {
-    { .uuid = &KLP_TX_UUID.u, .access_cb = klp_gatt_access, .arg = nullptr,
+static const struct ble_gatt_chr_def PLP_CHRS[] = {
+    { .uuid = &PLP_TX_UUID.u, .access_cb = plp_gatt_access, .arg = nullptr,
       .descriptors = nullptr, .flags = BLE_GATT_CHR_F_NOTIFY,
-      .min_key_size = 0, .val_handle = &g_klp_tx_handle },
-    { .uuid = &KLP_RX_UUID.u, .access_cb = klp_gatt_access, .arg = nullptr,
+      .min_key_size = 0, .val_handle = &g_plp_tx_handle },
+    { .uuid = &PLP_RX_UUID.u, .access_cb = plp_gatt_access, .arg = nullptr,
       .descriptors = nullptr, .flags = BLE_GATT_CHR_F_WRITE,
       .min_key_size = 0, .val_handle = nullptr },
     { 0 },
 };
-static const struct ble_gatt_svc_def KLP_SVCS[] = {
-    { .type = BLE_GATT_SVC_TYPE_PRIMARY, .uuid = &KLP_SVC_UUID.u,
-      .includes = nullptr, .characteristics = KLP_CHRS },
+static const struct ble_gatt_svc_def PLP_SVCS[] = {
+    { .type = BLE_GATT_SVC_TYPE_PRIMARY, .uuid = &PLP_SVC_UUID.u,
+      .includes = nullptr, .characteristics = PLP_CHRS },
     { 0 },
 };
 
@@ -129,11 +129,11 @@ bool Esp32Ble::enable(BtMode mode) {
     ble_svc_gap_init();
     ble_svc_gatt_init();
 
-    // Register the KLP transport GATT service (Plan 35). Must run before the host
+    // Register the PLP transport GATT service (Plan 35). Must run before the host
     // syncs / advertising starts so the service is committed to the GATT table.
-    int grc = ble_gatts_count_cfg(KLP_SVCS);
-    if (grc == 0) grc = ble_gatts_add_svcs(KLP_SVCS);
-    if (grc != 0 && log_) log_->error("Esp32Ble", "KLP GATT register failed",
+    int grc = ble_gatts_count_cfg(PLP_SVCS);
+    if (grc == 0) grc = ble_gatts_add_svcs(PLP_SVCS);
+    if (grc != 0 && log_) log_->error("Esp32Ble", "PLP GATT register failed",
                                       {{"rc", std::to_string(grc)}});
 
     ble_svc_gap_device_name_set(devName_.c_str());
@@ -268,21 +268,21 @@ void Esp32Ble::disconnect() {
 
 bool Esp32Ble::notify(const char* charUuid, const uint8_t* data, size_t len) {
     if (connHandle_ == 0xFFFF) return false;
-    // Only the KLP TX characteristic is notify-capable here.
-    if (std::strcmp(charUuid, klp_ble::CHAR_TX) != 0 || g_klp_tx_handle == 0) return false;
+    // Only the PLP TX characteristic is notify-capable here.
+    if (std::strcmp(charUuid, plp_ble::CHAR_TX) != 0 || g_plp_tx_handle == 0) return false;
     struct os_mbuf* om = ble_hs_mbuf_from_flat(data, len);
     if (!om) return false;                       // mbuf pool exhausted → drop frame
-    int rc = ble_gatts_notify_custom(connHandle_, g_klp_tx_handle, om);
+    int rc = ble_gatts_notify_custom(connHandle_, g_plp_tx_handle, om);
     return rc == 0;
 }
 
 void Esp32Ble::onRxWrite(const uint8_t* data, size_t len) {
     // Called from the NimBLE host task; deliver to the BleLinkTransport's RecvFn.
-    if (writeFn_) writeFn_(writeUser_, klp_ble::CHAR_RX, data, len);
+    if (writeFn_) writeFn_(writeUser_, plp_ble::CHAR_RX, data, len);
 }
 
 void Esp32Ble::registerService(const BleService& svc) {
-    // The KLP service is built in statically (KLP_SVCS) and committed in enable();
+    // The PLP service is built in statically (PLP_SVCS) and committed in enable();
     // this hook records the request for diagnostics. Generic app-defined GATT
     // services are a future extension.
     if (log_) log_->info("Esp32Ble", "GATT service registered", {{"uuid", svc.uuid}});

@@ -9,7 +9,7 @@
 > 1. **Bluetooth/BLE** — `IBluetoothController` membawahi `IBleAdapter` +
 >    `IClassicAdapter`, dipilih lewat capability bukan tipe board. SkyRizz E32
 >    (ESP32-S3) = **BLE-only**. Sekarang: peripheral/GATT-server (advertise,
->    pairing LE Secure, bond) + **registrasi banyak GATT service** (remote KLP =
+>    pairing LE Secure, bond) + **registrasi banyak GATT service** (remote PLP =
 >    satu; custom-app bisa daftar service sendiri untuk tukar data).
 >    Dipersiapkan: **GATT client** (connect ke device lain) & **A2DP** (sambung
 >    speaker / teruskan audio) sebagai profil future.
@@ -19,10 +19,10 @@
 >
 > Plan ini IMPLEMENTASI minimal yang dibutuhkan remote (BLE GATT-server+bond,
 > USB-CDC), TAPI **arsitektur disiapkan** untuk konsumen lain (A2DP, MSC,
-> custom-app data exchange, BLE central). Framing/protokol (KLP) ada di Plan 35;
+> custom-app data exchange, BLE central). Framing/protokol (PLP) ada di Plan 35;
 > Layer 1 menyediakan **byte pipe + connection mgmt + profil/class extensible**.
 
-- Status: ✅ BLE selesai (host + ESP32-S3). Host-side: HAL (`bluetooth.h`,`usb_cdc.h`) + Bt* events + SimBleAdapter/Controller + registrasi sim + capability `bluetooth`/`bluetooth.ble` + command `ble_phone_*` + BluetoothApp (ComponentApp) + Settings gated; host build hijau, smoke test pairing (BtPairRequest+passkey) ✓. **ESP32-S3: `Esp32Ble` (NimBLE) — advertise + GATT server + LE Secure Connections (numeric-comparison) + bond di NVS; di-`onRegister` oleh `Esp32Platform` (capability `bluetooth.ble`). `idf.py build` hijau → `palanu-skyrizz-e32.bin` (70% flash free).** Verifikasi pairing fisik (HP) menunggu device terhubung. USB-CDC: lihat §6 — transport KLP siap (`UsbCdcLinkTransport`). **(+Plan 37) USB-CDC remote AKTIF**: `Esp32UsbCdc` (HWCDC `Serial` = USB-Serial-JTAG, reader-task) + `MuxTransport` gabung USB+BLE → satu RemoteService/screen-tap. Console berbagi pipa yang sama → KLP magic-byte resync menanganinya; untuk pipa bersih sempurna, set console off-USB (1 baris sdkconfig). Build dua device hijau; verifikasi colok fisik menunggu device.
+- Status: ✅ BLE selesai (host + ESP32-S3). Host-side: HAL (`bluetooth.h`,`usb_cdc.h`) + Bt* events + SimBleAdapter/Controller + registrasi sim + capability `bluetooth`/`bluetooth.ble` + command `ble_phone_*` + BluetoothApp (ComponentApp) + Settings gated; host build hijau, smoke test pairing (BtPairRequest+passkey) ✓. **ESP32-S3: `Esp32Ble` (NimBLE) — advertise + GATT server + LE Secure Connections (numeric-comparison) + bond di NVS; di-`onRegister` oleh `Esp32Platform` (capability `bluetooth.ble`). `idf.py build` hijau → `palanu-skyrizz-e32.bin` (70% flash free).** Verifikasi pairing fisik (HP) menunggu device terhubung. USB-CDC: lihat §6 — transport PLP siap (`UsbCdcLinkTransport`). **(+Plan 37) USB-CDC remote AKTIF**: `Esp32UsbCdc` (HWCDC `Serial` = USB-Serial-JTAG, reader-task) + `MuxTransport` gabung USB+BLE → satu RemoteService/screen-tap. Console berbagi pipa yang sama → PLP magic-byte resync menanganinya; untuk pipa bersih sempurna, set console off-USB (1 baris sdkconfig). Build dua device hijau; verifikasi colok fisik menunggu device.
 - Milestone: M7 (Connectivity)
 - Depends on: **19.5 (Nema: Thread/TaskRunner)**, **19.6 (App-model: IApp/AppHost/AppContext)**, 16 (ESP32 Platform), 24 (Config Store), 30 (Component runtime + screen migration)
 - Blocks: **35 (Nema Link Protocol & Remote Layer)**, OTA
@@ -76,7 +76,7 @@ awal walau implementasinya bertahap:
 
 | Medium | Fungsi | Konsumen | Status di plan ini |
 |---|---|---|---|
-| BLE | GATT server (KLP) | Remote (Plan 35) | ✅ implement |
+| BLE | GATT server (PLP) | Remote (Plan 35) | ✅ implement |
 | BLE | GATT service custom | Custom app (tukar data) | ✅ API siap (`registerService` multi) |
 | BLE | GATT client (central) | Connect sensor/device lain | 🔜 interface, impl future |
 | BLE | A2DP source/sink | Speaker / teruskan lagu | 🔜 profil future (catatan: A2DP butuh BT Classic — TIDAK di S3; LE Audio bila chip dukung) |
@@ -202,7 +202,7 @@ struct IBleAdapter : IDriver {
     DriverKind kind() const override { return DriverKind::Bluetooth; }
 
     // Definisi GATT server — dipanggil sekali sebelum advertising. Plan 34 cukup
-    // daftar Device Info Service minimal; Plan 35 mendaftarkan service KLP.
+    // daftar Device Info Service minimal; Plan 35 mendaftarkan service PLP.
     virtual void registerService(const BleService& svc) = 0;
 
     // Advertising.
@@ -215,7 +215,7 @@ struct IBleAdapter : IDriver {
     virtual bool peer(BtPeer& out) const = 0;
     virtual void disconnect() = 0;
 
-    // I/O primitif (server side) — dipakai Plan 35 untuk KLP.
+    // I/O primitif (server side) — dipakai Plan 35 untuk PLP.
     virtual bool notify(const char* charUuid, const uint8_t* data, size_t len) = 0;
     using WriteFn = void(*)(void* user, const char* charUuid, const uint8_t* data, size_t len);
     virtual void onWrite(WriteFn fn, void* user) = 0;
@@ -353,7 +353,7 @@ BT (opsional, bila `BtConnected`).
 | Persistence | **Bonding** di NVS, IO cap DISPLAY_YESNO | re-pair tiap connect |
 | Otorisasi | **Forget device** (revoke bond) di Settings | HP hilang/dicuri |
 
-> Lapis kedua (token handshake di level aplikasi) dibangun di **Plan 35 (KLP
+> Lapis kedua (token handshake di level aplikasi) dibangun di **Plan 35 (PLP
 > handshake)** — bisa di-revoke tanpa unpair BLE, mendukung multi-device & expiry.
 > Plan 34 cukup mengamankan **transport + identitas**.
 
@@ -392,14 +392,14 @@ struct IUsbCdc : IDriver {
 
 ### Catatan
 - USB-CDC = **byte pipe** murni; tak ada framing/pairing (USB sudah point-to-point
-  & aman secara fisik). KLP handshake (Plan 35) tetap berlaku di atasnya.
+  & aman secara fisik). PLP handshake (Plan 35) tetap berlaku di atasnya.
 - Tidak ada UI khusus: USB aktif saat kabel tertancap; remote layer mendeteksi
   `isOpen()`.
 
 > **Status USB (jujur, per implementasi sekarang):**
-> - ✅ Transport KLP generik **selesai**: `core/include/palanu/link/usb_cdc_link_transport.h`
+> - ✅ Transport PLP generik **selesai**: `core/include/palanu/link/usb_cdc_link_transport.h`
 >   (`UsbCdcLinkTransport` membungkus `IUsbCdc` → `ILinkTransport`). Board apa pun
->   yang menyediakan `IUsbCdc` langsung dapat KLP-over-USB tanpa kode tambahan.
+>   yang menyediakan `IUsbCdc` langsung dapat PLP-over-USB tanpa kode tambahan.
 > - ⏸️ **`Esp32UsbCdc` (device-side) DEFERRED di skyrizz-e32.** Alasan hardware
 >   nyata: satu-satunya port USB board ini di-bond ke **USB-Serial-JTAG** untuk
 >   console + auto-reset flashing yang andal (`CONFIG_ESP_CONSOLE_USB_SERIAL_JTAG`,
@@ -489,7 +489,7 @@ USB-CDC). Berikut ditunda **tetapi HAL didesain agar tinggal nambah**, bukan rom
   profil di controller sudah menyiapkan slot-nya.
 - **USB MSC** (mount microSD ke komputer / transfer file) & **HID** — composite USB
   disiapkan; class menyusul.
-- **Channel data / KLP / remote / OTA** — Plan 35.
+- **Channel data / PLP / remote / OTA** — Plan 35.
 - Multiple koneksi aktif simultan (v1: 1 aktif; bond list boleh banyak).
 
 ---

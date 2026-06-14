@@ -2,7 +2,7 @@
 // routing + RemoteScreenTap streaming, all over a loopback "virtual cable".
 #include "nema/link/link_service.h"
 #include "nema/link/transport.h"
-#include "nema/link/klp_codec.h"
+#include "nema/link/plp_codec.h"
 #include "nema/hal/remote_screen_tap.h"
 #include "nema/hal/display.h"
 #include "nema/services/remote_service.h"
@@ -28,10 +28,10 @@ public:
     void flush() override {}
 };
 
-static std::vector<klp::Frame> g_hostFrames;
-static std::vector<klp::Frame> g_devFrames;
-static void hostSink(void*, const klp::Frame& f) { g_hostFrames.push_back(f); }
-static void devSink(void*, const klp::Frame& f) { g_devFrames.push_back(f); }
+static std::vector<plp::Frame> g_hostFrames;
+static std::vector<plp::Frame> g_devFrames;
+static void hostSink(void*, const plp::Frame& f) { g_hostFrames.push_back(f); }
+static void devSink(void*, const plp::Frame& f) { g_devFrames.push_back(f); }
 
 int main() {
     LoopbackTransport devCable, hostCable;
@@ -47,7 +47,7 @@ int main() {
     // Channels gated before handshake.
     {
         uint8_t x = 1;
-        device.send(klp::Channel::Screen, &x, 1);
+        device.send(plp::Channel::Screen, &x, 1);
         assert(g_hostFrames.empty());   // dropped, not ready
     }
 
@@ -65,23 +65,23 @@ int main() {
     tap.flush();
 
     assert(!g_hostFrames.empty());
-    const klp::Frame& sf = g_hostFrames.back();
-    assert(sf.channel == (uint8_t)klp::Channel::Screen);
-    assert(sf.flags & klp::Flags::Compressed);
+    const plp::Frame& sf = g_hostFrames.back();
+    assert(sf.channel == (uint8_t)plp::Channel::Screen);
+    assert(sf.flags & plp::Flags::Compressed);
     // decode payload: [w:2][h:2][rle...]
     uint16_t w = sf.payload[0] | (sf.payload[1] << 8);
     uint16_t h = sf.payload[2] | (sf.payload[3] << 8);
     assert(w == 16 && h == 4);
-    auto px = klp::rleDecode(sf.payload.data() + 4, sf.payload.size() - 4);
+    auto px = plp::rleDecode(sf.payload.data() + 4, sf.payload.size() - 4);
     assert(px.size() == (size_t)w * h);
     assert(px[18] == 1);
     for (size_t i = 0; i < px.size(); i++) if (i != 18) assert(px[i] == 0);
 
     // Input from host → device.
     uint8_t code = 0x02;   // e.g. Down
-    host.send(klp::Channel::Input, &code, 1);
+    host.send(plp::Channel::Input, &code, 1);
     assert(!g_devFrames.empty());
-    assert(g_devFrames.back().channel == (uint8_t)klp::Channel::Input);
+    assert(g_devFrames.back().channel == (uint8_t)plp::Channel::Input);
     assert(g_devFrames.back().payload.size() == 1 && g_devFrames.back().payload[0] == 0x02);
 
     // RemoteService: INPUT → InputService, device logs → LOG channel.
@@ -97,7 +97,7 @@ int main() {
         remote.attachLog(log);
 
         uint8_t down = (uint8_t)Key::Down;
-        host.send(klp::Channel::Input, &down, 1);
+        host.send(plp::Channel::Input, &down, 1);
         InputEvent ev;
         assert(input.next(ev));
         assert(ev.key == Key::Down);
@@ -106,7 +106,7 @@ int main() {
         log.info("RemoteTest", "hello");
         bool sawLog = false;
         for (size_t i = before; i < g_hostFrames.size(); i++)
-            if (g_hostFrames[i].channel == (uint8_t)klp::Channel::Log) sawLog = true;
+            if (g_hostFrames[i].channel == (uint8_t)plp::Channel::Log) sawLog = true;
         assert(sawLog);
     }
 

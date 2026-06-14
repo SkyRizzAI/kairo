@@ -29,7 +29,7 @@
 | BLE default name | `"Palanu"` | `"Palanu"` | User-visible device name |
 | Default user | `"Palaner"` | `"Palanut"` ⚠️ | **Keputusan user: mau diganti jadi apa?** |
 | Default device | `"My Palanu"` | `"My Palanu"` | NVS default, first-boot only |
-| Protocol name | `KLP (Nema Link Protocol)` | `NLP (Nema Link Protocol)` | Nama saja, format binary tidak berubah |
+| Protocol name | `PLP (Nema Link Protocol)` | `NLP (Nema Link Protocol)` | Nama saja, format binary tidak berubah |
 | NVS namespace wifi | `"palanu_wifi"` | `"palanu_wifi"` | ⚠️ Perlu migration (lihat 0.3) |
 | WASM output | `nema.wasm`, `palanu.js` | `nema.wasm`, `nema.js` | Build script + Forge loader |
 | JS folder | `/forge/static/wasm/palanu.*` | `/forge/static/wasm/nema.*` | |
@@ -87,7 +87,7 @@ Ganti ke `nema_nlp_recv` / `Module.nemaKlpOut` (NLP = Nema Link Protocol).
 
 ### Yang TIDAK berubah
 
-- Format binary KLP frame (`[0xAB][chan][flags][len][payload][crc8]`) — tidak berubah
+- Format binary PLP frame (`[0xAB][chan][flags][len][payload][crc8]`) — tidak berubah
 - BLE UUID (`6E400001-B5A3-F393-E0A9-E50E24DCCA9E` dll) — tidak berubah
 - NVS keys dalam namespace (bukan nama namespace-nya): `"ssid"`, `"user"`, `"device"`, dll
 - Nama file build output final (boleh berubah, tapi bukan breaking di level protocol)
@@ -198,7 +198,7 @@ find docs -name "*.md" | \
   xargs sed -i '' 's/Palanu/Palanu/g; s/palanu/palanu/g'
 
 # Rename plan yang menyebut "Palanu Link":
-# "KLP" → "NLP", "Nema Link Protocol" → "Nema Link Protocol"
+# "PLP" → "NLP", "Nema Link Protocol" → "Nema Link Protocol"
 ```
 
 ### Fase 7 — Root folder rename (opsional, last)

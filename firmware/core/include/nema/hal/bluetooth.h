@@ -8,7 +8,7 @@
 // One unified controller hosts two sub-adapters (BLE + Classic), selected by
 // CAPABILITY, never by board type. ESP32-S3 is BLE-only, so IClassicAdapter is
 // declared-but-unimplemented there. The BLE adapter is a general GATT peripheral:
-// the remote layer (Plan 35) is ONE consumer (its KLP service); apps may register
+// the remote layer (Plan 35) is ONE consumer (its PLP service); apps may register
 // their own services for data exchange.
 namespace nema {
 
@@ -50,7 +50,7 @@ struct IBleAdapter : IDriver {
     DriverKind kind() const override { return DriverKind::Bluetooth; }
 
     // GATT server definition. Called once per service before advertising; the
-    // remote layer registers its KLP service, apps may register their own.
+    // remote layer registers its PLP service, apps may register their own.
     virtual void registerService(const BleService& svc) = 0;
 
     // Advertising.

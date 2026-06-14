@@ -9,7 +9,7 @@
 // data class: a raw byte pipe wrapped by the remote layer's UsbCdcTransport
 // (Plan 35). MSC (mount microSD to a PC) and HID are future classes on the same
 // composite device. USB is point-to-point and physically secure, so there is no
-// pairing here — the KLP handshake (Plan 35) still applies on top.
+// pairing here — the PLP handshake (Plan 35) still applies on top.
 namespace nema {
 
 struct IUsbCdc : IDriver {

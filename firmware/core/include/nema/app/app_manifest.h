@@ -4,7 +4,7 @@ namespace nema {
 
 // How an app got onto the device. BuiltIn apps are compiled into the firmware
 // and installed at boot (the ".fam" equivalent — see AppRegistry). Custom apps
-// are installed at runtime — a .kapp package pushed over the wire (OTA via KLP)
+// are installed at runtime — a .kapp package pushed over the wire (OTA via PLP)
 // or loaded from storage (flash/SD, Plan 38). Same launcher, same registry;
 // only the origin differs.
 enum class AppKind { BuiltIn, Custom };

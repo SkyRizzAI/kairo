@@ -28,7 +28,7 @@ public:
     IClock& clock() override { return clock_; }
     OutputMode outputMode() const override { return OutputMode::Human; }
     void registerDrivers(Runtime& rt) override;
-    void postRegister(Runtime& rt) override;   // wrap display + wire KLP-over-BLE
+    void postRegister(Runtime& rt) override;   // wrap display + wire PLP-over-BLE
     void idle() override;   // vTaskDelay(5ms)
 
     Esp32WifiDriver& wifi() { return wifi_; }
@@ -45,7 +45,7 @@ private:
     Esp32Ble         ble_;
     NvsConfigStore   config_;
 
-    // KLP remote layer over BLE (Plan 35). Only wired when the board has a
+    // PLP remote layer over BLE (Plan 35). Only wired when the board has a
     // display + BLE capability; screen-tap decorates the board's display driver.
     Runtime*           rt_ = nullptr;
     Esp32UsbCdc        usbCdc_;

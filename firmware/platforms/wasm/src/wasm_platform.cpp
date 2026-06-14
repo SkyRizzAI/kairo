@@ -48,7 +48,7 @@ void WasmPlatform::registerDrivers(Runtime& rt) {
     remote_.onControl(&WasmPlatform::controlThunk, this);
     remote_.setProfile(rt.board().profile());
 
-    // CLI terminal over KLP (Plan 40) — same built-ins as hardware; commands that
+    // CLI terminal over PLP (Plan 40) — same built-ins as hardware; commands that
     // need a missing driver (e.g. `ble`) report "not available" in the browser.
     registerCoreCliCommands(cli_, rt);
     remote_.attachCli(cli_);

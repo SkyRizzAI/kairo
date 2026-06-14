@@ -64,7 +64,7 @@ void RemoteScreenTap::flush() {
 void RemoteScreenTap::streamFrame() {
     if (!link_ || !link_->ready() || shadow_.empty()) return;
     // Payload: [w:2 LE][h:2 LE][RLE 1-bit bytes...]
-    auto rle = klp::rleEncode(shadow_.data(), shadow_.size());
+    auto rle = plp::rleEncode(shadow_.data(), shadow_.size());
     payload_.clear();
     payload_.reserve(4 + rle.size());
     payload_.push_back((uint8_t)(w_ & 0xff));
@@ -72,7 +72,7 @@ void RemoteScreenTap::streamFrame() {
     payload_.push_back((uint8_t)(h_ & 0xff));
     payload_.push_back((uint8_t)(h_ >> 8));
     payload_.insert(payload_.end(), rle.begin(), rle.end());
-    link_->send(klp::Channel::Screen, payload_.data(), payload_.size(), klp::Flags::Compressed);
+    link_->send(plp::Channel::Screen, payload_.data(), payload_.size(), plp::Flags::Compressed);
 }
 
 void RemoteScreenTap::sleep() { if (inner_) inner_->sleep(); }

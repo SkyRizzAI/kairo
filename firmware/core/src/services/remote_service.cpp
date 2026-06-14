@@ -32,7 +32,7 @@ void RemoteService::sendCli(uint8_t sid, const std::string& text) {
     buf.reserve(text.size() + 1);
     buf.push_back(sid);
     buf.insert(buf.end(), text.begin(), text.end());
-    link_->send(klp::Channel::Cli, buf.data(), buf.size());
+    link_->send(plp::Channel::Cli, buf.data(), buf.size());
 }
 
 void RemoteService::attachLog(Logger& log) {
@@ -55,21 +55,21 @@ void RemoteService::attachEvents(EventBus& bus) {
             p.insert(p.end(), f.value.begin(), f.value.end());
             p.push_back(0);
         }
-        link_->send(klp::Channel::Event, p.data(), p.size());
+        link_->send(plp::Channel::Event, p.data(), p.size());
     });
 }
 
-void RemoteService::onFrameThunk(void* user, const klp::Frame& f) {
+void RemoteService::onFrameThunk(void* user, const plp::Frame& f) {
     static_cast<RemoteService*>(user)->dispatch(f);
 }
 
-void RemoteService::dispatch(const klp::Frame& f) {
-    switch ((klp::Channel)f.channel) {
-        case klp::Channel::Input:
+void RemoteService::dispatch(const plp::Frame& f) {
+    switch ((plp::Channel)f.channel) {
+        case plp::Channel::Input:
             if (!f.payload.empty() && input_)
                 input_->post((Key)f.payload[0]);
             break;
-        case klp::Channel::System:
+        case plp::Channel::System:
             if (f.payload.empty()) break;
             if (f.payload[0] == SysOp::GetInfo) {
                 // Reply [opcode][board-profile json] so the host can multiplex
@@ -78,12 +78,12 @@ void RemoteService::dispatch(const klp::Frame& f) {
                 p.reserve(1 + info_.size());
                 p.push_back(SysOp::GetInfo);
                 p.insert(p.end(), info_.begin(), info_.end());
-                link_->send(klp::Channel::System, p.data(), p.size());
+                link_->send(plp::Channel::System, p.data(), p.size());
             } else if (f.payload[0] >= SysOp::Restart && powerFn_) {
                 powerFn_(powerUser_, f.payload[0]);
             }
             break;
-        case klp::Channel::Cli: {            // host→device terminal: [sid][command line]
+        case plp::Channel::Cli: {            // host→device terminal: [sid][command line]
             if (!cli_ || !sessions_ || f.payload.empty()) break;
             uint8_t sid = f.payload[0];      // session id (Plan 45) — isolates shells
             std::string line((const char*)f.payload.data() + 1, f.payload.size() - 1);
@@ -93,13 +93,13 @@ void RemoteService::dispatch(const klp::Frame& f) {
             // Prompt update (Plan 44 Fase 4): [0x01]<cwd> so the host shows cwd.
             sendCli(sid, std::string(1, (char)0x01) + s.cwd);
             const uint8_t eot[2] = {sid, 0x04};   // end-of-output for this session
-            link_->send(klp::Channel::Cli, eot, 2);
+            link_->send(plp::Channel::Cli, eot, 2);
             break;
         }
-        case klp::Channel::File:             // host→device filesystem request
+        case plp::Channel::File:             // host→device filesystem request
             if (fs_ && !f.payload.empty()) handleFile(f.payload);
             break;
-        case klp::Channel::Ext: {            // host→device sim control
+        case plp::Channel::Ext: {            // host→device sim control
             if (f.payload.empty()) break;
             uint8_t op = f.payload[0];
             if (op == ExtOp::InjectEvent && events_) {
@@ -128,7 +128,7 @@ void RemoteService::handleFile(const std::vector<uint8_t>& in) {
         p.insert(p.end(), path.begin(), path.end());
         p.push_back(0);
         if (extra && extraLen) p.insert(p.end(), extra, extra + extraLen);
-        link_->send(klp::Channel::File, p.data(), p.size());
+        link_->send(plp::Channel::File, p.data(), p.size());
     };
 
     if (op == FileOp::Write) {
@@ -188,7 +188,7 @@ void RemoteService::LinkLogSink::write(const LogEntry& e) {
     p.push_back(0);
     p.insert(p.end(), e.message.begin(), e.message.end());
     p.push_back(0);
-    link->send(klp::Channel::Log, p.data(), p.size());
+    link->send(plp::Channel::Log, p.data(), p.size());
 }
 
 } // namespace nema

@@ -13,7 +13,7 @@ struct CliContext;
 // CliService — the command REGISTRY (Plan 44). It is not a Unix shell (no kernel,
 // no processes), but it is a real shell in the sense that commands run inside a
 // per-connection CliSession with persistent state (history + working directory).
-// Transport-agnostic: RemoteService routes each KLP CLI line into a session.
+// Transport-agnostic: RemoteService routes each PLP CLI line into a session.
 //
 // Built to extend. add() is the single entry point, shared by core built-ins
 // (registerCoreCliCommands), platform specializations (e.g. ESP32's live-heap

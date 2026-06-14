@@ -13,7 +13,7 @@
 		X
 	} from '@lucide/svelte';
 
-	// Transport-agnostic file browser over the KLP FILE channel. Both RemoteSession
+	// Transport-agnostic file browser over the PLP FILE channel. Both RemoteSession
 	// and simStore expose the same fs methods, so the parent passes either as `fs`.
 	interface Fs {
 		listDir(path: string): Promise<FileEntry[] | null>;

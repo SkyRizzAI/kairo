@@ -1,5 +1,5 @@
-import { Channel, Flags, encodeFrame, FrameParser, rleDecode } from '$lib/klp/codec';
-import type { ILinkTransport } from '$lib/klp/transport';
+import { Channel, Flags, encodeFrame, FrameParser, rleDecode } from '$lib/plp/codec';
+import type { ILinkTransport } from '$lib/plp/transport';
 
 export interface ScreenFrame {
 	w: number;
@@ -90,7 +90,7 @@ type Listeners = {
 };
 
 // RemoteSession — transport-agnostic client of a Kairo device (WASM sim or real
-// hardware) over KLP. Multi-listener so /simulator and /remote can both observe
+// hardware) over PLP. Multi-listener so /simulator and /remote can both observe
 // the SAME device without clobbering each other.
 export class RemoteSession {
 	#t: ILinkTransport;

@@ -1,6 +1,6 @@
 <script lang="ts">
 	// WASM simulator. Layout mirrors /remote: a large centered virtual device
-	// (shared BoardVisual, driven by the board profile over KLP) with compact,
+	// (shared BoardVisual, driven by the board profile over PLP) with compact,
 	// toggleable side panels — Settings (WiFi/Display/System) hidden by default so
 	// it never clutters, and Logs/Events/Services on the right.
 	import { onMount } from 'svelte';
@@ -296,7 +296,7 @@
 		{#if showFiles}
 			<aside class="border-border w-80 shrink-0 overflow-hidden border-l">
 				<div class="border-border text-muted-foreground border-b px-3 py-1.5 text-xs font-bold">
-					Files (KLP · VFS)
+					Files (PLP · VFS)
 				</div>
 				<div class="h-[calc(100%-2rem)]">
 					<FileBrowser fs={simStore} ready={simStore.power === 'on'} />

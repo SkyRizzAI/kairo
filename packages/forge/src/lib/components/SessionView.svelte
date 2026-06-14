@@ -138,7 +138,7 @@
 		{#if showFiles}
 			<aside class="border-border flex w-80 shrink-0 flex-col overflow-hidden border-l">
 				<div class="border-border text-muted-foreground border-b px-3 py-1.5 text-xs font-bold">
-					Files (KLP · VFS)
+					Files (PLP · VFS)
 				</div>
 				<div class="min-h-0 flex-1">
 					<FileBrowser fs={session} ready={connected} />
@@ -149,7 +149,7 @@
 		{#if showLogs}
 			<aside class="border-border flex w-80 shrink-0 flex-col overflow-hidden border-l">
 				<div class="border-border text-muted-foreground border-b px-3 py-1.5 text-xs font-bold">
-					Device logs (KLP)
+					Device logs (PLP)
 				</div>
 				<ScrollArea class="flex-1">
 					<div class="p-2 font-mono text-[10px] leading-relaxed">

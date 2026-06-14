@@ -17,7 +17,7 @@ namespace nema {
 
 // WASM platform — the firmware's environment in the browser. No glass, no stdio:
 // the display is a RemoteScreenTap streaming over the virtual cable, input comes
-// from the cable, logs go out on the cable. The device IS a KLP endpoint.
+// from the cable, logs go out on the cable. The device IS a PLP endpoint.
 class WasmPlatform : public IPlatform {
 public:
     const char* name() const override { return "wasm"; }

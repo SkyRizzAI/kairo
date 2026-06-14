@@ -8,8 +8,8 @@
 
 - Status: 🟢 Fase 1 + 2 done & build-verified (host 10/10 + ESP32 dev-board + WASM + Forge type-check clean). Fase 3 (Forge "new session" button + local TTY) optional, deferred.
 - Milestone: M12 (Runtime Foundation)
-- Depends on: Plan 35 (KLP), Plan 44 (CliSession + CliService registry)
-- Catatan: keputusan **(A) session-id** (bukan per-transport) dipilih agar mux KLP
+- Depends on: Plan 35 (PLP), Plan 44 (CliSession + CliService registry)
+- Catatan: keputusan **(A) session-id** (bukan per-transport) dipilih agar mux PLP
   tetap utuh dan hasilnya ≥ Flipper.
 
 ---
@@ -22,7 +22,7 @@ sesi karena mux menggabungkan semua transport jadi satu link. Flipper
 (`CliRegistry`). Pemetaan ke Kairo: `CliService` = registry ✅, `CliSession` =
 shell ✅ — yang kurang: **pengelola banyak sesi + routing per-sesi**.
 
-Karena KLP di-mux, "koneksi" tak punya identitas di sisi gabungan. Solusi: bawa
+Karena PLP di-mux, "koneksi" tak punya identitas di sisi gabungan. Solusi: bawa
 **session-id 1-byte** di tiap frame channel CLI. Device punya `CliSessionManager`
 yang get-or-create sesi per-id dan merutekan output kembali dengan id yang sama.
 
@@ -40,7 +40,7 @@ Tiap frame CLI sekarang berformat `[sid:1][rest...]`:
 
 1. **`CliSessionManager`** (core): `CliSession& get(uint8_t sid, makeOut)`, `list()`,
    `remove(sid)`, `clear()`. Dimiliki Runtime (`rt.cliSessions()`), supaya sumber
-   sesi apa pun (KLP remote, TTY lokal nanti) memakai pengelola yang sama.
+   sesi apa pun (PLP remote, TTY lokal nanti) memakai pengelola yang sama.
 2. **RemoteService** merutekan channel CLI per-`sid`: get-or-create sesi (out sink
    yang mem-prefix `sid`), eksekusi di sesi itu, EOT+prompt juga ber-`sid`. Saat
    link putus → `clear()`.

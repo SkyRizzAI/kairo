@@ -58,7 +58,7 @@ test('RLE roundtrip on a 1-bit framebuffer', () => {
 	expect(enc.length).toBeLessThan(px.length); // actually compresses
 });
 
-test('virtual cable (loopback) carries KLP frames both ways', () => {
+test('virtual cable (loopback) carries PLP frames both ways', () => {
 	const [a, b] = loopbackPair('wasm');
 	const pa = new FrameParser();
 	const pb = new FrameParser();

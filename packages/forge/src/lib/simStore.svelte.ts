@@ -3,7 +3,7 @@ import type { ScreenFrame, LogEntry, EventEntry, BoardProfile, CliChunk } from '
 
 // Reactive WASM simulator store — wraps the shared wasmSession() and exposes the
 // firmware's telemetry (screen / logs / events / services) + control commands.
-// Same data shape the old native-bridge store had, now over KLP. The rich
+// Same data shape the old native-bridge store had, now over PLP. The rich
 // /simulator UI binds to this.
 class SimStore {
 	frame = $state<ScreenFrame | null>(null);
@@ -14,7 +14,7 @@ class SimStore {
 	connected = $state(false);
 	// Power state — the device starts OFF. The WASM firmware is NOT loaded until
 	// boot() is called (no auto-boot on page open). 'booting' covers WASM fetch +
-	// pthread pool spin-up + KLP handshake; flips to 'on' when connected.
+	// pthread pool spin-up + PLP handshake; flips to 'on' when connected.
 	power = $state<'off' | 'booting' | 'on'>('off');
 
 	#wired = false;
@@ -64,7 +64,7 @@ class SimStore {
 	wifiSetNetworks(nets: { ssid: string; password: string; rssi: number; online: boolean }[]) {
 		this.#s.wifiSetNetworks(nets);
 	}
-	// CLI terminal passthrough (same KLP channel as /remote).
+	// CLI terminal passthrough (same PLP channel as /remote).
 	sendCli(sid: number, line: string) {
 		this.#s.sendCli(sid, line);
 	}

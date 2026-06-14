@@ -36,7 +36,7 @@ struct BoardProfile {
     uint8_t              component_count;
 };
 
-// Serialize a profile to the KLP SYSTEM-channel JSON (Plan 33 Phase 4 / Plan 35):
+// Serialize a profile to the PLP SYSTEM-channel JSON (Plan 33 Phase 4 / Plan 35):
 //   {"id":..,"name":..,"w":..,"h":..,
 //    "components":[{"id":..,"label":..,"type":"button","key":5,"x":..,...},...]}
 // Labels/ids are board-declared constants (no user input), so no JSON escaping.

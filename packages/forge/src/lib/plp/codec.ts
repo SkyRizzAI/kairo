@@ -1,4 +1,4 @@
-// Nema Link Protocol (KLP) — wire codec.
+// Nema Link Protocol (PLP) — wire codec.
 //
 // One protocol, many transports. The SAME frames travel over BLE, USB-Serial,
 // or the simulator "virtual cable" (postMessage). Only the transport differs.
@@ -47,7 +47,7 @@ export function crc8(data: Uint8Array, start = 0, end = data.length): number {
 	return crc;
 }
 
-/** Encode one KLP frame to bytes. */
+/** Encode one PLP frame to bytes. */
 export function encodeFrame(channel: number, payload: Uint8Array, flags = 0): Uint8Array {
 	const len = payload.length;
 	const out = new Uint8Array(HEADER + len + 1);

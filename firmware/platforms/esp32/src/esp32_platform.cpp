@@ -38,18 +38,18 @@ void Esp32Platform::registerDrivers(Runtime& rt) {
 }
 
 void Esp32Platform::postRegister(Runtime& rt) {
-    // --- SUBSTRATE (Plan 42 Fase 3): the KLP transport + CLI + VFS come up
+    // --- SUBSTRATE (Plan 42 Fase 3): the PLP transport + CLI + VFS come up
     // UNCONDITIONALLY, independent of any display. A headless board (no display
     // capability) is still fully usable over USB-CDC/BLE via the CLI — the
     // console is the substrate, the screen is just an optional consumer on top.
-    // KLP rides a MUX of transports: USB-CDC (always — native USB) + BLE (if the
+    // PLP rides a MUX of transports: USB-CDC (always — native USB) + BLE (if the
     // radio is present). The host reaches the device over whichever connects.
     usbCdc_.start();                 // reader task on the USB-CDC (Serial)
     usbLink_.init(usbCdc_);
     mux_.add(&usbLink_);             // USB cable
     rt.capabilities().add(caps::RemoteUsb);
     if (rt.capabilities().has(caps::BtBle)) {
-        cable_.init(ble_);          // KLP GATT TX/RX on the radio
+        cable_.init(ble_);          // PLP GATT TX/RX on the radio
         mux_.add(&cable_);          // BLE cable
     }
     link_.attach(&mux_, LinkService::Role::Device);
@@ -64,7 +64,7 @@ void Esp32Platform::postRegister(Runtime& rt) {
     if (auto* bt = rt.container().resolve<IBluetoothController>())
         bt->setDeviceName(profile_.deviceName().c_str());
 
-    // CLI terminal over KLP (Plan 40). Core built-ins + a live-heap `ram` that
+    // CLI terminal over PLP (Plan 40). Core built-ins + a live-heap `ram` that
     // replaces the totals-only core version with real free-heap numbers.
     registerCoreCliCommands(cli_, rt);
     cli_.add("ram", "free heap / PSRAM (live)",
@@ -117,7 +117,7 @@ void Esp32Platform::postRegister(Runtime& rt) {
     }
 
     remoteWired_ = true;
-    rt.log().info("Esp32Platform", "KLP remote wired",
+    rt.log().info("Esp32Platform", "PLP remote wired",
                   {{"usb", "1"},
                    {"ble", rt.capabilities().has(caps::BtBle) ? "1" : "0"},
                    {"screen", disp ? "1" : "0"}});

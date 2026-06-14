@@ -1,7 +1,7 @@
-import type { ILinkTransport } from '$lib/klp/transport';
+import type { ILinkTransport } from '$lib/plp/transport';
 
-// SerialTransport — KLP over Web Serial / USB-CDC (Plan 35). Connects to a Kairo
-// device exposing a CDC data port (Plan 34 USB). KLP frames are self-delimiting
+// SerialTransport — PLP over Web Serial / USB-CDC (Plan 35). Connects to a Kairo
+// device exposing a CDC data port (Plan 34 USB). PLP frames are self-delimiting
 // (magic + crc), so the stream parser on the RemoteSession side reframes them.
 // Requires a real device + Chrome/Edge.
 export class SerialTransport implements ILinkTransport {

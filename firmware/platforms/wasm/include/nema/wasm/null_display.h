@@ -5,7 +5,7 @@
 namespace nema {
 
 // Headless inner display for WASM — the RemoteScreenTap wraps it and streams the
-// 1-bit buffer over KLP to Forge. There is no local glass in the browser device.
+// 1-bit buffer over PLP to Forge. There is no local glass in the browser device.
 class NullDisplay : public IDisplayDriver, public IService {
 public:
     NullDisplay(uint16_t w = 264, uint16_t h = 176) : w_(w), h_(h) {}

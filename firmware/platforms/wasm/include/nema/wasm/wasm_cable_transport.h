@@ -3,10 +3,10 @@
 
 namespace nema {
 
-// WasmCableTransport — the "virtual cable" (Plan 35). Carries KLP datagrams
+// WasmCableTransport — the "virtual cable" (Plan 35). Carries PLP datagrams
 // between the WASM firmware and the Forge host via postMessage. Outbound:
 // send() posts a message to the worker host. Inbound: the exported C function
-// nema_nlp_recv() (called from JS) feeds bytes back to onRecv().
+// nema_plp_recv() (called from JS) feeds bytes back to onRecv().
 class WasmCableTransport : public ILinkTransport {
 public:
     void init();

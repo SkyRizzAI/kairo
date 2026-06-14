@@ -2,7 +2,7 @@
 #include <cstdint>
 #include <cstddef>
 
-// KLP transport abstraction (device side). The remote protocol (KLP) is always
+// PLP transport abstraction (device side). The remote protocol (PLP) is always
 // the same; only the transport — the "cable" — changes. BLE, USB-CDC, and the
 // simulator virtual-cable all implement this. See Plan 35.
 namespace nema {

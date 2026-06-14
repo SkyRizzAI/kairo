@@ -184,7 +184,7 @@ Kerjakan **berurutan**; tiap dok punya `Depends on`. Centang status di sini saat
 | # | Dokumen | Fitur / Stage | Depends on | Status |
 |---|---|---|---|---|
 | 33 | [`33-board-profile.md`](33-board-profile.md) | BoardProfile data model + AsciiRenderer + About visualization + JSON export | 08,14,27 | ☐ |
-| 35 | [`35-palanu-link-forge-remote.md`](35-palanu-link-forge-remote.md) | **Remote Layer (Layer 2, device-side)**: KLP codec + ILinkTransport (BLE/USB/virtual-cable) + RemoteService (screen-tap/input/log/system) + WASM firmware target | 34,13,19.5 | ☐ (codec TS ✓) |
+| 35 | [`35-palanu-link-forge-remote.md`](35-palanu-link-forge-remote.md) | **Remote Layer (Layer 2, device-side)**: PLP codec + ILinkTransport (BLE/USB/virtual-cable) + RemoteService (screen-tap/input/log/system) + WASM firmware target | 34,13,19.5 | ☐ (codec TS ✓) |
 | 36 | [`36-forge-foundation.md`](36-forge-foundation.md) | **Palanu Forge (Layer 3, web client)**: SvelteKit+Tailwind+shadcn+tRPC, simulator (→WASM), RemoteSession (Web Bluetooth/Serial/virtual-cable), /remote (remote device ATAU sim), /flash, OTA | 35,34,09,10,26,33 | 🚧 Fase 1–3 ✓ |
 
 ---

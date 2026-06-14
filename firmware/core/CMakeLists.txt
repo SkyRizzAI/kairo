@@ -4,7 +4,7 @@
 include("${CMAKE_CURRENT_LIST_DIR}/../cmake/nema_version.cmake")
 
 set(NEMA_CORE_SRCS
-    src/link/klp_codec.cpp
+    src/link/plp_codec.cpp
 src/link/link_service.cpp
 src/services/remote_service.cpp
 src/hal/remote_screen_tap.cpp

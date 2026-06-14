@@ -43,7 +43,7 @@ Hasil audit menyeluruh atas seluruh tree (di luar build/vendor):
 ### Lima masalah nyata (bukan kosmetik)
 
 1. **Substrate di-gate ke display** — `esp32_platform.cpp:43`
-   `if (!rt.capabilities().has("display")) return;` mematikan CLI/KLP/fs di board
+   `if (!rt.capabilities().has("display")) return;` mematikan CLI/PLP/fs di board
    tanpa display. Ini salah-pakai capability check **dan** prasyarat display-server.
 2. **Redundansi `has()` vs `resolve<T>()`** — `js_api.cpp:145`
    `has("profile") || resolve<ProfileService>()`: dua gerbang untuk fakta sama.
@@ -54,7 +54,7 @@ Hasil audit menyeluruh atas seluruh tree (di luar build/vendor):
    *derived capability* yang fragile/order-dependent.
 5. **Satu sumbu, dua makna** — `has("display")` mencampur "punya panel" (statis) dan
    "panel hidup sekarang" (dinamis). Untuk yang disolder ini tak masalah; untuk
-   **remote-screen lewat KLP** (yang attach/detach runtime) ini salah model.
+   **remote-screen lewat PLP** (yang attach/detach runtime) ini salah model.
 
 ### Infra liveness — sudah 80% ada (REUSE, jangan bangun ulang)
 
@@ -96,7 +96,7 @@ Hasil audit menyeluruh atas seluruh tree (di luar build/vendor):
    (`CameraService`, `AudioService`, `IWifiDriver`, BLE, VFS/storage, `LinkService`,
    display) memanggil `setState()` saat init sukses/gagal/teardown. Satu event
    (`ResourceChanged{resource, state}`), satu pola subscribe — N resource, bukan N kode.
-5. **CLI = substrate tak bersyarat.** Wiring CLI/KLP/fs **keluar** dari gate
+5. **CLI = substrate tak bersyarat.** Wiring CLI/PLP/fs **keluar** dari gate
    `has("display")` di `esp32_platform.cpp:43`. Device headless (tanpa display) tetap
    fully usable lewat CLI. Hanya Canvas/GUI yang tetap bergantung display.
 6. **JS API device bersih** — JS **tidak** menyentuh registry mentah. Surface kuratif:
@@ -256,7 +256,7 @@ void Esp32Platform::postRegister(Runtime& rt) {
     // SUBSTRATE — selalu, tanpa syarat display:
     registerCoreCliCommands(cli_, rt);
     remote_.attachCli(cli_);
-    // … KLP/transport wiring …
+    // … PLP/transport wiring …
 
     // DISPLAY-ONLY — baru di sini cek display:
     if (rt.capabilities().has(caps::Display)) {
@@ -289,7 +289,7 @@ nema.device.available("camera")  // dinamis: kamera hidup sekarang?
       dan `has("…")` (37 + 19 lokasi) → konstanta `caps::`. Rapikan taksonomi net/bt.
       Tambah `Runtime::registerDriver(...)`; ubah driver wifi/ble/http/display agar
       daftar sekali jalan. WASM & ESP32 seragam (siapa deklarasi `display`/`input`).
-- [ ] **Fase 3 — CLI substrate decouple.** Pindahkan wiring CLI/KLP/fs keluar dari
+- [ ] **Fase 3 — CLI substrate decouple.** Pindahkan wiring CLI/PLP/fs keluar dari
       gate `has(display)` di `esp32_platform.cpp:43`; hanya RemoteScreenTap/Canvas yang
       tetap di belakang `has(display)`. Verifikasi headless: build target tanpa display
       → CLI tetap jalan (uji di WASM + simulator dulu).

@@ -5,7 +5,7 @@
 
 // RemoteScreenTap — IDisplayDriver decorator (Plan 35). Sits between Canvas and
 // the real display: forwards every op to the inner driver (glass stays normal)
-// and keeps a 1-bit shadow. On flush(), if a remote KLP session is ready, it
+// and keeps a 1-bit shadow. On flush(), if a remote PLP session is ready, it
 // RLE-encodes the shadow and streams it on the SCREEN channel. Zero-ish overhead
 // when no session is connected. Taps the 1-bit buffer BEFORE any RGB conversion,
 // so it is board-agnostic and the core/Canvas are unchanged.

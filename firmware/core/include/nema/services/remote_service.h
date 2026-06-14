@@ -6,7 +6,7 @@
 #include <cstdint>
 #include <string>
 
-// RemoteService — device-side orchestrator for the KLP remote layer (Plan 35).
+// RemoteService — device-side orchestrator for the PLP remote layer (Plan 35).
 // Routes inbound channels (INPUT → InputService, SYSTEM → power callback) and
 // streams logs out on the LOG channel via an ILogSink. The screen path is the
 // separate RemoteScreenTap (registered as the IDisplayDriver). Transport-agnostic
@@ -65,9 +65,9 @@ private:
         void write(const LogEntry& e) override;
     };
 
-    static void onFrameThunk(void* user, const klp::Frame& f);
+    static void onFrameThunk(void* user, const plp::Frame& f);
     static void onDisconnectThunk(void* user);         // drop all shell sessions
-    void dispatch(const klp::Frame& f);
+    void dispatch(const plp::Frame& f);
     void handleFile(const std::vector<uint8_t>& in);   // FILE channel request → reply
     void sendCli(uint8_t sid, const std::string& text);   // frame: [sid][text]
 

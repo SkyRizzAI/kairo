@@ -37,7 +37,7 @@
 			<h1 class="text-xl font-semibold tracking-tight">Install custom app (OTA)</h1>
 			<p class="text-muted-foreground text-sm">
 				Push a built <code class="bg-muted rounded px-1">.kapp</code> to the running simulator over
-				the virtual cable — the same KLP path as BLE/USB on real hardware. The app installs live and
+				the virtual cable — the same PLP path as BLE/USB on real hardware. The app installs live and
 				appears in <em>Apps</em>, no reflash. Volatile for now (lost on reboot). Boot the device on the
 				<a class="underline" href="/simulator">Simulator</a> page first.
 			</p>

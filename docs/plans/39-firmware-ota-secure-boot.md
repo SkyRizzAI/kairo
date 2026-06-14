@@ -1,7 +1,7 @@
 # 39 — Firmware OTA: Secure Boot + Signed Update + A/B Rollback
 
 > Update **seluruh image firmware** lewat jaringan (WiFi pull dari Forge **atau**
-> push lewat KLP) tanpa kabel/esptool — dengan **aman**: image ditandatangani &
+> push lewat PLP) tanpa kabel/esptool — dengan **aman**: image ditandatangani &
 > diverifikasi, dua slot app (A/B) supaya update **atomic**, dan **rollback otomatis**
 > kalau image baru gagal boot. Plus **settings terenkripsi** untuk rahasia.
 >
@@ -16,7 +16,7 @@
 
 - Status: 📝 **PLANNED** (2026-06-08). Belum mulai.
 - Milestone: M11 (Field Reliability / Production).
-- Depends on: **16 (ESP32 Platform)**, **20 (WiFi)**, **34/35 (KLP transport —
+- Depends on: **16 (ESP32 Platform)**, **20 (WiFi)**, **34/35 (PLP transport —
   Channel::Ota sudah ada)**, **36 (Forge — registry `firmware.*` + signing)**,
   **24 (Config Store — untuk settings terenkripsi)**.
 - Blocks: rilis produksi / update di lapangan tanpa bongkar device.
@@ -36,7 +36,7 @@
 | OS jalan terus? | ✅ ya, OS tak berubah | ❌ perlu reboot ke image baru |
 | Risiko nge-brick | rendah (app di-sandbox) | tinggi → butuh secure-boot + rollback |
 | Mekanisme | `IAppStore.install()` simpan ke FS | tulis ke partisi OTA kedua + swap + verify |
-| Transport | KLP `Channel::Ext`/App, atau HTTP | KLP `Channel::Ota` (sudah ada) / `esp_https_ota` |
+| Transport | PLP `Channel::Ext`/App, atau HTTP | PLP `Channel::Ota` (sudah ada) / `esp_https_ota` |
 
 > Saat ini `/flash` (Forge, Plan 36) menulis **raw bin via kabel (Web Serial /
 > esptool-js)** — itu **bukan OTA**, itu flash kabel. Plan 39 menambah jalur
@@ -67,7 +67,7 @@ coredump, data, coredump,0xFF0000, 0x10000,
 ### 0.4 Dua jalur pengiriman (pilih, bisa dua-duanya)
 1. **Pull (WiFi)**: device tanya registry Forge (`firmware.version`/`list` — Plan 36
    sudah ada) → kalau ada versi baru → `esp_https_ota` tarik `.bin` (HTTPS).
-2. **Push (KLP)**: Forge kirim `.bin` chunk lewat **`Channel::Ota`** (sudah
+2. **Push (PLP)**: Forge kirim `.bin` chunk lewat **`Channel::Ota`** (sudah
    ter-reserve di `klp_codec.h`) → `RemoteService` tulis ke partisi OTA. Berguna
    lewat BLE/USB/virtual-cable tanpa WiFi.
 
@@ -79,7 +79,7 @@ coredump, data, coredump,0xFF0000, 0x10000,
 2. **Dual-slot A/B** aktif (partisi + otadata). Update **atomic**; gagal di tengah
    tak merusak slot aktif.
 3. **Rollback otomatis**: image baru yang gagal self-test → device balik ke slot lama.
-4. **Pull (WiFi)** dari Forge registry **dan** **Push (KLP `Channel::Ota`)** keduanya
+4. **Pull (WiFi)** dari Forge registry **dan** **Push (PLP `Channel::Ota`)** keduanya
    mengisi `IOtaUpdater`.
 5. **Forge**: `firmware.*` tRPC menambah versi + **tanda tangan**; `publish-firmware.sh`
    menandatangani build; halaman `/flash` menambah tab **"OTA (wireless)"**.
@@ -99,7 +99,7 @@ firmware/core/include/palanu/ota/ota_session.h   // state, progress, hash akumul
 firmware/core/src/ota/...                        // verifikasi SHA-256, progress event
 ```
 - `IOtaUpdater` transport-agnostic: dipanggil oleh **OTA-pull** (WiFi) maupun
-  **RemoteService** (KLP `Channel::Ota`). Mirip pola `ILinkTransport` kita.
+  **RemoteService** (PLP `Channel::Ota`). Mirip pola `ILinkTransport` kita.
 - Emit `events::OtaProgress`/`OtaDone`/`OtaFailed` ke EventBus → UI bisa tampil bar.
 
 ### 2.2 esp32 backend
@@ -112,7 +112,7 @@ firmware/platforms/esp32/.../esp32_ota.{h,cpp}   // esp_ota_begin/write/end, set
   Kalau crash sebelum mark → rollback otomatis.
 
 ### 2.3 Transport masuk
-- **KLP**: `RemoteService` (Plan 35) menangani `Channel::Ota` → forward chunk ke
+- **PLP**: `RemoteService` (Plan 35) menangani `Channel::Ota` → forward chunk ke
   `IOtaUpdater`. Tambah opcode `OtaOp{Begin,Data,End,Abort}`.
 - **WiFi pull**: `OtaPullService` (IService) — cek registry Forge periodik/manual →
   `esp_https_ota` (atau manual stream → `IOtaUpdater`).
@@ -124,7 +124,7 @@ firmware/platforms/esp32/.../esp32_ota.{h,cpp}   // esp_ota_begin/write/end, set
 ### 2.5 Forge (Plan 36 extend)
 - `firmware.*`: tambah `version` + `signature` + `notes` di manifest
   (`publish-firmware.sh` menandatangani `.bin` dengan kunci CI).
-- `/flash`: tab **OTA** → pilih device (KLP session) → push `.bin` via `Channel::Ota`
+- `/flash`: tab **OTA** → pilih device (PLP session) → push `.bin` via `Channel::Ota`
   dengan progress (reuse RemoteSession).
 
 ### 2.6 Settings terenkripsi (P6)
@@ -143,7 +143,7 @@ firmware/core/.../config/encrypted_config.{h,cpp}  // wrapper IConfigStore + AES
 | **0. Partisi A/B** | `partitions.csv` → ota_0/ota_1/otadata (+ koord. Plan 38 storage) | esp32 build hijau; boot dari ota_0 |
 | **1. IOtaUpdater + esp32** | `esp_ota_*` backend; SHA-256 verify; progress event | device: tulis image valid → set boot → reboot ke image baru |
 | **2. Rollback** | `app valid`/self-test + `BOOTLOADER_APP_ROLLBACK_ENABLE` | device: image "rusak" sengaja → auto-rollback ke slot lama |
-| **3. Push via KLP** | `Channel::Ota` opcodes; RemoteService→IOtaUpdater; Forge push UI | Forge→device (BLE/USB/sim): update tanpa WiFi |
+| **3. Push via PLP** | `Channel::Ota` opcodes; RemoteService→IOtaUpdater; Forge push UI | Forge→device (BLE/USB/sim): update tanpa WiFi |
 | **4. Pull via WiFi** | `OtaPullService` cek registry Forge → `esp_https_ota` | device: deteksi versi baru → tarik → update |
 | **5. Secure Boot v2** | sign di CI/`publish-firmware.sh`; verifikasi bootloader; doc enroll kunci | device (sekali kabel): hanya image bertanda-tangan boleh boot |
 | **6. Encrypted settings** | `EncryptedConfig` (AES-GCM) untuk value `secret` | host+device: wifi psk tersimpan terenkripsi, terbaca balik |
@@ -154,7 +154,7 @@ Fase 0,1,3 bisa diverifikasi sebagian build-only. Fase 2,5 wajib device. Fase 6 
 
 ## 4. Acceptance criteria
 - [ ] Dual-slot A/B aktif; update tidak merusak slot aktif (atomic).
-- [ ] `IOtaUpdater` mengisi dari **KLP Channel::Ota** dan **WiFi pull** (Forge).
+- [ ] `IOtaUpdater` mengisi dari **PLP Channel::Ota** dan **WiFi pull** (Forge).
 - [ ] Image baru gagal self-test → **rollback otomatis** ke image lama.
 - [ ] Secure Boot v2: image tanpa tanda tangan valid **ditolak** boot.
 - [ ] Forge: registry menyajikan versi+signature; `/flash` tab OTA push berhasil.

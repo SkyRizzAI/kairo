@@ -24,7 +24,7 @@ bool Esp32UsbCdc::isOpen() const {
     // USB is point-to-point: treat the pipe as always available so the device can
     // always reply (ACK / screen frames). HWCDC operator bool() is unreliable on
     // USB-Serial-JTAG (often false even when the host has the port open), which
-    // would make the mux drop the handshake ACK → host stuck "connecting". The KLP
+    // would make the mux drop the handshake ACK → host stuck "connecting". The PLP
     // handshake itself establishes the real session.
     return true;
 }

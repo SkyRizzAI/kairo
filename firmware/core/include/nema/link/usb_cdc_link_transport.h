@@ -6,8 +6,8 @@
 //
 // USB is point-to-point and physically secure (no pairing), so the "cable" is
 // just the raw CDC stream: write() goes to the host, onData() comes from it. The
-// KLP FrameParser above reassembles datagrams, so CDC packet boundaries don't
-// matter. Same KLP protocol as BLE and the WASM virtual cable — only the cable
+// PLP FrameParser above reassembles datagrams, so CDC packet boundaries don't
+// matter. Same PLP protocol as BLE and the WASM virtual cable — only the cable
 // differs.
 namespace nema {
 

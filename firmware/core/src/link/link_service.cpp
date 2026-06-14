@@ -32,12 +32,12 @@ void LinkService::onBytes(const uint8_t* d, size_t n) {
 void LinkService::sendControl(uint8_t op) {
     uint8_t b = op;
     std::vector<uint8_t> buf;   // local → thread-safe (send may run on any thread)
-    klp::encodeFrame(buf, (uint8_t)klp::Channel::Control, &b, 1, 0);
+    plp::encodeFrame(buf, (uint8_t)plp::Channel::Control, &b, 1, 0);
     if (t_) t_->send(buf.data(), buf.size());
 }
 
-void LinkService::handle(const klp::Frame& f) {
-    if (f.channel == (uint8_t)klp::Channel::Control) {
+void LinkService::handle(const plp::Frame& f) {
+    if (f.channel == (uint8_t)plp::Channel::Control) {
         if (f.payload.empty()) return;
         switch (f.payload[0]) {
             case HELLO:                       // device side: accept + ACK
@@ -61,11 +61,11 @@ void LinkService::handle(const klp::Frame& f) {
     if (ready_ && fn_) fn_(user_, f);
 }
 
-void LinkService::send(klp::Channel ch, const uint8_t* data, size_t len, uint8_t flags) {
+void LinkService::send(plp::Channel ch, const uint8_t* data, size_t len, uint8_t flags) {
     if (!t_) return;
-    if (ch != klp::Channel::Control && !ready_.load()) return;   // gated until handshake
+    if (ch != plp::Channel::Control && !ready_.load()) return;   // gated until handshake
     std::vector<uint8_t> buf;   // local → thread-safe
-    klp::encodeFrame(buf, (uint8_t)ch, data, len, flags);
+    plp::encodeFrame(buf, (uint8_t)ch, data, len, flags);
     t_->send(buf.data(), buf.size());
 }
 

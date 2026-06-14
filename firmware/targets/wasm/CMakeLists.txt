@@ -21,6 +21,6 @@ target_link_options(nema PRIVATE
     # keeps QuickJS's overflow guard well below this (clean error, never a crash).
     -sDEFAULT_PTHREAD_STACK_SIZE=1048576
     -sSTACK_SIZE=1048576
-    "SHELL:-s EXPORTED_FUNCTIONS=['_main','_nema_nlp_recv','_malloc','_free']"
+    "SHELL:-s EXPORTED_FUNCTIONS=['_main','_nema_plp_recv','_malloc','_free']"
     "SHELL:-s EXPORTED_RUNTIME_METHODS=['HEAPU8','ccall','cwrap']"
 )

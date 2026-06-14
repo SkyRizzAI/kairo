@@ -2,7 +2,7 @@
 	import { tick } from 'svelte';
 	import type { CliChunk } from '$lib/RemoteSession';
 
-	// Flipper-style terminal over the KLP CLI channel. Transport-agnostic: the
+	// Flipper-style terminal over the PLP CLI channel. Transport-agnostic: the
 	// parent wires `send` (host→device command line) and `subscribe` (device→host
 	// output chunks), so this works for both /remote (RemoteSession) and the WASM
 	// /simulator (simStore) without knowing which.

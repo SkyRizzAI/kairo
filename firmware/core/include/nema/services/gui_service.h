@@ -44,7 +44,7 @@ public:
     DisplayPowerManager& dpm() { return dpm_; }
 
     // Display server control (Plan 43). Thread-safe: requestServer() may be
-    // called from any thread (e.g. the CLI/KLP task); the swap is applied on the
+    // called from any thread (e.g. the CLI/PLP task); the swap is applied on the
     // GUI thread at the top of the next loop iteration.
     bool                       requestServer(const char* name);  // false = unknown name
     const char*                activeServerName() const;

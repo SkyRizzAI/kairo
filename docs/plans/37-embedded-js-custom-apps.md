@@ -34,9 +34,9 @@
   **Fase 6 ✅ END-TO-END (volatile, OTA does NOT need microSD)** — `JsAppStore` +
   `installKapp(rt, bytes, len)` registers a pushed `.kapp` as a live `JsAppPlugin`
   → appears in Apps **immediately, filesystem-free** (volatile, lost on reboot).
-  Wired over KLP: new `ExtOp::AppInstall` (Plan 35) → `RemoteService` dispatch →
+  Wired over PLP: new `ExtOp::AppInstall` (Plan 35) → `RemoteService` dispatch →
   platform `controlThunk` (wasm + esp32) → `installKapp`. Forge: `RemoteSession.
-  installApp(kapp)` + a **`/install`** route (pick/paste `.kapp` → push). Same KLP
+  installApp(kapp)` + a **`/install`** route (pick/paste `.kapp` → push). Same PLP
   path for WASM virtual-cable AND real BLE/USB. Builds green host/WASM/skyrizz
   (60%)/dev-board (41%); Forge `check` 0 errors.
   **Storage tiers (corrected):** volatile-RAM OTA works now (no storage); persistent
@@ -49,7 +49,7 @@
 - Depends on: **27/30/31** (component UI + runtime + scroll/gesture),
   **33-tsx-mapping-styling** (kontrak node↔TSX + styling — di-*supersede* & diperluas
   di sini), **19.5/19.6** (Nema thread + AppHost/AppContext), **24** (config/storage),
-  **34/35/36** (BLE/USB + KLP link + Forge → jalur install over-the-wire).
+  **34/35/36** (BLE/USB + PLP link + Forge → jalur install over-the-wire).
 - Blocks: Palanu App Store, microSD app loading.
 
 > Catatan penomoran: ada tabrakan `33` (board-profile vs tsx-mapping-styling).
@@ -112,7 +112,7 @@ TSX  ──build(esbuild)──► app.kapp (JS bundle + manifest)
    App hanya bisa yang board-nya support + yang diizinkan manifest.
 4. **Storage/install**: app tersimpan persisten (flash SPIFFS/NVS **sekarang**;
    microSD **nanti**) lewat `IAppStore`. **Install over-the-wire** dari Forge via
-   KLP/BLE (Plan 34/35) — push `.kapp` → device simpan → muncul di Apps.
+   PLP/BLE (Plan 34/35) — push `.kapp` → device simpan → muncul di Apps.
 5. **Sandbox**: app tidak bisa menyentuh apa pun di luar API yang di-expose;
    ada **limit memori + interrupt** (anti loop tak henti / OOM).
 6. Semua teruji di **host + WASM (Forge sim)** dulu, baru hardware.
@@ -179,12 +179,12 @@ firmware/core/src/js/  (impl) + firmware/vendor/quickjs/  (vendored engine)
   3. `SdAppStore` — microSD (nanti, saat FS ada). Interface sama.
 - `AppListScreen` gabung: native plugins + `IAppStore.list()` (JS apps). Pilih JS
   app → `AppHostManager.launch(jsApp)` (dapat pause/resume gratis).
-- **Install over-the-wire**: channel KLP baru (`APP`/ext) — Forge kirim `.kapp` →
+- **Install over-the-wire**: channel PLP baru (`APP`/ext) — Forge kirim `.kapp` →
   device `IAppStore.install()` → muncul di Apps. (Reuse Plan 34/35 transport.)
 
 ### 2.5 Forge (DX di web, Plan 36)
 - Halaman `/apps` (atau `/forge-apps`): editor/upload `.kapp`, daftar app
-  ter-install di device, tombol **Install** (push via KLP), **Run**, **Remove**.
+  ter-install di device, tombol **Install** (push via PLP), **Run**, **Remove**.
 - (Opsional dev) **hot-load**: build TSX di browser (esbuild-wasm) → push tiap save.
 
 ---
@@ -199,7 +199,7 @@ firmware/core/src/js/  (impl) + firmware/vendor/quickjs/  (vendored engine)
 | **3. Reaktivitas** | `useState/useEffect` + event-loop pump; re-render on setState | sim: counter JS interaktif (tap → angka naik), tanpa leak |
 | **4. System API** | `palanu.log/http/wifi/ble/storage/timer`, capability-gated, async via TaskRunner+Promise | sim: app JS fetch http (wifi-gated) → tampil hasil; UI tak freeze |
 | **5. Store + loader** | `IAppStore` (Embedded + Flash/SPIFFS); AppList gabung; launch via AppHostManager | device: app JS ter-embed muncul di Apps, jalan, bisa pause/resume |
-| **6. Install OTA (KLP)** | channel APP; Forge push `.kapp` → install → muncul | Forge→device: install app baru tanpa reflash, langsung jalan |
+| **6. Install OTA (PLP)** | channel APP; Forge push `.kapp` → install → muncul | Forge→device: install app baru tanpa reflash, langsung jalan |
 | **7. microSD store** | `SdAppStore` saat FS siap | load app dari SD |
 | **8. DX polish** | `create-palanu-app`, README, contoh (wifi/ble), hot-load Forge | dokumentasi + 2–3 contoh app |
 
@@ -234,7 +234,7 @@ export default function App() {
 ```
 ```
 palanu-build .        # → counter.kapp (manifest + minified JS)
-# install: Forge → device (KLP), atau embed ke firmware
+# install: Forge → device (PLP), atau embed ke firmware
 ```
 
 ---
@@ -248,7 +248,7 @@ palanu-build .        # → counter.kapp (manifest + minified JS)
 - [ ] `useState` re-render; tidak ada memory leak (heap stabil setelah N render).
 - [ ] System API capability-gated; app tanpa izin tak bisa akses; http async tak freeze UI.
 - [ ] App JS muncul di Apps list (Embedded + Flash store), launch via AppHostManager.
-- [ ] Install `.kapp` dari Forge via KLP → muncul & jalan tanpa reflash.
+- [ ] Install `.kapp` dari Forge via PLP → muncul & jalan tanpa reflash.
 - [ ] Interrupt/mem-limit: app loop tak-henti / boros memori dihentikan, device tetap hidup.
 - [ ] Contoh app (counter, http, wifi/ble) jalan di sim & device.
 

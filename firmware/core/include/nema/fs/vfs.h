@@ -7,7 +7,7 @@ namespace nema {
 
 // Vfs — a Linux-style virtual filesystem: ONE namespace rooted at "/", assembled
 // from several backends mounted at paths. It IS an IFileSystem (composite), so the
-// KLP File channel and the Forge browser see a single tree and never care which
+// PLP File channel and the Forge browser see a single tree and never care which
 // backend serves a path.
 //
 //   vfs.mount("/",   &flash);   // root / system partition

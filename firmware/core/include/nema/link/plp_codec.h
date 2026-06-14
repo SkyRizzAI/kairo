@@ -3,14 +3,14 @@
 #include <cstddef>
 #include <vector>
 
-// Nema Link Protocol (KLP) — wire codec (C++ device side).
+// Nema Link Protocol (PLP) — wire codec (C++ device side).
 //
-// Byte-exact mirror of the TS codec (packages/forge/src/lib/klp/codec.ts).
+// Byte-exact mirror of the TS codec (packages/forge/src/lib/plp/codec.ts).
 // One protocol, many transports: the same frames travel over BLE, USB-CDC, or
 // the simulator virtual-cable. See Plan 35.
 //
 // Frame: [magic:0xAB][chan:1][flags:1][len:2 LE][payload:len][crc8:1]
-namespace nema::klp {
+namespace nema::plp {
 
 enum class Channel : uint8_t {
     Control = 0x00,
@@ -62,4 +62,4 @@ private:
 std::vector<uint8_t> rleEncode(const uint8_t* px, size_t len);
 std::vector<uint8_t> rleDecode(const uint8_t* data, size_t len);
 
-} // namespace nema::klp
+} // namespace nema::plp

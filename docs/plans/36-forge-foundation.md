@@ -4,11 +4,11 @@
 > Forge = web "all-in-one" ekosistem Palanu: **simulator** (WASM in-browser),
 > **remote** (kontrol device fisik atau simulator), **flash/update**. Klien tunggal
 > dengan **RemoteSession** yang transport-agnostic: simulator (virtual-cable ke
-> WASM), device (Web Bluetooth / Web Serial) memakai UI & KLP yang sama. Karena
-> simulator-WASM = device KLP penuh (Plan 35), **"remote bisa me-remote simulator"
+> WASM), device (Web Bluetooth / Web Serial) memakai UI & PLP yang sama. Karena
+> simulator-WASM = device PLP penuh (Plan 35), **"remote bisa me-remote simulator"
 > otomatis** — cukup pilih transport.
 
-- Status: ✅ Fungsional penuh (client-side). Simulator WASM jalan di browser (multi-thread), `/simulator` & `/remote` berbagi satu instance, discovery list (Simulator/BLE/USB) ada. **Power lazy: halaman buka = device OFF (WASM TIDAK di-load); Boot → load+boot in-place; Restart → reload+autoboot; Shutdown → reload ke OFF (teardown WASM+workers).** **/flash: esptool-js (Web Serial) — pilih build dari registry, flash 3 part (0x0/0x8000/0x10000) + progress + serial console, full client-side.** **Firmware registry: tRPC `firmware.list`/`firmware.version` baca `static/firmware/manifest.json` (dihasilkan `firmware/tools/publish-firmware.sh`).** `bun run check` 0 error, `bun run build` hijau. Verifikasi flash fisik menunggu device terhubung. **(+Plan 37, aditif)** `RemoteSession.installApp(kapp)` + route **`/install`** (pilih/paste `.kapp` → push via KLP `Ext` ke device → install live di Apps). Jalur KLP sama untuk WASM virtual-cable & BLE/USB.
+- Status: ✅ Fungsional penuh (client-side). Simulator WASM jalan di browser (multi-thread), `/simulator` & `/remote` berbagi satu instance, discovery list (Simulator/BLE/USB) ada. **Power lazy: halaman buka = device OFF (WASM TIDAK di-load); Boot → load+boot in-place; Restart → reload+autoboot; Shutdown → reload ke OFF (teardown WASM+workers).** **/flash: esptool-js (Web Serial) — pilih build dari registry, flash 3 part (0x0/0x8000/0x10000) + progress + serial console, full client-side.** **Firmware registry: tRPC `firmware.list`/`firmware.version` baca `static/firmware/manifest.json` (dihasilkan `firmware/tools/publish-firmware.sh`).** `bun run check` 0 error, `bun run build` hijau. Verifikasi flash fisik menunggu device terhubung. **(+Plan 37, aditif)** `RemoteSession.installApp(kapp)` + route **`/install`** (pilih/paste `.kapp` → push via PLP `Ext` ke device → install live di Apps). Jalur PLP sama untuk WASM virtual-cable & BLE/USB.
 - Milestone: M9 (Board Profile & Ecosystem Foundation — Forge/Studio)
 - Depends on: **35 (Nema Link Protocol & Remote Layer)**, **34 (BLE/USB foundation)**, 33 (Board Profile)
 - Blocks: Palanu Studio (future)
@@ -36,7 +36,7 @@
    interface itu di-back oleh implementasi **virtual (in-process)**. Remote
    menyambung lewat interface itu **persis seperti ke hardware asli** — Forge tak
    bisa membedakan simulator dari device fisik selain transport-nya virtual.
-   Protokol di atasnya tetap **KLP yang sama** untuk semua (BLE/USB/virtual).
+   Protokol di atasnya tetap **PLP yang sama** untuk semua (BLE/USB/virtual).
 
 ```
                  Forge (full client-side, SSR off)
@@ -44,18 +44,18 @@
         (view)          │          ├─ Simulator (WASM)  ─┐
                         ▼          ├─ Bluetooth (BLE)     │ pilih transport
                   satu wasmSession()                      │
-                        │  KLP                            ▼
+                        │  PLP                            ▼
    ┌────────────────────┴───────────────────────────────────────┐
    │ WASM firmware (multi-thread, di browser)                    │
    │  interface VIRTUAL:  USB-CDC · BLE · (cable)  ← remote nyambung ke sini │
    └────────────────────────────────────────────────────────────┘
-   device fisik: interface sama, tapi USB/BLE asli (Plan 34) — KLP identik
+   device fisik: interface sama, tapi USB/BLE asli (Plan 34) — PLP identik
 ```
 
 6b. **`/simulator` = UI KAYA seperti versi lama, BEDANYA cuma engine = WASM.**
    Layout 3 kolom WAJIB dipertahankan: (kiri) device screen + tema (eink/phosphor/
    amber) + HardwareButtons (d-pad/OK/Cancel); (tengah) Settings tabs (WiFi/
-   Display/System); (kanan) Logs / Events / Services. Datanya lewat KLP:
+   Display/System); (kanan) Logs / Events / Services. Datanya lewat PLP:
    screen/input/log/**event**/**service** channel + perintah sim (inject event,
    wifi router) via channel kontrol. JANGAN sederhanakan jadi cuma layar+tombol.
 7. **Serverless / client-side penuh.** Tidak ada proses server yang menjalankan
@@ -65,7 +65,7 @@
    static host (cukup set header COOP/COEP + serve `.wasm` dengan COEP/CORP).
 
 > Status implementasi 0a: poin 1,3,4,6 ✅ jalan. Poin 5 (virtual USB/BLE interface)
-> saat ini diwujudkan oleh `WasmCableTransport` (KLP in-process) yang berperan
+> saat ini diwujudkan oleh `WasmCableTransport` (PLP in-process) yang berperan
 > sebagai interface virtual; penajaman agar benar-benar memetakan `IUsbCdc`/
 > `IBleAdapter` virtual = lanjutan. Poin 2 (hapus `packages/simulator` + bridge
 > native) = dikerjakan.
@@ -74,26 +74,26 @@
 
 ## 0. Latar belakang & posisi
 
-Layer 2 (Plan 35) memberi **device-side remote** (KLP + RemoteService + transport
+Layer 2 (Plan 35) memberi **device-side remote** (PLP + RemoteService + transport
 BLE/USB/virtual-cable + WASM firmware). Forge = **klien web**-nya: merender layar,
 mengirim input, menampilkan log, mengontrol power, flashing, update.
 
 Forge berdiri di atas fondasi yang **sudah dibangun** (Fase 1–3): scaffold
 SvelteKit + Tailwind + shadcn-svelte + tRPC, dan simulator yang dimigrasikan dari
 `packages/simulator` (React/Bun) ke Forge dengan **bridge native interim** (server
-spawn `palanu-sim`, telemetry via tRPC SSE). KLP codec TS juga sudah ada & teruji
-(`src/lib/klp/`). Plan ini melanjutkan ke **WASM + remote + flash**.
+spawn `palanu-sim`, telemetry via tRPC SSE). PLP codec TS juga sudah ada & teruji
+(`src/lib/plp/`). Plan ini melanjutkan ke **WASM + remote + flash**.
 
 ### Keputusan stack (terkunci)
 SvelteKit (routing + API `+server`/tRPC) · Tailwind v4 · shadcn-svelte · tRPC v11
-(command/query type-safe) · telemetry hot-path: SSE (interim) → KLP (final).
+(command/query type-safe) · telemetry hot-path: SSE (interim) → PLP (final).
 
 ---
 
 ## 1. Goal
 
 1. **Simulator → WASM in-browser** (gantikan bridge native): host `nema.wasm`
-   (Plan 35) di **Web Worker**; `VirtualCableTransport` (postMessage) bicara KLP.
+   (Plan 35) di **Web Worker**; `VirtualCableTransport` (postMessage) bicara PLP.
 2. **RemoteSession (TS)** — transport-agnostic: `{ screen, logs, info, sendAction,
    sendPointer, power, ext }`. Dipakai `/simulator` & `/remote` IDENTIK.
 3. **Transports (TS)** sejajar: `VirtualCableTransport` (WASM Worker),
@@ -110,7 +110,7 @@ SvelteKit (routing + API `+server`/tRPC) · Tailwind v4 · shadcn-svelte · tRPC
 ## 2. Arsitektur (web client)
 
 ```
-        Forge RemoteSession (TS) — satu UI, satu KLP codec
+        Forge RemoteSession (TS) — satu UI, satu PLP codec
    screen <canvas> · on-screen controls · logs · power · ext
                           │
                        LinkHub (fan-out: N view ⇄ 1 device)
@@ -123,18 +123,18 @@ SvelteKit (routing + API `+server`/tRPC) · Tailwind v4 · shadcn-svelte · tRPC
    (firmware, Plan 35)  (Plan 34/35)       (Plan 34/35)
 ```
 
-Semua transport mengimplement `ILinkTransport` (`src/lib/klp/transport.ts`, sudah
-ada). KLP codec (`src/lib/klp/codec.ts`, sudah ada & teruji) sama untuk semua.
+Semua transport mengimplement `ILinkTransport` (`src/lib/plp/transport.ts`, sudah
+ada). PLP codec (`src/lib/plp/codec.ts`, sudah ada & teruji) sama untuk semua.
 
 ```
 packages/forge/src/
 ├─ lib/
-│  ├─ klp/                      # ✅ codec.ts, transport.ts, codec.test.ts (DONE)
+│  ├─ plp/                      # ✅ codec.ts, transport.ts, codec.test.ts (DONE)
 │  ├─ transport/
 │  │  ├─ VirtualCableTransport.ts   # spawn Web Worker(nema.wasm), postMessage
-│  │  ├─ BleTransport.ts            # Web Bluetooth GATT (KLP char notify/write)
-│  │  └─ SerialTransport.ts         # Web Serial (KLP + flash/console)
-│  ├─ RemoteSession.ts          # transport + KLP → screen$/logs$/info/send/power
+│  │  ├─ BleTransport.ts            # Web Bluetooth GATT (PLP char notify/write)
+│  │  └─ SerialTransport.ts         # Web Serial (PLP + flash/console)
+│  ├─ RemoteSession.ts          # transport + PLP → screen$/logs$/info/send/power
 │  ├─ LinkHub.ts                # fan-out 1 device → N session view
 │  ├─ flash/esptool.ts          # esptool-js (Web Serial)
 │  ├─ sim.svelte.ts             # ✅ store (DONE, native bridge) → migrasi ke RemoteSession
@@ -153,7 +153,7 @@ packages/forge/src/
 ### RemoteSession (inti — transport-agnostic)
 ```ts
 class RemoteSession {
-  constructor(t: ILinkTransport) { /* KLP codec + handshake on connect */ }
+  constructor(t: ILinkTransport) { /* PLP codec + handshake on connect */ }
   readonly screen: Readable<ImageBitmap>;   // SCREEN channel
   readonly logs:   Readable<LogEntry>;        // LOG channel
   info(): DeviceInfo;                          // SYSTEM (model/fw/board profile)
@@ -169,13 +169,13 @@ transport. Itu buah dari "simulator = remote session".
 
 ## 3. "Remote me-remote simulator" — cara kerjanya
 
-1. WASM (Plan 35) jalan di Worker, expose KLP via `VirtualCableTransport`.
+1. WASM (Plan 35) jalan di Worker, expose PLP via `VirtualCableTransport`.
 2. `LinkHub` membungkus satu transport dan mem-fan-out ke banyak `RemoteSession`.
 3. `/simulator` attach RemoteSession#1 (lokal). `/remote` (tab/halaman lain) pilih
    transport **"Simulator (WASM)"** → attach RemoteSession#2 ke hub yang sama.
 4. Dua-duanya lihat layar & kirim input ke WASM yang sama, real-time. Persis seperti
    me-remote device fisik — cuma transport-nya virtual-cable.
-   *(Cross-device — HP me-remote sim di laptop — = relay KLP lewat server WS; future.)*
+   *(Cross-device — HP me-remote sim di laptop — = relay PLP lewat server WS; future.)*
 
 ---
 
@@ -186,7 +186,7 @@ transport. Itu buah dari "simulator = remote session".
 - ✅ Bridge native interim: `SimManager` spawn `palanu-sim` + telemetry SSE + snapshot replay
 - ✅ App-shell (nav Simulator/Remote/Flash, tema dark) + redirect
 - ✅ Simulator paritas penuh: DeviceScreen (3 tema) + HardwareButtons (+keyboard) + WiFi router + Display presets + System (inject + **Build dari web**) + Logs/Events/Services
-- ✅ KLP codec TS + test (`src/lib/klp/`, 7/7) — siap dipakai RemoteSession
+- ✅ PLP codec TS + test (`src/lib/plp/`, 7/7) — siap dipakai RemoteSession
 - ✅ Root scripts `forge`, `forge:build`, `forge:sim`
 
 ---
@@ -194,7 +194,7 @@ transport. Itu buah dari "simulator = remote session".
 ## 5. Fase lanjutan
 
 4. **Worker + VirtualCableTransport** — host `nema.wasm` (Plan 35) di Web Worker;
-   transport postMessage ⇄ KLP. *(butuh `nema.wasm` dari Plan 35 fase 4 → emsdk.)*
+   transport postMessage ⇄ PLP. *(butuh `nema.wasm` dari Plan 35 fase 4 → emsdk.)*
 5. **RemoteSession + cutover /simulator** — bungkus codec+transport; pindahkan
    `/simulator` dari `sim.svelte.ts`(native) ke `RemoteSession(VirtualCable)`.
    Verifikasi paritas → **hapus `SimManager` + `packages/simulator`**.
@@ -232,7 +232,7 @@ Fase 4–6 butuh `nema.wasm` (Plan 35) & emsdk; Fase 6 BLE butuh hardware/Chrome
 ---
 
 ## 7. Non-Goals (v1)
-- **WASM build / KLP codec C++ / RemoteService** — Plan 35 (device-side).
+- **WASM build / PLP codec C++ / RemoteService** — Plan 35 (device-side).
 - Cross-device remote-of-sim (HP ke sim laptop) — butuh server WS relay; future.
 - Multi-client > 2 simultan, video/grayscale stream, semantic mirroring.
 - UI "USB Mass Storage mode" (suruh device expose microSD MSC) — future (Plan 34 MSC).
@@ -242,7 +242,7 @@ Fase 4–6 butuh `nema.wasm` (Plan 35) & emsdk; Fase 6 BLE butuh hardware/Chrome
 ---
 
 ## 8. Hubungan dengan plan lain
-- **35** menyuplai: KLP (kontrak codec), `nema.wasm`, semantik channel/handshake.
+- **35** menyuplai: PLP (kontrak codec), `nema.wasm`, semantik channel/handshake.
 - **34** menyuplai semantik pairing (Web Bluetooth ↔ LE Secure) & USB.
 - **33** BoardProfile JSON (via SYSTEM channel) → render device mockup + map klik→Action.
 - **10/09** simulator lama = sumber migrasi (sudah dipindah; native bridge dihapus saat WASM cutover).

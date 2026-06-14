@@ -11,7 +11,7 @@ struct IService;
 
 // AppRegistry — the installed-app table. This is the device's app store index:
 // every launchable app lives here, whether it was compiled into the firmware
-// (install()) or installed at runtime (installCustom() — a .kapp pushed over KLP
+// (install()) or installed at runtime (installCustom() — a .kapp pushed over PLP
 // or loaded from storage). The launcher reads list(); selecting an entry calls
 // launch(id), which spawns the app on its own thread via the AppHostManager.
 //

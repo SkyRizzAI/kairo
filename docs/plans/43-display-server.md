@@ -23,7 +23,7 @@
 - Milestone: M12 (Runtime Foundation — Display Server)
 - Depends on: **Plan 42 (Capability & Resource Model)** — `available()`,
   `ResourceChanged`, CLI substrate, `resolve<T>()`; Plan 14 (UI Runtime),
-  Plan 30 (Component runtime), Plan 27 (Input Abstraction), Plan 35 (KLP remote)
+  Plan 30 (Component runtime), Plan 27 (Input Abstraction), Plan 35 (PLP remote)
 - Blocks: rich-UI evolution (LVGL apps), multi-modal display
 - Catatan kode: `nema::` (rebrand `palanu` = Plan 41, belum jalan).
 
@@ -85,7 +85,7 @@ ulang. Yang kurang: pemilik loop (sekarang `GuiService`) belum tipis,
    untuk UI. Board **boleh** inject `IService` autostart sendiri (post-boot panggil
    `displayManager.start("...")`) — core tetap bebas-policy. **Demo: tanpa autostart.**
 8. **Fallback**: server `stop`/`display.fault` (event Plan 42) → `DisplayManager`
-   jatuh ke fbcon. Device & CLI tetap hidup paralel lewat serial/KLP.
+   jatuh ke fbcon. Device & CLI tetap hidup paralel lewat serial/PLP.
 9. **Remote streaming tetap jalan**: `RemoteScreenTap` ada di layer `IDisplayDriver`,
    jadi **server apa pun** ter-stream ke Forge tanpa perubahan (properti gratis).
 10. Teruji **host + WASM** (swap aether↔fbcon, fallback); build ESP32 OK.
@@ -97,7 +97,7 @@ ulang. Yang kurang: pemilik loop (sekarang `GuiService`) belum tipis,
 - **`acquire<T>()`/refcount** display — satu server aktif pada satu waktu; tak ada
   kepemilikan contended. (lihat Plan 42 non-goal)
 - **Sandbox capability per-app** ala Akira `cap_mask` — plan terpisah (App Permissions).
-- **Protokol display jaringan baru** — `RemoteScreenTap`/KLP yang ada sudah cukup.
+- **Protokol display jaringan baru** — `RemoteScreenTap`/PLP yang ada sudah cukup.
 
 ---
 
@@ -105,7 +105,7 @@ ulang. Yang kurang: pemilik loop (sekarang `GuiService`) belum tipis,
 
 ```
                  ┌─────────────── CLI substrate (selalu ada) ───────────────┐
-   serial/KLP ──▶│  CliService  ── command `display start|stop|switch ...`   │
+   serial/PLP ──▶│  CliService  ── command `display start|stop|switch ...`   │
                  └───────────────────────────┬──────────────────────────────┘
                                               │ launch / switch
                                               ▼
@@ -206,4 +206,4 @@ Fase 3 & 5.
 - **`acquire<T>()`/refcount + display contended** — satu server aktif/saat.
 - **Sandbox izin per-app (Akira `cap_mask`)** — plan App Permissions terpisah; ini
   satu-satunya area di mana Akira (keamanan) di depan Palanu, layak dikejar nanti.
-- **Protokol display jaringan baru** — `RemoteScreenTap`/KLP cukup; berlaku lintas backend.
+- **Protokol display jaringan baru** — `RemoteScreenTap`/PLP cukup; berlaku lintas backend.

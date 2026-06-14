@@ -24,7 +24,7 @@ add_subdirectory(core)
 add_subdirectory(boards/simulator)
 
 if(EMSCRIPTEN)
-    # Browser/WASM build: firmware runs in a Web Worker, speaks KLP over the
+    # Browser/WASM build: firmware runs in a Web Worker, speaks PLP over the
     # virtual cable (postMessage). No stdio sim platform, no host tests.
     add_subdirectory(platforms/wasm)
     add_subdirectory(targets/wasm)

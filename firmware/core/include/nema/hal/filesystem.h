@@ -21,7 +21,7 @@ struct FsEntry {
 //
 // v1 is whole-file read/write — enough for the simulator file browser and small
 // configs/apps. Chunked/offset I/O for large files is a planned extension (the
-// KLP File channel reserves room for it); paths are absolute, '/'-separated.
+// PLP File channel reserves room for it); paths are absolute, '/'-separated.
 struct IFileSystem : IDriver {
     DriverKind kind() const override { return DriverKind::Storage; }
 

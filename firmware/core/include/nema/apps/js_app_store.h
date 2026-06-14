@@ -10,7 +10,7 @@ class Runtime;
 
 // JsAppStore — the custom-app store. A process-wide owner of JS apps (.kapp
 // bundles): the built-in (embedded) ones AND any installed at runtime over the
-// wire (OTA via KLP). Each installed app is registered into the AppRegistry as
+// wire (OTA via PLP). Each installed app is registered into the AppRegistry as
 // AppKind::Custom, so it appears in the launcher next to built-ins.
 //
 // Installing is FILESYSTEM-FREE: an app pushed over the wire is registered live
