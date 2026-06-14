@@ -216,6 +216,17 @@ void registerCoreCliCommands(CliService& cli, Runtime& rt) {
                 out("  " + e.id + " [" + driverKindName(e.kind) + "] " + e.detail);
         });
 
+    auto version = [r](CliContext& c) {
+        const SystemInfo& si = r->info();
+        c.out("fw:    " + si.firmwareVersion);
+        c.out("build: " + si.buildVersion);
+        c.out("board: " + std::string(r->board().name()) + " / " + si.platformName);
+        if (auto* ota = r->container().resolve<IOtaUpdater>(); ota && ota->supported())
+            c.out(std::string("slot:  ") + ota->runningSlot());  // active A/B slot
+    };
+    cli.add("version", "firmware version, build hash, active OTA slot", version);
+    cli.add("ver", "alias of version", version);
+
     cli.add("ram", "memory totals",
         [r](CliContext& c) {
             const auto& out = c.out;
