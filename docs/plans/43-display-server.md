@@ -1,10 +1,10 @@
 # 43 — Display Server (pluggable renderer + CLI substrate)
 
 > Renderer berhenti jadi pipeline mati. Jadikan **backend yang bisa diganti
-> runtime** (`IDisplayServer`): pixelate (canvas/UI sekarang), fbcon (console/TTY
+> runtime** (`IDisplayServer`): aether (canvas/UI sekarang), fbcon (console/TTY
 > di panel), LVGL (board warna). CLI = **substrate yang selalu ada** (model
 > AkiraOS / Linux getty); display server di-**launch dari CLI** di atas TTY
-> (`display start pixelate`). Saat server stop/crash → **fallback ke fbcon/TTY**,
+> (`display start aether`). Saat server stop/crash → **fallback ke fbcon/TTY**,
 > device tak ikut mati. **Tidak ada autostart default di core** — board boleh
 > inject service autostart sendiri; untuk demo, user yang menjalankan dari CLI.
 >
@@ -13,9 +13,9 @@
 > **Tak satu pun bisa swap runtime** — di sinilah Palanu lebih maju.
 
 - Status: 🟢 Fase 1–4 done & build-verified (host 9/9 + ESP32 dev-board green):
-  pluggable `IDisplayServer`, `PixelateServer` (default), `FbconServer`,
-  thread-safe runtime swap, CLI `display` command (pixelate ⇄ fbcon at runtime),
-  config-driven boot backend (`display/boot` = pixelate | fbcon for CLI-first),
+  pluggable `IDisplayServer`, `AetherServer` (default), `FbconServer`,
+  thread-safe runtime swap, CLI `display` command (aether ⇄ fbcon at runtime),
+  config-driven boot backend (`display/boot` = aether | fbcon for CLI-first),
   and display-fault → fbcon fallback (Fase 4). **Only Fase 5 LvglServer remains
   — BLOCKED: LVGL is not vendored** (add to vendor/ + ESP-IDF component first;
   the IDisplayServer seam is ready for it). On-device behaviour (fbcon paint,
@@ -55,7 +55,7 @@ ulang. Yang kurang: pemilik loop (sekarang `GuiService`) belum tipis,
 | Crash | `direct_draw` acquire | tak ada isolasi | Fallback fbcon via liveness Plan 42 |
 
 **Tak satu pun punya swap runtime** — Flipper mati, Akira compile-time. Goal kita
-(pixelate↔LVGL via CLI di atas TTY) lebih maju dari dua-duanya.
+(aether↔LVGL via CLI di atas TTY) lebih maju dari dua-duanya.
 
 ---
 
@@ -63,7 +63,7 @@ ulang. Yang kurang: pemilik loop (sekarang `GuiService`) belum tipis,
 
 1. **`IDisplayServer`** — kontrak backend yang bisa diganti. Tiga kewajiban: consume
    `UiNode` tree, gambar ke `IDisplayDriver`, terima input dari `InputService`.
-2. **`PixelateServer`** — renderer sekarang (`renderer.cpp`/`Canvas`/component-runtime)
+2. **`AetherServer`** — renderer sekarang (`renderer.cpp`/`Canvas`/component-runtime)
    diekstrak jadi backend default. **Nol perubahan visual** dibanding sekarang.
 3. **`FbconServer`** — backend teks: tampilkan **buffer CLI/console di panel**
    (analog Linux fbcon / AkiraOS `shell_display`). Sekaligus **fallback terakhir**.
@@ -75,20 +75,20 @@ ulang. Yang kurang: pemilik loop (sekarang `GuiService`) belum tipis,
 6. **CLI substrate + launch**: command `display`:
    ```
    display                       → status (server aktif, resolusi, fps)
-   display list                  → backend tersedia (pixelate / fbcon / lvgl)
+   display list                  → backend tersedia (aether / fbcon / lvgl)
    display start <backend>       → mount server di atas TTY
    display stop                  → lepas → balik ke fbcon/TTY
    display switch <backend>      → ganti runtime tanpa reboot
    ```
 7. **Kebijakan boot**: **core TANPA autostart default.** Saat cap display ada, boot
-   berakhir di **fbcon/console** (CLI tampil di panel). User `display start pixelate`
+   berakhir di **fbcon/console** (CLI tampil di panel). User `display start aether`
    untuk UI. Board **boleh** inject `IService` autostart sendiri (post-boot panggil
    `displayManager.start("...")`) — core tetap bebas-policy. **Demo: tanpa autostart.**
 8. **Fallback**: server `stop`/`display.fault` (event Plan 42) → `DisplayManager`
    jatuh ke fbcon. Device & CLI tetap hidup paralel lewat serial/KLP.
 9. **Remote streaming tetap jalan**: `RemoteScreenTap` ada di layer `IDisplayDriver`,
    jadi **server apa pun** ter-stream ke Forge tanpa perubahan (properti gratis).
-10. Teruji **host + WASM** (swap pixelate↔fbcon, fallback); build ESP32 OK.
+10. Teruji **host + WASM** (swap aether↔fbcon, fallback); build ESP32 OK.
 
 **Non-goal (di luar scope):**
 
@@ -117,7 +117,7 @@ ulang. Yang kurang: pemilik loop (sekarang `GuiService`) belum tipis,
                                           │ render(tree) / onInput(e)
               ┌───────────────────────────┼───────────────────────────┐
               ▼                            ▼                           ▼
-       PixelateServer               FbconServer                  LvglServer
+       AetherServer               FbconServer                  LvglServer
    (UiNode→Canvas→pixels,    (console buffer→panel,         (UiNode→lv_obj,
     = renderer sekarang)      fallback/TTY)                  build-time, warna)
               └───────────────────────────┴───────────────────────────┘
@@ -131,7 +131,7 @@ ulang. Yang kurang: pemilik loop (sekarang `GuiService`) belum tipis,
 ```cpp
 struct IDisplayServer {
     virtual ~IDisplayServer() = default;
-    virtual const char* name() const = 0;        // "pixelate" | "fbcon" | "lvgl"
+    virtual const char* name() const = 0;        // "aether" | "fbcon" | "lvgl"
 
     // Mount/unmount: ambil alih / lepas display + input.
     virtual bool mount(IDisplayDriver& display, InputService& input) = 0;
@@ -144,7 +144,7 @@ struct IDisplayServer {
 };
 ```
 
-> `renderFrame(views)`: PixelateServer = `render(activeTree, canvas)` sekarang;
+> `renderFrame(views)`: AetherServer = `render(activeTree, canvas)` sekarang;
 > FbconServer = abaikan tree app, gambar buffer console; LvglServer = reconcile
 > tree→`lv_obj` lalu `lv_timer_handler()`. **Detail akses tree & sumber buffer
 > console diselesaikan di eksekusi P1/P3** — interface ini titik tetapnya.
@@ -163,10 +163,10 @@ struct IDisplayServer {
 // CORE: tak ada start otomatis. Boot → fbcon/console di panel.
 // BOARD (opsional, TIDAK untuk demo): inject service autostart sendiri.
 struct AutoDisplayService : IService {            // contoh, milik board
-    void start() override { dm_->start("pixelate"); }
+    void start() override { dm_->start("aether"); }
     ...
 };
-// Demo: user ketik `display start pixelate` di CLI.
+// Demo: user ketik `display start aether` di CLI.
 ```
 
 ### 2.4 Reuse Plan 42
@@ -178,14 +178,14 @@ CLI substrate (sudah lepas dari display di Plan 42 Fase 3); `resolve<T>()` disco
 
 ## 3. Fase pengerjaan
 
-- [ ] **Fase 1 — Ekstrak `IDisplayServer` + `PixelateServer` (refactor, nol perubahan
-      visual).** Bungkus pipeline sekarang jadi `PixelateServer`. `DisplayManager`
-      memegangnya; boot tetap mount pixelate (parity). Host/WASM: output identik.
+- [ ] **Fase 1 — Ekstrak `IDisplayServer` + `AetherServer` (refactor, nol perubahan
+      visual).** Bungkus pipeline sekarang jadi `AetherServer`. `DisplayManager`
+      memegangnya; boot tetap mount aether (parity). Host/WASM: output identik.
 - [ ] **Fase 2 — `DisplayManager` memiliki loop + thread-safe `ViewDispatcher`.**
       Pindahkan loop/DPM/input-drain dari `GuiService`; `GuiService` jadi tipis/dilebur.
-      Masih pixelate-only. Uji race redraw (lanjutan fix atomic 12 Jun).
+      Masih aether-only. Uji race redraw (lanjutan fix atomic 12 Jun).
 - [ ] **Fase 3 — `FbconServer` + command `display` + boot CLI-first.** Console di panel.
-      `display start|stop|switch|list`. Kebijakan: boot → fbcon; user launch pixelate.
+      `display start|stop|switch|list`. Kebijakan: boot → fbcon; user launch aether.
       **Di sinilah perilaku berubah jadi CLI-first.** Uji headless + with-display.
 - [ ] **Fase 4 — Fallback crash + hook autostart board.** `display.fault`/server-stop →
       `DisplayManager` mount fbcon (device tak mati). Sediakan pola `AutoDisplayService`
@@ -193,7 +193,7 @@ CLI substrate (sudah lepas dari display di Plan 42 Fase 3); `resolve<T>()` disco
 - [ ] **Fase 5 — `LvglServer` (build-time, board warna).** Reconcile `UiNode`→`lv_obj`;
       `display switch lvgl` runtime. Bukti swappability. ESP32 build-only.
 
-**Build/uji:** host + WASM tiap fase (swap pixelate↔fbcon, fallback); ESP32 build-only
+**Build/uji:** host + WASM tiap fase (swap aether↔fbcon, fallback); ESP32 build-only
 Fase 3 & 5.
 
 ---

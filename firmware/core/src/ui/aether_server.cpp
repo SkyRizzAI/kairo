@@ -1,4 +1,4 @@
-#include "nema/ui/pixelate_server.h"
+#include "nema/ui/aether_server.h"
 #include "nema/ui/canvas.h"
 #include "nema/ui/screen.h"
 #include "nema/ui/status_bar.h"
@@ -9,7 +9,7 @@
 
 namespace nema {
 
-void PixelateServer::renderFrame(Canvas& c, ViewDispatcher& vd, const StatusBarData& status) {
+void AetherServer::renderFrame(Canvas& c, ViewDispatcher& vd, const StatusBarData& status) {
     uint64_t now = clock_.millis();
     // FPS window: snapshot the flush count once per second.
     if (now - fpsLastMs_ >= 1000) {

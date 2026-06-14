@@ -55,7 +55,7 @@ src/input/gesture.cpp
     src/ui/widgets.cpp
     src/ui/text_style.cpp
     src/ui/renderer.cpp
-    src/ui/pixelate_server.cpp
+    src/ui/aether_server.cpp
     src/ui/fbcon_server.cpp
     src/ui/focus.cpp
     src/ui/component_runtime.cpp

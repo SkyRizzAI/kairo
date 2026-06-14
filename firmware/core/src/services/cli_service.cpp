@@ -173,7 +173,7 @@ void registerCoreCliCommands(CliService& cli, Runtime& rt) {
                 out(std::string("active: ") + r->displayServerName());
                 out("backends:");
                 for (auto* n : r->displayServerList()) out(std::string("  ") + n);
-                out("usage: display start <backend>  (e.g. pixelate | fbcon)");
+                out("usage: display start <backend>  (e.g. aether | fbcon)");
                 return;
             }
             if (args[0] == "list") {

@@ -6,15 +6,15 @@ namespace nema {
 
 struct IClock;
 
-// PixelateServer — the built-in 1-bit canvas renderer (the default display
+// AetherServer — the built-in 1-bit canvas renderer (the default display
 // server). Composites the status bar + active screen/modal onto the Canvas and
 // flushes, with an optional FPS/timing overlay. This is exactly the rendering
 // that used to live inline in GuiService::renderOnce.
-class PixelateServer : public IDisplayServer {
+class AetherServer : public IDisplayServer {
 public:
-    explicit PixelateServer(IClock& clock) : clock_(clock) {}
+    explicit AetherServer(IClock& clock) : clock_(clock) {}
 
-    const char* name() const override { return "pixelate"; }
+    const char* name() const override { return "aether"; }
     void renderFrame(Canvas& c, ViewDispatcher& views, const StatusBarData& status) override;
 
     // FPS overlay — actual display flushes/sec over a rolling 1s window.

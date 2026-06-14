@@ -23,13 +23,13 @@ namespace nema {
 void GuiService::start() {
     display_ = rt_.container().resolve<IDisplayDriver>();
 
-    // Display servers (Plan 43). Default = PixelateServer (1-bit canvas UI);
+    // Display servers (Plan 43). Default = AetherServer (1-bit canvas UI);
     // FbconServer is the swappable text-console backend. server_ is the active
     // one; switch at runtime via requestServer()/the CLI `display` command.
-    pixelate_ = std::make_unique<PixelateServer>(rt_.clock());
+    aether_ = std::make_unique<AetherServer>(rt_.clock());
     fbcon_    = std::make_unique<FbconServer>(rt_);
     // CLI-first by default (Plan 43): boot lands in the fbcon console, like a
-    // Linux TTY — the UI is launched on top via `display start pixelate`. A board
+    // Linux TTY — the UI is launched on top via `display start aether`. A board
     // or user can opt into booting straight to the UI with config display/boot.
     server_   = fbcon_.get();
 
@@ -38,12 +38,12 @@ void GuiService::start() {
     if (auto* cfg = rt_.container().resolve<IConfigStore>()) {
         sleepMs = (uint64_t)cfg->getIntOr("dpm", "sleep_ms", (int64_t)sleepMs);
         lockMs  = (uint64_t)cfg->getIntOr("dpm", "lock_ms",  (int64_t)lockMs);
-        pixelate_->setShowFps(cfg->getIntOr("debug", "fps", 0) != 0);  // Settings → Display
+        aether_->setShowFps(cfg->getIntOr("debug", "fps", 0) != 0);  // Settings → Display
         // Boot server policy (Plan 43): board/user picks the initial backend via
         // config "display/boot". Default = fbcon (CLI-first console boot); set
-        // "pixelate" to boot straight into the UI. No core default autostart.
-        if (cfg->getString("display", "boot", "fbcon") == "pixelate")
-            server_ = pixelate_.get();
+        // "aether" to boot straight into the UI. No core default autostart.
+        if (cfg->getString("display", "boot", "fbcon") == "aether")
+            server_ = aether_.get();
     }
 
     // Crash/fault fallback (Plan 43 Fase 4): if the display resource faults or
@@ -73,7 +73,7 @@ void GuiService::stop() {
 
 bool GuiService::requestServer(const char* name) {
     IDisplayServer* target = nullptr;
-    if (pixelate_ && std::string(pixelate_->name()) == name) target = pixelate_.get();
+    if (aether_ && std::string(aether_->name()) == name) target = aether_.get();
     else if (fbcon_ && std::string(fbcon_->name()) == name)  target = fbcon_.get();
     if (!target) return false;
     pendingServer_.store(target);   // GUI thread applies it next iteration
@@ -86,7 +86,7 @@ const char* GuiService::activeServerName() const {
 
 std::vector<const char*> GuiService::serverNames() const {
     std::vector<const char*> v;
-    if (pixelate_) v.push_back(pixelate_->name());
+    if (aether_) v.push_back(aether_->name());
     if (fbcon_)    v.push_back(fbcon_->name());
     return v;
 }

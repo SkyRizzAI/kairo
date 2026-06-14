@@ -1,7 +1,7 @@
 #pragma once
 #include "nema/thread.h"
 #include "nema/ui/status_bar.h"
-#include "nema/ui/pixelate_server.h"
+#include "nema/ui/aether_server.h"
 #include "nema/ui/fbcon_server.h"
 #include "nema/screens/lock_screen.h"
 #include "nema/services/display_power_manager.h"
@@ -50,11 +50,11 @@ public:
     const char*                activeServerName() const;
     std::vector<const char*>   serverNames() const;
 
-    // FPS API — forwarded to the active display server (PixelateServer owns the
+    // FPS API — forwarded to the active display server (AetherServer owns the
     // rolling 1s flush-count window + the overlay toggle).
-    uint16_t fps()         const { return pixelate_ ? pixelate_->fps() : 0; }
-    bool     showFps()     const { return pixelate_ && pixelate_->showFps(); }
-    void     setShowFps(bool b)  { if (pixelate_) pixelate_->setShowFps(b); }
+    uint16_t fps()         const { return aether_ ? aether_->fps() : 0; }
+    bool     showFps()     const { return aether_ && aether_->showFps(); }
+    void     setShowFps(bool b)  { if (aether_) aether_->setShowFps(b); }
 
 private:
     static void threadEntry(void* self);
@@ -69,7 +69,7 @@ private:
     // Pluggable renderers (Plan 43). Backends are owned here; server_ points at
     // the active one (touched only on the GUI thread). pendingServer_ is the
     // thread-safe hand-off slot for a runtime swap requested from another thread.
-    std::unique_ptr<PixelateServer> pixelate_;
+    std::unique_ptr<AetherServer> aether_;
     std::unique_ptr<FbconServer>    fbcon_;
     IDisplayServer*                 server_  = nullptr;
     std::atomic<IDisplayServer*>    pendingServer_{nullptr};

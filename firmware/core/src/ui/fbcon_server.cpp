@@ -40,7 +40,7 @@ void FbconServer::renderFrame(Canvas& c, ViewDispatcher&, const StatusBarData&) 
     }
     if (!row.empty()) line(row);
 
-    line("> display start pixelate");   // hint: how to bring up the UI
+    line("> display start aether");   // hint: how to bring up the UI
 
     c.flush();
 }
