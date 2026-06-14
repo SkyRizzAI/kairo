@@ -1,8 +1,12 @@
-# Palanu Dev Board partition table — 8 MB flash.
-# Single factory app (3 MB, plenty for arduino-esp32 + GxEPD2) + SPIFFS for assets/apps.
+# Palanu Dev Board partition table — 8 MB flash, A/B OTA (Plan 39).
+# Two app slots (ota_0/ota_1, 2.625 MB each) + otadata for atomic firmware update
+# with automatic rollback. NOTE: switching from the old single-`factory` layout
+# needs ONE cable re-flash; after that, updates go over the air (PLP/WiFi).
 # Name,     Type, SubType,  Offset,   Size,     Flags
 nvs,        data, nvs,      0x9000,   0x6000,
-phy_init,   data, phy,      0xf000,   0x1000,
-factory,    app,  factory,  0x10000,  0x300000,
-spiffs,     data, spiffs,   0x310000, 0x4E0000,
+otadata,    data, ota,      0xf000,   0x2000,
+phy_init,   data, phy,      0x11000,  0x1000,
+ota_0,      app,  ota_0,    0x20000,  0x2A0000,
+ota_1,      app,  ota_1,    0x2C0000, 0x2A0000,
+spiffs,     data, spiffs,   0x560000, 0x290000,
 coredump,   data, coredump, 0x7F0000, 0x10000,

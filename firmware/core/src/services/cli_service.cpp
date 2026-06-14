@@ -11,6 +11,7 @@
 #include "nema/hal/wifi.h"
 #include "nema/hal/bluetooth.h"
 #include "nema/hal/filesystem.h"
+#include "nema/hal/ota.h"
 #include <cctype>
 
 namespace nema {
@@ -247,6 +248,14 @@ void registerCoreCliCommands(CliService& cli, Runtime& rt) {
             out(r->switchDisplayServer(target.c_str())
                     ? "switched to " + target
                     : "unknown backend: " + target);
+        });
+
+    cli.add("ota", "firmware update status (Plan 39)",
+        [r](CliContext& c) {
+            auto* ota = r->container().resolve<IOtaUpdater>();
+            if (!ota || !ota->supported()) { c.out("ota: not supported on this platform"); return; }
+            c.out(std::string("running slot: ") + ota->runningSlot());
+            c.out("push a new image from Forge → \"Update firmware\" (PLP over USB/BLE)");
         });
 
     cli.add("power", "power control: power restart|shutdown",

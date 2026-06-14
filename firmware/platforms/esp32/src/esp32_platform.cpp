@@ -77,6 +77,13 @@ void Esp32Platform::postRegister(Runtime& rt) {
     remote_.attachCli(cli_);
     remote_.attachSessions(rt.cliSessions());   // multi-session shells (Plan 45)
 
+    // Firmware OTA (Plan 39): register the esp_ota updater + route the PLP Ota
+    // channel to it. We've booted far enough to register services, so confirm the
+    // running image is good — cancels any pending A/B rollback.
+    rt.container().registerAs<IOtaUpdater>(&otaUpdater_);
+    remote_.attachOta(otaUpdater_);
+    otaUpdater_.confirmBoot();
+
     // VFS + FILE channel. Root "/" is PERSISTENT (LittleFS on the internal flash
     // "spiffs" partition — survives reboot); "/tmp" is volatile RAM scratch. A FAT
     // backend can mount at "/sd" when a card is detected — the mount table means no

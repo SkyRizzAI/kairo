@@ -6,6 +6,7 @@
 #include "nema/esp32/esp32_ble.h"
 #include "nema/esp32/nvs_config_store.h"
 #include "nema/esp32/esp32_usb_cdc.h"
+#include "nema/esp32/esp32_ota.h"
 #include "nema/link/link_service.h"
 #include "nema/link/ble_link_transport.h"
 #include "nema/link/usb_cdc_link_transport.h"
@@ -55,6 +56,7 @@ private:
     LinkService        link_;
     RemoteScreenTap    tap_;
     RemoteService      remote_;
+    Esp32OtaUpdater    otaUpdater_;   // firmware OTA via esp_ota (Plan 39)
     CliService         cli_;
     ProfileService     profile_;   // owner identity (Plan 40)
     Vfs                vfs_;       // mount table

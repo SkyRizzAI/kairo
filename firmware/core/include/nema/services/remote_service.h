@@ -18,6 +18,7 @@ class Logger;
 class EventBus;
 class CliService;
 struct IFileSystem;
+struct IOtaUpdater;
 
 // SYSTEM channel opcodes (first payload byte).
 namespace SysOp {
@@ -28,6 +29,15 @@ namespace SysOp {
 // device→host as [op][status][path\0][...]; status 0=ok, 1=not found, 2=error.
 namespace FileOp {
     enum : uint8_t { List = 0x01, Read = 0x03, Write = 0x04, Mkdir = 0x05, Remove = 0x06 };
+}
+
+// OTA channel opcodes (host→device firmware push, Plan 39). Reply on the same
+// channel: [op][status]([written:4 LE]). status: 0=ok, 1=error, 2=unsupported.
+namespace OtaOp {
+    enum : uint8_t { Begin = 0x01, Data = 0x02, End = 0x03, Abort = 0x04 };
+}
+namespace OtaStatus {
+    enum : uint8_t { Ok = 0, Error = 1, Unsupported = 2 };
 }
 
 // EXT channel opcodes (host→device sim control).
@@ -51,6 +61,7 @@ public:
     void attachCli(CliService& cli) { cli_ = &cli; }   // route CLI channel here
     void attachSessions(CliSessionManager& m) { sessions_ = &m; }  // multi-session (Plan 45)
     void attachFs(IFileSystem& fs) { fs_ = &fs; }      // route FILE channel here
+    void attachOta(IOtaUpdater& ota) { ota_ = &ota; }  // route OTA channel here (Plan 39)
     void onPower(PowerFn fn, void* user) { powerFn_ = fn; powerUser_ = user; }
     void onControl(ControlFn fn, void* user) { controlFn_ = fn; controlUser_ = user; }
     // Board profile (name, LCD, buttons) serialized to JSON and replied on
@@ -69,6 +80,7 @@ private:
     static void onDisconnectThunk(void* user);         // drop all shell sessions
     void dispatch(const plp::Frame& f);
     void handleFile(const std::vector<uint8_t>& in);   // FILE channel request → reply
+    void handleOta(const std::vector<uint8_t>& in);    // OTA channel: drive IOtaUpdater
     void sendCli(uint8_t sid, const std::string& text);   // frame: [sid][text]
 
     LinkService*  link_   = nullptr;
@@ -76,6 +88,7 @@ private:
     EventBus*     events_ = nullptr;
     CliService*   cli_    = nullptr;
     IFileSystem*  fs_     = nullptr;
+    IOtaUpdater*  ota_     = nullptr;
     PowerFn       powerFn_ = nullptr;
     void*         powerUser_ = nullptr;
     ControlFn     controlFn_ = nullptr;

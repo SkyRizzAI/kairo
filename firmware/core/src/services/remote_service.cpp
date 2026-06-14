@@ -2,6 +2,7 @@
 #include "nema/services/cli_service.h"
 #include "nema/services/input_service.h"
 #include "nema/hal/filesystem.h"
+#include "nema/hal/ota.h"
 #include "nema/log/logger.h"
 #include "nema/event/event_bus.h"
 #include "nema/event/event.h"
@@ -99,6 +100,9 @@ void RemoteService::dispatch(const plp::Frame& f) {
         case plp::Channel::File:             // host→device filesystem request
             if (fs_ && !f.payload.empty()) handleFile(f.payload);
             break;
+        case plp::Channel::Ota:              // host→device firmware push (Plan 39)
+            if (!f.payload.empty()) handleOta(f.payload);
+            break;
         case plp::Channel::Ext: {            // host→device sim control
             if (f.payload.empty()) break;
             uint8_t op = f.payload[0];
@@ -113,6 +117,49 @@ void RemoteService::dispatch(const plp::Frame& f) {
         }
         default:
             break;   // SCREEN/LOG/OTA handled elsewhere or outbound-only
+    }
+}
+
+void RemoteService::handleOta(const std::vector<uint8_t>& in) {
+    const uint8_t op = in[0];
+    // Reply on the OTA channel: [op][status]([written:4 LE]).
+    auto reply = [&](uint8_t status, uint32_t written = 0) {
+        uint8_t p[6] = {op, status,
+                        (uint8_t)written, (uint8_t)(written >> 8),
+                        (uint8_t)(written >> 16), (uint8_t)(written >> 24)};
+        link_->send(plp::Channel::Ota, p, 6);
+    };
+    if (!ota_ || !ota_->supported()) { reply(OtaStatus::Unsupported); return; }
+
+    switch (op) {
+        case OtaOp::Begin: {
+            uint32_t size = 0;   // [op][size:4 LE] (0 = unknown)
+            if (in.size() >= 5)
+                size = in[1] | (in[2] << 8) | (in[3] << 16) | ((uint32_t)in[4] << 24);
+            reply(ota_->begin(size) ? OtaStatus::Ok : OtaStatus::Error);
+            break;
+        }
+        case OtaOp::Data:        // [op][chunk...] — ack with bytes-written for flow control
+            reply(ota_->write(in.data() + 1, in.size() - 1) ? OtaStatus::Ok : OtaStatus::Error,
+                  ota_->written());
+            break;
+        case OtaOp::End:
+            if (ota_->commit()) {
+                reply(OtaStatus::Ok);
+                // Boot into the freshly-written slot. The platform's power hook
+                // performs the restart (same path as `power restart`).
+                if (powerFn_) powerFn_(powerUser_, SysOp::Restart);
+            } else {
+                reply(OtaStatus::Error);
+            }
+            break;
+        case OtaOp::Abort:
+            ota_->abort();
+            reply(OtaStatus::Ok);
+            break;
+        default:
+            reply(OtaStatus::Error);
+            break;
     }
 }
 

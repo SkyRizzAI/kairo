@@ -12,9 +12,12 @@ CONFIG_FREERTOS_HZ=1000
 CONFIG_ESPTOOLPY_FLASHSIZE_8MB=y
 CONFIG_ESPTOOLPY_FLASHMODE_QIO=y
 
-# Custom partition table (3 MB app — default ~1 MB too small for arduino-esp32)
+# Custom partition table — A/B OTA slots (Plan 39)
 CONFIG_PARTITION_TABLE_CUSTOM=y
 CONFIG_PARTITION_TABLE_CUSTOM_FILENAME="partitions.csv"
+# Firmware OTA: enable A/B rollback (boots new image on probation; reverts if it
+# fails to confirm via esp_ota_mark_app_valid_cancel_rollback).
+CONFIG_BOOTLOADER_APP_ROLLBACK_ENABLE=y
 
 # Octal PSRAM (N8R8) — large heap for Canvas buffer + future JS engine
 CONFIG_SPIRAM=y
