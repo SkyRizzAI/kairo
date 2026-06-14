@@ -21,7 +21,10 @@ export const GET: RequestHandler = async ({ url }) => {
 			redirect: 'follow'
 		});
 	} catch (e) {
-		return new Response(`upstream fetch failed: ${e}`, { status: 502 });
+		const detail = e instanceof Error
+			? `${e.name}: ${e.message}${e.cause ? ` (cause: ${e.cause})` : ''}`
+			: String(e);
+		return new Response(`upstream fetch failed: ${detail}`, { status: 502 });
 	}
 
 	if (!upstream.ok) {

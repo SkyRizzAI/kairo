@@ -1,23 +1,34 @@
 #pragma once
 #include "nema/ui/display_server.h"
+#include "nema/services/cli_service.h"
+#include <string>
+#include <vector>
 
 namespace nema {
 
 class Runtime;
 
-// FbconServer — a minimal text "console" display backend (Plan 43), analogous
-// to Linux fbcon / AkiraOS shell_display. It ignores the app view tree and
-// instead paints a system console (board identity, uptime, capabilities) to the
-// panel. It is the always-available fallback surface and the second backend
-// that proves the renderer is swappable at runtime (`display switch fbcon`).
+// FbconServer — Linux-style text console backend (Plan 43). Shows a boot banner
+// and an interactive prompt; physical buttons navigate history and submit lines
+// to the CliService. Boot default pre-fills "display start aether" so pressing
+// OK immediately starts the UI.
 class FbconServer : public IDisplayServer {
 public:
-    explicit FbconServer(Runtime& rt) : rt_(rt) {}
+    explicit FbconServer(Runtime& rt);
     const char* name() const override { return "fbcon"; }
     void renderFrame(Canvas& c, ViewDispatcher& views, const StatusBarData& status) override;
+    bool onAction(input::Action action) override;
 
 private:
-    Runtime& rt_;
+    void executeInput();
+    void histPrev();
+    void histNext();
+
+    Runtime&    rt_;
+    CliSession  session_;               // local TTY session: owns history
+    std::string inputBuf_;              // current line being composed
+    int         histIdx_ = -1;          // -1 = not in history browse mode
+    std::vector<std::string> outputLines_;  // output lines shown above the prompt
 };
 
 } // namespace nema

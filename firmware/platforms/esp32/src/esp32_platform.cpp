@@ -77,6 +77,7 @@ void Esp32Platform::postRegister(Runtime& rt) {
         });
     remote_.attachCli(cli_);
     remote_.attachSessions(rt.cliSessions());   // multi-session shells (Plan 45)
+    rt.setCli(cli_);                            // expose to FbconServer local console
 
     // Firmware OTA (Plan 39): register the esp_ota updater + route the PLP Ota
     // channel to it. We've booted far enough to register services, so confirm the

@@ -1,4 +1,5 @@
 #pragma once
+#include "nema/input/input_action.h"
 
 // IDisplayServer (Plan 43) — a swappable rendering backend.
 //
@@ -26,6 +27,10 @@ struct IDisplayServer {
     // Render one frame of the active view to the canvas and flush it. Called by
     // the UI loop only when a redraw is pending and the display is awake.
     virtual void renderFrame(Canvas& c, ViewDispatcher& views, const StatusBarData& status) = 0;
+
+    // Deliver an input action to the server. Returns true if the server consumed
+    // the action (GuiService will not forward it to the view dispatcher).
+    virtual bool onAction(input::Action) { return false; }
 };
 
 } // namespace nema
