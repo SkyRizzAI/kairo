@@ -12,15 +12,14 @@
 > swap backend cuma compile-time + framebuffer destruktif tanpa compositor.
 > **Tak satu pun bisa swap runtime** — di sinilah Palanu lebih maju.
 
-- Status: 🟡 Partially implemented — Fase 1–3 done & build-verified (host 9/9 +
-  ESP32 dev-board green): pluggable `IDisplayServer`, `PixelateServer` (default),
-  `FbconServer`, thread-safe runtime swap, and the CLI `display` command
-  (pixelate ⇄ fbcon at runtime). **Deferred:** Fase 4 auto-fallback (mechanism
-  present; needs a display-fault *signal* to trigger), CLI-first boot policy
-  flip (behaviour change — needs on-device validation), and **Fase 5 LvglServer
-  — BLOCKED: LVGL is not vendored** (must be added to vendor/ + ESP-IDF
-  component first). On-device behaviour (does fbcon paint, does live swap look
-  right) is unverified here — needs a hardware flash.
+- Status: 🟢 Fase 1–4 done & build-verified (host 9/9 + ESP32 dev-board green):
+  pluggable `IDisplayServer`, `PixelateServer` (default), `FbconServer`,
+  thread-safe runtime swap, CLI `display` command (pixelate ⇄ fbcon at runtime),
+  config-driven boot backend (`display/boot` = pixelate | fbcon for CLI-first),
+  and display-fault → fbcon fallback (Fase 4). **Only Fase 5 LvglServer remains
+  — BLOCKED: LVGL is not vendored** (add to vendor/ + ESP-IDF component first;
+  the IDisplayServer seam is ready for it). On-device behaviour (fbcon paint,
+  live swap appearance) is unverified here — needs a hardware flash.
 - Milestone: M12 (Runtime Foundation — Display Server)
 - Depends on: **Plan 42 (Capability & Resource Model)** — `available()`,
   `ResourceChanged`, CLI substrate, `resolve<T>()`; Plan 14 (UI Runtime),

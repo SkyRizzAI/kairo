@@ -10,9 +10,12 @@
 > **CLI substrate dari ketergantungan display**, dan beri **JS API device yang
 > bersih** (JS tak menyentuh registry mentah).
 
-- Status: ✅ Implemented — host (9/9 ctest) + ESP32 dev-board & skyrizz-e32 build green.
-  Deferred sub-items (low value / verification-gated): `registerDriver()` helper,
-  WASM-vs-board layer unification, background-thread net/bt/remote liveness bridge.
+- Status: ✅ Complete — host (9/9 ctest) + ESP32 dev-board & skyrizz-e32 build green.
+  Includes the net/bt liveness bridge (main-thread, race-free). Two items are
+  intentionally NOT done because they'd be the wrong abstraction, not omissions:
+  `registerDriver()` helper (the 3 drivers register heterogeneously — BLE binds 2
+  interfaces, HTTP has no hardware entry) and WASM-vs-board unification (WASM
+  legitimately is its own board layer).
 - Milestone: M12 (Runtime Foundation — prasyarat Display Server)
 - Depends on: EventBus + AsyncEventPoster (Plan 04), ServiceContainer (Plan 05),
   IService lifecycle (Plan 19.5/19.6), capability/hardware registry (Plan 08)
