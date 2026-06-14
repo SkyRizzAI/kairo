@@ -25,41 +25,32 @@ void FbconServer::renderFrame(Canvas& c, ViewDispatcher&, const StatusBarData&) 
     c.clear();
 
     const uint16_t lh = ui::CHAR_H + 1;
-    const uint16_t maxLines = c.height() / lh;
-    if (maxLines == 0) { c.flush(); return; }
+    if (c.height() < lh * 2) { c.flush(); return; }
 
-    // Reserve bottom line for the prompt; banner takes 2 lines at most.
-    // Available lines for output = maxLines - 1 (prompt) - 2 (banner).
-    const uint16_t bannerLines = 2;
-    const uint16_t promptLines = 1;
-    const uint16_t outputSlots = (maxLines > bannerLines + promptLines)
-                                 ? maxLines - bannerLines - promptLines : 0;
-
-    uint16_t y = 1;
-    auto drawLine = [&](const std::string& s) {
-        if (y + lh > c.height()) return;
-        c.drawText(1, y, s.c_str(), true);
-        y += lh;
-    };
+    // Prompt is pinned to the bottom; banner to the top.
+    const uint16_t promptY = c.height() - lh;
+    const uint16_t bannerY = 1;
 
     // ── Banner ────────────────────────────────────────────────────────────────
     const SystemInfo& info = rt_.info();
-    drawLine(info.boardName + "  v" + info.firmwareVersion);
-    drawLine(info.platformName);
+    c.drawText(1, bannerY,        (info.boardName + "  v" + info.firmwareVersion).c_str(), true);
+    c.drawText(1, bannerY + lh,   info.platformName.c_str(), true);
 
-    // ── Output lines (most recent, bottom-aligned within the slot) ────────────
-    if (outputSlots > 0) {
+    // ── Output lines (most recent, filling upward from just above the prompt) ─
+    const uint16_t outputTop = bannerY + lh * 2;
+    if (promptY > outputTop && !outputLines_.empty()) {
+        uint16_t slots = (promptY - outputTop) / lh;
         size_t total = outputLines_.size();
-        size_t start = (total > outputSlots) ? total - outputSlots : 0;
-        for (size_t i = start; i < total; i++)
-            drawLine(outputLines_[i]);
-        // Fill any empty slots so the prompt stays anchored at the bottom.
-        uint16_t used = (uint16_t)(total - start);
-        for (uint16_t i = used; i < outputSlots; i++) y += lh;
+        size_t start = (total > slots) ? total - slots : 0;
+        uint16_t y = outputTop;
+        for (size_t i = start; i < total; i++) {
+            c.drawText(1, y, outputLines_[i].c_str(), true);
+            y += lh;
+        }
     }
 
     // ── Prompt ────────────────────────────────────────────────────────────────
-    drawLine("> " + inputBuf_);
+    c.drawText(1, promptY, ("> " + inputBuf_).c_str(), true);
 
     c.flush();
 }
