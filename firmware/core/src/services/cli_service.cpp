@@ -6,6 +6,8 @@
 #include "nema/system/hardware_registry.h"
 #include "nema/system/capability_registry.h"
 #include "nema/service/service_container.h"
+#include "nema/service.h"
+#include "nema/app/app_host_manager.h"
 #include "nema/hal/wifi.h"
 #include "nema/hal/bluetooth.h"
 #include "nema/hal/filesystem.h"
@@ -76,6 +78,18 @@ void CliSessionManager::remove(uint8_t sid) {
 void CliSessionManager::clear() { sessions_.clear(); }
 
 namespace {
+
+const char* serviceStateStr(ServiceState s) {
+    switch (s) {
+        case ServiceState::Created:  return "created";
+        case ServiceState::Starting: return "starting";
+        case ServiceState::Running:  return "running";
+        case ServiceState::Stopping: return "stopping";
+        case ServiceState::Stopped:  return "stopped";
+        case ServiceState::Failed:   return "failed";
+    }
+    return "?";
+}
 
 const char* driverKindName(DriverKind k) {
     switch (k) {
@@ -159,6 +173,29 @@ void registerCoreCliCommands(CliService& cli, Runtime& rt) {
                       "  cwd=" + s->cwd +
                       "  hist=" + std::to_string(s->history.size()));
             }
+        });
+
+    cli.add("ps", "process monitor: services, apps, sessions",
+        [r](CliContext& c) {
+            const auto& out = c.out;
+            out("SERVICES:");
+            for (auto* svc : r->container().services())
+                out(std::string("  ") + svc->name() +
+                    "  [" + serviceStateStr(r->serviceState(svc)) + "]");
+            out("APPS:");
+            bool any = false;
+            if (r->appHost().hasForeground()) {
+                out(std::string("  ") + r->appHost().foregroundName() + "  [foreground]");
+                any = true;
+            }
+            if (r->appHost().hasPaused()) {
+                out(std::string("  ") + r->appHost().pausedName() + "  [paused]");
+                any = true;
+            }
+            if (!any) out("  (none)");
+            out("SESSIONS:");
+            for (auto& s : r->cliSessions().sessions())
+                out("  #" + std::to_string(s->id) + "  cwd=" + s->cwd);
         });
 
     cli.add("hwinfo", "board, chip and device summary",

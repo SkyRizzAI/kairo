@@ -31,6 +31,8 @@ public:
 
     bool        hasPaused() const { return paused_ != nullptr; }
     const char* pausedName() const;
+    bool        hasForeground() const { return foreground_ != nullptr; }
+    const char* foregroundName() const;   // running app name, "" if none (Plan 46)
 
     // Unconditional launch — used by the modal after killing the paused app.
     void doLaunch(IApp& app);

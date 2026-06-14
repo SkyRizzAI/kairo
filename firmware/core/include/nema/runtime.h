@@ -56,6 +56,7 @@ public:
     HardwareRegistry&   hardware();
     CapabilityRegistry& capabilities();
     CliSessionManager&  cliSessions();   // live CLI shell sessions (Plan 45)
+    ServiceState        serviceState(IService* svc) const;  // for `ps` (Plan 46)
     const SystemInfo&   info() const;
     AsyncEventPoster&   asyncPoster();  // thread-safe cross-task event queue
     InputService&       input();        // single input funnel (any thread → main)

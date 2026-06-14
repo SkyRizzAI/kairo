@@ -55,4 +55,8 @@ const char* AppHostManager::pausedName() const {
     return paused_ ? paused_->appName() : nullptr;
 }
 
+const char* AppHostManager::foregroundName() const {
+    return foreground_ ? foreground_->appName() : "";
+}
+
 } // namespace nema

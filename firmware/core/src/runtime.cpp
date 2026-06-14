@@ -202,6 +202,9 @@ ServiceContainer&   Runtime::container()     { assert(container_); return *conta
 HardwareRegistry&   Runtime::hardware()      { assert(hardware_);  return *hardware_; }
 CapabilityRegistry& Runtime::capabilities()  { assert(capabilities_); return *capabilities_; }
 CliSessionManager&  Runtime::cliSessions()   { assert(cliSessions_); return *cliSessions_; }
+ServiceState Runtime::serviceState(IService* svc) const {
+    return serviceManager_ ? serviceManager_->stateOf(svc) : ServiceState::Created;
+}
 const SystemInfo&   Runtime::info()    const { assert(systemInfo_);  return *systemInfo_; }
 AppRegistry&        Runtime::apps()          { assert(appRegistry_); return *appRegistry_; }
 AppHostManager&     Runtime::appHost()       { assert(appHosts_); return *appHosts_; }
