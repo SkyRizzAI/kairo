@@ -28,10 +28,19 @@ static constexpr uint16_t KBD_H = KBD_ROWS * KEY_H; // 33 px
 
 static constexpr const char* DEFAULT_CMD = "display start aether";
 
+// Position of the '>' (Enter) key in the grid: row 2, col 11.
+static constexpr int KBD_ENTER_ROW = 2;
+static constexpr int KBD_ENTER_COL = 11;
+
 // ── Constructor ───────────────────────────────────────────────────────────────
 
 FbconServer::FbconServer(Runtime& rt) : rt_(rt) {
     inputBuf_ = DEFAULT_CMD;
+    // Start with keyboard open, cursor on the Enter key — pressing OK immediately
+    // submits the pre-filled command, but the keyboard is visible for editing.
+    kbdOpen_ = true;
+    kbdRow_  = KBD_ENTER_ROW;
+    kbdCol_  = KBD_ENTER_COL;
     session_.id  = 0xFF;
     session_.out = [this](const std::string& line) {
         outputLines_.push_back(line);
@@ -114,6 +123,7 @@ bool FbconServer::onAction(input::Action action) {
     using input::Action;
 
     if (kbdOpen_) {
+        // Keyboard mode — Prev/Next navigate keys; Back closes keyboard (history mode).
         switch (action) {
             case Action::Prev:
                 if (--kbdCol_ < 0) {
@@ -133,30 +143,32 @@ bool FbconServer::onAction(input::Action action) {
 
             case Action::Activate: {
                 char ch = KBD[kbdRow_][kbdCol_];
-                if (ch == '>') {           // Enter key
+                if (ch == '>') {          // Enter key → submit
                     kbdOpen_ = false;
                     executeInput();
-                } else if (ch == '<') {   // Backspace key
+                } else if (ch == '<') {  // Backspace key → delete last char
                     if (!inputBuf_.empty()) inputBuf_.pop_back();
                     rt_.view().requestRedraw();
                 } else {
-                    inputBuf_ += ch;      // letter, digit, or space
+                    inputBuf_ += ch;     // letter, digit, or space
                     rt_.view().requestRedraw();
                 }
                 return true;
             }
 
             case Action::Back:
+                // Close keyboard → history mode (Prev/Next navigate history).
                 kbdOpen_ = false;
                 rt_.view().requestRedraw();
                 return true;
 
             default:
-                return false;
+                return true;  // consume all — don't let ViewDispatcher see it
         }
     }
 
-    // ── Normal mode (keyboard closed) ─────────────────────────────────────────
+    // ── History mode (keyboard closed) ────────────────────────────────────────
+    // Prev/Next browse history; Back re-opens the keyboard.
     switch (action) {
         case Action::Activate:
             executeInput();
@@ -175,13 +187,11 @@ bool FbconServer::onAction(input::Action action) {
 
         case Action::Back:
             kbdOpen_ = true;
-            kbdRow_  = 0;
-            kbdCol_  = 0;
             rt_.view().requestRedraw();
             return true;
 
         default:
-            return false;
+            return true;  // consume all — don't let ViewDispatcher see it
     }
 }
 
