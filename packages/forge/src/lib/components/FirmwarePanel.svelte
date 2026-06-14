@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { Button } from '$lib/components/ui/button';
 	import { Upload, Globe, RefreshCw } from '@lucide/svelte';
-	import { PUBLIC_FIRMWARE_REPO } from '$env/static/public';
+	import { env } from '$env/dynamic/public';
 
 	interface GhAsset {
 		name: string;
@@ -18,7 +18,7 @@
 		assets: GhAsset[];
 	}
 
-	const DEFAULT_REPO = PUBLIC_FIRMWARE_REPO || 'SkyRizzAI/kairo';
+	const DEFAULT_REPO = env.PUBLIC_FIRMWARE_REPO || 'SkyRizzAI/kairo';
 	// Firmware assets are named palanu-<target>.bin or palanu-<target>.wasm
 	const isFwAsset = (a: GhAsset) =>
 		a.name.startsWith('palanu-') && (a.name.endsWith('.bin') || a.name.endsWith('.wasm'));
