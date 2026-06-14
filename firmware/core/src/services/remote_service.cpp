@@ -136,7 +136,11 @@ void RemoteService::handleOta(const std::vector<uint8_t>& in) {
             uint32_t size = 0;   // [op][size:4 LE] (0 = unknown)
             if (in.size() >= 5)
                 size = in[1] | (in[2] << 8) | (in[3] << 16) | ((uint32_t)in[4] << 24);
-            reply(ota_->begin(size) ? OtaStatus::Ok : OtaStatus::Error);
+            bool ok = ota_->begin(size);
+            // Begin reply is extended: [op][status][written:4][protoVersion]. The
+            // host checks protoVersion to catch a stale-firmware mismatch.
+            uint8_t p[7] = {op, ok ? OtaStatus::Ok : OtaStatus::Error, 0, 0, 0, 0, OtaProtoVersion};
+            link_->send(plp::Channel::Ota, p, 7);
             break;
         }
         case OtaOp::Data: {

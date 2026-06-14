@@ -33,9 +33,13 @@ namespace FileOp {
 
 // OTA channel opcodes (host→device firmware push, Plan 39). Reply on the same
 // channel: [op][status]([written:4 LE]). status: 0=ok, 1=error, 2=unsupported.
+// Data is [op][offset:4 LE][bytes] (idempotent retry by offset). The Begin reply
+// also carries OtaProtoVersion so the host can detect a stale firmware and tell
+// the user to re-flash, instead of failing mysteriously mid-upload.
 namespace OtaOp {
     enum : uint8_t { Begin = 0x01, Data = 0x02, End = 0x03, Abort = 0x04 };
 }
+inline constexpr uint8_t OtaProtoVersion = 2;   // bump when the OTA wire format changes
 namespace OtaStatus {
     enum : uint8_t { Ok = 0, Error = 1, Unsupported = 2 };
 }

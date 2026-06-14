@@ -102,7 +102,7 @@ export class RemoteSession {
 	// Sequential UI usage → FIFO correlation is enough.
 	#filePending: Record<number, ((r: { status: number; rest: Uint8Array } | null) => void)[]> = {};
 	// OTA is strictly sequential (Begin→Data×N→End), so one in-flight resolver.
-	#otaPending: ((r: { status: number; written: number } | null) => void) | null = null;
+	#otaPending: ((r: { status: number; written: number; proto: number } | null) => void) | null = null;
 	#l: Listeners = {
 		screen: new Set(),
 		log: new Set(),
@@ -233,12 +233,13 @@ export class RemoteSession {
 			return;
 		}
 		if (f.channel === Channel.Ota) {
-			// device→host: [op][status][written:4 LE] (Plan 39)
+			// device→host: [op][status][written:4 LE]([proto:1] on the Begin ack)
 			const p = f.payload;
 			const written = p.length >= 6 ? p[2] | (p[3] << 8) | (p[4] << 16) | (p[5] * 0x1000000) : 0;
+			const proto = p.length >= 7 ? p[6] : 0; // 0 = stale firmware (no version byte)
 			const cb = this.#otaPending;
 			this.#otaPending = null;
-			cb?.({ status: p[1] ?? 1, written });
+			cb?.({ status: p[1] ?? 1, written, proto });
 			return;
 		}
 		if (f.channel === Channel.Screen) {
@@ -356,7 +357,7 @@ export class RemoteSession {
 	}
 
 	// --- Firmware OTA (Plan 39): stream a .bin over the Ota channel ---
-	#otaReq(frame: Uint8Array, timeoutMs = 15000): Promise<{ status: number; written: number } | null> {
+	#otaReq(frame: Uint8Array, timeoutMs = 15000): Promise<{ status: number; written: number; proto: number } | null> {
 		return new Promise((resolve) => {
 			const timer = setTimeout(() => {
 				this.#otaPending = null;
@@ -408,6 +409,16 @@ export class RemoteSession {
 			log('begin failed — could not open the update slot.');
 			return false;
 		}
+		// Catch a stale device firmware (old OTA wire format) up front, instead of
+		// failing mysteriously at 0% when esp_ota_write rejects a mis-framed chunk.
+		const OTA_PROTO = 2;
+		if (r.proto !== OTA_PROTO) {
+			log(
+				`firmware OTA protocol mismatch: device v${r.proto || '≤1'}, Forge v${OTA_PROTO}. ` +
+					'Re-flash the device over cable with the latest build (bun run dev:ota skyrizz-e32 → idf.py flash), then reload Forge.'
+			);
+			return false;
+		}
 
 		log(`uploading ${(image.length / 1024).toFixed(0)} KB…`);
 		const RETRIES = 8;
@@ -426,7 +437,7 @@ export class RemoteSession {
 			frame.set(chunk, 5);
 			const pct = Math.round((off / image.length) * 100);
 
-			let acked: { status: number; written: number } | null = null;
+			let acked: { status: number; written: number; proto: number } | null = null;
 			for (let attempt = 0; attempt < RETRIES && !acked; attempt++) {
 				if (attempt > 0) {
 					log(`retrying at ${pct}% (attempt ${attempt + 1}/${RETRIES})…`);
