@@ -69,8 +69,12 @@ class SimStore {
 		this.#s.sendCli(sid, line);
 	}
 	// Firmware OTA passthrough — dry-run in the sim (SimOtaUpdater), real flow API.
-	otaUpdate(image: Uint8Array, onProgress: (sent: number, total: number) => void) {
-		return this.#s.otaUpdate(image, onProgress);
+	otaUpdate(
+		image: Uint8Array,
+		onProgress: (sent: number, total: number) => void,
+		onStatus: (msg: string) => void
+	) {
+		return this.#s.otaUpdate(image, onProgress, onStatus);
 	}
 	onCli(fn: (c: CliChunk) => void) {
 		return this.#s.on('cli', fn);

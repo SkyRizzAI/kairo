@@ -26,6 +26,11 @@ struct IOtaUpdater : IDriver {
     virtual uint32_t written() const = 0;              // bytes written so far (progress)
     virtual const char* runningSlot() const { return "?"; }  // active partition label
 
+    // Whether commit() should be followed by a device reboot into the new slot.
+    // Real hardware: yes. The WASM dry-run: NO — a "restart" there just halts the
+    // in-browser device (no auto-reload), which would wedge the session.
+    virtual bool rebootOnCommit() const { return true; }
+
     // Mark the freshly-booted image valid so the bootloader stops watching for a
     // rollback. No-op if no rollback is pending.
     virtual void confirmBoot() {}

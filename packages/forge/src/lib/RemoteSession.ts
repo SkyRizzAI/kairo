@@ -356,12 +356,12 @@ export class RemoteSession {
 	}
 
 	// --- Firmware OTA (Plan 39): stream a .bin over the Ota channel ---
-	#otaReq(frame: Uint8Array): Promise<{ status: number; written: number } | null> {
+	#otaReq(frame: Uint8Array, timeoutMs = 15000): Promise<{ status: number; written: number } | null> {
 		return new Promise((resolve) => {
 			const timer = setTimeout(() => {
 				this.#otaPending = null;
-				resolve(null); // no reply (offline / unsupported)
-			}, 10000);
+				resolve(null); // no reply within the window
+			}, timeoutMs);
 			this.#otaPending = (r) => {
 				clearTimeout(timer);
 				resolve(r);
@@ -370,32 +370,75 @@ export class RemoteSession {
 		});
 	}
 
-	// Push a firmware image to the device: Begin(size) → Data chunks → End. Each
-	// step waits for the device ack (flow control + progress). Returns false on any
-	// error/unsupported/timeout. Transport-agnostic: works over USB, BLE, or sim.
-	async otaUpdate(image: Uint8Array, onProgress?: (sent: number, total: number) => void): Promise<boolean> {
+	// Push a firmware image: Begin(size) → Data chunks → End, each waiting for the
+	// device ack (flow control + progress). onProgress drives the bar; onStatus is a
+	// human log of each phase/error so the upload is debuggable on real hardware.
+	// Transport-agnostic (USB / BLE / sim).
+	async otaUpdate(
+		image: Uint8Array,
+		onProgress?: (sent: number, total: number) => void,
+		onStatus?: (msg: string) => void
+	): Promise<boolean> {
+		const log = (m: string) => onStatus?.(m);
 		const OtaOp = { Begin: 0x01, Data: 0x02, End: 0x03 };
-		const CHUNK = 4096;
+		const CHUNK = 16384; // fewer round-trips (a 2 MB image = ~128 frames)
+
 		const begin = new Uint8Array(5);
 		begin[0] = OtaOp.Begin;
 		begin[1] = image.length & 0xff;
 		begin[2] = (image.length >> 8) & 0xff;
 		begin[3] = (image.length >> 16) & 0xff;
 		begin[4] = (image.length >>> 24) & 0xff;
-		let r = await this.#otaReq(begin);
-		if (!r || r.status !== 0) return false; // status 2 = unsupported
+		// esp_ota_begin erases ~image-size of flash up front — seconds on a real
+		// device, and it stalls the UI meanwhile. Give it a long window.
+		log(`preparing — device is erasing ~${(image.length / 1024).toFixed(0)} KB of flash (a few seconds; the screen may freeze)…`);
+		let r = await this.#otaReq(begin, 120000);
+		if (!r) {
+			log('no response. The device is offline, or its firmware has no OTA — flash the OTA build over cable once first.');
+			return false;
+		}
+		if (r.status === 2) {
+			log('unsupported: this firmware has no A/B OTA slots. Flash the OTA build over cable once, then retry.');
+			return false;
+		}
+		if (r.status !== 0) {
+			log('begin failed — could not open the update slot.');
+			return false;
+		}
 
+		log(`uploading ${(image.length / 1024).toFixed(0)} KB…`);
 		for (let off = 0; off < image.length; off += CHUNK) {
 			const chunk = image.subarray(off, off + CHUNK);
 			const frame = new Uint8Array(1 + chunk.length);
 			frame[0] = OtaOp.Data;
 			frame.set(chunk, 1);
-			r = await this.#otaReq(frame);
-			if (!r || r.status !== 0) return false;
+			r = await this.#otaReq(frame, 30000); // each chunk = a flash write
+			const pct = Math.round((Math.min(off + CHUNK, image.length) / image.length) * 100);
+			if (!r) {
+				log(`lost connection at ${pct}% — upload aborted.`);
+				return false;
+			}
+			if (r.status !== 0) {
+				log(`device rejected a chunk at ${pct}% (flash write error).`);
+				return false;
+			}
 			onProgress?.(Math.min(off + CHUNK, image.length), image.length);
 		}
-		r = await this.#otaReq(new Uint8Array([OtaOp.End]));
-		return !!r && r.status === 0; // device reboots into the new slot on success
+
+		log('finalizing — verifying the image…');
+		r = await this.#otaReq(new Uint8Array([OtaOp.End]), 30000);
+		if (r && r.status === 0) {
+			log('done — device rebooting into the new image. Run `version` to confirm.');
+			return true;
+		}
+		if (!r) {
+			// All bytes were written + acked; a missing End ack usually just means
+			// the device already rebooted before the reply got out.
+			log('upload complete; no final ack (device likely rebooting). Run `version` to confirm.');
+			return true;
+		}
+		log('finalize failed — the device rejected the image (bad/corrupt).');
+		return false;
 	}
 
 	async #filePathOp(op: number, path: string): Promise<boolean> {

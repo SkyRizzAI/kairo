@@ -320,7 +320,7 @@
 				<div class="border-border text-muted-foreground border-b px-3 py-1.5 text-xs font-bold">
 					Firmware (PLP · OTA · sim dry-run)
 				</div>
-				<FirmwarePanel update={(img, p) => simStore.otaUpdate(img, p)} ready={simStore.power === 'on'} />
+				<FirmwarePanel update={(img, p, s) => simStore.otaUpdate(img, p, s)} ready={simStore.power === 'on'} />
 			</aside>
 		{/if}
 

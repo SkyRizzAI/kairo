@@ -146,9 +146,10 @@ void RemoteService::handleOta(const std::vector<uint8_t>& in) {
         case OtaOp::End:
             if (ota_->commit()) {
                 reply(OtaStatus::Ok);
-                // Boot into the freshly-written slot. The platform's power hook
-                // performs the restart (same path as `power restart`).
-                if (powerFn_) powerFn_(powerUser_, SysOp::Restart);
+                // Boot into the freshly-written slot — but ONLY for a real updater.
+                // The WASM dry-run returns false here: a "restart" there just halts
+                // the in-browser device (no auto-reload) and would wedge the session.
+                if (powerFn_ && ota_->rebootOnCommit()) powerFn_(powerUser_, SysOp::Restart);
             } else {
                 reply(OtaStatus::Error);
             }

@@ -163,7 +163,7 @@
 					<div class="border-border text-muted-foreground border-b px-3 py-1.5 text-xs font-bold">
 						Firmware (PLP · OTA)
 					</div>
-					<FirmwarePanel update={(img, p) => session.otaUpdate(img, p)} ready={connected} />
+					<FirmwarePanel update={(img, p, s) => session.otaUpdate(img, p, s)} ready={connected} />
 								</aside>
 			{/if}
 

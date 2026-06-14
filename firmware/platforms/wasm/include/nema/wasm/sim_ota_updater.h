@@ -21,6 +21,7 @@ public:
     void        abort() override { active_ = false; written_ = 0; }
     uint32_t    written() const override { return written_; }
     const char* runningSlot() const override { return "sim (no real OTA)"; }
+    bool        rebootOnCommit() const override { return false; }  // never halt the sim
 
 private:
     uint32_t written_ = 0;
