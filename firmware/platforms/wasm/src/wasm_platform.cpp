@@ -53,6 +53,10 @@ void WasmPlatform::registerDrivers(Runtime& rt) {
     registerCoreCliCommands(cli_, rt);
     remote_.attachCli(cli_);
     remote_.attachSessions(rt.cliSessions());   // multi-session shells (Plan 45)
+    // OTA dry-run: lets the Forge "Update firmware" flow + PLP Ota protocol be
+    // exercised in-browser (no real image swap — WASM has no flash). Plan 39.
+    rt.container().registerAs<IOtaUpdater>(&otaUpdater_);
+    remote_.attachOta(otaUpdater_);
 
     // VFS with two in-RAM partitions to show the Linux-style mount system: root
     // at "/", plus a second backend mounted at "/sd" (a stand-in for a microSD —

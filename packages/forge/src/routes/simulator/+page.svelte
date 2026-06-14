@@ -14,6 +14,7 @@
 	import BoardVisual from '$lib/components/BoardVisual.svelte';
 	import CliTerminal from '$lib/components/CliTerminal.svelte';
 	import FileBrowser from '$lib/components/FileBrowser.svelte';
+	import FirmwarePanel from '$lib/components/FirmwarePanel.svelte';
 	import {
 		Power as PowerIcon,
 		RotateCw,
@@ -22,7 +23,8 @@
 		PanelRightClose,
 		PanelRightOpen,
 		TerminalIcon,
-		FolderTree
+		FolderTree,
+		Upload
 	} from '@lucide/svelte';
 
 	// ── device screen (themes) ──
@@ -42,6 +44,7 @@
 	let showLogs = $state(true);
 	let showCli = $state(true);   // CLI-first demo: the terminal is the primary surface
 	let showFiles = $state(false);
+	let showFw = $state(false);
 
 	const AUTOBOOT = 'nema:autoboot';
 
@@ -157,6 +160,14 @@
 			>
 				<FolderTree class="size-4" />
 			</Button>
+				<Button
+					size="sm"
+					variant={showFw ? 'default' : 'ghost'}
+					title="Update firmware (OTA)"
+					onclick={() => (showFw = !showFw)}
+				>
+					<Upload class="size-4" />
+				</Button>
 			<Button
 				size="sm"
 				variant="ghost"
@@ -301,6 +312,15 @@
 				<div class="h-[calc(100%-2rem)]">
 					<FileBrowser fs={simStore} ready={simStore.power === 'on'} />
 				</div>
+			</aside>
+		{/if}
+
+		{#if showFw}
+			<aside class="border-border w-80 shrink-0 overflow-hidden border-l">
+				<div class="border-border text-muted-foreground border-b px-3 py-1.5 text-xs font-bold">
+					Firmware (PLP · OTA · sim dry-run)
+				</div>
+				<FirmwarePanel update={(img, p) => simStore.otaUpdate(img, p)} ready={simStore.power === 'on'} />
 			</aside>
 		{/if}
 

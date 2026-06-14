@@ -7,6 +7,7 @@
 #include "nema/link/link_service.h"
 #include "nema/hal/remote_screen_tap.h"
 #include "nema/services/remote_service.h"
+#include "nema/wasm/sim_ota_updater.h"
 #include "nema/services/cli_service.h"
 #include "nema/services/profile_service.h"
 #include "nema/fs/mem_filesystem.h"
@@ -37,6 +38,7 @@ private:
     LinkService        link_;
     RemoteScreenTap    tap_;
     RemoteService      remote_;
+    SimOtaUpdater      otaUpdater_;   // OTA dry-run for in-browser flow testing (Plan 39)
     CliService         cli_;
     ProfileService     profile_;   // owner identity (Plan 40)
     Vfs                vfs_;       // mount table (root + demo /sd)
