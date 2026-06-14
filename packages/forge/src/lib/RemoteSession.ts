@@ -381,9 +381,10 @@ export class RemoteSession {
 	): Promise<boolean> {
 		const log = (m: string) => onStatus?.(m);
 		const OtaOp = { Begin: 0x01, Data: 0x02, End: 0x03 };
-		// Small frames: safe within any transport's MTU/reassembly (esp. BLE) and a
-		// tiny flash write per chunk. Reliability > speed for OTA.
-		const CHUNK = 1024;
+		// 4 KB balances speed vs reliability: ~4× fewer round-trips than 1 KB, still
+		// comfortably within transport reassembly now that link sends are atomic
+		// (the mutex fix — not the tiny chunk — is what stopped the dropped acks).
+		const CHUNK = 4096;
 
 		const begin = new Uint8Array(5);
 		begin[0] = OtaOp.Begin;
@@ -409,22 +410,43 @@ export class RemoteSession {
 		}
 
 		log(`uploading ${(image.length / 1024).toFixed(0)} KB…`);
-		for (let off = 0; off < image.length; off += CHUNK) {
+		const RETRIES = 8;
+		let off = 0;
+		while (off < image.length) {
 			const chunk = image.subarray(off, off + CHUNK);
-			const frame = new Uint8Array(1 + chunk.length);
+			// Data frame: [op][offset:4 LE][bytes]. The offset lets the device dedupe
+			// a resent chunk (idempotent), so we can safely retry on a dropped frame
+			// or a lost ack instead of aborting the whole multi-minute upload.
+			const frame = new Uint8Array(5 + chunk.length);
 			frame[0] = OtaOp.Data;
-			frame.set(chunk, 1);
-			r = await this.#otaReq(frame, 30000); // each chunk = a flash write
-			const pct = Math.round((Math.min(off + CHUNK, image.length) / image.length) * 100);
-			if (!r) {
-				log(`lost connection at ${pct}% — upload aborted.`);
+			frame[1] = off & 0xff;
+			frame[2] = (off >> 8) & 0xff;
+			frame[3] = (off >> 16) & 0xff;
+			frame[4] = (off >>> 24) & 0xff;
+			frame.set(chunk, 5);
+			const pct = Math.round((off / image.length) * 100);
+
+			let acked: { status: number; written: number } | null = null;
+			for (let attempt = 0; attempt < RETRIES && !acked; attempt++) {
+				if (attempt > 0) {
+					log(`retrying at ${pct}% (attempt ${attempt + 1}/${RETRIES})…`);
+					await new Promise((res) => setTimeout(res, 150));
+				}
+				const rr = await this.#otaReq(frame, 20000);
+				if (rr && rr.status === 0) acked = rr;
+				else if (rr && rr.status === 2) {
+					log('unsupported mid-stream — aborting.');
+					return false;
+				}
+				// rr null (timeout / dropped) or status 1 (transient) → retry the same chunk
+			}
+			if (!acked) {
+				log(`gave up at ${pct}% after ${RETRIES} retries — upload aborted.`);
 				return false;
 			}
-			if (r.status !== 0) {
-				log(`device rejected a chunk at ${pct}% (flash write error).`);
-				return false;
-			}
-			onProgress?.(Math.min(off + CHUNK, image.length), image.length);
+			// Advance to the device's authoritative written count (handles dedup).
+			off = Math.max(off + chunk.length, acked.written);
+			onProgress?.(off, image.length);
 		}
 
 		log('finalizing — verifying the image…');

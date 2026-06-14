@@ -139,10 +139,22 @@ void RemoteService::handleOta(const std::vector<uint8_t>& in) {
             reply(ota_->begin(size) ? OtaStatus::Ok : OtaStatus::Error);
             break;
         }
-        case OtaOp::Data:        // [op][chunk...] — ack with bytes-written for flow control
-            reply(ota_->write(in.data() + 1, in.size() - 1) ? OtaStatus::Ok : OtaStatus::Error,
-                  ota_->written());
+        case OtaOp::Data: {
+            // [op][offset:4 LE][bytes]. Idempotent: dedupe a resent chunk by offset
+            // so a retry (after a dropped frame / lost ack) never double-writes.
+            if (in.size() < 5) { reply(OtaStatus::Error, ota_->written()); break; }
+            uint32_t off  = in[1] | (in[2] << 8) | (in[3] << 16) | ((uint32_t)in[4] << 24);
+            uint32_t have = ota_->written();
+            if (off == have) {
+                bool ok = ota_->write(in.data() + 5, in.size() - 5);
+                reply(ok ? OtaStatus::Ok : OtaStatus::Error, ota_->written());
+            } else if (off < have) {
+                reply(OtaStatus::Ok, have);     // already written (retry) — ack, no rewrite
+            } else {
+                reply(OtaStatus::Error, have);  // gap — host resyncs from `written`
+            }
             break;
+        }
         case OtaOp::End:
             if (ota_->commit()) {
                 reply(OtaStatus::Ok);
