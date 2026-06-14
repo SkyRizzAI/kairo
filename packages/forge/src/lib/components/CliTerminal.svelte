@@ -20,6 +20,7 @@
 	let lines = $state<Line[]>([{ kind: 'out', text: "Palanu CLI — type 'help'." }]);
 	let input = $state('');
 	let busy = $state(false);
+	let cwd = $state('/'); // shell working directory, from device prompt frames (Plan 44)
 	let scroller = $state<HTMLElement>();
 	const history: string[] = [];
 	let histIdx = -1;
@@ -33,6 +34,8 @@
 		const off = subscribe((c) => {
 			if (c.done) {
 				busy = false;
+			} else if (c.prompt !== undefined) {
+				cwd = c.prompt || '/';
 			} else if (c.text !== undefined) {
 				lines = [...lines.slice(-500), { kind: 'out', text: c.text }];
 			}
@@ -83,10 +86,10 @@
 		{#if busy}<div class="text-zinc-500">…</div>{/if}
 	</div>
 	<div class="border-border flex items-center gap-1.5 border-t px-2 py-1.5 font-mono text-[11px]">
-		<span class="text-zinc-500">$</span>
+		<span class="text-emerald-400">{cwd}</span><span class="text-zinc-500">$</span>
 		<input
 			class="flex-1 bg-transparent text-zinc-100 outline-none placeholder:text-zinc-600 disabled:opacity-50"
-			placeholder={ready ? "command (e.g. help, hwinfo, ram)" : 'connecting…'}
+			placeholder={ready ? 'command (e.g. help, pwd, cd /apps, display)' : 'connecting…'}
 			bind:value={input}
 			onkeydown={onKey}
 			disabled={!ready}

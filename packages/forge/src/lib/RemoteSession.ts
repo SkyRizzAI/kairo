@@ -16,10 +16,12 @@ export interface EventEntry {
 	fields: Record<string, string>;
 }
 // CLI output chunk. `text` is a line of output; `done` marks end-of-command (the
-// device sent EOT) so the terminal can re-enable its prompt.
+// device sent EOT) so the terminal can re-enable its prompt; `prompt` carries the
+// device's current working directory (Plan 44) for a shell-like prompt.
 export interface CliChunk {
 	text?: string;
 	done?: boolean;
+	prompt?: string;
 }
 // One directory entry from the FILE channel (mirrors firmware FsEntry).
 export interface FileEntry {
@@ -210,9 +212,13 @@ export class RemoteSession {
 			return;
 		}
 		if (f.channel === Channel.Cli) {
-			// device→host: text output chunks, terminated by a single 0x04 (EOT).
+			// device→host: text chunks, an 0x04 (EOT) end marker, or a prompt
+			// frame [0x01]<cwd> (Plan 44) carrying the shell working directory.
 			if (f.payload.length === 1 && f.payload[0] === 0x04) {
 				this.#emit('cli', { done: true } as CliChunk);
+			} else if (f.payload.length >= 1 && f.payload[0] === 0x01) {
+				const prompt = new TextDecoder().decode(f.payload.slice(1));
+				this.#emit('cli', { prompt } as CliChunk);
 			} else {
 				const text = new TextDecoder().decode(f.payload);
 				this.#emit('cli', { text } as CliChunk);

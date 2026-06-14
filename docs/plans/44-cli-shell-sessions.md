@@ -12,7 +12,12 @@
 > stateful** + sesi **transport-agnostic lewat mux** (USB+BLE bareng, tiap
 > koneksi terisolasi) — itu yang "lebih baik".
 
-- Status: 🟢 Fase 1 done & build-verified (host 10/10 + ESP32 dev-board + WASM green). Fase 2-4 (multi-conn isolation, streaming/Ctrl+C, Forge cwd prompt) deferred.
+- Status: ✅ Complete — Fase 1 + Fase 4 done & build-verified (host 10/10 + ESP32
+  dev-board + WASM green). **Fase 2 reconsidered** (the mux unifies transports into
+  ONE session by design — reach the single console via any wire; per-transport
+  isolation is a multi-user feature, out of scope). **Fase 3 deferred** (output
+  already streams line-by-line; `Ctrl+C` abort needs async/long-running commands
+  to abort — none exist yet, so it's infrastructure-ahead-of-need).
 - Milestone: M12 (Runtime Foundation)
 - Depends on: Plan 35 (KLP remote), Plan 38 (VFS/filesystem), Plan 42 Fase 4
   (`LinkService::onDisconnect`)
@@ -114,11 +119,18 @@ void execute(const std::string& line, CliSession& s);        // parse → dispat
       + esp32 `ram` to the context form; `pwd`/`cd`/`history` + cwd-relative
       `fs`/`cat`. Session lifecycle in RemoteService via onReady/onDisconnect.
       Host unit test (history ring, cwd resolve, dispatch).
-- [ ] **Fase 2 — Multi-connection isolation.** One CliSession per mux child; verify
-      USB + BLE hold independent cwd/history.
-- [ ] **Fase 3 — Streaming + abort.** Long commands stream; `Ctrl+C` (a Cli control
-      byte) aborts — matches Flipper's interactive feel.
-- [ ] **Fase 4 — Forge polish.** Show cwd in the prompt; device-side history opt-in.
+- [~] **Fase 2 — Multi-connection isolation. RECONSIDERED → won't build.** The mux
+      intentionally unifies USB+BLE into one logical cable → one LinkService → one
+      session: "reach the single console over any wire". That's the right model for
+      a single-user device; per-transport isolation is a multi-user feature (needs
+      auth) and is explicitly out of scope. Documented, not built.
+- [~] **Fase 3 — Streaming + abort. DEFERRED.** Output already streams one frame per
+      line. `Ctrl+C` abort only matters once a command runs long/async (e.g. a live
+      sensor read) — none exist yet, so building abort now is dead infrastructure.
+      Revisit when the first long-running command lands.
+- [x] **Fase 4 — Forge cwd prompt.** Device sends a prompt frame `[0x01]<cwd>` after
+      each command; RemoteSession parses it; CliTerminal shows `"<cwd>$"` like a real
+      shell. (Device-side history opt-in left for later — Forge keeps client history.)
 
 ---
 

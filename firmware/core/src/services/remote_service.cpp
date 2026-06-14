@@ -81,6 +81,10 @@ void RemoteService::dispatch(const klp::Frame& f) {
             if (!cli_ || f.payload.empty()) break;
             std::string line((const char*)f.payload.data(), f.payload.size());
             cli_->execute(line, cliSession_);   // persistent session: cwd + history
+            // Prompt update (Plan 44 Fase 4): [0x01]<cwd> so the host shows the
+            // current working directory in its prompt, like a real shell.
+            std::string prompt = std::string(1, (char)0x01) + cliSession_.cwd;
+            link_->send(klp::Channel::Cli, (const uint8_t*)prompt.data(), prompt.size());
             const uint8_t eot = 0x04;        // mark end-of-output → host re-prompts
             link_->send(klp::Channel::Cli, &eot, 1);
             break;
