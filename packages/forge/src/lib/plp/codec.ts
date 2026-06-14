@@ -1,4 +1,4 @@
-// Nema Link Protocol (PLP) — wire codec.
+// Palanu Link Protocol (PLP) — wire codec.
 //
 // One protocol, many transports. The SAME frames travel over BLE, USB-Serial,
 // or the simulator "virtual cable" (postMessage). Only the transport differs.
@@ -109,7 +109,7 @@ export class FrameParser {
 
 // ── RLE for 1-bit framebuffers (w*h bytes, each 0 or 1) ──
 // Pairs of [count:1][value:1]; runs longer than 255 are split. Great for the
-// mostly-blank monochrome Kairo UI.
+// mostly-blank monochrome Palanu UI.
 export function rleEncode(px: Uint8Array): Uint8Array {
 	const out: number[] = [];
 	let i = 0;

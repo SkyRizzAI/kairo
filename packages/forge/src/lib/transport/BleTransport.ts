@@ -1,10 +1,10 @@
 import type { ILinkTransport } from '$lib/plp/transport';
 import { PLP_SERVICE, PLP_CHAR_TX, PLP_CHAR_RX } from '$lib/plp/uuids';
 
-// BleTransport — PLP over Web Bluetooth (Plan 35). Connects to a Kairo device
+// BleTransport — PLP over Web Bluetooth (Plan 35). Connects to a Palanu device
 // that advertises the PLP GATT service (Plan 34). Same ILinkTransport interface
 // as the WASM virtual cable, so RemoteSession is identical. Requires a real,
-// flashed Kairo device + Chrome/Edge.
+// flashed Palanu device + Chrome/Edge.
 export class BleTransport implements ILinkTransport {
 	readonly kind = 'ble';
 	#data?: (d: Uint8Array) => void;

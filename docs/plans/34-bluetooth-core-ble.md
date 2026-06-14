@@ -25,7 +25,7 @@
 - Status: ✅ BLE selesai (host + ESP32-S3). Host-side: HAL (`bluetooth.h`,`usb_cdc.h`) + Bt* events + SimBleAdapter/Controller + registrasi sim + capability `bluetooth`/`bluetooth.ble` + command `ble_phone_*` + BluetoothApp (ComponentApp) + Settings gated; host build hijau, smoke test pairing (BtPairRequest+passkey) ✓. **ESP32-S3: `Esp32Ble` (NimBLE) — advertise + GATT server + LE Secure Connections (numeric-comparison) + bond di NVS; di-`onRegister` oleh `Esp32Platform` (capability `bluetooth.ble`). `idf.py build` hijau → `palanu-skyrizz-e32.bin` (70% flash free).** Verifikasi pairing fisik (HP) menunggu device terhubung. USB-CDC: lihat §6 — transport PLP siap (`UsbCdcLinkTransport`). **(+Plan 37) USB-CDC remote AKTIF**: `Esp32UsbCdc` (HWCDC `Serial` = USB-Serial-JTAG, reader-task) + `MuxTransport` gabung USB+BLE → satu RemoteService/screen-tap. Console berbagi pipa yang sama → PLP magic-byte resync menanganinya; untuk pipa bersih sempurna, set console off-USB (1 baris sdkconfig). Build dua device hijau; verifikasi colok fisik menunggu device.
 - Milestone: M7 (Connectivity)
 - Depends on: **19.5 (Nema: Thread/TaskRunner)**, **19.6 (App-model: IApp/AppHost/AppContext)**, 16 (ESP32 Platform), 24 (Config Store), 30 (Component runtime + screen migration)
-- Blocks: **35 (Nema Link Protocol & Remote Layer)**, OTA
+- Blocks: **35 (Palanu Link Protocol & Remote Layer)**, OTA
 
 > Kontrak kejujuran (sama seperti 19.5/20): tidak ada klaim ajaib; tiap fase
 > build & jalan di host+ESP32; race ditangani by-design; verifikasi pairing

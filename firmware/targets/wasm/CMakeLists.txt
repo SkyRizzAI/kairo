@@ -8,7 +8,7 @@ set_target_properties(nema PROPERTIES SUFFIX ".js")
 
 target_link_options(nema PRIVATE
     -sENVIRONMENT=web,worker
-    # Kairo stays multi-threaded in WASM (pthreads = Web Workers). Fixed shared
+    # Palanu stays multi-threaded in WASM (pthreads = Web Workers). Fixed shared
     # memory (NO growth): growable SharedArrayBuffer + pthreads is buggy and is a
     # known cause of the pthread-pool "loading-workers" hang. main() unwinds via
     # emscripten_set_main_loop(simulate_infinite_loop) so the event loop can

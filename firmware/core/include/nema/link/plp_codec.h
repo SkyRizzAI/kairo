@@ -3,7 +3,7 @@
 #include <cstddef>
 #include <vector>
 
-// Nema Link Protocol (PLP) — wire codec (C++ device side).
+// Palanu Link Protocol (PLP) — wire codec (C++ device side).
 //
 // Byte-exact mirror of the TS codec (packages/forge/src/lib/plp/codec.ts).
 // One protocol, many transports: the same frames travel over BLE, USB-CDC, or

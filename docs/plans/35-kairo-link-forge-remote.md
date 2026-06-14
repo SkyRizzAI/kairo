@@ -1,7 +1,7 @@
-# 35 — Nema Link Protocol & Remote Layer (device-side)
+# 35 — Palanu Link Protocol & Remote Layer (device-side)
 
 > **LAYER 2 dari 3** (Foundation (34) → **Remote Layer** → Forge (36)). Satu
-> protokol, banyak transport. **Nema Link Protocol (PLP)** — framing + channel
+> protokol, banyak transport. **Palanu Link Protocol (PLP)** — framing + channel
 > multiplexing + handshake aman — berjalan di atas `ILinkTransport`, yang
 > membungkus pipa byte dari Layer 1: **BLE**, **USB-CDC**, atau **virtual-cable**
 > (WASM, postMessage). Di atasnya, **RemoteService** men-stream framebuffer 1-bit

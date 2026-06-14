@@ -5,7 +5,7 @@ import type { ILinkTransport } from '$lib/plp/transport';
 // (Vite's ESM transform mangles import.meta.url and breaks pthread workers).
 // emscripten manages its own pthread pool from the page thread. PLP is delivered
 // in-process: outbound via Module.nemaPlpOut, inbound via _nema_plp_recv.
-interface KairoModule {
+interface PalanuModule {
 	_malloc(n: number): number;
 	_free(p: number): void;
 	_nema_plp_recv(ptr: number, len: number): void;
@@ -23,7 +23,7 @@ export class VirtualCableTransport implements ILinkTransport {
 	// The simulator's virtual USB interface (in-process). Same role as a real
 	// device's USB-CDC, just backed by the WASM instance instead of hardware.
 	readonly kind = 'wasm-usb';
-	#mod: KairoModule | null = null;
+	#mod: PalanuModule | null = null;
 	#data?: (d: Uint8Array) => void;
 	#state?: (c: boolean) => void;
 	#ready = false;
@@ -43,7 +43,7 @@ export class VirtualCableTransport implements ILinkTransport {
 				locateFile: (p: string) => '/fw/' + p, // headered endpoint (COEP+CORP)
 				nemaPlpOut: (bytes: Uint8Array) => this.#data?.(new Uint8Array(bytes)),
 				onRuntimeInitialized: () => {
-					this.#mod = window.Module as unknown as KairoModule;
+					this.#mod = window.Module as unknown as PalanuModule;
 					this.#ready = true;
 					this.#state?.(true);
 					resolve();

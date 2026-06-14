@@ -1,4 +1,4 @@
-# Kairo Dev Board partition table — 8 MB flash.
+# Palanu Dev Board partition table — 8 MB flash.
 # Single factory app (3 MB, plenty for arduino-esp32 + GxEPD2) + SPIFFS for assets/apps.
 # Name,     Type, SubType,  Offset,   Size,     Flags
 nvs,        data, nvs,      0x9000,   0x6000,

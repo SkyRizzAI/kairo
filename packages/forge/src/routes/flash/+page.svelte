@@ -167,7 +167,7 @@
 		<div>
 			<h1 class="text-lg font-semibold">Flash</h1>
 			<p class="text-muted-foreground text-sm">
-				Flash a Kairo device over USB (Web Serial · esptool-js). Fully client-side.
+				Flash a Palanu device over USB (Web Serial · esptool-js). Fully client-side.
 			</p>
 		</div>
 		{#if phase === 'done'}<Badge class="ml-auto">flashed</Badge>{/if}

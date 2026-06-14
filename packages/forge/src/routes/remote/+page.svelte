@@ -79,7 +79,7 @@
 			key: 'ble',
 			icon: Bluetooth,
 			title: 'Bluetooth (BLE)',
-			desc: 'A physical Kairo device over Web Bluetooth. Requires a flashed device.',
+			desc: 'A physical Palanu device over Web Bluetooth. Requires a flashed device.',
 			cta: 'Scan…',
 			ready: false,
 			on: pickBle
@@ -88,7 +88,7 @@
 			key: 'usb',
 			icon: Usb,
 			title: 'USB (Serial)',
-			desc: 'A physical Kairo device over Web Serial / USB-CDC. Requires a flashed device.',
+			desc: 'A physical Palanu device over Web Serial / USB-CDC. Requires a flashed device.',
 			cta: 'Connect…',
 			ready: false,
 			on: pickUsb
@@ -112,7 +112,7 @@
 		<div>
 			<h1 class="text-lg font-semibold">Remote — Discovery</h1>
 			<p class="text-muted-foreground text-sm">
-				Pick a target. Same Nema Link Protocol, different transport.
+				Pick a target. Same Palanu Link Protocol, different transport.
 			</p>
 		</div>
 

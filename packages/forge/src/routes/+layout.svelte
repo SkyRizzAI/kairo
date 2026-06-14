@@ -19,7 +19,7 @@
 
 <div class="bg-background text-foreground flex h-screen">
 	<aside class="border-border flex w-56 shrink-0 flex-col border-r">
-		<div class="px-4 py-4 text-lg font-semibold tracking-tight">Kairo Forge</div>
+		<div class="px-4 py-4 text-lg font-semibold tracking-tight">Palanu Forge</div>
 		<nav class="flex flex-col gap-1 px-2">
 			{#each nav as item (item.href)}
 				{@const active = page.url.pathname.startsWith(item.href)}
@@ -35,7 +35,7 @@
 				</a>
 			{/each}
 		</nav>
-		<div class="text-muted-foreground mt-auto px-4 py-3 text-xs">Kairo Forge · v0.0.1</div>
+		<div class="text-muted-foreground mt-auto px-4 py-3 text-xs">Palanu Forge · v0.0.1</div>
 	</aside>
 
 	<main class="flex-1 overflow-hidden">

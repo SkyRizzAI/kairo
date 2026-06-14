@@ -29,7 +29,7 @@
 | BLE default name | `"Palanu"` | `"Palanu"` | User-visible device name |
 | Default user | `"Palaner"` | `"Palanut"` ⚠️ | **Keputusan user: mau diganti jadi apa?** |
 | Default device | `"My Palanu"` | `"My Palanu"` | NVS default, first-boot only |
-| Protocol name | `PLP (Nema Link Protocol)` | `NLP (Nema Link Protocol)` | Nama saja, format binary tidak berubah |
+| Protocol name | `PLP (Palanu Link Protocol)` | `PLP (Palanu Link Protocol)` | Nama saja, format binary tidak berubah |
 | NVS namespace wifi | `"palanu_wifi"` | `"palanu_wifi"` | ⚠️ Perlu migration (lihat 0.3) |
 | WASM output | `nema.wasm`, `palanu.js` | `nema.wasm`, `nema.js` | Build script + Forge loader |
 | JS folder | `/forge/static/wasm/palanu.*` | `/forge/static/wasm/nema.*` | |
@@ -65,7 +65,7 @@ if (cfg.getString("palanu_wifi", "ssid", ssid)) {
 
 Ini bukan benar-benar "breaking" karena firmware dan Forge di-build bersamaan —
 rename koordinasi antara `wasm_cable_transport.cpp` dan kode JS Forge cukup.
-Ganti ke `nema_nlp_recv` / `Module.nemaKlpOut` (NLP = Nema Link Protocol).
+Ganti ke `nema_nlp_recv` / `Module.nemaKlpOut` (PLP = Palanu Link Protocol).
 
 ---
 
@@ -198,7 +198,7 @@ find docs -name "*.md" | \
   xargs sed -i '' 's/Palanu/Palanu/g; s/palanu/palanu/g'
 
 # Rename plan yang menyebut "Palanu Link":
-# "PLP" → "NLP", "Nema Link Protocol" → "Nema Link Protocol"
+# "PLP" → "PLP", "Palanu Link Protocol" → "Palanu Link Protocol"
 ```
 
 ### Fase 7 — Root folder rename (opsional, last)

@@ -1,4 +1,4 @@
-# Kairo Dev Board — sdkconfig defaults (mirrors ref kairo-test-concept firmware).
+# Palanu Dev Board — sdkconfig defaults (mirrors ref kairo-test-concept firmware).
 # ESP32-S3-WROOM-1-N8R8, 8 MB flash, 8 MB Octal PSRAM.
 
 # Target
@@ -27,10 +27,10 @@ CONFIG_ESP_WIFI_ENABLED=y
 # Logging
 CONFIG_LOG_DEFAULT_LEVEL_INFO=y
 
-# Stack size for Arduino task (needs to be large enough for kairo runtime)
+# Stack size for Arduino task (needs to be large enough for palanu runtime)
 CONFIG_ARDUINO_LOOP_STACK_SIZE=16384
 
-# C++ features used by Kairo Core:
+# C++ features used by Palanu Core:
 #  - RTTI: ServiceContainer uses std::type_index
 #  - Exceptions: ServiceManager uses try/catch around service start
 CONFIG_COMPILER_CXX_EXCEPTIONS=y

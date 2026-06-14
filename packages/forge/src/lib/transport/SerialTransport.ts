@@ -1,6 +1,6 @@
 import type { ILinkTransport } from '$lib/plp/transport';
 
-// SerialTransport — PLP over Web Serial / USB-CDC (Plan 35). Connects to a Kairo
+// SerialTransport — PLP over Web Serial / USB-CDC (Plan 35). Connects to a Palanu
 // device exposing a CDC data port (Plan 34 USB). PLP frames are self-delimiting
 // (magic + crc), so the stream parser on the RemoteSession side reframes them.
 // Requires a real device + Chrome/Edge.

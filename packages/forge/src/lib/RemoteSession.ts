@@ -59,7 +59,7 @@ const GET_INFO = 0x01; // SYSTEM channel opcode
 export const Power = { Restart: 0x10, Sleep: 0x11, Shutdown: 0x12 } as const;
 export const Key = { Up: 1, Down: 2, Left: 3, Right: 4, Select: 5, Cancel: 6 } as const;
 
-// Browser keyboard → Kairo Key. Shared by every view that forwards keystrokes to
+// Browser keyboard → Palanu Key. Shared by every view that forwards keystrokes to
 // a device (/remote SessionView, /simulator) so the mapping lives in one place.
 export const KEY_MAP: Record<string, number> = {
 	ArrowUp: Key.Up,
@@ -89,7 +89,7 @@ type Listeners = {
 	cli: Set<(c: CliChunk) => void>;
 };
 
-// RemoteSession — transport-agnostic client of a Kairo device (WASM sim or real
+// RemoteSession — transport-agnostic client of a Palanu device (WASM sim or real
 // hardware) over PLP. Multi-listener so /simulator and /remote can both observe
 // the SAME device without clobbering each other.
 export class RemoteSession {

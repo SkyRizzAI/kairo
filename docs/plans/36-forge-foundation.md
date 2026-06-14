@@ -10,7 +10,7 @@
 
 - Status: ✅ Fungsional penuh (client-side). Simulator WASM jalan di browser (multi-thread), `/simulator` & `/remote` berbagi satu instance, discovery list (Simulator/BLE/USB) ada. **Power lazy: halaman buka = device OFF (WASM TIDAK di-load); Boot → load+boot in-place; Restart → reload+autoboot; Shutdown → reload ke OFF (teardown WASM+workers).** **/flash: esptool-js (Web Serial) — pilih build dari registry, flash 3 part (0x0/0x8000/0x10000) + progress + serial console, full client-side.** **Firmware registry: tRPC `firmware.list`/`firmware.version` baca `static/firmware/manifest.json` (dihasilkan `firmware/tools/publish-firmware.sh`).** `bun run check` 0 error, `bun run build` hijau. Verifikasi flash fisik menunggu device terhubung. **(+Plan 37, aditif)** `RemoteSession.installApp(kapp)` + route **`/install`** (pilih/paste `.kapp` → push via PLP `Ext` ke device → install live di Apps). Jalur PLP sama untuk WASM virtual-cable & BLE/USB.
 - Milestone: M9 (Board Profile & Ecosystem Foundation — Forge/Studio)
-- Depends on: **35 (Nema Link Protocol & Remote Layer)**, **34 (BLE/USB foundation)**, 33 (Board Profile)
+- Depends on: **35 (Palanu Link Protocol & Remote Layer)**, **34 (BLE/USB foundation)**, 33 (Board Profile)
 - Blocks: Palanu Studio (future)
 
 ---

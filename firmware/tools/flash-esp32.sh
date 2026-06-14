@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Flash + monitor the Kairo Dev Board. Usage: flash-esp32.sh [PORT]
+# Flash + monitor the Palanu Dev Board. Usage: flash-esp32.sh [PORT]
 set -euo pipefail
 
 IDF="${IDF_PATH:-$HOME/esp/esp-idf}"

@@ -50,6 +50,6 @@ CONFIG_LOG_DEFAULT_LEVEL_INFO=y
 # Stack size for Arduino task
 CONFIG_ARDUINO_LOOP_STACK_SIZE=16384
 
-# C++ features used by Kairo Core
+# C++ features used by Palanu Core
 CONFIG_COMPILER_CXX_EXCEPTIONS=y
 CONFIG_COMPILER_CXX_RTTI=y

@@ -1,4 +1,4 @@
-# Kairo Dev Board — ESP-IDF + arduino-esp32 project.
+# Palanu Dev Board — ESP-IDF + arduino-esp32 project.
 # EXTRA_COMPONENT_DIRS lists PARENT dirs; ESP-IDF registers each child that has
 # a CMakeLists.txt as a component. Component name = directory basename:
 #   firmware/core            → component "core"

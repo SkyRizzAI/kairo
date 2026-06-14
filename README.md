@@ -1,8 +1,8 @@
-# Kairo
+# Palanu
 
 **A hardware-agnostic firmware runtime for portable multi-tool devices.**
 
-Kairo is one firmware core that runs on many boards. Write an app once — it runs
+Palanu is one firmware core that runs on many boards. Write an app once — it runs
 on every device, in the browser simulator, and on real hardware, without
 touching the app for each new board. Bring a new device to life by writing
 *drivers*, not a new firmware.
@@ -14,7 +14,7 @@ clone the genre — it's to give it a foundation good enough to outgrow it.
 
 ---
 
-## Why Kairo
+## Why Palanu
 
 - **One core, many boards.** App and UI code never branch on board type. They
   ask the runtime *"do you have a camera?"* — not *"are you board X?"*
@@ -140,11 +140,11 @@ bun install
 ### Run in the simulator (no hardware needed)
 
 The simulator is the firmware compiled to **WebAssembly**, running fully in the
-browser via Kairo Forge (no native binary, no server).
+browser via Palanu Forge (no native binary, no server).
 
 ```bash
 bun run forge:wasm   # build firmware → WASM + launch Forge (open /simulator)
-bun run test         # host unit tests (layout / KLP / link) via ctest
+bun run test         # host unit tests (layout / PLP / link) via ctest
 ```
 
 ### Build / flash a real board
@@ -207,6 +207,6 @@ layering rules, and the PR flow. All participants are expected to follow our
 
 ## License
 
-Kairo is free software licensed under the **GNU General Public License v3.0** —
+Palanu is free software licensed under the **GNU General Public License v3.0** —
 see [`LICENSE`](LICENSE). You may use, study, share, and modify it; derivative
 works that you distribute must also be released under the GPLv3.
