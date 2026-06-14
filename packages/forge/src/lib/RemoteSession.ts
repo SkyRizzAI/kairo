@@ -382,7 +382,7 @@ export class RemoteSession {
 	): Promise<boolean> {
 		const log = (m: string) => onStatus?.(m);
 		const OtaOp = { Begin: 0x01, Data: 0x02, End: 0x03 };
-		const CHUNK = 1024; // conservative; raise once a full upload is confirmed reliable
+		const CHUNK = 2048; // 1024 was safe; 4096 broke HW (USB-CDC RX ring overflow); 2048 is the middle ground
 
 		const begin = new Uint8Array(5);
 		begin[0] = OtaOp.Begin;
