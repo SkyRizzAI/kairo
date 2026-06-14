@@ -60,6 +60,15 @@ else()
     set(NEMA_FULL_VERSION "${NEMA_VERSION}-dev+${NEMA_BUILD_HASH}")
 endif()
 
+# ── Local dev-build counter (OTA testing) ────────────────────────────────────
+# build-dev-ota.sh passes -DNEMA_DEV_BUILD=<N> from a gitignored counter so each
+# local dev image has a distinct version (visible via the `version` CLI after an
+# OTA). NOT a release mechanism; normal/CI builds never set it, so the repo and
+# committed builds are unaffected.
+if(DEFINED NEMA_DEV_BUILD AND NOT "${NEMA_DEV_BUILD}" STREQUAL "")
+    set(NEMA_FULL_VERSION "${NEMA_FULL_VERSION}.dev${NEMA_DEV_BUILD}")
+endif()
+
 # ── Generate header ──────────────────────────────────────────────────────────
 configure_file(
     "${_FIRMWARE_DIR}/cmake/version.h.in"

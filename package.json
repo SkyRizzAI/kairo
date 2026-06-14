@@ -21,7 +21,8 @@
     "build:audiotest": "bash firmware/tools/build-skyrizz-audiotest.sh",
     "flash:audiotest": "bash firmware/tools/flash-skyrizz-audiotest.sh",
     "build:esp32": "bun run build:dev-board",
-    "flash:esp32": "bun run flash:dev-board"
+    "flash:esp32": "bun run flash:dev-board",
+    "dev:ota": "bash firmware/tools/build-dev-ota.sh"
   },
   "devDependencies": {
     "@types/bun": "latest"
