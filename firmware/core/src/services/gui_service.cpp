@@ -28,7 +28,10 @@ void GuiService::start() {
     // one; switch at runtime via requestServer()/the CLI `display` command.
     pixelate_ = std::make_unique<PixelateServer>(rt_.clock());
     fbcon_    = std::make_unique<FbconServer>(rt_);
-    server_   = pixelate_.get();
+    // CLI-first by default (Plan 43): boot lands in the fbcon console, like a
+    // Linux TTY — the UI is launched on top via `display start pixelate`. A board
+    // or user can opt into booting straight to the UI with config display/boot.
+    server_   = fbcon_.get();
 
     // Load saved timeouts — fall back to 15s defaults if not set yet
     uint64_t sleepMs = 15000, lockMs = 15000;
@@ -37,11 +40,10 @@ void GuiService::start() {
         lockMs  = (uint64_t)cfg->getIntOr("dpm", "lock_ms",  (int64_t)lockMs);
         pixelate_->setShowFps(cfg->getIntOr("debug", "fps", 0) != 0);  // Settings → Display
         // Boot server policy (Plan 43): board/user picks the initial backend via
-        // config "display/boot" (pixelate | fbcon). Default pixelate keeps the UI
-        // on boot; "fbcon" gives a CLI-first console boot (launch UI via
-        // `display start pixelate`). No core default autostart beyond this.
-        if (cfg->getString("display", "boot", "pixelate") == "fbcon")
-            server_ = fbcon_.get();
+        // config "display/boot". Default = fbcon (CLI-first console boot); set
+        // "pixelate" to boot straight into the UI. No core default autostart.
+        if (cfg->getString("display", "boot", "fbcon") == "pixelate")
+            server_ = pixelate_.get();
     }
 
     // Crash/fault fallback (Plan 43 Fase 4): if the display resource faults or
