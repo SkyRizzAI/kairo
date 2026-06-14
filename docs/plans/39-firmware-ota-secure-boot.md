@@ -14,7 +14,7 @@
 > AkiraOS pakai MCUboot (Zephyr); kita pakai padanannya di **ESP-IDF**:
 > `esp_https_ota`/`app_update` + Secure Boot v2 — **tanpa** menarik Zephyr.
 
-- Status: 📝 **PLANNED** (2026-06-08). Belum mulai.
+- Status: 🟢 Implemented (no Secure Boot) & build-verified — host 10/10, ESP32 dev-board + skyrizz-e32 (A/B partitions), WASM, Forge type-check clean. Push-via-PLP done; WiFi-pull & Secure Boot deferred. On-device OTA flow needs a hardware flash to verify (+ one cable re-flash to adopt the A/B layout).
 - Milestone: M11 (Field Reliability / Production).
 - Depends on: **16 (ESP32 Platform)**, **20 (WiFi)**, **34/35 (PLP transport —
   Channel::Ota sudah ada)**, **36 (Forge — registry `firmware.*` + signing)**,

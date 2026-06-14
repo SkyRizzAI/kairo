@@ -101,6 +101,8 @@ export class RemoteSession {
 	// FILE channel is request/response; one queue of pending resolvers per opcode.
 	// Sequential UI usage → FIFO correlation is enough.
 	#filePending: Record<number, ((r: { status: number; rest: Uint8Array } | null) => void)[]> = {};
+	// OTA is strictly sequential (Begin→Data×N→End), so one in-flight resolver.
+	#otaPending: ((r: { status: number; written: number } | null) => void) | null = null;
 	#l: Listeners = {
 		screen: new Set(),
 		log: new Set(),
@@ -230,6 +232,15 @@ export class RemoteSession {
 			}
 			return;
 		}
+		if (f.channel === Channel.Ota) {
+			// device→host: [op][status][written:4 LE] (Plan 39)
+			const p = f.payload;
+			const written = p.length >= 6 ? p[2] | (p[3] << 8) | (p[4] << 16) | (p[5] * 0x1000000) : 0;
+			const cb = this.#otaPending;
+			this.#otaPending = null;
+			cb?.({ status: p[1] ?? 1, written });
+			return;
+		}
 		if (f.channel === Channel.Screen) {
 			const p = f.payload;
 			const w = p[0] | (p[1] << 8);
@@ -342,6 +353,49 @@ export class RemoteSession {
 		body.set(data, 3 + pb.length);
 		const r = await this.#fileReq(FileOp.Write, body);
 		return !!r && r.status === 0;
+	}
+
+	// --- Firmware OTA (Plan 39): stream a .bin over the Ota channel ---
+	#otaReq(frame: Uint8Array): Promise<{ status: number; written: number } | null> {
+		return new Promise((resolve) => {
+			const timer = setTimeout(() => {
+				this.#otaPending = null;
+				resolve(null); // no reply (offline / unsupported)
+			}, 10000);
+			this.#otaPending = (r) => {
+				clearTimeout(timer);
+				resolve(r);
+			};
+			this.#t.send(encodeFrame(Channel.Ota, frame));
+		});
+	}
+
+	// Push a firmware image to the device: Begin(size) → Data chunks → End. Each
+	// step waits for the device ack (flow control + progress). Returns false on any
+	// error/unsupported/timeout. Transport-agnostic: works over USB, BLE, or sim.
+	async otaUpdate(image: Uint8Array, onProgress?: (sent: number, total: number) => void): Promise<boolean> {
+		const OtaOp = { Begin: 0x01, Data: 0x02, End: 0x03 };
+		const CHUNK = 4096;
+		const begin = new Uint8Array(5);
+		begin[0] = OtaOp.Begin;
+		begin[1] = image.length & 0xff;
+		begin[2] = (image.length >> 8) & 0xff;
+		begin[3] = (image.length >> 16) & 0xff;
+		begin[4] = (image.length >>> 24) & 0xff;
+		let r = await this.#otaReq(begin);
+		if (!r || r.status !== 0) return false; // status 2 = unsupported
+
+		for (let off = 0; off < image.length; off += CHUNK) {
+			const chunk = image.subarray(off, off + CHUNK);
+			const frame = new Uint8Array(1 + chunk.length);
+			frame[0] = OtaOp.Data;
+			frame.set(chunk, 1);
+			r = await this.#otaReq(frame);
+			if (!r || r.status !== 0) return false;
+			onProgress?.(Math.min(off + CHUNK, image.length), image.length);
+		}
+		r = await this.#otaReq(new Uint8Array([OtaOp.End]));
+		return !!r && r.status === 0; // device reboots into the new slot on success
 	}
 
 	async #filePathOp(op: number, path: string): Promise<boolean> {

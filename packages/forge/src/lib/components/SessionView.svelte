@@ -20,7 +20,8 @@
 		PanelRightClose,
 		PanelRightOpen,
 		TerminalIcon,
-		FolderTree
+		FolderTree,
+		Upload
 	} from '@lucide/svelte';
 
 	let {
@@ -36,6 +37,36 @@
 	let showLogs = $state(true);
 	let showCli = $state(false);
 	let showFiles = $state(false);
+	let showFw = $state(false);
+
+	// Firmware OTA (Plan 39) — push a .bin over the PLP Ota channel.
+	let fwInput = $state<HTMLInputElement>();
+	let fwName = $state('');
+	let fwSize = $state(0);
+	let fwBusy = $state(false);
+	let fwPct = $state(0);
+	let fwMsg = $state('');
+	let fwData: Uint8Array | null = null;
+
+	async function onFwPick(e: Event) {
+		const file = (e.target as HTMLInputElement).files?.[0];
+		if (!file) return;
+		fwData = new Uint8Array(await file.arrayBuffer());
+		fwName = file.name;
+		fwSize = fwData.length;
+		fwMsg = '';
+	}
+	async function pushFirmware() {
+		if (!fwData || fwBusy) return;
+		fwBusy = true;
+		fwPct = 0;
+		fwMsg = 'uploading…';
+		const ok = await session.otaUpdate(fwData, (s, t) => (fwPct = Math.round((s / t) * 100)));
+		fwBusy = false;
+		fwMsg = ok
+			? 'done — device rebooting into the new image.'
+			: 'failed (unsupported, transport error, or bad image).';
+	}
 
 	const dims = $derived(frameDims(frame));
 
@@ -101,6 +132,14 @@
 			>
 				<FolderTree class="size-4" />
 			</Button>
+				<Button
+					size="sm"
+					variant={showFw ? 'default' : 'ghost'}
+					title="Update firmware (OTA)"
+					onclick={() => (showFw = !showFw)}
+				>
+					<Upload class="size-4" />
+				</Button>
 			<Button
 				size="sm"
 				variant="ghost"
@@ -145,6 +184,36 @@
 				</div>
 			</aside>
 		{/if}
+
+			{#if showFw}
+				<aside class="border-border flex w-80 shrink-0 flex-col overflow-hidden border-l">
+					<div class="border-border text-muted-foreground border-b px-3 py-1.5 text-xs font-bold">
+						Firmware (PLP · OTA)
+					</div>
+					<div class="flex flex-1 flex-col gap-3 p-3 text-xs">
+						<input bind:this={fwInput} type="file" accept=".bin" class="hidden" onchange={onFwPick} />
+						<Button size="sm" variant="secondary" onclick={() => fwInput?.click()} disabled={fwBusy}>
+							<Upload class="size-4" /> Choose .bin
+						</Button>
+						{#if fwName}
+							<div class="text-muted-foreground break-all">{fwName} · {(fwSize / 1024).toFixed(0)} KB</div>
+							<Button size="sm" onclick={pushFirmware} disabled={fwBusy || !connected}>
+								{fwBusy ? `Updating… ${fwPct}%` : 'Push update'}
+							</Button>
+							{#if fwBusy}
+								<div class="bg-border h-1.5 w-full overflow-hidden rounded">
+									<div class="h-full bg-sky-400" style="width:{fwPct}%"></div>
+								</div>
+							{/if}
+						{/if}
+						{#if fwMsg}<div class="text-muted-foreground break-words">{fwMsg}</div>{/if}
+						<div class="text-muted-foreground mt-auto text-[10px] leading-relaxed">
+							Streams the image over PLP (USB/BLE) to the inactive A/B slot, then the
+							device reboots into it. Rollback is automatic if the new image fails to boot.
+						</div>
+					</div>
+				</aside>
+			{/if}
 
 		{#if showLogs}
 			<aside class="border-border flex w-80 shrink-0 flex-col overflow-hidden border-l">
