@@ -122,7 +122,7 @@
 		total = selectedAsset.size;
 		log = [`downloading ${selectedAsset.name} (${(selectedAsset.size / 1024).toFixed(0)} KB)…`];
 		try {
-			const res = await fetch(selectedAsset.browser_download_url);
+			const res = await fetch(`/api/firmware-proxy?url=${encodeURIComponent(selectedAsset.browser_download_url)}`);
 			if (!res.ok) throw new Error(`download failed: HTTP ${res.status}`);
 			const image = new Uint8Array(await res.arrayBuffer());
 			log = [...log, 'download complete — flashing…'];
