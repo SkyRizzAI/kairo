@@ -40,7 +40,7 @@
 
 	let showSettings = $state(false);
 	let showLogs = $state(true);
-	let showCli = $state(false);
+	let showCli = $state(true);   // CLI-first demo: the terminal is the primary surface
 	let showFiles = $state(false);
 
 	const AUTOBOOT = 'nema:autoboot';
