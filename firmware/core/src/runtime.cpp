@@ -189,9 +189,15 @@ void Runtime::step() {
     platform_->idle();
 }
 
-void Runtime::requestShutdown() { shutdownRequested_ = true; }
+void Runtime::requestShutdown() {
+    shutdownRequested_ = true;                         // host/sim: run() loop exits
+    if (platform_) platform_->power(IPlatform::PowerAction::Shutdown);  // hardware: sleep
+}
 bool Runtime::isShutdownRequested() const { return shutdownRequested_; }
-void Runtime::requestRestart()  { exitCode_ = 75; shutdownRequested_ = true; }
+void Runtime::requestRestart()  {
+    exitCode_ = 75; shutdownRequested_ = true;         // host/sim: run() loop exits (75 = restart)
+    if (platform_) platform_->power(IPlatform::PowerAction::Restart);  // hardware: reboot now
+}
 
 IPlatform&          Runtime::platform()      { assert(platform_); return *platform_; }
 IBoard&             Runtime::board()         { assert(board_);    return *board_; }

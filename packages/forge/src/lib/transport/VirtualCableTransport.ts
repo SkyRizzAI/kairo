@@ -50,9 +50,9 @@ export class VirtualCableTransport implements ILinkTransport {
 				}
 			};
 			const s = document.createElement('script');
-			s.src = '/fw/nema.js';
+			s.src = '/fw/palanu.js';
 			s.async = true;
-			s.onerror = () => reject(new Error('failed to load /wasm/nema.js'));
+			s.onerror = () => reject(new Error('failed to load /fw/palanu.js'));
 			document.head.appendChild(s);
 		});
 	}

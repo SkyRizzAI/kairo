@@ -382,10 +382,7 @@ export class RemoteSession {
 	): Promise<boolean> {
 		const log = (m: string) => onStatus?.(m);
 		const OtaOp = { Begin: 0x01, Data: 0x02, End: 0x03 };
-		// 4 KB balances speed vs reliability: ~4× fewer round-trips than 1 KB, still
-		// comfortably within transport reassembly now that link sends are atomic
-		// (the mutex fix — not the tiny chunk — is what stopped the dropped acks).
-		const CHUNK = 4096;
+		const CHUNK = 1024; // conservative; raise once a full upload is confirmed reliable
 
 		const begin = new Uint8Array(5);
 		begin[0] = OtaOp.Begin;

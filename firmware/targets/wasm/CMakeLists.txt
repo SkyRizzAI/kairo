@@ -1,12 +1,12 @@
-add_executable(nema main.cpp)
-target_link_libraries(nema PRIVATE nema_core nema_platform_wasm nema_board_sim)
+add_executable(palanu main.cpp)
+target_link_libraries(palanu PRIVATE nema_core nema_platform_wasm nema_board_sim)
 
-# Emit a CLASSIC script (nema.js + nema.wasm). Loaded via a <script> tag on the
+# Emit a CLASSIC script (palanu.js + palanu.wasm). Loaded via a <script> tag on the
 # page (outside Vite's ESM transform, which would mangle import.meta.url and break
 # pthread workers). emscripten manages its own pthread pool from the page thread.
-set_target_properties(nema PROPERTIES SUFFIX ".js")
+set_target_properties(palanu PROPERTIES SUFFIX ".js")
 
-target_link_options(nema PRIVATE
+target_link_options(palanu PRIVATE
     -sENVIRONMENT=web,worker
     # Palanu stays multi-threaded in WASM (pthreads = Web Workers). Fixed shared
     # memory (NO growth): growable SharedArrayBuffer + pthreads is buggy and is a

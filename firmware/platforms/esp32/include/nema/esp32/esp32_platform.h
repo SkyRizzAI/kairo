@@ -31,6 +31,7 @@ public:
     void registerDrivers(Runtime& rt) override;
     void postRegister(Runtime& rt) override;   // wrap display + wire PLP-over-BLE
     void idle() override;   // vTaskDelay(5ms)
+    void power(PowerAction action) override;   // esp_restart / esp_deep_sleep_start
 
     Esp32WifiDriver& wifi() { return wifi_; }
     Esp32Ble&        ble()  { return ble_; }

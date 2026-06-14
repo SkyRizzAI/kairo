@@ -13,6 +13,7 @@
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 #include <esp_system.h>
+#include <esp_sleep.h>
 #include <esp_heap_caps.h>
 #include <string>
 #include <vector>
@@ -137,8 +138,23 @@ void Esp32Platform::readyThunk(void* user) {
 void Esp32Platform::powerThunk(void* user, uint8_t op) {
     auto* s = static_cast<Esp32Platform*>(user);
     if (!s->rt_) return;
+    // Route through the runtime so the remote path and the CLI `power` command
+    // converge on one place (Runtime::request* → IPlatform::power below).
     if (op == SysOp::Restart)       s->rt_->requestRestart();
     else if (op == SysOp::Shutdown) s->rt_->requestShutdown();
+}
+
+// Actually drive the hardware. On ESP32 the Arduino loop() just calls rt.step()
+// forever and never reads shutdownRequested_, so the host/sim "exit the run()
+// loop" pattern is a no-op here — we reboot/sleep the chip directly. The short
+// delay lets a pending reply (the OTA End-Ok ack, or the CLI "restarting…" line)
+// flush over USB/BLE before the link drops, so the host sees a clean finish.
+void Esp32Platform::power(PowerAction action) {
+    if (rt_) rt_->log().info("Esp32Platform",
+                             action == PowerAction::Restart ? "rebooting" : "powering off");
+    vTaskDelay(pdMS_TO_TICKS(200));
+    if (action == PowerAction::Restart) esp_restart();
+    else                                esp_deep_sleep_start();
 }
 
 void Esp32Platform::controlThunk(void* user, uint8_t op, const uint8_t* data, size_t len) {

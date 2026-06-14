@@ -1,11 +1,28 @@
 <script lang="ts">
 	import { Button } from '$lib/components/ui/button';
-	import { Upload } from '@lucide/svelte';
+	import { Upload, Globe, RefreshCw } from '@lucide/svelte';
+	import { PUBLIC_FIRMWARE_REPO } from '$env/static/public';
 
-	// Firmware OTA panel (Plan 39). Transport-agnostic: the parent passes `update`
-	// (RemoteSession.otaUpdate for /remote, simStore.otaUpdate for /simulator), so
-	// the same UI drives a real device or the in-browser dry-run. Shows a live
-	// progress bar + a status log so an upload is debuggable on real hardware.
+	interface GhAsset {
+		name: string;
+		size: number;
+		browser_download_url: string;
+	}
+	interface GhRelease {
+		id: number;
+		tag_name: string;
+		name: string;
+		published_at: string;
+		prerelease: boolean;
+		draft: boolean;
+		assets: GhAsset[];
+	}
+
+	const DEFAULT_REPO = PUBLIC_FIRMWARE_REPO || 'SkyRizzAI/kairo';
+	// Firmware assets are named palanu-<target>.bin or palanu-<target>.wasm
+	const isFwAsset = (a: GhAsset) =>
+		a.name.startsWith('palanu-') && (a.name.endsWith('.bin') || a.name.endsWith('.wasm'));
+
 	let {
 		update,
 		ready = true
@@ -18,54 +35,218 @@
 		ready?: boolean;
 	} = $props();
 
-	let input = $state<HTMLInputElement>();
-	let name = $state('');
-	let size = $state(0);
-	let busy = $state(false);
-	let sent = $state(0);
-	let total = $state(0);
-	let log = $state<string[]>([]);
-	let data: Uint8Array | null = null;
+	// ── mode ────────────────────────────────────────────────────────────────────
+	type Mode = 'release' | 'custom' | 'file';
+	let mode = $state<Mode>('release');
 
-	const pct = $derived(total > 0 ? Math.round((sent / total) * 100) : 0);
+	// ── repo / release state ─────────────────────────────────────────────────────
+	let customRepo = $state('');
+	let releases = $state<GhRelease[]>([]);
+	let selectedRelease = $state<GhRelease | null>(null);
+	let selectedAsset = $state<GhAsset | null>(null);
+	let fetching = $state(false);
+	let fetchError = $state('');
 
-	async function pick(e: Event) {
+	const activeRepo = $derived(mode === 'custom' ? customRepo.trim() : DEFAULT_REPO);
+	const fwAssets = $derived(
+		(selectedRelease?.assets ?? []).filter(isFwAsset)
+	);
+
+	async function fetchReleases() {
+		if (!activeRepo) return;
+		fetching = true;
+		fetchError = '';
+		releases = [];
+		selectedRelease = null;
+		selectedAsset = null;
+		try {
+			const res = await fetch(`https://api.github.com/repos/${activeRepo}/releases`, {
+				headers: { Accept: 'application/vnd.github+json' }
+			});
+			if (!res.ok) throw new Error(`GitHub API: HTTP ${res.status}`);
+			const all: GhRelease[] = await res.json();
+			releases = all.filter((r) => !r.draft);
+			if (releases.length) {
+				selectedRelease = releases[0];
+				const first = releases[0].assets.filter(isFwAsset);
+				if (first.length) selectedAsset = first[0];
+			}
+		} catch (e) {
+			fetchError = String(e);
+		}
+		fetching = false;
+	}
+
+	// Auto-fetch when switching to release mode
+	$effect(() => {
+		if (mode === 'release' && releases.length === 0 && !fetching) fetchReleases();
+	});
+
+	// ── local file state ─────────────────────────────────────────────────────────
+	let fileInput = $state<HTMLInputElement>();
+	let fileName = $state('');
+	let fileSize = $state(0);
+	let fileData = $state<Uint8Array | null>(null);
+
+	async function pickFile(e: Event) {
 		const file = (e.target as HTMLInputElement).files?.[0];
 		if (!file) return;
-		data = new Uint8Array(await file.arrayBuffer());
-		name = file.name;
-		size = data.length;
+		fileData = new Uint8Array(await file.arrayBuffer());
+		fileName = file.name;
+		fileSize = fileData.length;
 		log = [];
 		sent = 0;
 		total = 0;
 	}
-	async function push() {
-		if (!data || busy) return;
+
+	// ── flash progress (shared) ───────────────────────────────────────────────────
+	let busy = $state(false);
+	let sent = $state(0);
+	let total = $state(0);
+	let log = $state<string[]>([]);
+	const pct = $derived(total > 0 ? Math.round((sent / total) * 100) : 0);
+
+	async function flash(image: Uint8Array) {
 		busy = true;
 		sent = 0;
-		total = data.length;
+		total = image.length;
 		log = [];
-		await update(
-			data,
-			(s) => (sent = s),
-			(m) => (log = [...log, m])
-		);
+		await update(image, (s) => (sent = s), (m) => (log = [...log, m]));
 		busy = false;
+	}
+
+	async function flashRelease() {
+		if (!selectedAsset || busy) return;
+		busy = true;
+		sent = 0;
+		total = selectedAsset.size;
+		log = [`downloading ${selectedAsset.name} (${(selectedAsset.size / 1024).toFixed(0)} KB)…`];
+		try {
+			const res = await fetch(selectedAsset.browser_download_url);
+			if (!res.ok) throw new Error(`download failed: HTTP ${res.status}`);
+			const image = new Uint8Array(await res.arrayBuffer());
+			log = [...log, 'download complete — flashing…'];
+			total = image.length;
+			sent = 0;
+			await update(image, (s) => (sent = s), (m) => (log = [...log, m]));
+		} catch (e) {
+			log = [...log, `error: ${e}`];
+		}
+		busy = false;
+	}
+
+	function onModeChange(m: Mode) {
+		mode = m;
+		log = [];
+		sent = 0;
+		total = 0;
 	}
 </script>
 
 <div class="flex h-full flex-col gap-2 p-3 text-xs">
-	<input bind:this={input} type="file" accept=".bin" class="hidden" onchange={pick} />
-	<Button size="sm" variant="secondary" onclick={() => input?.click()} disabled={busy}>
-		<Upload class="size-4" /> Choose .bin
-	</Button>
-	{#if name}
-		<div class="text-muted-foreground break-all">{name} · {(size / 1024).toFixed(0)} KB</div>
-		<Button size="sm" onclick={push} disabled={busy || !ready}>
-			{busy ? `Updating… ${pct}%` : 'Push update'}
-		</Button>
+	<!-- Mode selector -->
+	<div class="flex rounded border border-border overflow-hidden text-[10px]">
+		{#each ([['release', 'Official'], ['custom', 'Custom Repo'], ['file', 'Local File']] as const) as [m, label]}
+			<button
+				class="flex-1 px-2 py-1 transition-colors {mode === m
+					? 'bg-sky-500/20 text-sky-300 font-medium'
+					: 'text-muted-foreground hover:bg-accent'}"
+				onclick={() => onModeChange(m)}
+			>
+				{label}
+			</button>
+		{/each}
+	</div>
+
+	<!-- Release / Custom Repo mode -->
+	{#if mode === 'release' || mode === 'custom'}
+		{#if mode === 'custom'}
+			<div class="flex gap-1">
+				<input
+					class="flex-1 rounded border border-border bg-background px-2 py-1 text-[10px] outline-none focus:border-sky-500"
+					placeholder="owner/repo"
+					bind:value={customRepo}
+					onkeydown={(e) => e.key === 'Enter' && fetchReleases()}
+				/>
+				<Button size="sm" variant="secondary" onclick={fetchReleases} disabled={fetching || !customRepo.trim()}>
+					{#if fetching}<RefreshCw class="size-3 animate-spin" />{:else}<RefreshCw class="size-3" />{/if}
+				</Button>
+			</div>
+		{:else}
+			<div class="flex items-center gap-1 text-muted-foreground">
+				<Globe class="size-3 shrink-0" />
+				<span class="truncate">{DEFAULT_REPO}</span>
+				<button class="ml-auto shrink-0" onclick={fetchReleases} disabled={fetching} title="Refresh">
+					<RefreshCw class="size-3 {fetching ? 'animate-spin' : ''}" />
+				</button>
+			</div>
+		{/if}
+
+		{#if fetchError}
+			<div class="text-red-400 text-[10px]">{fetchError}</div>
+		{:else if fetching}
+			<div class="text-muted-foreground text-[10px]">Fetching releases…</div>
+		{:else if releases.length}
+			<!-- Release picker -->
+			<select
+				class="rounded border border-border bg-background px-2 py-1 text-[10px] outline-none focus:border-sky-500"
+				onchange={(e) => {
+					selectedRelease = releases.find((r) => String(r.id) === (e.target as HTMLSelectElement).value) ?? null;
+					selectedAsset = null;
+					if (selectedRelease) {
+						const a = selectedRelease.assets.filter(isFwAsset);
+						if (a.length) selectedAsset = a[0];
+					}
+				}}
+			>
+				{#each releases as r (r.id)}
+					<option value={String(r.id)}>
+						{r.tag_name}{r.prerelease ? ' (pre)' : ''} — {r.name || r.tag_name}
+					</option>
+				{/each}
+			</select>
+
+			<!-- Asset picker -->
+			{#if fwAssets.length}
+				<div class="flex flex-col gap-1">
+					{#each fwAssets as asset}
+						<button
+							class="flex items-center gap-1 rounded border px-2 py-1 text-left transition-colors {selectedAsset?.name === asset.name
+								? 'border-sky-500 bg-sky-500/10 text-sky-300'
+								: 'border-border hover:bg-accent text-muted-foreground'}"
+							onclick={() => (selectedAsset = asset)}
+						>
+							<span class="flex-1 font-mono truncate">{asset.name}</span>
+							<span class="shrink-0 tabular-nums">{(asset.size / 1024).toFixed(0)} KB</span>
+						</button>
+					{/each}
+				</div>
+				<Button size="sm" onclick={flashRelease} disabled={busy || !ready || !selectedAsset}>
+					{busy ? `Flashing… ${pct}%` : `Flash ${selectedAsset?.name ?? '…'}`}
+				</Button>
+			{:else if selectedRelease}
+				<div class="text-muted-foreground text-[10px]">No firmware assets in this release.</div>
+			{/if}
+		{:else if mode === 'release'}
+			<div class="text-muted-foreground text-[10px]">No releases found.</div>
+		{/if}
 	{/if}
 
+	<!-- Local file mode -->
+	{#if mode === 'file'}
+		<input bind:this={fileInput} type="file" accept=".bin,.wasm" class="hidden" onchange={pickFile} />
+		<Button size="sm" variant="secondary" onclick={() => fileInput?.click()} disabled={busy}>
+			<Upload class="size-4" /> Choose .bin / .wasm
+		</Button>
+		{#if fileName}
+			<div class="text-muted-foreground break-all">{fileName} · {(fileSize / 1024).toFixed(0)} KB</div>
+			<Button size="sm" onclick={() => fileData && flash(fileData)} disabled={busy || !ready || !fileData}>
+				{busy ? `Updating… ${pct}%` : 'Push update'}
+			</Button>
+		{/if}
+	{/if}
+
+	<!-- Progress bar (shared) -->
 	{#if busy || sent > 0}
 		<div class="bg-border h-1.5 w-full overflow-hidden rounded">
 			<div class="h-full bg-sky-400 transition-all" style="width:{pct}%"></div>
@@ -75,6 +256,7 @@
 		</div>
 	{/if}
 
+	<!-- Status log (shared) -->
 	{#if log.length}
 		<div class="border-border mt-1 max-h-40 flex-1 overflow-auto rounded border bg-black/30 p-2 font-mono text-[10px] leading-relaxed">
 			{#each log as line, i (i)}
@@ -85,7 +267,7 @@
 
 	<div class="text-muted-foreground mt-auto text-[10px] leading-relaxed">
 		Streams the image over PLP to the inactive A/B slot, then the device reboots into it
-		(rollback is automatic if it fails). The device's screen may freeze while it erases/writes
-		flash. In the WASM simulator this is a dry-run — the flow runs but no real image is swapped.
+		(rollback is automatic if it fails). Official releases are fetched from
+		<span class="font-mono">{DEFAULT_REPO}</span>.
 	</div>
 </div>

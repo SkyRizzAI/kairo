@@ -34,7 +34,7 @@ cd "$FW_DIR/targets/$TARGET"
 [[ -f sdkconfig ]] || idf.py set-target esp32s3
 idf.py -DNEMA_DEV_BUILD="$N" build
 
-BIN="$(pwd)/build/nema-$TARGET.bin"
+BIN="$(pwd)/build/palanu-$TARGET.bin"
 echo ""
 echo "================ DEV OTA build #$N ($TARGET) ================"
 echo "image: $BIN"

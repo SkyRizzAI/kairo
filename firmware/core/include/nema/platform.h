@@ -7,11 +7,17 @@ struct IClock;
 
 struct IPlatform {
     enum class OutputMode { Human, Json };
+    enum class PowerAction { Restart, Shutdown };
 
     virtual ~IPlatform() = default;
     virtual const char* name() const = 0;
     virtual IClock& clock() = 0;
     virtual OutputMode outputMode() const { return OutputMode::Human; }
+    // Carry out a hardware power action. Default is a no-op: on the host/simulator
+    // Runtime::requestRestart/Shutdown sets shutdownRequested_ and the run() loop
+    // exits cleanly. On real hardware (e.g. ESP32) there is no run() loop to exit —
+    // the platform overrides this to actually reboot/sleep the chip.
+    virtual void power(PowerAction) {}
     // Register platform-specific drivers/services into the runtime.
     // Called during Runtime::registerServices(), after initCore().
     virtual void registerDrivers(Runtime& rt) = 0;
