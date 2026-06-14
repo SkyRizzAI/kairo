@@ -68,7 +68,7 @@ jobs:
           path: |
             ~/.espressif
             ~/esp-idf
-          key: esp-idf-v5.4-${{ runner.os }}
+          key: esp-idf-v5.3-${{ runner.os }}
 
       - name: Install system deps
         run: |
@@ -77,10 +77,10 @@ jobs:
             git wget flex bison gperf python3 python3-pip python3-venv \
             cmake ninja-build ccache libffi-dev libssl-dev dfu-util libusb-1.0-0
 
-      - name: Install ESP-IDF v5.4
+      - name: Install ESP-IDF v5.3
         run: |
           if [ ! -f ~/esp-idf/export.sh ]; then
-            git clone --depth 1 --branch v5.4 https://github.com/espressif/esp-idf.git ~/esp-idf
+            git clone --depth 1 --branch v5.3.2 https://github.com/espressif/esp-idf.git ~/esp-idf
           fi
           ~/esp-idf/install.sh esp32s3
 
