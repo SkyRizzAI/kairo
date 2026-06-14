@@ -381,7 +381,9 @@ export class RemoteSession {
 	): Promise<boolean> {
 		const log = (m: string) => onStatus?.(m);
 		const OtaOp = { Begin: 0x01, Data: 0x02, End: 0x03 };
-		const CHUNK = 16384; // fewer round-trips (a 2 MB image = ~128 frames)
+		// Small frames: safe within any transport's MTU/reassembly (esp. BLE) and a
+		// tiny flash write per chunk. Reliability > speed for OTA.
+		const CHUNK = 1024;
 
 		const begin = new Uint8Array(5);
 		begin[0] = OtaOp.Begin;

@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <cstddef>
 #include <atomic>
+#include <mutex>
 #include <vector>
 
 // LinkService — PLP session over one ILinkTransport (Plan 35). Owns the codec,
@@ -61,6 +62,7 @@ private:
     void*             readyUser_ = nullptr;
     DisconnectFn      disconnectFn_   = nullptr;
     void*             disconnectUser_ = nullptr;
+    std::mutex        sendMtx_;        // serialize concurrent send() (atomic frames)
 };
 
 } // namespace nema

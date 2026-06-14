@@ -64,8 +64,13 @@ void LinkService::handle(const plp::Frame& f) {
 void LinkService::send(plp::Channel ch, const uint8_t* data, size_t len, uint8_t flags) {
     if (!t_) return;
     if (ch != plp::Channel::Control && !ready_.load()) return;   // gated until handshake
-    std::vector<uint8_t> buf;   // local → thread-safe
+    std::vector<uint8_t> buf;
     plp::encodeFrame(buf, (uint8_t)ch, data, len, flags);
+    // Serialize the actual transmit: the GUI thread (screen-tap), the RX task
+    // (OTA/CLI acks) and app threads (events) all send concurrently. Without this
+    // two frames can interleave on the wire (a transport may write in MTU-sized
+    // pieces) → corrupt frames → e.g. a lost OTA ack mid-upload.
+    std::lock_guard<std::mutex> lk(sendMtx_);
     t_->send(buf.data(), buf.size());
 }
 
