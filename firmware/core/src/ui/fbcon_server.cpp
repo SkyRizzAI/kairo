@@ -6,41 +6,54 @@
 #include "nema/system/system_info.h"
 #include "nema/services/cli_service.h"
 #include "nema/input/input_action.h"
+#include <cstring>
 #include <string>
 
 namespace nema {
 
 // ── Keyboard layout ───────────────────────────────────────────────────────────
-// 3 rows × 13 keys. Special: '<' = backspace, '>' = submit, ' ' = space.
-static constexpr int  KBD_ROWS = 3;
-static constexpr int  KBD_COLS = 13;
-static constexpr const char* KBD[KBD_ROWS] = {
-    "abcdefghijklm",
-    "nopqrstuvwxyz",
-    "0123456789 ><",   // space, backspace (<), enter (>)
+// 4 char rows × 10 keys, + 1 action row with 3 wide keys.
+// Special chars in char rows: '-', '_', '.', '/' for CLI use.
+// Action row: SPACE (cols 0-3), DEL (cols 4-6), ENT (cols 7-9).
+static constexpr int KBD_CHAR_ROWS = 4;
+static constexpr int KBD_COLS      = 10;
+static constexpr const char KBD_CHARS[KBD_CHAR_ROWS][KBD_COLS + 1] = {
+    "qwertyuiop",
+    "asdfghjkl-",
+    "zxcvbnm_./",
+    "1234567890",
 };
-// Each key cell: 1px padding on each side of the 6px glyph = 8px wide,
-//                1px padding on each side of the 9px glyph = 11px tall.
-static constexpr uint16_t KEY_W = ui::CHAR_W + 2;   // 8 px
-static constexpr uint16_t KEY_H = ui::CHAR_H + 2;   // 11 px
-static constexpr uint16_t KBD_W = KBD_COLS * KEY_W; // 104 px
-static constexpr uint16_t KBD_H = KBD_ROWS * KEY_H; // 33 px
+
+// Row 4: 3 wide keys spanning the same pixel width as the 10-key rows.
+// Internally stored as col = 0, 4, 7 for navigation purposes.
+static constexpr int  ACT_SP  = 0;   // SPACE  (cols 0-3)
+static constexpr int  ACT_DEL = 4;   // DEL    (cols 4-6)
+static constexpr int  ACT_ENT = 7;   // ENTER  (cols 7-9)
+static int snapActionCol(int col) {
+    if (col < 4) return ACT_SP;
+    if (col < 7) return ACT_DEL;
+    return ACT_ENT;
+}
+
+static constexpr uint16_t KEY_W  = ui::CHAR_W + 2;          // 8 px per cell
+static constexpr uint16_t KEY_H  = ui::CHAR_H + 2;          // 11 px per cell
+static constexpr uint16_t KBD_W  = KBD_COLS * KEY_W;        // 80 px wide
+static constexpr uint16_t KBD_H  = (KBD_CHAR_ROWS + 1) * KEY_H; // 55 px tall
+
+// Enter key position (row 4, action col 7) — cursor starts here so pressing
+// OK immediately submits the pre-filled "display start aether".
+static constexpr int INIT_ROW = KBD_CHAR_ROWS;   // 4
+static constexpr int INIT_COL = ACT_ENT;          // 7
 
 static constexpr const char* DEFAULT_CMD = "display start aether";
-
-// Position of the '>' (Enter) key in the grid: row 2, col 11.
-static constexpr int KBD_ENTER_ROW = 2;
-static constexpr int KBD_ENTER_COL = 11;
 
 // ── Constructor ───────────────────────────────────────────────────────────────
 
 FbconServer::FbconServer(Runtime& rt) : rt_(rt) {
     inputBuf_ = DEFAULT_CMD;
-    // Start with keyboard open, cursor on the Enter key — pressing OK immediately
-    // submits the pre-filled command, but the keyboard is visible for editing.
-    kbdOpen_ = true;
-    kbdRow_  = KBD_ENTER_ROW;
-    kbdCol_  = KBD_ENTER_COL;
+    kbdOpen_  = true;
+    kbdRow_   = INIT_ROW;
+    kbdCol_   = INIT_COL;
     session_.id  = 0xFF;
     session_.out = [this](const std::string& line) {
         outputLines_.push_back(line);
@@ -53,11 +66,9 @@ FbconServer::FbconServer(Runtime& rt) : rt_(rt) {
 void FbconServer::renderFrame(Canvas& c, ViewDispatcher&, const StatusBarData&) {
     c.clear();
 
-    const uint16_t lh = ui::CHAR_H + 1;   // line height (10 px)
+    const uint16_t lh = ui::CHAR_H + 1;
     if (c.height() < lh * 2) { c.flush(); return; }
 
-    // When the keyboard is open it sits at the very bottom; the prompt lives
-    // just above it. When closed the prompt is at the bottom.
     const uint16_t kbdH    = kbdOpen_ ? KBD_H : 0;
     const uint16_t promptY = c.height() - lh - kbdH;
 
@@ -66,12 +77,12 @@ void FbconServer::renderFrame(Canvas& c, ViewDispatcher&, const StatusBarData&) 
     c.drawText(1, 1,      (info.boardName + "  v" + info.firmwareVersion).c_str(), true);
     c.drawText(1, 1 + lh, info.platformName.c_str(), true);
 
-    // ── Output lines (fill downward from below the banner, clipped above prompt)
+    // ── Output lines (fill below banner, clipped above prompt) ───────────────
     const uint16_t outputTop = 1 + lh * 2;
     if (promptY > outputTop && !outputLines_.empty()) {
         uint16_t slots = (promptY - outputTop) / lh;
-        size_t total   = outputLines_.size();
-        size_t start   = (total > slots) ? total - slots : 0;
+        size_t   total = outputLines_.size();
+        size_t   start = (total > slots) ? total - slots : 0;
         uint16_t y     = outputTop;
         for (size_t i = start; i < total; i++) {
             c.drawText(1, y, outputLines_[i].c_str(), true);
@@ -82,7 +93,7 @@ void FbconServer::renderFrame(Canvas& c, ViewDispatcher&, const StatusBarData&) 
     // ── Prompt ────────────────────────────────────────────────────────────────
     c.drawText(1, promptY, ("> " + inputBuf_).c_str(), true);
 
-    // ── Virtual keyboard (floating, center-bottom) ────────────────────────────
+    // ── Keyboard ─────────────────────────────────────────────────────────────
     if (kbdOpen_) drawKeyboard(c);
 
     c.flush();
@@ -91,30 +102,46 @@ void FbconServer::renderFrame(Canvas& c, ViewDispatcher&, const StatusBarData&) 
 // ── drawKeyboard ──────────────────────────────────────────────────────────────
 
 void FbconServer::drawKeyboard(Canvas& c) const {
-    // Center horizontally; pin to the very bottom of the canvas.
-    const uint16_t kx = (c.width() > KBD_W) ? (c.width() - KBD_W) / 2 : 0;
-    const uint16_t ky = (c.height() >= KBD_H) ? c.height() - KBD_H : 0;
+    // Centered horizontally, pinned to the bottom.
+    const uint16_t startX = (c.width() > KBD_W) ? (c.width() - KBD_W) / 2 : 0;
+    const uint16_t startY = (c.height() >= KBD_H) ? c.height() - KBD_H : 0;
 
-    for (int row = 0; row < KBD_ROWS; row++) {
-        for (int col = 0; col < KBD_COLS; col++) {
-            char ch   = KBD[row][col];
-            char disp = (ch == ' ') ? '_' : ch;  // show underscore for space
-            char text[2] = { disp, '\0' };
+    // Clear background strip
+    c.fillRect(0, startY, c.width(), KBD_H, false);
 
-            uint16_t cellX = kx + (uint16_t)col * KEY_W;
-            uint16_t cellY = ky + (uint16_t)row * KEY_H;
-            uint16_t tx    = cellX + 1;  // 1px inner left padding
-            uint16_t ty    = cellY + 1;  // 1px inner top padding
+    // Helper: draw one key cell. Selected key = white fill + dark glyph.
+    auto cell = [&](uint16_t cx, uint16_t cy, uint16_t cw, const char* label, bool sel) {
+        uint16_t tx = cx + (cw - (uint16_t)(std::strlen(label) * ui::CHAR_W)) / 2;
+        uint16_t ty = cy + 1;
+        if (sel) {
+            c.fillRect(cx, cy, cw, KEY_H, true);
+            c.drawText(tx, ty, label, false);
+        } else {
+            c.drawText(tx, ty, label, true);
+        }
+    };
 
-            if (row == kbdRow_ && col == kbdCol_) {
-                // Selected key: white block with dark glyph
-                c.fillRect(cellX, cellY, KEY_W, KEY_H, true);
-                c.drawText(tx, ty, text, false);
-            } else {
-                c.drawText(tx, ty, text, true);
-            }
+    // Char rows 0-3
+    for (int r = 0; r < KBD_CHAR_ROWS; r++) {
+        uint16_t ry = startY + (uint16_t)r * KEY_H;
+        for (int cc = 0; cc < KBD_COLS; cc++) {
+            char lbl[2] = { KBD_CHARS[r][cc], '\0' };
+            bool sel = (kbdRow_ == r && kbdCol_ == cc);
+            cell(startX + (uint16_t)cc * KEY_W, ry, KEY_W, lbl, sel);
         }
     }
+
+    // Action row (row 4): 3 wide keys
+    const uint16_t ry4 = startY + KBD_CHAR_ROWS * KEY_H;
+    const int acol = snapActionCol(kbdCol_);
+    const bool onAction = (kbdRow_ == KBD_CHAR_ROWS);
+
+    // SPACE: cols 0-3 → 4 * KEY_W wide
+    cell(startX,                   ry4, 4 * KEY_W, "SP",  onAction && acol == ACT_SP);
+    // DEL:   cols 4-6 → 3 * KEY_W wide
+    cell(startX + 4 * KEY_W,       ry4, 3 * KEY_W, "<",   onAction && acol == ACT_DEL);
+    // ENT:   cols 7-9 → 3 * KEY_W wide
+    cell(startX + 7 * KEY_W,       ry4, 3 * KEY_W, ">",   onAction && acol == ACT_ENT);
 }
 
 // ── onAction ─────────────────────────────────────────────────────────────────
@@ -123,75 +150,90 @@ bool FbconServer::onAction(input::Action action) {
     using input::Action;
 
     if (kbdOpen_) {
-        // Keyboard mode — Prev/Next navigate keys; Back closes keyboard (history mode).
         switch (action) {
+            // Up/Down = move between rows
             case Action::Prev:
-                if (--kbdCol_ < 0) {
-                    kbdRow_ = (kbdRow_ + KBD_ROWS - 1) % KBD_ROWS;
-                    kbdCol_ = KBD_COLS - 1;
-                }
+                kbdRow_ = (kbdRow_ + KBD_CHAR_ROWS) % (KBD_CHAR_ROWS + 1);
+                // clamp col when entering action row
+                if (kbdRow_ == KBD_CHAR_ROWS) kbdCol_ = snapActionCol(kbdCol_);
                 rt_.view().requestRedraw();
                 return true;
 
             case Action::Next:
-                if (++kbdCol_ >= KBD_COLS) {
-                    kbdRow_ = (kbdRow_ + 1) % KBD_ROWS;
-                    kbdCol_ = 0;
+                kbdRow_ = (kbdRow_ + 1) % (KBD_CHAR_ROWS + 1);
+                if (kbdRow_ == KBD_CHAR_ROWS) kbdCol_ = snapActionCol(kbdCol_);
+                rt_.view().requestRedraw();
+                return true;
+
+            // Left/Right = move within a row
+            case Action::AdjustDown:  // Left button → move left
+                if (kbdRow_ == KBD_CHAR_ROWS) {
+                    static const int SLOTS[] = { ACT_SP, ACT_DEL, ACT_ENT };
+                    int s = snapActionCol(kbdCol_);
+                    for (int i = 0; i < 3; i++)
+                        if (SLOTS[i] == s) { kbdCol_ = SLOTS[(i + 2) % 3]; break; }
+                } else {
+                    kbdCol_ = (kbdCol_ + KBD_COLS - 1) % KBD_COLS;
                 }
                 rt_.view().requestRedraw();
                 return true;
 
-            case Action::Activate: {
-                char ch = KBD[kbdRow_][kbdCol_];
-                if (ch == '>') {          // Enter key → submit
-                    kbdOpen_ = false;
-                    executeInput();
-                } else if (ch == '<') {  // Backspace key → delete last char
-                    if (!inputBuf_.empty()) inputBuf_.pop_back();
-                    rt_.view().requestRedraw();
+            case Action::AdjustUp:    // Right button → move right
+                if (kbdRow_ == KBD_CHAR_ROWS) {
+                    static const int SLOTS[] = { ACT_SP, ACT_DEL, ACT_ENT };
+                    int s = snapActionCol(kbdCol_);
+                    for (int i = 0; i < 3; i++)
+                        if (SLOTS[i] == s) { kbdCol_ = SLOTS[(i + 1) % 3]; break; }
                 } else {
-                    inputBuf_ += ch;     // letter, digit, or space
-                    rt_.view().requestRedraw();
+                    kbdCol_ = (kbdCol_ + 1) % KBD_COLS;
                 }
+                rt_.view().requestRedraw();
                 return true;
-            }
 
+            // OK = type / submit / delete
+            case Action::Activate:
+                if (kbdRow_ < KBD_CHAR_ROWS) {
+                    inputBuf_ += KBD_CHARS[kbdRow_][kbdCol_];
+                } else {
+                    int s = snapActionCol(kbdCol_);
+                    if (s == ACT_SP)       inputBuf_ += ' ';
+                    else if (s == ACT_DEL) { if (!inputBuf_.empty()) inputBuf_.pop_back(); }
+                    else                   { kbdOpen_ = false; executeInput(); return true; }
+                }
+                rt_.view().requestRedraw();
+                return true;
+
+            // Back (double-tap OK) = close keyboard → history mode
             case Action::Back:
-                // Close keyboard → history mode (Prev/Next navigate history).
                 kbdOpen_ = false;
                 rt_.view().requestRedraw();
                 return true;
 
             default:
-                return true;  // consume all — don't let ViewDispatcher see it
+                return true;
         }
     }
 
     // ── History mode (keyboard closed) ────────────────────────────────────────
-    // Prev/Next browse history; Back re-opens the keyboard.
     switch (action) {
         case Action::Activate:
             executeInput();
             rt_.view().requestRedraw();
             return true;
-
         case Action::Prev:
             histPrev();
             rt_.view().requestRedraw();
             return true;
-
         case Action::Next:
             histNext();
             rt_.view().requestRedraw();
             return true;
-
         case Action::Back:
             kbdOpen_ = true;
             rt_.view().requestRedraw();
             return true;
-
         default:
-            return true;  // consume all — don't let ViewDispatcher see it
+            return true;
     }
 }
 
