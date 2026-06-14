@@ -17,6 +17,16 @@ void RemoteService::init(LinkService& link, InputService& input) {
     input_ = &input;
     logSink_.link = &link;
     link_->onFrame(&RemoteService::onFrameThunk, this);
+    link_->onDisconnect(&RemoteService::onDisconnectThunk, this);  // fresh shell per connection
+    // The shell session streams its output back on the CLI channel for the
+    // lifetime of this device — set once (Plan 44).
+    cliSession_.out = [this](const std::string& s) {
+        if (link_) link_->send(klp::Channel::Cli, (const uint8_t*)s.data(), s.size());
+    };
+}
+
+void RemoteService::onDisconnectThunk(void* user) {
+    static_cast<RemoteService*>(user)->cliSession_.reset();  // clear cwd/history
 }
 
 void RemoteService::attachLog(Logger& log) {
@@ -70,9 +80,7 @@ void RemoteService::dispatch(const klp::Frame& f) {
         case klp::Channel::Cli: {            // host→device terminal: [command line]
             if (!cli_ || f.payload.empty()) break;
             std::string line((const char*)f.payload.data(), f.payload.size());
-            cli_->execute(line, [this](const std::string& s) {
-                link_->send(klp::Channel::Cli, (const uint8_t*)s.data(), s.size());
-            });
+            cli_->execute(line, cliSession_);   // persistent session: cwd + history
             const uint8_t eot = 0x04;        // mark end-of-output → host re-prompts
             link_->send(klp::Channel::Cli, &eot, 1);
             break;

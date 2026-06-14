@@ -2,27 +2,25 @@
 #include <functional>
 #include <string>
 #include <vector>
+#include <cstdint>
 
 namespace nema {
 
 class Runtime;
+struct CliContext;
 
-// CliService — a Flipper-style command interpreter (NOT a Unix shell: no kernel,
-// no processes, no real filesystem). It is just a registry of named commands;
-// each handler reads device state and streams text output back. Transport-
-// agnostic: RemoteService routes the KLP CLI channel here, but the service itself
-// only knows "a line in → lines out".
+// CliService — the command REGISTRY (Plan 44). It is not a Unix shell (no kernel,
+// no processes), but it is a real shell in the sense that commands run inside a
+// per-connection CliSession with persistent state (history + working directory).
+// Transport-agnostic: RemoteService routes each KLP CLI line into a session.
 //
-// Built to extend. add() is the single entry point, and is shared by:
-//   - core built-ins (registerCoreCliCommands)
-//   - platform specializations (e.g. ESP32 replaces `ram` with a live-heap read)
-//   - future sources — a working-dir/file context once the FS lands, or `.kapp`
-//     apps that expose their own commands ("bin"). None of those need to touch
-//     the core; they just register more commands.
+// Built to extend. add() is the single entry point, shared by core built-ins
+// (registerCoreCliCommands), platform specializations (e.g. ESP32's live-heap
+// `ram`), and future `.kapp` apps that register their own commands.
 class CliService {
 public:
     using Out     = std::function<void(const std::string&)>;  // emit one output line
-    using Handler = std::function<void(const std::vector<std::string>& args, const Out& out)>;
+    using Handler = std::function<void(CliContext& ctx)>;       // ctx = args + out + session
 
     struct Command {
         std::string name;
@@ -30,14 +28,13 @@ public:
         Handler     handler;
     };
 
-    // Register a command, or REPLACE the existing one with the same name. Replace
-    // semantics let a platform/app specialize a built-in without removing it.
+    // Register a command, or REPLACE the one with the same name (specialize).
     void add(std::string name, std::string help, Handler handler);
 
-    // Parse `line` into argv (whitespace-split) and dispatch to argv[0]. Output is
-    // streamed via `out`, one call per logical line. Empty line → no-op; unknown
-    // command → an error line. Handlers must be non-blocking (run on the link
-    // thread); offload anything heavy to a TaskRunner.
+    // Execute one line inside a session: parse → push history → dispatch with a
+    // CliContext. cwd/history persist across calls for that session.
+    void execute(const std::string& line, struct CliSession& session);
+    // Convenience: run with just an output sink (a throwaway, stateless session).
     void execute(const std::string& line, const Out& out);
 
     const std::vector<Command>& commands() const { return cmds_; }
@@ -46,10 +43,30 @@ private:
     std::vector<Command> cmds_;
 };
 
-// Register the built-in commands: help, ram, hwinfo, caps, power, wlan/network,
-// ble/bluetooth. They read everything through `rt` (introspection + container-
-// resolved drivers), so the same set works on every platform; a driver that
-// isn't present (e.g. BLE on the simulator) reports "not available".
+// Per-connection shell session (Plan 44): device-side state that persists across
+// command lines for one connected client (USB / BLE / WASM cable). Each link
+// connection gets its own — history and cwd are isolated per connection.
+struct CliSession {
+    uint32_t                 id    = 0;
+    std::string              cwd   = "/";   // working directory (over the VFS)
+    std::vector<std::string> history;       // device-side, capped ring
+    CliService::Out          out;           // this connection's output sink
+    bool                     alive = true;
+
+    void pushHistory(const std::string& line);   // cap ~32, skips blanks/dupes
+    void reset() { cwd = "/"; history.clear(); }  // on (re)connect
+};
+
+// Context handed to every command handler.
+struct CliContext {
+    const std::vector<std::string>& args;     // argv after the command name
+    const CliService::Out&          out;      // == session.out
+    CliSession&                     session;  // history + cwd
+};
+
+// Register the built-in commands (help, hwinfo, ram, caps, display, power,
+// wlan/network, ble/bluetooth, whoami, profile, fs, plus the shell built-ins
+// pwd/cd/history). They read everything through `rt`.
 void registerCoreCliCommands(CliService& cli, Runtime& rt);
 
 } // namespace nema

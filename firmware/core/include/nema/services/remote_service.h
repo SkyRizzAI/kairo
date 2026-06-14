@@ -2,6 +2,7 @@
 #include "nema/link/link_service.h"
 #include "nema/log/log_sink.h"
 #include "nema/system/board_profile.h"
+#include "nema/services/cli_service.h"
 #include <cstdint>
 #include <string>
 
@@ -64,6 +65,7 @@ private:
     };
 
     static void onFrameThunk(void* user, const klp::Frame& f);
+    static void onDisconnectThunk(void* user);         // reset the shell session
     void dispatch(const klp::Frame& f);
     void handleFile(const std::vector<uint8_t>& in);   // FILE channel request → reply
 
@@ -78,6 +80,7 @@ private:
     void*         controlUser_ = nullptr;
     std::string   info_   = "{\"id\":\"nema\",\"name\":\"nema\",\"components\":[]}";
     LinkLogSink   logSink_;
+    CliSession    cliSession_;   // per-connection shell state (history + cwd)
 };
 
 } // namespace nema

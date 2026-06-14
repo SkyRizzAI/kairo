@@ -13,6 +13,13 @@
 
 namespace nema {
 
+void CliSession::pushHistory(const std::string& line) {
+    if (line.empty()) return;
+    if (!history.empty() && history.back() == line) return;  // skip immediate dupes
+    history.push_back(line);
+    if (history.size() > 32) history.erase(history.begin());  // capped ring
+}
+
 void CliService::add(std::string name, std::string help, Handler handler) {
     for (auto& c : cmds_) {
         if (c.name == name) {                 // replace (specialize) an existing command
@@ -24,7 +31,7 @@ void CliService::add(std::string name, std::string help, Handler handler) {
     cmds_.push_back({std::move(name), std::move(help), std::move(handler)});
 }
 
-void CliService::execute(const std::string& line, const Out& out) {
+void CliService::execute(const std::string& line, CliSession& session) {
     std::vector<std::string> argv;
     size_t i = 0;
     while (i < line.size()) {
@@ -34,14 +41,23 @@ void CliService::execute(const std::string& line, const Out& out) {
         if (i > start) argv.push_back(line.substr(start, i - start));
     }
     if (argv.empty()) return;
+    session.pushHistory(line);
 
+    std::vector<std::string> args(argv.begin() + 1, argv.end());
+    CliContext ctx{args, session.out, session};
     for (auto& c : cmds_) {
         if (c.name == argv[0]) {
-            c.handler({argv.begin() + 1, argv.end()}, out);
+            c.handler(ctx);
             return;
         }
     }
-    out("unknown command: " + argv[0] + " (try 'help')");
+    session.out("unknown command: " + argv[0] + " (try 'help')");
+}
+
+void CliService::execute(const std::string& line, const Out& out) {
+    CliSession tmp;            // throwaway: no persisted history/cwd
+    tmp.out = out;
+    execute(line, tmp);
 }
 
 namespace {
@@ -57,25 +73,72 @@ const char* driverKindName(DriverKind k) {
     }
 }
 
+// Resolve `p` against the session's cwd into a normalized absolute path,
+// honouring "/", relative paths, "." and "..". (Plan 44 — stateful fs.)
+std::string resolvePath(const std::string& cwd, const std::string& p) {
+    std::string base = p.empty() ? cwd
+                     : (p[0] == '/' ? p : (cwd == "/" ? "/" + p : cwd + "/" + p));
+    std::vector<std::string> parts;
+    std::string cur;
+    base.push_back('/');                       // sentinel to flush the last segment
+    for (char ch : base) {
+        if (ch == '/') {
+            if (cur == "..") { if (!parts.empty()) parts.pop_back(); }
+            else if (cur != "." && !cur.empty()) parts.push_back(cur);
+            cur.clear();
+        } else {
+            cur.push_back(ch);
+        }
+    }
+    std::string out = "/";
+    for (size_t i = 0; i < parts.size(); i++) {
+        out += parts[i];
+        if (i + 1 < parts.size()) out += "/";
+    }
+    return out;
+}
+
 } // namespace
 
 void registerCoreCliCommands(CliService& cli, Runtime& rt) {
     Runtime* r = &rt;
 
     cli.add("help", "list commands (help <cmd> for detail)",
-        [&cli](const std::vector<std::string>& args, const CliService::Out& out) {
+        [&cli](CliContext& c) {
+            const auto& args = c.args; const auto& out = c.out;
             if (!args.empty()) {
-                for (auto& c : cli.commands())
-                    if (c.name == args[0]) { out(c.name + " — " + c.help); return; }
+                for (auto& cmd : cli.commands())
+                    if (cmd.name == args[0]) { out(cmd.name + " — " + cmd.help); return; }
                 out("no such command: " + args[0]);
                 return;
             }
             out("Commands:");
-            for (auto& c : cli.commands()) out("  " + c.name + "  —  " + c.help);
+            for (auto& cmd : cli.commands()) out("  " + cmd.name + "  —  " + cmd.help);
+        });
+
+    // ── shell built-ins (Plan 44): stateful, per-session ──
+    cli.add("pwd", "print working directory",
+        [](CliContext& c) { c.out(c.session.cwd); });
+
+    cli.add("cd", "change working directory: cd <dir>",
+        [r](CliContext& c) {
+            std::string target = resolvePath(c.session.cwd, c.args.empty() ? "/" : c.args[0]);
+            auto* fs = r->container().resolve<IFileSystem>();
+            if (!fs) { c.out("fs: not available"); return; }
+            std::vector<FsEntry> es;
+            if (target != "/" && !fs->list(target, es)) { c.out("no such directory: " + target); return; }
+            c.session.cwd = target;
+        });
+
+    cli.add("history", "show this session's command history",
+        [](CliContext& c) {
+            for (size_t i = 0; i < c.session.history.size(); i++)
+                c.out(std::to_string(i + 1) + "  " + c.session.history[i]);
         });
 
     cli.add("hwinfo", "board, chip and device summary",
-        [r](const std::vector<std::string>&, const CliService::Out& out) {
+        [r](CliContext& c) {
+            const auto& out = c.out;
             const SystemInfo& si = r->info();
             out(std::string("board:    ") + r->board().name());
             out("platform: " + si.platformName);
@@ -91,19 +154,21 @@ void registerCoreCliCommands(CliService& cli, Runtime& rt) {
         });
 
     cli.add("ram", "memory totals",
-        [r](const std::vector<std::string>&, const CliService::Out& out) {
+        [r](CliContext& c) {
+            const auto& out = c.out;
             const SystemInfo& si = r->info();
             out("ram:   " + std::to_string(si.ramKb) + " KB");
             out("psram: " + std::to_string(si.psramKb) + " KB");
         });
 
     cli.add("caps", "list runtime capabilities",
-        [r](const std::vector<std::string>&, const CliService::Out& out) {
-            for (auto& c : r->capabilities().list()) out(c);
+        [r](CliContext& c) {
+            for (auto& cap : r->capabilities().list()) c.out(cap);
         });
 
     cli.add("display", "display server: display [list | start <backend>]",
-        [r](const std::vector<std::string>& args, const CliService::Out& out) {
+        [r](CliContext& c) {
+            const auto& args = c.args; const auto& out = c.out;
             if (args.empty()) {
                 out(std::string("active: ") + r->displayServerName());
                 out("backends:");
@@ -115,7 +180,6 @@ void registerCoreCliCommands(CliService& cli, Runtime& rt) {
                 for (auto* n : r->displayServerList()) out(n);
                 return;
             }
-            // `display start X` and the shorthand `display X` both switch to X.
             const std::string& target =
                 (args[0] == "start" && args.size() > 1) ? args[1] : args[0];
             out(r->switchDisplayServer(target.c_str())
@@ -124,14 +188,16 @@ void registerCoreCliCommands(CliService& cli, Runtime& rt) {
         });
 
     cli.add("power", "power control: power restart|shutdown",
-        [r](const std::vector<std::string>& args, const CliService::Out& out) {
+        [r](CliContext& c) {
+            const auto& args = c.args; const auto& out = c.out;
             if (args.empty()) { out("usage: power restart|shutdown"); return; }
             if (args[0] == "restart")  { out("restarting…");   r->requestRestart(); }
             else if (args[0] == "shutdown") { out("shutting down…"); r->requestShutdown(); }
             else out("unknown: " + args[0] + " (restart|shutdown)");
         });
 
-    auto wlan = [r](const std::vector<std::string>&, const CliService::Out& out) {
+    auto wlan = [r](CliContext& c) {
+        const auto& out = c.out;
         auto* wifi = r->container().resolve<IWifiDriver>();
         if (!wifi) { out("wifi: not available"); return; }
         out(std::string("status: ") + (wifi->isConnected() ? "connected" : "disconnected"));
@@ -144,7 +210,8 @@ void registerCoreCliCommands(CliService& cli, Runtime& rt) {
     cli.add("wlan", "WiFi status (ssid, ip, connection)", wlan);
     cli.add("network", "alias of wlan", wlan);
 
-    auto ble = [r](const std::vector<std::string>&, const CliService::Out& out) {
+    auto ble = [r](CliContext& c) {
+        const auto& out = c.out;
         auto* ctl = r->container().resolve<IBluetoothController>();
         if (!ctl) { out("bluetooth: not available"); return; }
         out(std::string("enabled: ") + (ctl->isEnabled() ? "yes" : "no"));
@@ -162,7 +229,8 @@ void registerCoreCliCommands(CliService& cli, Runtime& rt) {
     cli.add("bluetooth", "alias of ble", ble);
 
     cli.add("whoami", "show owner user and device name",
-        [r](const std::vector<std::string>&, const CliService::Out& out) {
+        [r](CliContext& c) {
+            const auto& out = c.out;
             auto* p = r->container().resolve<ProfileService>();
             if (!p) { out("profile: not available"); return; }
             out("user:   " + p->userName());
@@ -170,7 +238,8 @@ void registerCoreCliCommands(CliService& cli, Runtime& rt) {
         });
 
     cli.add("profile", "view/edit owner profile (set user|device, passwd, verify)",
-        [r](const std::vector<std::string>& args, const CliService::Out& out) {
+        [r](CliContext& c) {
+            const auto& args = c.args; const auto& out = c.out;
             auto* p = r->container().resolve<ProfileService>();
             if (!p) { out("profile: not available"); return; }
             if (args.empty()) {
@@ -197,12 +266,15 @@ void registerCoreCliCommands(CliService& cli, Runtime& rt) {
             }
         });
 
-    cli.add("fs", "filesystem: fs ls|cat|rm|mkdir [path]",
-        [r](const std::vector<std::string>& args, const CliService::Out& out) {
+    cli.add("fs", "filesystem: fs ls|cat|rm|mkdir [path] (relative to cwd)",
+        [r](CliContext& c) {
+            const auto& args = c.args; const auto& out = c.out;
             auto* fs = r->container().resolve<IFileSystem>();
             if (!fs) { out("fs: not available"); return; }
             std::string sub = args.empty() ? "ls" : args[0];
-            std::string path = args.size() > 1 ? args[1] : "/";
+            // ls defaults to cwd; the rest resolve their arg relative to cwd.
+            std::string path = (args.size() > 1) ? resolvePath(c.session.cwd, args[1])
+                             : (sub == "ls" ? c.session.cwd : "/");
             if (sub == "ls") {
                 std::vector<FsEntry> es;
                 if (!fs->list(path, es)) { out("no such directory: " + path); return; }

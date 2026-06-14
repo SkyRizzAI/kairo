@@ -68,7 +68,8 @@ void Esp32Platform::postRegister(Runtime& rt) {
     // replaces the totals-only core version with real free-heap numbers.
     registerCoreCliCommands(cli_, rt);
     cli_.add("ram", "free heap / PSRAM (live)",
-        [](const std::vector<std::string>&, const CliService::Out& out) {
+        [](CliContext& c) {
+            const auto& out = c.out;
             out("free heap:  " + std::to_string(esp_get_free_heap_size()) + " B");
             out("min free:   " + std::to_string(esp_get_minimum_free_heap_size()) + " B");
             out("free psram: " + std::to_string(heap_caps_get_free_size(MALLOC_CAP_SPIRAM)) + " B");
