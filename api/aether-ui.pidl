@@ -1,0 +1,41 @@
+// aether:ui — Aether widget SDK IDL (Plan 50).
+// Flat widget-building ABI for wasm3/QuickJS/C import.
+// Each function takes a parent view handle and returns a child handle.
+// Backed by the nema::ui retained-mode tree + NodeArena.
+package aether:ui@1.0
+
+/// Container and layout functions.
+/// Begin/end pattern: view-begin opens a container, subsequent widget calls
+/// add children to it, view-end closes and returns to the parent.
+interface view {
+    /// Begin a container view (row or column flex direction).
+    /// direction: "row" or "col"
+    view-begin: func(direction: string) -> handle
+
+    /// End the current container. Children added after this go to the parent.
+    view-end: func()
+}
+
+/// Text widgets.
+interface text {
+    /// Simple text label (body style).
+    label: func(content: string) -> handle
+
+    /// Styled text. variant ∈ {"title", "subtitle", "body", "caption"}.
+    styled: func(content: string, variant: string) -> handle
+}
+
+/// Interactive widgets.
+interface interactive {
+    /// Pressable button with label and on-press callback handle.
+    button: func(label: string, on-press: handle) -> handle
+}
+
+/// Scrollable container.
+interface scroll {
+    /// Begin a vertical scroll region. Returns handle for content children.
+    scroll-begin: func() -> handle
+
+    /// End the scroll region.
+    scroll-end: func()
+}

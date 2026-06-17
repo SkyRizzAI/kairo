@@ -1,12 +1,16 @@
 #pragma once
 #include "nema/ui/screen.h"
 #include "nema/app/app_context.h"
+#include "nema/input_event.h"
+#include "nema/proc/stream.h"
 #include "nema/thread.h"
 #include "nema/message_queue.h"
 #include <cstdint>
 #include <cstddef>
 #include <mutex>
 #include <atomic>
+#include <string>
+#include <vector>
 
 namespace nema {
 
@@ -48,13 +52,22 @@ public:
     bool suppressCanvasFlush() const override;  // fullscreen → we flush directly
     void tick(uint64_t nowMs) override;  // pop self when app thread finishes
 
-    // AppContext (app thread)
+    // AppContext (app thread) — UI surface (Plan 55 will move to ISurface)
     Canvas&  canvas()  override;
     void     present() override;
     bool     nextInput(InputEvent& out) override;
     bool     waitInput(InputEvent& out, uint32_t timeoutMs) override;
-    void     requestExit() override;
+
+    // ProcessContext — process primitives (Plan 54)
+    const std::vector<std::string>& args() const override;
+    const std::string&              cwd()  const override;
+    const char*                     env(const char* key) const override;
+    IInputStream&                   in()  override;
+    IOutputStream&                  out() override;
+    IOutputStream&                  err() override;
+    void     requestExit(int code = 0) override;
     bool     shouldExit() const override;
+    int      exitCode()   const override;
     Runtime& runtime() override;
 
 private:
@@ -85,6 +98,13 @@ private:
     std::atomic<bool>        paused_{false};   // Plan 22: app thread parked
     uint32_t                 dbgPresent_ = 0;  // diagnostic: count first presents
     uint32_t                 dbgDraw_    = 0;  // diagnostic: count first draws
+
+    // Plan 54 — ProcessContext default values for UI apps (no shell args/stdio)
+    std::vector<std::string> args_;
+    std::string              cwd_ = "/";
+    NullInputStream          nullIn_;
+    StringOutputStream       nullOut_;
+    int                      exitCode_ = 0;
 };
 
 } // namespace nema

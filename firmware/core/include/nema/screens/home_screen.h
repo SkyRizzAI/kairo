@@ -8,25 +8,35 @@ namespace nema {
 
 class Runtime;
 
-// Home — component-migrated (Plan 30). PALANU title + a tappable menu
-// (Apps / Logs / Settings). Sub-screens are owned here and reused per visit.
+// HomeScreen — DSi-style carousel launcher (Plan 60).
+// Items: [Continue?] [Apps] [Logs] [Settings]
+// Carousel shows current item large + adjacent items smaller at screen edges.
+// Draws via tier-1 draw toolkit (not ComponentScreen default renderer).
 class HomeScreen : public ComponentScreen {
 public:
     explicit HomeScreen(Runtime& rt);
+
     void        enter() override;
-    ui::UiNode* build(ui::NodeArena& a, Runtime& rt) override;
+    void        draw(Canvas& c) override;        // override: carousel render
+    void        onAction(input::Action a) override;
+    ui::UiNode* build(ui::NodeArena& a, Runtime& rt) override;  // unused stub
 
 private:
     AppListScreen  appList_;
     LogsScreen     logs_;
     SettingsScreen settings_;
 
-    static void onApps(void* u);
-    static void onLogs(void* u);
-    static void onSettings(void* u);
-    static void onContinue(void* u);   // Plan 22: resume paused app
+    int cursor_  = 0;
+    int nItems_  = 0;    // set in enter() based on hasPaused()
 
-    char continueLabel_[40] = "";      // "Continue: <app>" (stable for Text node)
+    char continueLabel_[40] = "Continue";
+
+    // Returns true if the "Continue" entry should be shown.
+    bool hasContinue() const;
+    // Label for item at index i.
+    const char* itemLabel(int i) const;
+    // Navigate to sub-screen for item at index i.
+    void activate(int i);
 };
 
 } // namespace nema

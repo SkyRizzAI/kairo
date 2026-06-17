@@ -12,8 +12,9 @@
 // dispatches onPress/onChange handlers back into JS. quickjs.h leaks only to the
 // JS-layer .cpp files (js_engine/js_app include it); the rest of the firmware
 // forward-declares JsEngine.
-namespace nema { class Runtime; }
+namespace nema { class Runtime; class CapabilityRegistry; class ProcessContext; }
 namespace nema::ui { struct UiNode; class NodeArena; struct ScrollState; }
+struct HostApi;  // generated/host/nema_api.gen.h (Plan 49)
 
 namespace nema::js {
 
@@ -61,9 +62,26 @@ public:
 
     // Wire host services + install the capability-gated `nema` global (system
     // API: log/device/storage/http…). Call before loadApp(). (Plan 37 Fase 4.)
+    // Also creates a NemaHostImpl to back the generated QuickJS bindings (Plan 49).
     void setHost(nema::Runtime* rt, std::string appId);
     nema::Runtime*    host()  const { return host_; }
     const std::string& appId() const { return appId_; }
+
+    // Plan 58 — ProcessContext accessor (used by C callbacks inside js_api.cpp).
+    nema::ProcessContext* proc() const { return proc_; }
+
+    // Wire the process context and install the `process` global:
+    //   process.argv     → string[] from ctx.args()
+    //   process.exit(n)  → ctx.requestExit(n); throws to unwind JS call stack
+    //   process.stdout   → { write(s): ctx.out().write(s) }
+    //   process.stdin    → { read(): returns "" (stub; blocking IO unimplemented) }
+    // Call after setHost() and before loadApp(). ProcessContext pointer must remain
+    // valid for the engine's lifetime.
+    void setProcessContext(nema::ProcessContext* ctx);
+
+    // HostApi accessor (Plan 49 — generated abstract class for parity).
+    void     setHostApi(HostApi* api) { hostApi_ = api; }
+    HostApi* hostApi() const { return hostApi_; }
 
     // Embedded-runtime module caching (used by the module loader).
     JSModuleDef* nemaModuleDef() const { return nemaDef_; }
@@ -81,11 +99,12 @@ private:
     // rejection. Without this, a module that throws at load would look "loaded".
     bool     settleEval(JSValue res);
     void     freeHandlers();
-    void     installApi();          // build the `nema` global (js_api.cpp)
     ui::UiNode* reify(JSValueConst node, ui::NodeArena& arena);
 
-    nema::Runtime* host_ = nullptr;
-    std::string     appId_;
+    nema::Runtime*       host_ = nullptr;
+    HostApi*             hostApi_ = nullptr;     // Plan 49 generated binding target
+    nema::ProcessContext* proc_ = nullptr;        // Plan 58 — process global
+    std::string          appId_;
 
     JSRuntime* rt_  = nullptr;
     JSContext* ctx_ = nullptr;

@@ -1,4 +1,9 @@
 #pragma once
+// Plan 50 — Toolkit nema::ui (node-tree + flexbox + widget builders).
+// This is an OPTIONAL library, NOT a universal UI contract. Individual display
+// servers MAY use it (Aether does), but are NOT required to (LVGL would use its
+// own lv_obj tree). It is NOT part of the shared System API (Plan 48).
+// Status: library reuse, not interface standard.
 #include "nema/ui/node.h"
 #include <cstddef>
 #include <initializer_list>
@@ -63,13 +68,36 @@ UiNode* Button(NodeArena& a, const char* label, void (*onPress)(void*), void* us
 // Header: a Title line followed by a full-width separator. align=Stretch parent.
 UiNode* Header(NodeArena& a, const char* title);
 
+// TitleBar (Plan 60): a full-width FILLED title bar (banner) with the title in
+// inverted (white) Title-role text. Use as the first child of a Stretch Col so
+// it spans the width. The renderer fills the box (rounded) and draws white text.
+UiNode* TitleBar(NodeArena& a, const char* title);
+
 // Footer: a Caption-role hint line (use at the bottom of a Col).
 UiNode* Footer(NodeArena& a, const char* hint);
+
+// SmartLabel (Plan 52): a Text node with TextRole::Smart. Ellipsis when its
+// parent Pressable is not focused; marquee-scrolls when focused. Use inside a
+// ListItem or ListRow to handle long strings gracefully.
+UiNode* SmartLabel(NodeArena& a, const char* text);
+
+// Icon (Plan 53): a 1-bit XBM bitmap leaf node. Pass the bitmap pointer and
+// its pixel dimensions; the node sizes itself to w_px×h_px plus padding.
+// Use findIcon() from icon_pack.h to look up built-in bitmaps by handle.
+UiNode* Icon(NodeArena& a, const uint8_t* bitmap, uint8_t w_px, uint8_t h_px,
+             uint8_t padding = 0);
 
 // ListRow: a full-width focusable row with a left-aligned label and no border —
 // selection is shown by the focus ring (buttons) or touch. Put rows in a Col or
 // ScrollView with align=Stretch so they fill the width. The list/menu idiom.
 UiNode* ListRow(NodeArena& a, const char* label, void (*onPress)(void*), void* userdata);
+
+// ListItem (Plan 60): a focusable row "label                accessory". The
+// label grows to fill, pushing the accessory (e.g. ">", a value, "ON"/"OFF")
+// flush-right. accessory may be nullptr for none. Themed padding. Use inside a
+// ScrollView (align=Stretch) — the renderer draws a dashed scrollbar for free.
+UiNode* ListItem(NodeArena& a, const char* label, const char* accessory,
+                 void (*onPress)(void*), void* userdata);
 
 // ── Native input controls (Plan 30/31) ────────────────────────────────────
 // All are composed from primitives (except Slider, a native node) so the same

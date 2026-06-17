@@ -2,6 +2,12 @@
 #include "nema/services/profile_service.h"
 #include "nema/runtime.h"
 #include "nema/board.h"
+#include "nema/app/app.h"
+#include "nema/app/app_registry.h"
+#include "nema/proc/process_host.h"
+#include "nema/proc/pipe.h"
+#include "nema/app/papp_installer.h"
+#include "nema/apps/js_app_store.h"
 #include "nema/system/system_info.h"
 #include "nema/system/hardware_registry.h"
 #include "nema/system/capability_registry.h"
@@ -12,6 +18,8 @@
 #include "nema/hal/bluetooth.h"
 #include "nema/hal/filesystem.h"
 #include "nema/hal/ota.h"
+#include "nema/ui/style_tokens.h"
+#include "nema/ui/view_dispatcher.h"
 #include <cctype>
 
 namespace nema {
@@ -54,6 +62,55 @@ void CliService::execute(const std::string& line, CliSession& session) {
             return;
         }
     }
+
+    // ── Auto-launch: check if argv[0] matches an installed app (Plan 57) ──
+    // Scans AppRegistry first, then PATH directories for .papp bundles.
+    if (!rt_) { session.out("unknown command: " + argv[0] + " (try 'help')"); return; }
+    auto& rt = *rt_;
+
+    // ── Helper: recursively scan a PATH directory for matching .papp ──
+    auto endsWith = [](const std::string& s, const std::string& suffix) {
+        return s.size() >= suffix.size() &&
+               s.compare(s.size() - suffix.size(), suffix.size(), suffix) == 0;
+    };
+    std::function<bool(const std::string&)> findAppInDir;
+    IFileSystem* fs = rt.container().resolve<IFileSystem>();
+    findAppInDir = [&](const std::string& dir) -> bool {
+        if (!fs) return false;
+        std::vector<FsEntry> es;
+        if (!fs->list(dir, es)) return false;
+        for (auto& e : es) {
+            std::string name(e.name);
+            if (e.isDir) {
+                // .papp folder: match folder name exactly
+                if (name == argv[0] + ".papp") return true;
+                // Recurse into non-.papp subdirs too
+                if (!endsWith(name, ".papp")) {
+                    if (findAppInDir(dir + "/" + name)) return true;
+                }
+            } else if (name == argv[0] + ".papp" || name == argv[0] + ".kapp") {
+                return true;
+            }
+        }
+        return false;
+    };
+
+    // Check AppRegistry first
+    if (rt.apps().getApp(argv[0].c_str())) {
+        for (auto& c : cmds_) {
+            if (c.name == "run") { c.handler(ctx); return; }
+        }
+    }
+
+    // Scan PATH directories recursively for .papp/.kapp files
+    for (const auto& dir : session.path) {
+        if (findAppInDir(dir)) {
+            for (auto& c : cmds_) {
+                if (c.name == "run") { c.handler(ctx); return; }
+            }
+        }
+    }
+
     session.out("unknown command: " + argv[0] + " (try 'help')");
 }
 
@@ -131,6 +188,7 @@ std::string resolvePath(const std::string& cwd, const std::string& p) {
 } // namespace
 
 void registerCoreCliCommands(CliService& cli, Runtime& rt) {
+    cli.setRuntime(rt);  // enable auto-launch fallback (Plan 57)
     Runtime* r = &rt;
 
     cli.add("help", "list commands (help <cmd> for detail)",
@@ -194,9 +252,110 @@ void registerCoreCliCommands(CliService& cli, Runtime& rt) {
                 any = true;
             }
             if (!any) out("  (none)");
+            out("INSTALLED:");
+            bool anyInst = false;
+            for (const auto& m : r->apps().list()) {
+                if (m.type == AppType::Service) continue;
+                std::string line = std::string("  ") + (m.name ? m.name : m.id ? m.id : "?");
+                line += "  [" + std::string(runtimeTierName(m.runtimeTier)) + "]";
+                if (m.kind == AppKind::Custom) line += "  custom";
+                out(line);
+                anyInst = true;
+            }
+            if (!anyInst) out("  (none)");
             out("SESSIONS:");
             for (auto& s : r->cliSessions().sessions())
                 out("  #" + std::to_string(s->id) + "  cwd=" + s->cwd);
+            out("PROCESSES:");
+            const auto& procs = r->processes().list();
+            if (procs.empty()) {
+                out("  (none)");
+            } else {
+                for (auto* p : procs)
+                    out(std::string("  ") + (p->finished() ? "[exited:" + std::to_string(p->exitCode()) + "]" : "[running]"));
+            }
+        });
+
+    // ── Process execution (Plan 54) ───────────────────────────────────
+    // Helper: launch one app and wait for it. Returns exit code.
+    // stdout/stderr go to the given sinks; null sinks if omitted.
+    auto launchOne = [r](const std::vector<std::string>& argv,
+                         const std::string& cwd,
+                         IOutputStream* outSink,
+                         IOutputStream* errSink) -> int {
+        IApp* app = r->apps().getApp(argv.empty() ? "" : argv[0].c_str());
+        if (!app) return -1;
+
+        ProcessSpec spec;
+        spec.argv = argv;
+        spec.cwd  = cwd;
+        spec.stdout_ = outSink;
+        spec.stderr_ = errSink;
+
+        ProcessHost host(*r, *app, std::move(spec));
+        r->processes().add(host);
+        host.start();
+        host.join();
+        r->processes().remove(host);
+        return host.exitCode();
+    };
+
+    cli.add("run", "run an app [run <app> args… | <appB> args…]",
+        [launchOne](CliContext& c) {
+            const auto& args = c.args; const auto& out = c.out;
+            if (args.empty()) { out("usage: run <app> [args…]"); return; }
+
+            // Find pipe separator
+            auto pipeIt = std::find(args.begin(), args.end(), "|");
+            bool hasPipe = (pipeIt != args.end());
+
+            if (!hasPipe) {
+                // Single process
+                LineOutputStream lineOut(c.session.out);
+                int ec = launchOne(args, c.session.cwd, &lineOut, &lineOut);
+                c.session.lastExit = (ec < 0) ? 127 : ec;
+                if (ec < 0) out("run: app not found: " + args[0]);
+            } else {
+                // Pipeline: A | B
+                std::vector<std::string> leftArgs(args.begin(), pipeIt);
+                std::vector<std::string> rightArgs(pipeIt + 1, args.end());
+
+                if (leftArgs.empty() || rightArgs.empty()) {
+                    out("run: invalid pipeline (empty left or right side)");
+                    return;
+                }
+
+                Pipe pipe;
+                LineOutputStream lineOut(c.session.out);
+
+                // Launch left (A) — stdout → pipe writer
+                int ecLeft = launchOne(leftArgs, c.session.cwd, &pipe.writer(), &lineOut);
+                pipe.writer().close();  // signal EOF to reader
+
+                // Launch right (B) — stdin → pipe reader, stdout → session
+                if (ecLeft < 0) {
+                    out("run: app not found: " + leftArgs[0]);
+                    c.session.lastExit = 127;
+                } else {
+                    int ecRight = launchOne(rightArgs, c.session.cwd, &lineOut, &lineOut);
+                    c.session.lastExit = (ecRight < 0) ? 127 : ecRight;
+                    if (ecRight < 0) out("run: app not found: " + rightArgs[0]);
+                }
+            }
+        });
+
+    cli.add("echo", "print text (echo $? for last exit code)",
+        [](CliContext& c) {
+            if (!c.args.empty() && c.args[0] == "$?") {
+                c.out(std::to_string(c.session.lastExit));
+            } else {
+                std::string line;
+                for (size_t i = 0; i < c.args.size(); i++) {
+                    if (i > 0) line += " ";
+                    line += c.args[i];
+                }
+                c.out(line);
+            }
         });
 
     cli.add("hwinfo", "board, chip and device summary",
@@ -376,6 +535,49 @@ void registerCoreCliCommands(CliService& cli, Runtime& rt) {
                 out(fs->mkdir(path) ? "created " + path : "failed: " + path);
             } else {
                 out("usage: fs ls|cat|rm|mkdir [path]");
+            }
+        });
+
+    cli.add("config", "config get|set|rm <ns> <key> [value]",
+        [r](CliContext& c) {
+            const auto& args = c.args; const auto& out = c.out;
+            auto* cfg = r->container().resolve<IConfigStore>();
+            if (!cfg) { out("config: not available"); return; }
+            if (args.size() < 3) {
+                out("usage:");
+                out("  config get <ns> <key>");
+                out("  config set <ns> <key> <value>");
+                out("  config rm  <ns> <key>");
+                return;
+            }
+            const std::string& sub = args[0];
+            const std::string& ns  = args[1];
+            const std::string& key = args[2];
+            if (sub == "get") {
+                std::string v;
+                if (cfg->getString(ns.c_str(), key.c_str(), v))
+                    out(ns + "/" + key + " = " + v);
+                else
+                    out(ns + "/" + key + ": not set");
+            } else if (sub == "set") {
+                if (args.size() < 4) { out("usage: config set <ns> <key> <value>"); return; }
+                cfg->setString(ns.c_str(), key.c_str(), args[3]);
+                out("set " + ns + "/" + key + " = " + args[3]);
+                // Apply display/theme immediately so no reboot needed.
+                if (ns == "display" && key == "theme") {
+                    const std::string& t = args[3];
+                    if (t == "compact")    setTheme(compactTheme());
+                    else if (t == "large") setTheme(largeTheme());
+                    else                   setTheme(defaultTheme());
+                    r->view().requestRedraw();
+                    out("theme applied");
+                }
+            } else if (sub == "rm") {
+                out(cfg->remove(ns.c_str(), key.c_str())
+                    ? "removed " + ns + "/" + key
+                    : ns + "/" + key + ": not found");
+            } else {
+                out("unknown subcommand: " + sub);
             }
         });
 }

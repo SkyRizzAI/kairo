@@ -66,12 +66,16 @@ void WasmPlatform::registerDrivers(Runtime& rt) {
     vfs_.mount("/", &rootFs_);
     vfs_.mount("/sd", &sdFs_);
     rt.container().registerAs<IFileSystem>(&vfs_);
+    rt.setFs(&vfs_);
     rt.capabilities().add(caps::Storage);
     rootFs_.seed("/readme.txt", "Palanu virtual filesystem (in-RAM, volatile).\n"
-                                "Browse, edit, upload and delete here or via `fs` in the terminal.\n");
-    rootFs_.seed("/apps/hello.kapp", "// a placeholder app bundle\n");
+                                "See examples/ folder for sample apps.\n"
+                                "Copy .papp folders to /apps/ or /sd/apps/.\n");
+    // Create empty scan roots (user uploads apps here)
+    rootFs_.mkdir("/apps");
     rootFs_.mkdir("/data");
-    sdFs_.seed("/sd-card.txt", "This file lives on the /sd mount (separate backend).\n");
+    sdFs_.mkdir("/apps");   // appears as /sd/apps in VFS
+    sdFs_.seed("/card.txt", "Drop .papp folders here. Scanned recursively.\n");
     remote_.attachFs(vfs_);
 
     link_.onReady(&WasmPlatform::readyThunk, this);   // push current screen on connect

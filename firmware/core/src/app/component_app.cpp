@@ -4,6 +4,7 @@
 #include "nema/ui/component_runtime.h"
 #include "nema/ui/text_style.h"
 #include "nema/ui/ui_constants.h"
+#include "nema/ui/aether_abi.h"
 #include "nema/input_event.h"
 
 namespace nema {
@@ -46,8 +47,10 @@ void ComponentApp::run(AppContext& ctx) {
                 arena.reset();
                 st.pressed = nullptr;        // arena reset invalidates node pointers
                 modalSt.pressed = nullptr;
+                aether_set_arena(&arena);    // Plan 50: expose arena to ABI functions
                 root  = build(arena, ctx);
                 modal = buildModal(arena, ctx);
+                aether_set_arena(nullptr);
 
                 uint16_t w = c.width();
                 uint16_t h = c.height();

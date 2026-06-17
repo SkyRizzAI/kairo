@@ -1,0 +1,12 @@
+{
+  "id": "com.palanu.example.hello",
+  "name": "Hello",
+  "version": "1.0.0",
+  "entry": "app.js",
+  "needs": [],
+  "api_version": "1.0",
+  "display_server": "aether",
+  "runtime": "js",
+  "category": "Demo",
+  "icon": "feature.apps"
+}

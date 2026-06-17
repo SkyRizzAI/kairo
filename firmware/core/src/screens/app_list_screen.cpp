@@ -1,15 +1,39 @@
+// Plan 60 — AppListScreen: ListView launcher (banner title + ListItem rows).
+// Plan 52/53 — SmartLabel for long names; per-app icon from icon_pack.
 #include "nema/screens/app_list_screen.h"
 #include "nema/runtime.h"
-#include "nema/ui/view_dispatcher.h"
+#include "nema/ui/style_tokens.h"
+#include "nema/ui/icon_pack.h"
 #include "nema/app/app_registry.h"
+#include "nema/app/app_manifest.h"
+#include "nema/app/papp_installer.h"
+#include <cstring>
 
 namespace nema {
 
 using namespace ui;
 
-AppListScreen::AppListScreen(Runtime& rt) : ComponentScreen(rt, 160) {}
+AppListScreen::AppListScreen(Runtime& rt) : ComponentScreen(rt, 256) {}
+
+// Map category/iconPath to an icon_pack handle.
+static const IconDef* iconForApp(const AppManifest& m) {
+    // iconPath may directly name an icon handle (e.g. "feature.gpio")
+    if (m.iconPath) {
+        const IconDef* d = findIcon(m.iconPath);
+        if (d) return d;
+    }
+    // Fallback: map category to a handle
+    if (m.category) {
+        if (strcmp(m.category, "SubGHz") == 0) return findIcon("feature.subghz");
+        if (strcmp(m.category, "NFC")    == 0) return findIcon("feature.nfc");
+        if (strcmp(m.category, "GPIO")   == 0) return findIcon("feature.gpio");
+        if (strcmp(m.category, "Settings") == 0) return findIcon("feature.settings");
+    }
+    return findIcon("feature.apps");
+}
 
 void AppListScreen::enter() {
+    loadInstalledPapps(rt_);  // auto-scan /flash/apps on every open
     scroll_.scrollMain = 0;
     state_.focus.focused = 0;
     ComponentScreen::enter();
@@ -23,34 +47,76 @@ void AppListScreen::onLaunch(void* u) {
 }
 
 UiNode* AppListScreen::build(NodeArena& a, Runtime& rt) {
-    names_.clear(); ids_.clear(); rows_.clear();
-    // Launchable apps only — services (AppType::Service) are background daemons
-    // and stay hidden from the launcher (same as Flipper's menu).
+    names_.clear(); ids_.clear(); icons_.clear(); rows_.clear();
     for (const auto& m : rt.apps().list()) {
         if (m.type != AppType::App) continue;
         names_.push_back(m.name);
         ids_.push_back(m.id);
+        icons_.push_back(iconForApp(m));
     }
-    if (names_.empty()) { names_.push_back("No apps"); ids_.push_back(""); }
+    bool empty = names_.empty();
+    if (empty) {
+        names_.push_back("No apps installed");
+        ids_.push_back("");
+        icons_.push_back(nullptr);
+    }
     rows_.resize(names_.size());
 
-    Style root; root.dir = FlexDir::Col; root.flexGrow = 1; root.padding = 3; root.gap = 1;
-    Style line; line.height = 1; line.background = true;
-    Style sv;   sv.dir = FlexDir::Col; sv.align = Align::Stretch; sv.gap = 1;
+    uint8_t pad = nema::theme().space.sm;
+    uint8_t gap = nema::theme().space.xs;
+
+    Style root; root.dir = FlexDir::Col; root.flexGrow = 1; root.padding = pad; root.gap = gap;
+    root.align = Align::Stretch;
+    Style sv; sv.dir = FlexDir::Col; sv.align = Align::Stretch; sv.gap = 1;
+
+    // Row style: horizontal, vertically centered, themed padding + gap
+    Style rs; rs.dir = FlexDir::Row; rs.padding = pad; rs.align = Align::Center; rs.gap = gap;
+    rs.justify = Justify::SpaceBetween;
 
     UiNode* list = ScrollView(a, scroll_, sv, {});
     UiNode* prev = nullptr;
     for (size_t i = 0; i < names_.size(); i++) {
         rows_[i] = {this, (int)i};
-        UiNode* row = ListRow(a, names_[i].c_str(), onLaunch, &rows_[i]);
+
+        UiNode* row;
+        if (empty) {
+            row = ListRow(a, names_[i].c_str(), onLaunch, &rows_[i]);
+        } else {
+            // Icon (8×8) + SmartLabel (grows) + ">" accessory
+            const IconDef* ico = icons_[i];
+            UiNode* ico_node = ico
+                ? Icon(a, ico->bitmap, ico->w, ico->h)
+                : nullptr;
+            UiNode* lbl = SmartLabel(a, names_[i].c_str());
+            if (lbl) lbl->style.flexGrow = 1;
+            UiNode* acc = Text(a, ">", TextRole::Caption);
+
+            row = a.alloc();
+            if (!row) break;
+            row->type      = NodeType::Pressable;
+            row->style     = rs;
+            row->onPress   = onLaunch;
+            row->userdata  = &rows_[i];
+            row->focusable = true;
+            // Link children: [icon?] → lbl → acc
+            UiNode* cprev = nullptr;
+            auto link = [&](UiNode* child) {
+                if (!child) return;
+                if (!cprev) row->firstChild = child;
+                else        cprev->nextSibling = child;
+                cprev = child;
+            };
+            link(ico_node);
+            link(lbl);
+            link(acc);
+        }
         if (!row) break;
         if (!prev) list->firstChild = row; else prev->nextSibling = row;
         prev = row;
     }
 
     return View(a, root, {
-        Text(a, "APPS", TextRole::Title),
-        View(a, line, {}),
+        TitleBar(a, "APPS"),
         list,
     });
 }

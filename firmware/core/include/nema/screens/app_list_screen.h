@@ -1,5 +1,6 @@
 #pragma once
 #include "nema/ui/component_screen.h"
+#include "nema/ui/icon_pack.h"
 #include <vector>
 #include <string>
 
@@ -18,10 +19,11 @@ public:
 private:
     struct Row { AppListScreen* self; int index; };
 
-    ui::ScrollState          scroll_;
-    std::vector<std::string> names_;
-    std::vector<std::string> ids_;
-    std::vector<Row>         rows_;   // stable per-frame callback contexts
+    ui::ScrollState               scroll_;
+    std::vector<std::string>      names_;
+    std::vector<std::string>      ids_;
+    std::vector<const ui::IconDef*> icons_; // Plan 53: per-app icon (may be nullptr)
+    std::vector<Row>              rows_;
 
     static void onLaunch(void* u);
 };

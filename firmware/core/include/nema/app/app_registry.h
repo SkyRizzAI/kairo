@@ -36,6 +36,10 @@ public:
     // install() but tagged AppKind::Custom so the UI can distinguish origin.
     void installCustom(IApp& app, const char* version = "1.0.0");
 
+    // Install a custom app with a pre-built manifest (Plan 56/59 — carries
+    // runtimeTier, displayServer, and other fields set by the bundle loader).
+    void installCustom(IApp& app, AppManifest manifest);
+
     // Install a screen-backed app: one whose UI is a system IScreen pushed on the
     // view stack, rather than an IApp run on its own thread. For apps that are
     // inherently UI-thread (e.g. the live camera viewfinder). launch() pushes the
@@ -60,6 +64,9 @@ public:
 
     // Launch an installed app on its own thread. Returns false if id is unknown.
     bool launch(const char* id);
+
+    // Look up an app by id. Returns nullptr if not found (Plan 54).
+    IApp* getApp(const char* id) const;
 
 private:
     // What a manifest entry points at: a threaded app (AppHost), a UI-thread

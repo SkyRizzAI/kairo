@@ -86,6 +86,41 @@ bool MemFileSystem::remove(const std::string& path) {
     return true;
 }
 
+bool MemFileSystem::rename(const std::string& src, const std::string& dst) {
+    std::string s = norm(src), d = norm(dst);
+    if (s == d || d.empty() || d == "/") return false;
+    // File rename.
+    auto it = files_.find(s);
+    if (it != files_.end()) {
+        if (dirs_.count(d)) return false;   // dst is an existing dir
+        ensureParents(d);
+        files_[d] = std::move(it->second);
+        files_.erase(it);
+        return true;
+    }
+    // Directory rename: rewrite every path under src.
+    if (!dirs_.count(s)) return false;
+    std::string srcPfx = s + "/";
+    // Collect files to move.
+    std::vector<std::pair<std::string, std::vector<uint8_t>>> fmove;
+    for (auto& kv : files_)
+        if (kv.first.substr(0, srcPfx.size()) == srcPfx)
+            fmove.push_back({d + kv.first.substr(s.size()), std::move(kv.second)});
+    for (auto& kv : fmove) files_.erase(s + kv.first.substr(d.size()));
+    // Collect dirs to move.
+    std::vector<std::string> dmove;
+    for (const auto& dir : dirs_)
+        if (dir.substr(0, srcPfx.size()) == srcPfx) dmove.push_back(dir);
+    for (const auto& dir : dmove) dirs_.erase(dir);
+    dirs_.erase(s);
+    // Insert new paths.
+    ensureParents(d);
+    dirs_.insert(d);
+    for (const auto& dir : dmove) dirs_.insert(d + dir.substr(s.size()));
+    for (auto& kv : fmove) { ensureParents(kv.first); files_[kv.first] = std::move(kv.second); }
+    return true;
+}
+
 void MemFileSystem::seed(const std::string& path, const std::string& text) {
     write(path, (const uint8_t*)text.data(), text.size());
 }

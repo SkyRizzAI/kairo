@@ -65,7 +65,7 @@ UiNode* AboutScreen::build(NodeArena& a, Runtime& rt) {
     }
 
     Style root; root.dir = FlexDir::Col; root.flexGrow = 1; root.padding = 3; root.gap = 1;
-    Style line; line.height = 1; line.background = true;
+    root.align = Align::Stretch;
     Style sv;   sv.dir = FlexDir::Col; sv.gap = 1;
 
     UiNode* list = ScrollView(a, scroll_, sv, {});
@@ -78,8 +78,7 @@ UiNode* AboutScreen::build(NodeArena& a, Runtime& rt) {
     }
 
     return View(a, root, {
-        Text(a, "ABOUT", TextRole::Title),
-        View(a, line, {}),
+        TitleBar(a, "ABOUT"),
         list,
     });
 }

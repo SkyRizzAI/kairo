@@ -3,7 +3,7 @@
 > Toolchain yang membaca IDL (Plan 48) dan men-generate binding host C++, SDK
 > WASM (C/Rust/AS), SDK JS, docs human-readable, dan matriks parity.
 
-- Status: 🟧 Detail draft (belum diimplementasi)
+- Status: ✅ Implemented — generator `packages/idl/`, output `generated/` (host quickjs `nema_api*.gen.*` + SDK `nema.d.ts`/`nema.h`) (verifikasi 2026-06-15)
 - Depends on: 48
 - Blocks: 56/57/58 (runtimes mengonsumsi SDK), docs
 
@@ -233,8 +233,8 @@ add_custom_target(nema_api_gen DEPENDS ${GEN}/host/nema_api_quickjs.gen.cpp)
 ## File yang disentuh
 
 **Baru:**
-- `tools/idl/gen.ts` — generator multi-target (bun). *(parser = Plan 48.)*
-- `tools/idl/emit/{host_cpp,quickjs,wasm3,dts,rust,docs,parity}.ts` — emitter per target.
+- `packages/idl/src/gen.ts` — generator multi-target (bun). *(parser = Plan 48.)*
+- `packages/idl/src/emit/{host_cpp,quickjs,wasm3,dts,rust,docs,parity}.ts` — emitter per target.
 - `generated/host/nema_api.gen.h`, `nema_api_quickjs.gen.cpp`, `nema_api_wasm3.gen.cpp`
   — output host (gitignore atau commit-cache).
 - `generated/sdk/nema.h`, `nema.d.ts`, `nema_sys.rs` — output SDK.

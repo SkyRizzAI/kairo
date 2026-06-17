@@ -1,0 +1,6 @@
+{
+  "name": "@palanu-apps/deauth",
+  "dependencies": {
+    "nema": "workspace:*"
+  }
+}

@@ -4,7 +4,7 @@
 > (namespace + font + widget + theme). App menarget satu server. Sekarang fokus
 > **Aether** (`aether:ui`); server masa depan (Aurora/LVGL) ikut pola yang sama.
 
-- Status: 🟧 Detail draft (belum diimplementasi)
+- Status: ✅ Implemented — `UiSdkDescriptor` + `IUiBindingHost` (`ui_sdk.h`), `AetherServer::uiSdk()`/`registerBindings()`, `aether_abi` ABI shims (verifikasi 2026-06-15)
 - Depends on: 48 (System API non-UI), 49 (generator)
 - Blocks: 52 (Aether UI SDK), 51 (negosiasi), 59 (manifest)
 

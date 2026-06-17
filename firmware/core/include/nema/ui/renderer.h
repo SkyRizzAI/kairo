@@ -11,4 +11,10 @@ namespace nema::ui {
 // `focused` (optional) highlights that Pressable node with an inverted box.
 void render(const UiNode& root, Canvas& c, const UiNode* focused = nullptr);
 
+// Plan 52 — set the current frame timestamp (ms) before calling render().
+// TextRole::Smart nodes use it for marquee scroll animation.
+// GuiService calls this once per frame from the UI clock.
+void setRenderTick(uint32_t ms);
+uint32_t renderTick();
+
 } // namespace nema::ui

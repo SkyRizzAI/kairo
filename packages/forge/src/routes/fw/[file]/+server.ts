@@ -11,7 +11,7 @@ import type { RequestHandler } from './$types';
 // we serve through this endpoint — guaranteed headers in BOTH dev and prod.
 export const GET: RequestHandler = ({ params }) => {
 	const file = params.file ?? '';
-	if (!/^nema.(js|wasm)$/.test(file)) throw error(404, 'not found');
+	if (!/^palanu.(js|wasm)$/.test(file)) throw error(404, 'not found');
 
 	const candidates = [
 		`static/wasm/${file}`, // dev (cwd = packages/forge)

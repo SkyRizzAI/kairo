@@ -1,5 +1,6 @@
 #include "nema/js/js_engine.h"
 #include "nema/js/nema_runtime_js.h"
+#include "host/nema_api.gen.h"
 #include "nema/runtime.h"
 #include "nema/log/logger.h"
 #include "nema/ui/node.h"
@@ -81,6 +82,7 @@ JsEngine::~JsEngine() {
         JS_FreeContext(ctx_);
     }
     if (rt_) JS_FreeRuntime(rt_);
+    delete hostApi_;
 }
 
 void JsEngine::setMemoryLimit(size_t bytes) { if (rt_ && bytes) JS_SetMemoryLimit(rt_, bytes); }

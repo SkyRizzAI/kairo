@@ -26,12 +26,17 @@ public:
     // Build + install a JS app live (appears in the launcher now). Refuses a
     // duplicate id (the running instance must not be swapped out from under it).
     // Returns false on bad input or duplicate.
+    // displayServer: preferred server from the manifest (Plan 51); empty = any.
     bool installApp(Runtime& rt, std::string id, std::string name,
-                    std::string version, std::string js);
+                    std::string version, std::string js,
+                    std::string displayServer = "");
 
-    // Install from a .kapp container ("KAPP1\n<manifest-json>\n<js>"): parses the
-    // id/name/version from the manifest, then installApp(). The OTA entry point.
-    bool installKapp(Runtime& rt, const char* kappBytes, size_t len);
+    // Install from a bundle container. Handles two formats (Plan 59):
+    //   KAPP1\n<manifest-json>\n<js>
+    //   PAPP1\n<manifest-json>\n<entry-filename>\n<js>
+    // Parses manifest fields (id, name, version, display_server, api_version).
+    // The OTA entry point; also used by the WASM platform for live installs.
+    bool installKapp(Runtime& rt, const char* bytes, size_t len);
 
     int count() const { return (int)apps_.size(); }
 

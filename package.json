@@ -22,7 +22,14 @@
     "flash:audiotest": "bash firmware/tools/flash-skyrizz-audiotest.sh",
     "build:esp32": "bun run build:dev-board",
     "flash:esp32": "bun run flash:dev-board",
-    "dev:ota": "bash firmware/tools/build-dev-ota.sh"
+    "dev:ota": "bash firmware/tools/build-dev-ota.sh",
+    "idl:parse": "bun run packages/idl/src/parser.ts",
+    "idl:gen": "bun run packages/idl/src/gen.ts --ast api/build/nema-api.json --out .",
+    "idl:gen:check": "bun run packages/idl/src/gen.ts --ast api/build/nema-api.json --out . --check",
+    "idl:test": "cd packages/idl && bun test",
+    "app:build": "bun run packages/app-sdk/bin/build.ts",
+    "app:build:hello": "bun run packages/app-sdk/bin/build.ts --dir examples/hello",
+    "app:build:deauth": "bun run packages/app-sdk/bin/build.ts --dir examples/deauth"
   },
   "devDependencies": {
     "@types/bun": "latest"

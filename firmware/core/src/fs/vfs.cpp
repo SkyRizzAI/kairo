@@ -124,4 +124,15 @@ bool Vfs::remove(const std::string& path) {
     return m && m->fs->remove(sub);
 }
 
+bool Vfs::rename(const std::string& src, const std::string& dst) {
+    std::string s = norm(src), d = norm(dst);
+    if (isMountPoint(s) || isMountPoint(d)) return false;
+    std::string ssub, dsub;
+    Mount* sm = resolve(s, ssub);
+    Mount* dm = resolve(d, dsub);
+    // Both paths must be on the same backend (cross-mount rename = not supported).
+    if (!sm || !dm || sm->fs != dm->fs) return false;
+    return sm->fs->rename(ssub, dsub);
+}
+
 } // namespace nema

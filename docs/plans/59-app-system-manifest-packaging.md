@@ -3,7 +3,7 @@
 > Membungkus ketiga runtime jadi produk: manifest, format single-file & bundle
 > `.papp` (ala macOS .app), install/registry/launcher, persistence.
 
-- Status: 🟧 Detail draft (belum diimplementasi)
+- Status: ✅ Implemented — Folder-based `.papp` (macOS `.app` style): `my-app.papp/` directory with `manifest.json` + `app.js` + assets. Recursive scan of `/apps` + `/sd/apps`. Cache system (hot-reload add/remove). Binary PAPP1 still supported for wire transfer. Manifest: id/name/version/runtime/display_server/mode/category/icon/needs/api_version. CLI PATH auto-launch by app name. Launcher auto-rescan on open.
 - Depends on: 55, 56, 57, 58; melanjutkan Plan 37 (custom apps), 38 (appstore)
 
 ---
@@ -117,7 +117,8 @@ untuk custom (JS/WASM) ia adalah **entry pertama** di container `.papp`.
   "type": "app",                 // app (launchable) | service (daemon, Plan 19.6)
   "category": "Tools",           // grup di launcher (Flipper fap_category)
 
-  "icon": "icon.pbm",            // path dlm bundle (1-bit pixelete); opsional
+  "icon": "feature.apps",        // HANDLE ikon (icon system Plan 53) ATAU path aset
+                                 //   bundle "icons/app.xbm" (1-bit pixelete); opsional
   "author": "Palanu",            // metadata, opsional
   "description": "On-device clock" // opsional
 }
@@ -140,7 +141,7 @@ untuk custom (JS/WASM) ia adalah **entry pertama** di container `.papp`.
 | `needs` | tidak | array capability | default `[]`. Eksplisit, **tanpa wildcard**. |
 | `type` | tidak | `app`\|`service` | default `app`. `service`=hidden, ke ServiceManager. |
 | `category` | tidak | string | default `"Apps"`. |
-| `icon` | tidak | path bundle | 1-bit; default = icon generik per-runtime di launcher. |
+| `icon` | tidak | **handle** ikon \| path bundle | **handle** `feature.apps` (built-in pack Plan 53) **atau** aset bundle `icons/app.xbm`; 1-bit, integer-scale crisp. Default = icon generik per-runtime. Detail: §Koherensi icon ↔ manifest. |
 | `author`,`description` | tidak | string | metadata; tak memengaruhi eksekusi. |
 
 **Konsistensi `mode` × `display_server`** (divalidasi saat install):
@@ -182,7 +183,7 @@ clock.papp/                 (folder authoring; di-pack jadi satu file .papp)
 ├── manifest.json
 ├── App.tsx                 (sumber; tak ikut ke device)
 ├── app.js                  (artifact build — yg dikirim)
-├── icon.pbm                (1-bit, pixelete)
+├── icon.xbm                (1-bit, pixelete)
 └── assets/
     ├── font.bin
     └── beep.raw
@@ -203,7 +204,7 @@ offset  field
 6       u16  entryCount             (LE)
 8       TOC[entryCount], tiap entry:
           u8   nameLen
-          u8[] name                 ("manifest.json" | "app.js" | "icon.pbm" | "assets/font.bin")
+          u8[] name                 ("manifest.json" | "app.js" | "icon.xbm" | "assets/font.bin")
           u8   flags                (bit0 = COMPRESSED/RLE — reuse PLP RLE)
           u32  length               (LE, byte blob ter-dekompres = ukuran asli)
           u32  stored               (LE, byte di file; == length bila tak ter-kompres)
@@ -251,7 +252,7 @@ Saat install, **explode** container ke direktori per-app (bukan simpan blob utuh
 /flash/apps/<id>/
 ├── manifest.json
 ├── app.js | app.wasm        (artifact runtime)
-├── icon.pbm
+├── icon.xbm
 ├── assets/…
 └── data/                    (sandbox tulis app — palanu.storage, Plan 38)
 ```
@@ -278,7 +279,7 @@ struct AppManifest {
     DisplayTarget server;      // Headless | Aether
     AppMode      mode;         // Cli | Ui | Hybrid
     const char*  category;     // "Tools"
-    const char*  iconPath;     // "/flash/apps/<id>/icon.pbm" | nullptr
+    const char*  iconPath;     // "/flash/apps/<id>/icon.xbm" | nullptr
     ApiVersion   apiVersion;   // {major, minor} — versi System-API IDL (Plan 48)
     ApiVersion   serverVersion;// display_server_version (aether:ui), opsional (Plan 51)
     CapList      needs;        // span<const char*> capability
@@ -302,6 +303,27 @@ struct AppManifest {
      `headless`, **bagian headless tetap jalan** di shell (Plan 54).
 - Lulus tiga gerbang → spawn via `AppHostManager` (thread app, pause/resume gratis,
   Plan 22) untuk tier runtime sesuai `runtime`.
+
+### 6. Koherensi icon ↔ manifest (icon system Plan 53 + launcher Plan 52)
+
+Field `icon` manifest = **handle ikon**, di-resolve oleh **icon system yang sama**
+dengan UI inti (Plan 53). Dua bentuk:
+
+| Bentuk | Nilai `icon` | Resolusi | Untuk |
+|---|---|---|---|
+| **Handle built-in** | `feature.apps`, `feature.settings`, … | langsung ke **built-in pack** (Plan 53, di flash) | **system app** (Settings, GPIO, …) — tanpa aset di bundle |
+| **Aset bundle** | `icons/app.xbm` (path) | saat install, third-party **register** XBM ke icon system di **namespace app**-nya: `app.<id>.icon` | app custom (`.papp`) yang bawa ikon sendiri |
+
+- App custom: `papp-build` (§2) mem-pack `icons/app.xbm` → saat `installPapp`
+  (explode ke `/flash/apps/<id>/`, §4) ikon di-**register** ke icon system Plan 53
+  sebagai `app.<id>.icon` (isolasi namespace per-app, tak bentrok lintas-app).
+- **Launcher (`AppListScreen`, §5) + MainMenu carousel DSi (Plan 52)** keduanya
+  render ikon app lewat **`icon(handle)` icon system (Plan 53) yang sama** → menu
+  awal/launcher = **registry app (§4) + ikon manifest**, satu jalur render konsisten
+  dengan status bar & file browser. Rujuk-silang Plan 52 (MainMenu/launcher) ↔ Plan
+  53 (icon system) ↔ Plan 59 (registry + manifest `icon`).
+- Kontrak **no-null** (Plan 53): `icon` kosong / handle tak dikenal → fallback ikon
+  generik per-runtime, tak pernah crash.
 
 ---
 
@@ -333,7 +355,8 @@ Fase 0–3 tanpa hardware (host+WASM). 4–5 verifikasi device (build-only bila 
 | `firmware/core/include/nema/apps/embedded_apps.h` | generator sertakan `runtime`,`mode`,`server`,`category` per embedded app |
 | `firmware/core/include/nema/services/remote_service.h` | komentar `ExtOp::AppInstall` = PAPP1; (opsional) opcode streaming |
 | `firmware/core/.../js_app_store.{h}` + Plan 38 `loadPersisted` | explode/scan `/flash/apps/<id>/` lewat `IFileSystem` |
-| `firmware/core/.../app_list_screen.*` (launcher) | render icon + kategori + gating-aware (disable bila tak bisa launch) |
+| `firmware/core/.../app_list_screen.*` (launcher) | render icon via `icon(handle)` (Plan 53) + kategori + gating-aware; sumber ikon = MainMenu DSi (Plan 52) yang sama |
+| install path (`js_app_store.cpp`/`papp_package.cpp`) | register aset `icons/app.xbm` ke icon system Plan 53 sbg `app.<id>.icon`; handle built-in (`feature.*`) lewat tanpa register |
 | `firmware/tests/papp_test.cpp` | **baru** — parse/validasi PAPP1 (single-file + bundle, corrupt, RLE) |
 
 ## Test
@@ -352,6 +375,10 @@ Fase 0–3 tanpa hardware (host+WASM). 4–5 verifikasi device (build-only bila 
   LittleFS absen → volatile (tak crash).
 - **Transfer (Forge→device)**: push bundle `.papp` ber-icon via PLP → muncul +
   launch; paket > MTU ter-fragment & reassembly benar.
+- **Icon ↔ manifest (host/sim)**: `icon: "feature.apps"` → resolve built-in pack
+  (Plan 53) tanpa aset bundle; `icon: "icons/app.xbm"` → register `app.<id>.icon` saat
+  install, launcher + MainMenu (Plan 52) render handle yang sama; `icon` kosong →
+  fallback generik (no-null).
 
 ## Risiko & mitigasi
 

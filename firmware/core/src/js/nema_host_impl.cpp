@@ -1,0 +1,207 @@
+// nema_host_impl.cpp — Hand-written implementation of HostApi (Plan 49 Fase 2).
+// This is the SINGLE file where C++ touches rt.* to back the System API.
+// All QuickJS/WASM marshalling is generated; this file provides the semantics.
+// Adding a function to the IDL without adding an impl here → build error.
+
+#include "host/nema_api.gen.h"
+#include "nema/runtime.h"
+#include "nema/log/logger.h"
+#include "nema/system/capability_registry.h"
+#include "nema/system/system_info.h"
+#include "nema/service/service_container.h"
+#include "nema/config/config_store.h"
+#include "nema/hal/http_client.h"
+#include "nema/services/profile_service.h"
+#include "nema/ui/aether_abi.h"
+#include <string>
+#include <utility>
+
+namespace {
+
+class NemaHostImpl : public HostApi {
+public:
+    NemaHostImpl(nema::Runtime& rt, std::string appId)
+        : rt_(rt), appId_(std::move(appId)) {}
+
+    // ── nema:sys/log ──────────────────────────────────────────────────
+
+    void log_log(std::string_view level, std::string_view tag, std::string_view msg) override {
+        auto& log = rt_.log();
+        if      (level == "error") log.error(tag.data(), msg.data());
+        else if (level == "warn")  log.warn (tag.data(), msg.data());
+        else if (level == "debug") log.debug(tag.data(), msg.data());
+        else if (level == "trace") log.trace(tag.data(), msg.data());
+        else if (level == "fatal") log.fatal(tag.data(), msg.data());
+        else                       log.info (tag.data(), msg.data());
+    }
+
+    // ── nema:sys/device ───────────────────────────────────────────────
+
+    std::string device_name() override {
+        return rt_.info().boardName;
+    }
+
+    std::vector<std::string> device_caps() override {
+        return rt_.capabilities().list();
+    }
+
+    bool device_has(std::string_view cap) override {
+        return rt_.capabilities().has(std::string(cap));
+    }
+
+    bool device_available(std::string_view cap) override {
+        return rt_.capabilities().available(std::string(cap));
+    }
+
+    // ── nema:sys/events ───────────────────────────────────────────────
+    // @future — not yet implemented; stubs log a warning.
+
+    int32_t events_subscribe(std::string_view, int32_t) override { return -1; }
+    void    events_unsubscribe(int32_t) override {}
+    void    events_publish(std::string_view, const std::vector<Field>&) override {}
+
+    // ── nema:sys/tasks ────────────────────────────────────────────────
+    // @future
+
+    void    tasks_submit(int32_t, int32_t) override {}
+    int32_t tasks_timeout(uint32_t, int32_t) override { return -1; }
+    int32_t tasks_interval(uint32_t, int32_t) override { return -1; }
+    void    tasks_cancel(int32_t) override {}
+
+    // ── nema:storage/kv ───────────────────────────────────────────────
+
+    std::optional<std::string> kv_get(std::string_view key) override {
+        std::string v;
+        if (rt_.config().getString(appId_.c_str(), std::string(key).c_str(), v))
+            return v;
+        return std::nullopt;
+    }
+
+    void kv_set(std::string_view key, std::string_view value) override {
+        rt_.config().setString(appId_.c_str(), std::string(key).c_str(), std::string(value));
+    }
+
+    std::optional<int64_t> kv_get_int(std::string_view key) override {
+        int64_t v = 0;
+        if (rt_.config().getInt(appId_.c_str(), std::string(key).c_str(), v))
+            return v;
+        return std::nullopt;
+    }
+
+    void kv_set_int(std::string_view key, int64_t value) override {
+        rt_.config().setInt(appId_.c_str(), std::string(key).c_str(), value);
+    }
+
+    bool kv_remove(std::string_view key) override {
+        return rt_.config().remove(appId_.c_str(), std::string(key).c_str());
+    }
+
+    // ── nema:net/http ─────────────────────────────────────────────────
+
+    NemaResult<HttpResponse, std::string> http_get(std::string_view url) override {
+        auto* client = rt_.container().resolve<nema::IHttpClient>();
+        if (!client) return {false, {}, "http not available"};
+        auto r = client->get(std::string(url).c_str());
+        HttpResponse resp{static_cast<uint16_t>(r.status), std::move(r.body)};
+        if (!r.ok()) return {false, resp, "transport error"};
+        return {true, std::move(resp), {}};
+    }
+
+    NemaResult<HttpResponse, std::string> http_post(std::string_view, std::string_view, std::string_view) override {
+        return {false, {}, "http post not yet implemented"};
+    }
+
+    // ── nema:net/wifi ─────────────────────────────────────────────────
+    // @future — stubs
+
+    bool wifi_is_connected() override { return false; }
+    std::string wifi_ssid() override { return {}; }
+    std::string wifi_ip() override { return {}; }
+    std::vector<WifiAp> wifi_scan() override { return {}; }
+    NemaResult<void, std::string> wifi_connect(std::string_view, std::string_view) override {
+        return {false, "wifi not implemented"};
+    }
+    void wifi_disconnect() override {}
+
+    // ── nema:profile ──────────────────────────────────────────────────
+
+    std::string profile_user_name() override {
+        auto* p = rt_.container().resolve<nema::ProfileService>();
+        return p ? p->userName() : "";
+    }
+
+    std::string profile_device_name() override {
+        auto* p = rt_.container().resolve<nema::ProfileService>();
+        return p ? p->deviceName() : "";
+    }
+
+    bool profile_has_password() override {
+        auto* p = rt_.container().resolve<nema::ProfileService>();
+        return p ? p->hasPassword() : false;
+    }
+
+    bool profile_verify_password(std::string_view input) override {
+        auto* p = rt_.container().resolve<nema::ProfileService>();
+        return p ? p->verifyPassword(std::string(input)) : false;
+    }
+
+    // ── nema:bt/ble ───────────────────────────────────────────────────
+    // @future — stubs
+
+    NemaResult<void, std::string> ble_enable() override { return {false, "ble not implemented"}; }
+    void ble_disable() override {}
+    bool ble_is_enabled() override { return false; }
+
+    // ── nema:media/* ──────────────────────────────────────────────────
+    // @future — stubs
+
+    std::vector<std::string> audio_input_list() override { return {}; }
+    std::vector<std::string> audio_output_list() override { return {}; }
+    std::vector<std::string> camera_list() override { return {}; }
+    NemaResult<std::string, std::string> camera_capture() override { return {false, {}, "camera not implemented"}; }
+
+    // ── nema:input ────────────────────────────────────────────────────
+    // @future — stubs
+
+    std::string input_hint(std::string_view) override { return {}; }
+    std::vector<std::string> input_actions() override { return {}; }
+
+    // ── aether:ui ─────────────────────────────────────────────────────
+    // Delegates to aether_abi.cpp; arena must be set by ComponentApp::run()
+    // via aether_set_arena() before build() calls these (Plan 50/52).
+
+    int32_t view_view_begin(std::string_view direction) override {
+        std::string d(direction);
+        return (int32_t)(intptr_t)aether_view_begin(d.c_str());
+    }
+    void    view_view_end() override { aether_view_end(); }
+
+    int32_t text_label(std::string_view content) override {
+        std::string s(content);
+        return (int32_t)(intptr_t)aether_text_label(s.c_str());
+    }
+    int32_t text_styled(std::string_view content, std::string_view variant) override {
+        std::string c(content), v(variant);
+        return (int32_t)(intptr_t)aether_text_styled(c.c_str(), v.c_str());
+    }
+    int32_t interactive_button(std::string_view label, int32_t on_press) override {
+        std::string l(label);
+        return (int32_t)(intptr_t)aether_interactive_button(l.c_str(), on_press);
+    }
+    int32_t scroll_scroll_begin() override {
+        return (int32_t)(intptr_t)aether_scroll_begin();
+    }
+    void    scroll_scroll_end() override { aether_scroll_end(); }
+
+private:
+    nema::Runtime& rt_;
+    std::string    appId_;
+};
+
+} // anon namespace
+
+// ── Factory ────────────────────────────────────────────────────────────────
+
+HostApi* createNemaHost(nema::Runtime& rt, std::string appId) {
+    return new NemaHostImpl(rt, std::move(appId));
+}

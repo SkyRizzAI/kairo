@@ -1,7 +1,0 @@
-{
-  "id": "com.palanu.example.counter",
-  "name": "Counter",
-  "version": "1.0.0",
-  "entry": "App.tsx",
-  "needs": ["http"]
-}

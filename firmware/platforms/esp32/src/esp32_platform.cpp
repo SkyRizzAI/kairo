@@ -94,6 +94,7 @@ void Esp32Platform::postRegister(Runtime& rt) {
     vfs_.mount("/", &rootFs_);
     vfs_.mount("/tmp", &tmpFs_);
     rt.container().registerAs<IFileSystem>(&vfs_);
+    rt.setFs(&vfs_);
     rt.capabilities().add(caps::Storage);
     // Liveness (Plan 42): /tmp RAM scratch always mounts, so storage is usable
     // even if the persistent root failed; report Fault when the root didn't mount.

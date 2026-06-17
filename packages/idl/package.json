@@ -1,0 +1,14 @@
+{
+  "name": "@palanu/idl",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "parse": "bun run src/parser.ts",
+    "gen": "bun run src/gen.ts",
+    "test": "bun test"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  }
+}

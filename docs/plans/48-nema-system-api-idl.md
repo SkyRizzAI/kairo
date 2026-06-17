@@ -4,7 +4,7 @@
 > kernel/services ke app — **bersama untuk semua display server**. Satu IDL →
 > generate host + SDK + docs. "OpenAPI-nya Palanu." (UI = per-server, lihat Plan 50.)
 
-- Status: 🟧 Detail draft (belum diimplementasi)
+- Status: ✅ Implemented — IDL di `api/*.pidl`, AST `api/build/nema-api.json`, codegen jalan (verifikasi 2026-06-15)
 - Depends on: Plan 42 (capability), inventaris API saat ini
 - Blocks: 49 (generator), 50 (UI SDK di-generate dgn toolchain sama), 56/57/58
 
@@ -354,7 +354,7 @@ declare namespace nema.storage.kv {
 - `api/sys.pidl`, `api/storage.pidl`, `api/net.pidl`, `api/profile.pidl`,
   `api/bt.pidl`, `api/media.pidl`, `api/input.pidl` — sumber IDL (SSOT).
 - `api/build/nema-api.json` — AST hasil-parse (generated, di-commit/cache).
-- `tools/idl/parser.ts` — parser `.pidl`→AST (bun). *(Generator emitter = Plan 49.)*
+- `packages/idl/src/parser.ts` — parser `.pidl`→AST (bun). *(Generator emitter = Plan 49.)*
 - `firmware/core/include/nema/app/api_version.h` *(atau generated)* — `NEMA_API_VERSION*`.
 
 **Disentuh:**

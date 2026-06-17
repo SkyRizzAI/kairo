@@ -3,7 +3,7 @@
 > Runtime app mainstream untuk developer JS modern: **QuickJS-ng** (di-harden),
 > global `process`/`nema`/`aether/ui`, authoring TSX → node-tree.
 
-- Status: 🟧 Detail draft (belum diimplementasi)
+- Status: ✅ Implemented — JsRuntime/JsEngine/JsApp/NemaHostImpl done; IAppRuntime adapter wired; process.argv/process.exit()/process.stdout.write()/process.stdin.read() global installed via setProcessContext(); TSX build pipeline is external toolchain (not firmware code)
 - Depends on: 49 (SDK gen), 54 (process), 55 (surface), 56 (arch)
 - Blocks: 59 (manifest/packaging)
 

@@ -18,8 +18,12 @@ struct CliContext;
 // Built to extend. add() is the single entry point, shared by core built-ins
 // (registerCoreCliCommands), platform specializations (e.g. ESP32's live-heap
 // `ram`), and future `.kapp` apps that register their own commands.
+// Plan 57: CliService holds a Runtime pointer for auto-launch.
 class CliService {
 public:
+    explicit CliService(Runtime& rt) : rt_(&rt) {}
+    CliService() = default;
+    void setRuntime(Runtime& rt) { rt_ = &rt; }
     using Out     = std::function<void(const std::string&)>;  // emit one output line
     using Handler = std::function<void(CliContext& ctx)>;       // ctx = args + out + session
 
@@ -42,6 +46,7 @@ public:
 
 private:
     std::vector<Command> cmds_;
+    Runtime* rt_ = nullptr;  // for auto-launch fallback (Plan 57)
 };
 
 // Per-connection shell session (Plan 44): device-side state that persists across
@@ -53,6 +58,8 @@ struct CliSession {
     std::vector<std::string> history;       // device-side, capped ring
     CliService::Out          out;           // this connection's output sink
     bool                     alive = true;
+    int                      lastExit = 0;  // exit code of last foreground process (Plan 54)
+    std::vector<std::string> path = {"/apps", "/sd/apps"};  // PATH dirs scanned recursively
 
     void pushHistory(const std::string& line);   // cap ~32, skips blanks/dupes
     void reset() { cwd = "/"; history.clear(); }  // on (re)connect

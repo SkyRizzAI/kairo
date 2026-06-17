@@ -3,7 +3,7 @@
 > Runtime app portabel & sandboxed: C/C++/Rust/Zig → wasm32, dijalankan oleh
 > **wasm3** yang di-compile ke dalam core (satu jalur di ESP32 & simulator).
 
-- Status: 🟧 Detail draft (belum diimplementasi)
+- Status: 🟢 Implemented (Fase 1–3) — wasm3 vendored (`vendor/wasm3/`), `WasmEngine` wrapper (init/load/runStart), WASI bridge (`wasm_wasi.cpp` — fd_read/write, args_get, proc_exit) delegating to `ProcessContext`, `WasmRuntime : IAppRuntime` adapter; Fase 4–6 deferred (SysAPI gating, aether:ui surface import, memory quota — need test .wasm assembly)
 - Depends on: 49 (SDK gen), 54 (process/WASI), 55 (surface), 56 (arch)
 - Blocks: 59 (manifest/packaging)
 

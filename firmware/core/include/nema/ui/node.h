@@ -7,11 +7,16 @@ namespace nema::ui {
 // layout engine (layout.h), and painted by the renderer (renderer.h). Both the
 // C builder (widgets.h) and a future JS reconciler produce this same structure.
 
-enum class NodeType : uint8_t { View, Text, Pressable, Scroll, Slider };
+enum class NodeType : uint8_t { View, Text, Pressable, Scroll, Slider, Icon };
 enum class FlexDir  : uint8_t { Row, Col };
 enum class Align    : uint8_t { Start, Center, End, Stretch };       // cross-axis
 enum class Justify  : uint8_t { Start, Center, End, SpaceBetween };  // main-axis
-enum class TextRole : uint8_t { Body, Title, Caption };              // → BitmapFont
+enum class TextRole : uint8_t {
+    Body,     // normal text
+    Title,    // large/heading
+    Caption,  // small hint/label
+    Smart,    // Plan 52 SmartLabel: ellipsis when too-wide+unfocused, marquee when focused
+};
 
 // width/height == SIZE_AUTO → measured from content; otherwise fixed logical px.
 constexpr uint16_t SIZE_AUTO = 0xFFFF;
@@ -69,6 +74,11 @@ struct UiNode {
     int16_t sliderMax   = 100;
     int16_t sliderStep  = 1;
     void  (*onChange)(void* userdata, int value) = nullptr;
+
+    // Icon leaf (type == Icon, Plan 53): 1-bit packed XBM bitmap.
+    const uint8_t* iconBitmap = nullptr;
+    uint8_t        iconW      = 0;
+    uint8_t        iconH      = 0;
 
     // Scroll container (type == Scroll): persistent state, caller-owned.
     ScrollState* scroll = nullptr;

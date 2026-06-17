@@ -195,19 +195,31 @@ void RemoteService::handleFile(const std::vector<uint8_t>& in) {
         link_->send(plp::Channel::File, p.data(), p.size());
     };
 
-    if (op == FileOp::Write) {
-        // [op][pathLen:2 LE][path][data...]
+    // Two-path ops share the same wire format: [op][srcLen:2 LE][src][dst...]
+    if (op == FileOp::Write || op == FileOp::Rename || op == FileOp::Copy) {
         if (in.size() < 3) return;
         uint16_t plen = in[1] | (in[2] << 8);
         if (in.size() < (size_t)3 + plen) return;
-        std::string path((const char*)in.data() + 3, plen);
-        const uint8_t* data = in.data() + 3 + plen;
-        size_t dlen = in.size() - 3 - plen;
-        reply(fs_->write(path, data, dlen) ? 0 : 2, path, nullptr, 0);
+        std::string src((const char*)in.data() + 3, plen);
+        if (op == FileOp::Write) {
+            const uint8_t* data = in.data() + 3 + plen;
+            size_t dlen = in.size() - 3 - plen;
+            reply(fs_->write(src, data, dlen) ? 0 : 2, src, nullptr, 0);
+        } else {
+            std::string dst((const char*)in.data() + 3 + plen, in.size() - 3 - plen);
+            if (op == FileOp::Rename) {
+                reply(fs_->rename(src, dst) ? 0 : 2, dst, nullptr, 0);
+            } else { // Copy: read src, write dst
+                std::vector<uint8_t> data;
+                bool ok = fs_->read(src, data) &&
+                          fs_->write(dst, data.data(), data.size());
+                reply(ok ? 0 : 2, dst, nullptr, 0);
+            }
+        }
         return;
     }
 
-    // All other ops: [op][path...]
+    // Single-path ops: [op][path...]
     std::string path((const char*)in.data() + 1, in.size() - 1);
     switch (op) {
         case FileOp::List: {

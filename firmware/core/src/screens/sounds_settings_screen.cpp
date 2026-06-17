@@ -52,7 +52,7 @@ UiNode* SoundsSettingsScreen::build(NodeArena& a, Runtime& rt) {
         formatBar(rows_, audio.output(i)->label(), audio.output(i)->peakLevel());
 
     Style root; root.dir = FlexDir::Col; root.flexGrow = 1; root.padding = 3; root.gap = 1;
-    Style line; line.height = 1; line.background = true;
+    root.align = Align::Stretch;
     Style sv;   sv.dir = FlexDir::Col; sv.align = Align::Stretch; sv.gap = 1;
 
     UiNode* list = ScrollView(a, scroll_, sv, {});
@@ -63,11 +63,10 @@ UiNode* SoundsSettingsScreen::build(NodeArena& a, Runtime& rt) {
         prev = n;
     };
     for (auto& r : rows_) append(Text(a, r.c_str(), TextRole::Body));
-    if (audio.outputCount() > 0) append(ListRow(a, "Test Beep 440Hz", onTestBeep, this));
+    if (audio.outputCount() > 0) append(ListItem(a, "Test Beep 440Hz", ">", onTestBeep, this));
 
     return View(a, root, {
-        Text(a, "SOUNDS", TextRole::Title),
-        View(a, line, {}),
+        TitleBar(a, "SOUNDS"),
         list,
     });
 }

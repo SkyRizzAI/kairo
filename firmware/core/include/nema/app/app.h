@@ -4,6 +4,7 @@
 namespace nema {
 
 class AppContext;
+class ProcessContext;
 
 // IApp — a foreground application that runs on ITS OWN thread.
 //
@@ -13,11 +14,20 @@ class AppContext;
 // last frame the app presented, and input is delivered via the app's mailbox.
 //
 // run() must loop until ctx.shouldExit() and return promptly when it flips.
+//
+// Plan 54: Two entry points.
+//   run(AppContext&)       — UI app (canvas, present, nextInput, status bar).
+//   runProcess(ProcessContext&) — headless app (args, stdin/stdout/stderr, exit).
+// Headless apps override runProcess(); UI apps override run().
 struct IApp {
     virtual ~IApp() = default;
     virtual const char* id()   const = 0;
     virtual const char* name() const = 0;
     virtual void run(AppContext& ctx) = 0;
+
+    // Headless entry point (Plan 54). Called by the shell's `run` command.
+    // Default: no-op (app is UI-only and can't run headless).
+    virtual void runProcess(ProcessContext&) {}
 
     // false (default) → system status bar is shown above the app, and the app's
     // frame is composited below it. true → app owns the whole 264×176 screen.

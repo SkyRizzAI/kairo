@@ -24,11 +24,17 @@ static void measure(UiNode* n, const TextMetrics& tm) {
     }
 
     if (n->type == NodeType::Slider) {
-        // Leaf control: fixed-ish height; width AUTO → 0 so a Stretch parent
-        // gives it the full cross size (it spans the row).
         constexpr uint16_t SLIDER_H = 11;
         n->w = (s.width  == SIZE_AUTO) ? 0 : s.width;
         n->h = (s.height == SIZE_AUTO) ? SLIDER_H : s.height;
+        return;
+    }
+
+    if (n->type == NodeType::Icon) {
+        // Leaf: fixed size from the bitmap dimensions + padding.
+        const uint16_t pad2 = (uint16_t)(s.padding * 2);
+        n->w = (s.width  == SIZE_AUTO) ? (uint16_t)(n->iconW + pad2) : s.width;
+        n->h = (s.height == SIZE_AUTO) ? (uint16_t)(n->iconH + pad2) : s.height;
         return;
     }
 

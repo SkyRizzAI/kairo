@@ -1,0 +1,70 @@
+// nema:sys — Core system interfaces. Always available, no capability gate.
+// Sources: log/logger.h, system/system_info.h, system/capability_registry.h,
+//          event/event_bus.h, task_runner.h
+package nema:sys@1.0
+
+/// System logging. Maps to Logger (log/logger.h:18–26).
+/// Apps log via a single function that takes a level string; the host Logger
+/// fans the call out to all registered sinks (ConsoleSink + MemorySink).
+@core
+interface log {
+    /// Log a message at the given level.
+    /// level ∈ {"trace", "debug", "info", "warn", "error", "fatal"}
+    log: func(level: string, tag: string, msg: string)
+}
+
+/// Device identity and capability queries.
+/// Maps to SystemInfo (system_info.h) + CapabilityRegistry (capability_registry.h).
+@core
+interface device {
+    /// Board/product name, e.g. "dev-board", "skyrizz-e32".
+    name: func() -> string
+
+    /// All static capabilities this box was built with (Plan 42).
+    caps: func() -> list<string>
+
+    /// Static: was this box built able to do X?
+    has: func(cap: string) -> bool
+
+    /// Dynamic: is X up and usable right now? (Plan 42 liveness)
+    available: func(cap: string) -> bool
+}
+
+/// Publish/subscribe event bus. Maps to EventBus (event/event_bus.h).
+/// @future — not yet exposed in JS v0 (js_api.cpp); defined here so the
+/// IDL is the complete SSOT. Will be added to JS/WASM bindings in Plan 49.
+@core
+interface events {
+    /// Subscribe to an event name (or "*" for all).
+    subscribe: func(name: string, handler: handle) -> handle
+
+    /// Remove a subscription by handle returned from subscribe.
+    unsubscribe: func(token: handle)
+
+    /// Publish an event with optional string fields.
+    publish: func(name: string, fields: list<field>)
+}
+
+/// A key-value field in an event payload.
+record field {
+    key: string,
+    value: string,
+}
+
+/// Async task scheduling + timers. Maps to TaskRunner (task_runner.h:33).
+/// @future — not yet exposed in JS v0. Basis for setTimeout/setInterval.
+@core
+interface tasks {
+    /// Submit a job to run on a worker thread; done() is called on the UI loop.
+    /// @blocking marks that the job may block (http, wifi scan, ble enable).
+    submit: func(job: handle, done: handle)
+
+    /// Schedule a callback after delay milliseconds (one-shot).
+    timeout: func(ms: u32, callback: handle) -> handle
+
+    /// Schedule a repeating callback every interval milliseconds.
+    interval: func(ms: u32, callback: handle) -> handle
+
+    /// Cancel a pending timeout/interval by handle.
+    cancel: func(token: handle)
+}

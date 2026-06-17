@@ -3,7 +3,7 @@
 > Index seri **Palanu App Platform** (Plan 47–59). Memetakan layering, urutan
 > dependensi, dan keputusan arsitektur lintas-plan. Bukan fitur — ini peta.
 
-- Status: 🟧 Detail draft (belum diimplementasi)
+- Status: ✅ Architecture documented — this is an overview/map plan (no code deliverables). All architectural decisions captured here are reflected in Plans 48–60 implementations.
 - Milestone: M13 (App Platform)
 - Depends on: Plan 42 (capability), 43 (display server), 44–46 (CLI shell, multi-session, process monitor)
 

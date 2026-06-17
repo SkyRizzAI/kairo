@@ -1,4 +1,8 @@
+// Plan 60 Fase 3 — widgets rewrite using theme spacing.
+// Node structure is unchanged (tier-0 preserved). Padding/gap now read from
+// nema::theme() so compact/large theme tokens propagate to all components.
 #include "nema/ui/widgets.h"
+#include "nema/ui/style_tokens.h"
 
 namespace nema::ui {
 
@@ -11,7 +15,7 @@ NodeArena::~NodeArena() { delete[] pool_; }
 UiNode* NodeArena::alloc() {
     if (used_ >= cap_) return nullptr;
     UiNode* n = &pool_[used_++];
-    *n = UiNode{};   // reset to defaults
+    *n = UiNode{};
     return n;
 }
 
@@ -49,10 +53,10 @@ UiNode* Pressable(NodeArena& a, void (*onPress)(void*), void* userdata,
                   Style style, std::initializer_list<UiNode*> children) {
     UiNode* n = a.alloc();
     if (!n) return nullptr;
-    n->type      = NodeType::Pressable;
-    n->style     = style;
-    n->onPress   = onPress;
-    n->userdata  = userdata;
+    n->type     = NodeType::Pressable;
+    n->style    = style;
+    n->onPress  = onPress;
+    n->userdata = userdata;
     n->focusable = true;
     setChildren(n, children);
     return n;
@@ -63,8 +67,6 @@ UiNode* ScrollView(NodeArena& a, ScrollState& st, Style style,
     UiNode* n = a.alloc();
     if (!n) return nullptr;
     n->type  = NodeType::Scroll;
-    // Default to filling the available space so the parent flex bounds the
-    // viewport (content overflows & scrolls). Callers can override flexGrow/size.
     if (style.flexGrow == 0 && style.width == SIZE_AUTO && style.height == SIZE_AUTO)
         style.flexGrow = 1;
     n->style  = style;
@@ -91,14 +93,16 @@ UiNode* Container(NodeArena& a, uint8_t padding, std::initializer_list<UiNode*> 
 }
 
 UiNode* Button(NodeArena& a, const char* label, void (*onPress)(void*), void* userdata) {
-    Style s; s.dir = FlexDir::Row; s.border = true; s.padding = 2;
+    uint8_t pad = nema::theme().space.sm;  // themed padding (4px default, 2px compact)
+    Style s; s.dir = FlexDir::Row; s.border = true; s.padding = pad;
     s.align = Align::Center; s.justify = Justify::Center;
     return Pressable(a, onPress, userdata, s, { Text(a, label, TextRole::Body) });
 }
 
 UiNode* Header(NodeArena& a, const char* title) {
-    Style col; col.dir = FlexDir::Col; col.align = Align::Stretch; col.gap = 2;
-    Style line; line.height = 1; line.background = true;   // full-width separator
+    uint8_t gap = nema::theme().space.xs;
+    Style col; col.dir = FlexDir::Col; col.align = Align::Stretch; col.gap = gap;
+    Style line; line.height = 1; line.background = true;
     return View(a, col, { Text(a, title, TextRole::Title), View(a, line, {}) });
 }
 
@@ -106,14 +110,56 @@ UiNode* Footer(NodeArena& a, const char* hint) {
     return Text(a, hint, TextRole::Caption);
 }
 
+UiNode* SmartLabel(NodeArena& a, const char* text) {
+    return Text(a, text, TextRole::Smart);
+}
+
+UiNode* Icon(NodeArena& a, const uint8_t* bitmap, uint8_t w_px, uint8_t h_px,
+             uint8_t padding) {
+    UiNode* n = a.alloc();
+    if (!n) return nullptr;
+    n->type        = NodeType::Icon;
+    n->iconBitmap  = bitmap;
+    n->iconW       = w_px;
+    n->iconH       = h_px;
+    n->style.padding = padding;
+    return n;
+}
+
+UiNode* TitleBar(NodeArena& a, const char* title) {
+    // A Title-role Text node with a filled background; the renderer fills the
+    // box and draws the glyphs inverted (white). Themed padding; stretches full
+    // width when placed in a Stretch Col.
+    UiNode* n = Text(a, title, TextRole::Title);
+    if (n) {
+        n->style.background = true;
+        n->style.padding    = nema::theme().space.sm;
+    }
+    return n;
+}
+
 UiNode* ListRow(NodeArena& a, const char* label, void (*onPress)(void*), void* userdata) {
-    Style s; s.dir = FlexDir::Row; s.padding = 2; s.align = Align::Center;
+    uint8_t pad = nema::theme().space.sm;
+    Style s; s.dir = FlexDir::Row; s.padding = pad; s.align = Align::Center;
     return Pressable(a, onPress, userdata, s, { Text(a, label, TextRole::Body) });
+}
+
+UiNode* ListItem(NodeArena& a, const char* label, const char* accessory,
+                 void (*onPress)(void*), void* userdata) {
+    uint8_t pad = nema::theme().space.sm;
+    uint8_t gap = nema::theme().space.xs;
+    Style s; s.dir = FlexDir::Row; s.padding = pad; s.align = Align::Center; s.gap = gap;
+    s.justify = Justify::SpaceBetween;
+    UiNode* lbl = Text(a, label, TextRole::Body);
+    if (lbl) lbl->style.flexGrow = 1;   // label grows → accessory pushed flush-right
+    if (accessory && *accessory)
+        return Pressable(a, onPress, userdata, s,
+                         { lbl, Text(a, accessory, TextRole::Caption) });
+    return Pressable(a, onPress, userdata, s, { lbl });
 }
 
 // ── Native input controls ──────────────────────────────────────────────────
 
-// A label Text that grows to push trailing controls to the right edge.
 static UiNode* labelGrow(NodeArena& a, const char* label) {
     UiNode* t = Text(a, label, TextRole::Body);
     if (t) t->style.flexGrow = 1;
@@ -122,24 +168,26 @@ static UiNode* labelGrow(NodeArena& a, const char* label) {
 
 UiNode* Toggle(NodeArena& a, const char* label, bool on,
                void (*onToggle)(void*), void* userdata) {
-    Style s; s.dir = FlexDir::Row; s.padding = 2; s.align = Align::Center;
+    uint8_t pad = nema::theme().space.sm;
+    Style s; s.dir = FlexDir::Row; s.padding = pad; s.align = Align::Center;
     s.justify = Justify::SpaceBetween;
     return Pressable(a, onToggle, userdata, s,
-                     { Text(a, label, TextRole::Body), Text(a, on ? "[ON]" : "[OFF]", TextRole::Body) });
+                     { Text(a, label, TextRole::Body),
+                       Text(a, on ? "ON" : "OFF", TextRole::Caption) });
 }
 
-// A single focusable row whose value is tuned with Left/Right (onAdjust). The
-// glyphs (`lo`/`hi`, e.g. "-"/"+" or "<"/">") are visual affordances; the whole
-// row is one focus/tap target (location-aware tap: left half = −1, right = +1).
 static UiNode* adjustRow(NodeArena& a, const char* label, const char* lo,
                          const char* value, const char* hi,
                          void (*onAdjust)(void*, int), void* userdata) {
-    Style row; row.dir = FlexDir::Row; row.padding = 2; row.align = Align::Center; row.gap = 4;
+    uint8_t pad = nema::theme().space.sm;
+    uint8_t gap = nema::theme().space.xs;
+    Style row; row.dir = FlexDir::Row; row.padding = pad; row.align = Align::Center;
+    row.gap = gap;
     UiNode* n = View(a, row, {
         labelGrow(a, label),
-        Text(a, lo, TextRole::Body),
+        Text(a, lo,    TextRole::Caption),
         Text(a, value, TextRole::Body),
-        Text(a, hi, TextRole::Body),
+        Text(a, hi,    TextRole::Caption),
     });
     if (n) { n->focusable = true; n->onAdjust = onAdjust; n->userdata = userdata; }
     return n;
@@ -167,19 +215,21 @@ UiNode* Slider(NodeArena& a, int* value, int min, int max, int step,
     n->sliderStep  = (int16_t)step;
     n->onChange    = onChange;
     n->userdata    = userdata;
-    // Width comes from a Stretch parent (Col) or an explicit flexGrow in a Row.
     return n;
 }
 
 UiNode* TextField(NodeArena& a, const char* label, const char* text,
                   void (*onPress)(void*), void* userdata) {
-    Style s; s.dir = FlexDir::Row; s.padding = 2; s.align = Align::Center; s.gap = 4;
+    uint8_t pad = nema::theme().space.sm;
+    uint8_t gap = nema::theme().space.xs;
+    Style s; s.dir = FlexDir::Row; s.padding = pad; s.align = Align::Center; s.gap = gap;
     return Pressable(a, onPress, userdata, s,
                      { labelGrow(a, label), Text(a, text, TextRole::Body) });
 }
 
 UiNode* Menu(NodeArena& a, const MenuItem* items, int count) {
-    Style col; col.dir = FlexDir::Col; col.align = Align::Stretch; col.gap = 2;
+    uint8_t gap = nema::theme().space.xs;
+    Style col; col.dir = FlexDir::Col; col.align = Align::Stretch; col.gap = gap;
     UiNode* menu = View(a, col, {});
     UiNode* prev = nullptr;
     for (int i = 0; i < count; i++) {
@@ -193,9 +243,9 @@ UiNode* Menu(NodeArena& a, const MenuItem* items, int count) {
 }
 
 UiNode* Modal(NodeArena& a, std::initializer_list<UiNode*> children) {
-    // No background/border here — ComponentApp paints the white backdrop + border
-    // and centers this box. Just lay the content out inside with breathing room.
-    Style s; s.dir = FlexDir::Col; s.padding = 6; s.gap = 6;
+    uint8_t pad = nema::theme().space.md;
+    uint8_t gap = nema::theme().space.sm;
+    Style s; s.dir = FlexDir::Col; s.padding = pad; s.gap = gap;
     s.align = Align::Stretch; s.justify = Justify::Center;
     return View(a, s, children);
 }
