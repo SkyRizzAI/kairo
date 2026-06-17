@@ -1,0 +1,24 @@
+// nema:profile — Read-only device owner identity (Plan 40).
+// Source: services/profile_service.h
+// Stores userName, deviceName, and an optional password (salt + SHA-256 hash).
+// Setters are intentionally absent from the app API: apps cannot change the
+// owner's identity. Only verifyPassword() is exposed for PIN checks.
+package nema:profile@1.0
+
+/// Owner identity, gated by the "profile" capability (Plan 42).
+/// Maps to ProfileService (services/profile_service.h:19–44).
+@capability("profile")
+interface profile {
+    /// The device owner's display name (e.g. "Alice").
+    user-name: func() -> string
+
+    /// The user-assigned device name (e.g. "My Palanu").
+    device-name: func() -> string
+
+    /// Whether a password/PIN has been set.
+    has-password: func() -> bool
+
+    /// Verify a password/PIN candidate. Uses constant-time comparison.
+    /// Returns false if no password is set.
+    verify-password: func(input: string) -> bool
+}

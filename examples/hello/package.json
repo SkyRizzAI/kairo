@@ -1,0 +1,6 @@
+{
+  "name": "@palanu-apps/hello",
+  "devDependencies": {
+    "nema": "workspace:*"
+  }
+}

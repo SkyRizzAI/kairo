@@ -25,6 +25,8 @@ private:
     DisplayPowerManager* dpm_         = nullptr;
     int                  selectCount_ = 0;
     bool                 hintVisible_ = false;
+    char                 clock_[8]    = "";   // "HH:MM", stable for the Text node
+    char                 hint_[48]    = "";   // "Double-tap <btn> to unlock"
 };
 
 } // namespace nema

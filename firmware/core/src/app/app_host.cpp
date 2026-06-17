@@ -164,16 +164,23 @@ void AppHost::threadEntry(void* self) {
 Canvas& AppHost::canvas() { return *appCanvas_; }
 
 void AppHost::present() {
+    // Diagnostic: on the first few presents, count non-zero pixels in drawBuf_
+    // so we can tell whether the app renderer actually drew anything visible.
+    if (dbgPresent_ < 4) {
+        size_t nonzero = 0;
+        for (size_t i = 0; i < size_; i++) if (drawBuf_[i]) nonzero++;
+        rt_.log().info("AppHost", "present",
+                       {{"n",  std::to_string(dbgPresent_)},
+                        {"nz", std::to_string(nonzero)},
+                        {"sz", std::to_string(size_)}});
+        dbgPresent_++;
+    }
     {
         std::lock_guard<std::mutex> lk(frameMtx_);
         std::memcpy(readyBuf_, drawBuf_, size_);
         hasFrame_ = true;
     }
     frameSeq_.fetch_add(1, std::memory_order_release);
-    if (dbgPresent_ < 4) {
-        rt_.log().info("AppHost", "present", {{"n", std::to_string(dbgPresent_)}});
-        dbgPresent_++;
-    }
     rt_.view().requestRedraw();   // ask GUI thread to re-blit
 }
 
@@ -192,8 +199,22 @@ bool AppHost::waitInput(InputEvent& out, uint32_t timeoutMs) {
 
 const char* AppHost::appName() const { return app_.name(); }
 
-void AppHost::requestExit()      { thread_.requestStop(); paused_.store(false); }
+// ── ProcessContext impl (Plan 54) ──────────────────────────────────────────
+
+const std::vector<std::string>& AppHost::args() const { return args_; }
+const std::string&              AppHost::cwd()  const { return cwd_; }
+const char*                     AppHost::env(const char*) const { return nullptr; }
+IInputStream&                   AppHost::in()   { return nullIn_; }
+IOutputStream&                  AppHost::out()  { return nullOut_; }
+IOutputStream&                  AppHost::err()  { return nullOut_; }
+
+void AppHost::requestExit(int code) {
+    exitCode_ = code;
+    thread_.requestStop();
+    paused_.store(false);
+}
 bool AppHost::shouldExit() const { return thread_.shouldStop(); }
+int  AppHost::exitCode()   const { return exitCode_; }
 Runtime& AppHost::runtime()      { return rt_; }
 
 } // namespace nema

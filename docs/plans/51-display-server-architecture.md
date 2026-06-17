@@ -3,7 +3,7 @@
 > Memperluas `IDisplayServer` (Plan 43): tiap server mendeklarasikan UI SDK-nya +
 > capability board; launch app dicocokkan dengan server target. Sekarang: Aether.
 
-- Status: 🟧 Detail draft (belum diimplementasi)
+- Status: ✅ Implemented — `IDisplayServer` + `AetherServer`/`FbconServer` + `switchDisplayServer()`/`displayServerList()`/`findDisplayServer()` jalan; `requiredCaps()` on `IDisplayServer` done; `AetherServer` declares `{"display"}`; `AppRegistry::launch()` pre-checks caps before switching; `GuiService::registerServer(IDisplayServer*)` added for dynamic registration (Plan 51 DisplayServerRegistry); `extraServers_` vector in GuiService searched by `findServer()`/`requestServer()`/`serverNames()`.
 - Depends on: 43 (display server), 50 (UI SDK model)
 - Blocks: 52, 55
 

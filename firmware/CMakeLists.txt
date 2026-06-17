@@ -13,13 +13,14 @@ if(EMSCRIPTEN)
     add_link_options(-pthread)
 endif()
 
-# Header-only vendor (nlohmann/json) — only used by platform/target, never by core
+# Header-only vendor (nlohmann/json) — used by core (manifest parsing) and platform/target
 add_library(nema_vendor INTERFACE)
 target_include_directories(nema_vendor INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/vendor)
 
 enable_testing()   # root-level so `ctest` discovers host tests (npm run test)
 
 add_subdirectory(vendor/quickjs)   # embedded JS engine (Plan 37)
+add_subdirectory(vendor/wasm3)    # WASM interpreter (Plan 57)
 add_subdirectory(core)
 add_subdirectory(boards/simulator)
 

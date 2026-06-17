@@ -1,7 +1,12 @@
+// Plan 60 — LockScreen: themed big clock + unlock hint.
 #include "nema/screens/lock_screen.h"
 #include "nema/runtime.h"
+#include "nema/clock.h"
 #include "nema/ui/view_dispatcher.h"
+#include "nema/ui/style_tokens.h"
 #include "nema/services/display_power_manager.h"
+#include <cstdio>
+#include <ctime>
 
 namespace nema {
 
@@ -30,12 +35,25 @@ void LockScreen::onAction(input::Action a) {
     rt_.view().requestRedraw();
 }
 
-UiNode* LockScreen::build(NodeArena& a, Runtime&) {
-    Style root; root.dir = FlexDir::Col; root.flexGrow = 1; root.padding = 4;
-    root.align = Align::Center; root.justify = Justify::Center; root.gap = 8;
+UiNode* LockScreen::build(NodeArena& a, Runtime& rt) {
+    // Wall-clock HH:MM (falls back to "--:--" before NTP/RTC sync).
+    time_t t = (time_t)(rt.clock().epochMs() / 1000);
+    struct tm* tm = localtime(&t);
+    if (tm) std::snprintf(clock_, sizeof(clock_), "%02d:%02d", tm->tm_hour, tm->tm_min);
+    else    std::snprintf(clock_, sizeof(clock_), "--:--");
+
+    // Unlock hint uses the board's own button label (never hardcode names).
+    const char* okBtn = rt.input().hintFor(input::Action::Activate);
+    std::snprintf(hint_, sizeof(hint_), "Double-tap %s to unlock",
+                  (okBtn && *okBtn) ? okBtn : "OK");
+
+    uint8_t gap = nema::theme().space.lg;
+    Style root; root.dir = FlexDir::Col; root.flexGrow = 1; root.padding = nema::theme().space.md;
+    root.align = Align::Center; root.justify = Justify::Center; root.gap = gap;
     return View(a, root, {
-        Text(a, "LOCKED", TextRole::Title),
-        hintVisible_ ? Text(a, "Double-tap OK to unlock", TextRole::Caption) : nullptr,
+        Text(a, clock_, TextRole::Title),
+        Text(a, "LOCKED", TextRole::Caption),
+        hintVisible_ ? Text(a, hint_, TextRole::Caption) : nullptr,
     });
 }
 

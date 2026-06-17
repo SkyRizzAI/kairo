@@ -1,10 +1,12 @@
 #include "nema/system/capabilities.h"
 #include "nema/services/gui_service.h"
+#include "nema/ui/style_tokens.h"
 #include "nema/runtime.h"
 #include "nema/clock.h"
 #include "nema/service/service_container.h"
 #include "nema/config/config_store.h"
 #include "nema/ui/canvas.h"
+#include "nema/ui/renderer.h"
 #include "nema/ui/screen.h"
 #include "nema/ui/status_bar.h"
 #include "nema/ui/view_dispatcher.h"
@@ -39,6 +41,18 @@ void GuiService::start() {
         sleepMs = (uint64_t)cfg->getIntOr("dpm", "sleep_ms", (int64_t)sleepMs);
         lockMs  = (uint64_t)cfg->getIntOr("dpm", "lock_ms",  (int64_t)lockMs);
         aether_->setShowFps(cfg->getIntOr("debug", "fps", 0) != 0);  // Settings → Display
+        // Aether owns its presentational state (theme + scale). FbCon is a
+        // text console — it always renders at scale 1 with the default theme.
+        {
+            std::string t = cfg->getString("display", "theme", "default");
+            if (t == "compact")     aether_->setServerTheme(compactTheme());
+            else if (t == "large")  aether_->setServerTheme(largeTheme());
+            else                    aether_->setServerTheme(defaultTheme());
+        }
+        // Snapshot the canvas scale that runtime.cpp resolved from config/DPI
+        // so Aether can restore it when switching back from another server.
+        if (rt_.canvas().scale() >= 1.0f)
+            aether_->setServerScale(rt_.canvas().scale());
         // Boot server policy (Plan 43): board/user picks the initial backend via
         // config "display/boot". Default = fbcon (CLI-first console boot); set
         // "aether" to boot straight into the UI. No core default autostart.
@@ -71,10 +85,12 @@ void GuiService::stop() {
     thread_.join();
 }
 
+void GuiService::registerServer(IDisplayServer* s) {
+    if (s) extraServers_.push_back(s);
+}
+
 bool GuiService::requestServer(const char* name) {
-    IDisplayServer* target = nullptr;
-    if (aether_ && std::string(aether_->name()) == name) target = aether_.get();
-    else if (fbcon_ && std::string(fbcon_->name()) == name)  target = fbcon_.get();
+    IDisplayServer* target = findServer(name);
     if (!target) return false;
     pendingServer_.store(target);   // GUI thread applies it next iteration
     return true;
@@ -88,7 +104,17 @@ std::vector<const char*> GuiService::serverNames() const {
     std::vector<const char*> v;
     if (aether_) v.push_back(aether_->name());
     if (fbcon_)    v.push_back(fbcon_->name());
+    for (IDisplayServer* s : extraServers_) v.push_back(s->name());
     return v;
+}
+
+IDisplayServer* GuiService::findServer(const char* name) const {
+    if (!name) return nullptr;
+    if (aether_ && std::string(aether_->name()) == name) return aether_.get();
+    if (fbcon_  && std::string(fbcon_->name())  == name) return fbcon_.get();
+    for (IDisplayServer* s : extraServers_)
+        if (std::string(s->name()) == name) return s;
+    return nullptr;
 }
 
 void GuiService::threadEntry(void* self) {
@@ -163,6 +189,14 @@ void GuiService::loop() {
                 rt_.canvas().clear(false);
                 rt_.canvas().flush();
             } else if (!dpm_.isSleeping() && vd.takeRedraw()) {
+                nema::ui::setRenderTick((uint32_t)now);
+                // Restore the active server's presentational state before
+                // rendering — theme and scale are server-owned, not global.
+                if (const StyleTokens* st = server_->serverTheme())
+                    setTheme(*st);
+                else
+                    setTheme(defaultTheme());
+                rt_.canvas().setScale(server_->serverScale());
                 server_->renderFrame(rt_.canvas(), vd, status_);
             }
         }

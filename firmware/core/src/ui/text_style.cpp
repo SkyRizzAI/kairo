@@ -1,22 +1,23 @@
 #include "nema/ui/text_style.h"
-#include "nema/ui/canvas.h"   // BitmapFont, FONT_5X8
+#include "nema/ui/canvas.h"        // BitmapFont, FONT_5X8
+#include "nema/ui/style_tokens.h"  // nema::theme()
 #include <cstring>
 
 namespace nema::ui {
 
+// setTextSize/textSize kept for backward compat; rendering now reads
+// nema::theme().font instead (Plan 53).
 static TextSize g_size = TextSize::Normal;
-
 void     setTextSize(TextSize sz) { g_size = sz; }
 TextSize textSize()               { return g_size; }
 
 FontSpec fontForRole(TextRole role) {
-    // Normal: Body=1x, Title=2x, Caption=1x.  Large: bump body+title one step.
-    const uint8_t bump = (g_size == TextSize::Large) ? 1 : 0;
+    const nema::FontTokens& f = nema::theme().font;
     switch (role) {
-        case TextRole::Title:   return { &FONT_5X8, (uint8_t)(2 + bump) };
-        case TextRole::Caption: return { &FONT_5X8, 1 };
+        case TextRole::Title:   return { &FONT_5X8, f.title };
+        case TextRole::Caption: return { &FONT_5X8, f.caption };
         case TextRole::Body:
-        default:                return { &FONT_5X8, (uint8_t)(1 + bump) };
+        default:                return { &FONT_5X8, f.body };
     }
 }
 

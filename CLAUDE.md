@@ -1,6 +1,6 @@
-# Kairo — Project Conventions
+# Palanu — Project Conventions
 
-Kairo is a hardware-agnostic embedded firmware runtime (C++17). One core, many
+Palanu is a hardware-agnostic embedded firmware runtime (C++17). One core, many
 boards. Code is layered: **core** (`firmware/core/`, no hardware deps) →
 **platforms** (`esp32`, `simulator`) → **boards** (`dev-board`, `skyrizz-e32`) →
 **targets** (`firmware/targets/*` — the buildable apps).
@@ -12,7 +12,7 @@ per-board taste. When adding code, follow them; when you see a violation, fix it
 
 ## Logging
 
-**All system/application logging MUST go through the Kairo Logger (`rt.log()`).**
+**All system/application logging MUST go through the Palanu Logger (`rt.log()`).**
 Never use raw `Serial`, `printf`/`fprintf`/`std::cout`, or `ESP_LOGx` for logging.
 
 ```cpp

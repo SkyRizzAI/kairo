@@ -5,6 +5,7 @@
 #include "nema/services/audio_service.h"
 #include "nema/services/camera_service.h"
 #include "nema/task_runner.h"
+#include "nema/proc/process_manager.h"
 #include <memory>
 #include <vector>
 
@@ -15,6 +16,7 @@ struct IBoard;
 struct IClock;
 class Logger;
 struct ILogSink;
+struct IFileSystem;
 class EventBus;
 class ServiceContainer;
 class ServiceManager;
@@ -26,11 +28,13 @@ class CliService;
 struct SystemInfo;
 class AppRegistry;
 class AppHostManager;
+class ProcessManager;
 class ViewDispatcher;
 class Canvas;
 class GuiService;
 class DisplayPowerManager;
 class IConfigStore;
+struct IDisplayServer;
 
 class Runtime {
 public:
@@ -64,6 +68,7 @@ public:
     nema::TaskRunner&   tasks();        // offload blocking work off the UI thread
     AppRegistry&        apps();       // installed-app table: install/list/launch
     AppHostManager&     appHost();    // app loader: launch IApp + pause/resume (Plan 22)
+    ProcessManager&     processes();  // live process tracker (Plan 54)
 
     // Hand a background service to the Nema lifecycle. Before start(): it boots
     // with the system (startAll). While Running: it starts immediately. Used by
@@ -86,6 +91,8 @@ public:
     bool                     switchDisplayServer(const char* name);
     const char*              displayServerName() const;
     std::vector<const char*> displayServerList() const;
+    IDisplayServer*          displayServer() const;      // Plan 50/51: active server
+    IDisplayServer*          findDisplayServer(const char* name) const;  // Plan 51: by name
     AudioService&        audio();
     CameraService&       camera();
 
@@ -93,6 +100,18 @@ public:
     // from the on-device console. Called by each platform after CLI setup.
     void         setCli(CliService& c)  { cli_ = &c; }
     CliService*  cliService()           { return cli_; }
+
+    // Platform filesystem (Plan 59). Platforms call setFs(&vfs_) during
+    // registerDrivers(). The PAPP1 installer uses fs() to persist bundles to
+    // /flash/apps/<id>/. May be nullptr on platforms with no flash filesystem.
+    void          setFs(IFileSystem* fs) { fs_ = fs; }
+    IFileSystem*  fs()                   { return fs_; }
+
+    // Enumerate the in-memory log ring buffer oldest→newest (Plan 60 LogsScreen).
+    // Callback-based so callers don't depend on the sink's container type, and
+    // it avoids assuming contiguous storage (the sink is a std::deque).
+    void logForEach(void (*fn)(void* ctx, const struct LogEntry&), void* ctx) const;
+    size_t logCount() const;
 
     BootPhase phase()    const;
     int       exitCode() const;
@@ -118,6 +137,7 @@ private:
     std::unique_ptr<SystemInfo>        systemInfo_;
     std::unique_ptr<AppRegistry>       appRegistry_;
     std::unique_ptr<AppHostManager>    appHosts_;
+    ProcessManager                     processes_;      // value member — always alive
     std::unique_ptr<ViewDispatcher>    viewDispatcher_;
     std::unique_ptr<Canvas>            canvas_;
     std::unique_ptr<GuiService>        gui_;           // UI thread (owns render)
@@ -126,6 +146,7 @@ private:
     nema::TaskRunner                   taskRunner_;    // value member — always alive
     AudioService                       audioService_;  // value member — always alive
     CliService*                        cli_           = nullptr;
+    IFileSystem*                       fs_            = nullptr;
     CameraService                      cameraService_; // value member — always alive
 };
 

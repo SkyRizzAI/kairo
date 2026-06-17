@@ -49,6 +49,16 @@ public:
     bool                       requestServer(const char* name);  // false = unknown name
     const char*                activeServerName() const;
     std::vector<const char*>   serverNames() const;
+    IDisplayServer*            activeServer() const { return server_; }  // Plan 50/51
+
+    // Plan 51 — Look up a registered server by name without switching.
+    // Used by AppRegistry to pre-check requiredCaps() before calling requestServer().
+    IDisplayServer*            findServer(const char* name) const;
+
+    // Plan 51 DisplayServerRegistry — register an externally-owned server so it
+    // participates in findServer()/requestServer()/serverNames(). The caller owns
+    // the lifetime; call before GuiService::start(). Not thread-safe.
+    void                       registerServer(IDisplayServer* s);
 
     // FPS API — forwarded to the active display server (AetherServer owns the
     // rolling 1s flush-count window + the overlay toggle).
@@ -77,6 +87,9 @@ private:
     LockScreen            lockScreen_;
     DisplayPowerManager   dpm_;
     IDisplayDriver*       display_ = nullptr;
+
+    // Plan 51 — additional servers registered via registerServer().
+    std::vector<IDisplayServer*> extraServers_;
 };
 
 } // namespace nema

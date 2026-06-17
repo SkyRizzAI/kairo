@@ -1,4 +1,8 @@
+// Plan 60 Fase 4 — AetherServer chrome update (modal → rounded box, FPS overlay).
 #include "nema/ui/aether_server.h"
+#include "nema/ui/aether_abi.h"
+#include "nema/ui/draw.h"
+#include "nema/system/capabilities.h"
 #include "nema/ui/canvas.h"
 #include "nema/ui/screen.h"
 #include "nema/ui/status_bar.h"
@@ -11,16 +15,16 @@ namespace nema {
 
 void AetherServer::renderFrame(Canvas& c, ViewDispatcher& vd, const StatusBarData& status) {
     uint64_t now = clock_.millis();
-    // FPS window: snapshot the flush count once per second.
     if (now - fpsLastMs_ >= 1000) {
         fps_       = (uint16_t)fpsFrames_;
         fpsFrames_ = 0;
         fpsLastMs_ = now;
     }
-    fpsFrames_++;   // count actual display flushes
+    fpsFrames_++;
 
     uint64_t tDraw0 = now;
     c.clear();
+
     if (auto* s = vd.active()) {
         switch (s->mode()) {
         case ScreenMode::Normal:
@@ -33,10 +37,10 @@ void AetherServer::renderFrame(Canvas& c, ViewDispatcher& vd, const StatusBarDat
             }
             uint16_t mw = s->modalWidth();
             uint16_t mh = s->modalHeight();
-            uint16_t mx = (c.width()  - mw) / 2;
-            uint16_t my = (c.height() - mh) / 2;
-            c.fillRect(mx, my, mw, mh, false);
-            c.drawRect(mx, my, mw, mh, true);
+            uint16_t mx = (uint16_t)((c.width()  > mw) ? (c.width()  - mw) / 2 : 0);
+            uint16_t my = (uint16_t)((c.height() > mh) ? (c.height() - mh) / 2 : 0);
+            c.fillRect(mx, my, mw, mh, false);          // clear interior
+            aether::ui::draw::box_rounded(c, mx, my, mw, mh, false);  // rounded border
             break;
         }
         case ScreenMode::Fullscreen:
@@ -44,28 +48,42 @@ void AetherServer::renderFrame(Canvas& c, ViewDispatcher& vd, const StatusBarDat
         }
         s->draw(c);
 
-        // Fullscreen screens that use direct color rendering (blitRgb565) need
-        // to suppress the 1-bit canvas flush — it would overwrite their content.
         if (s->mode() == ScreenMode::Fullscreen && s->suppressCanvasFlush())
             return;
     }
     lastDrawMs_ = (uint16_t)(clock_.millis() - tDraw0);
 
-    // FPS + timing overlay (top-right): "<fps> d<drawMs>/f<flushMs>" so you can
-    // see exactly where a slow frame goes (screen draw vs LCD flush).
     if (showFps_) {
         char fb[24];
         std::snprintf(fb, sizeof(fb), "%u d%u/f%u",
                       (unsigned)fps_, (unsigned)lastDrawMs_, (unsigned)lastFlushMs_);
         uint16_t tw = c.textWidth(fb);
         uint16_t bx = (uint16_t)(c.width() > tw + 4 ? c.width() - tw - 4 : 0);
-        c.fillRect(bx, 0, (uint16_t)(tw + 4), ui::CHAR_H + 1, false);  // clear bg
-        c.drawText((uint16_t)(bx + 2), 1, fb, true);
+        // Small rounded pill background for FPS counter
+        aether::ui::draw::box_rounded(c, bx, 0, (uint16_t)(tw + 4),
+                                      ui::CHAR_H + 1, true);
+        c.drawText((uint16_t)(bx + 2), 1, fb, false);  // white text on dark pill
     }
 
     uint64_t tFlush0 = clock_.millis();
     c.flush();
     lastFlushMs_ = (uint16_t)(clock_.millis() - tFlush0);
+}
+
+const UiSdkDescriptor* AetherServer::uiSdk() const {
+    static const char* caps[] = { caps::Display, caps::Input2D };
+    static const UiSdkDescriptor d{ "aether:ui", 1, 0, caps, 2 };
+    return &d;
+}
+
+void AetherServer::registerBindings(IUiBindingHost& host) {
+    host.bind("aether:ui", "view-begin",    (void*)&aether_view_begin);
+    host.bind("aether:ui", "view-end",      (void*)&aether_view_end);
+    host.bind("aether:ui", "label",         (void*)&aether_text_label);
+    host.bind("aether:ui", "styled",        (void*)&aether_text_styled);
+    host.bind("aether:ui", "button",        (void*)&aether_interactive_button);
+    host.bind("aether:ui", "scroll-begin",  (void*)&aether_scroll_begin);
+    host.bind("aether:ui", "scroll-end",    (void*)&aether_scroll_end);
 }
 
 } // namespace nema

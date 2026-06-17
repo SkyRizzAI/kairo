@@ -1,0 +1,19 @@
+{
+  "name": "@palanu/app-sdk",
+  "version": "0.1.0",
+  "description": "Palanu custom-app SDK — write device apps in TSX, build to .papp",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./jsx-runtime": "./src/jsx-runtime.ts",
+    "./jsx-dev-runtime": "./src/jsx-runtime.ts",
+    "./nema": "./src/index.ts"
+  },
+  "bin": {
+    "palanu-build": "./bin/build.ts"
+  },
+  "scripts": {
+    "build:counter": "bun bin/build.ts templates/counter",
+    "verify": "bun run scripts/verify.ts"
+  }
+}

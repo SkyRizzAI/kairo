@@ -1,0 +1,58 @@
+// nema:net — Network interfaces (HTTP client, Wi-Fi station).
+// Sources: hal/http_client.h, hal/wifi.h
+package nema:net@1.0
+
+/// HTTP response returned by get/post.
+record http-response {
+    /// HTTP status code (100–599); 0 = transport error.
+    status: u16,
+    /// Response body, truncated to a host-defined cap.
+    body: string,
+}
+
+/// Networked HTTP client. Maps to IHttpClient (hal/http_client.h:16–23).
+/// All methods BLOCK and MUST run on a TaskRunner worker — never the UI loop.
+/// The host wraps @blocking functions as async (Promise in JS, callback in WASM).
+@capability("net.http")
+interface http {
+    /// HTTPS GET. Returns the response or an error string on transport failure.
+    @blocking
+    get: func(url: string) -> result<http-response, string>
+
+    /// HTTPS POST with a body and Content-Type header.
+    @blocking
+    post: func(url: string, body: string, content-type: string) -> result<http-response, string>
+}
+
+/// Wi-Fi station management. Maps to IWifiDriver (hal/wifi.h:30–43).
+/// @future — not yet exposed in JS v0 (js_api.cpp); defined here so the
+/// IDL is the complete SSOT. Will be added to JS/WASM bindings in Plan 49.
+@capability("net.wifi")
+interface wifi {
+    /// Whether the device is currently connected to an AP.
+    is-connected: func() -> bool
+
+    /// The SSID of the currently connected AP, or empty string.
+    ssid: func() -> string
+
+    /// The local IP address, or empty string.
+    ip: func() -> string
+
+    /// Start a Wi-Fi scan. @blocking — runs on worker.
+    @blocking
+    scan: func() -> list<wifi-ap>
+
+    /// Connect to an AP.
+    @blocking
+    connect: func(ssid: string, password: string) -> result<tuple<>, string>
+
+    /// Disconnect from the current AP.
+    disconnect: func()
+}
+
+/// A Wi-Fi access point found during a scan.
+record wifi-ap {
+    ssid: string,
+    rssi: s32,
+    auth: string,
+}

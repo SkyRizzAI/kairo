@@ -3,6 +3,8 @@
 #include "nema/app/app_context.h"
 #include "nema/runtime.h"
 #include "nema/log/logger.h"
+#include "nema/ui/display_server.h"
+#include "nema/ui/ui_sdk.h"
 #include "nema/ui/widgets.h"
 #include <cstdio>
 #include <utility>
@@ -11,9 +13,10 @@ namespace nema {
 
 using namespace ui;
 
-JsApp::JsApp(std::string id, std::string name, std::string version, std::string bundleJs)
+JsApp::JsApp(std::string id, std::string name, std::string version, std::string bundleJs,
+             std::string displayServer)
     : id_(std::move(id)), name_(std::move(name)), version_(std::move(version)),
-      js_(std::move(bundleJs)) {}
+      js_(std::move(bundleJs)), displayServer_(std::move(displayServer)) {}
 
 JsApp::~JsApp() = default;
 
@@ -29,6 +32,17 @@ void JsApp::onStart(AppContext& ctx) {
     eng_->setMaxStackSize(stackBytes() * 3 / 4);
     eng_->setDeadlineMs(5000);               // runaway guard per JS turn (time)
     eng_->setHost(&ctx.runtime(), id_);      // capability-gated nema.* system API
+
+    // Plan 50 — validate UI SDK availability against the active display server.
+    if (const IDisplayServer* srv = ctx.runtime().displayServer()) {
+        if (const UiSdkDescriptor* sdk = srv->uiSdk()) {
+            ctx.runtime().log().info("JsApp", "ui sdk",
+                {{"app", id_}, {"sdk", sdk->ns},
+                 {"server", srv->name()}});
+        }
+    }
+
+    eng_->setProcessContext(&ctx);              // Plan 58: process.argv/exit/stdout
     loaded_ = eng_->ok() && eng_->loadApp(js_.c_str(), id_.c_str());
     if (!loaded_) {
         std::snprintf(errLine_, sizeof(errLine_), "JS load failed: %.70s",
@@ -48,7 +62,7 @@ UiNode* JsApp::build(NodeArena& arena, AppContext& ctx) {
             Text(arena, errLine_, TextRole::Caption),
         });
     }
-    ctx.runtime().log().debug("JsApp", "render start", {{"app", id_}});
+    ctx.runtime().log().info("JsApp", "render start", {{"app", id_}});
     UiNode* root = eng_->render(arena);
     if (!root) {
         ctx.runtime().log().error("JsApp", "render failed",
@@ -60,7 +74,7 @@ UiNode* JsApp::build(NodeArena& arena, AppContext& ctx) {
                  TextRole::Caption),
         });
     }
-    ctx.runtime().log().debug("JsApp", "render ok", {{"app", id_}});
+    ctx.runtime().log().info("JsApp", "render ok", {{"app", id_}});
     return root;
 }
 

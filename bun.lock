@@ -11,6 +11,13 @@
         "typescript": "^5",
       },
     },
+    "packages/app-sdk": {
+      "name": "@palanu/app-sdk",
+      "version": "0.1.0",
+      "bin": {
+        "palanu-build": "./bin/build.ts",
+      },
+    },
     "packages/forge": {
       "name": "forge",
       "version": "0.0.1",
@@ -47,11 +54,11 @@
         "vite": "^8.0.7",
       },
     },
-    "packages/nema-app-sdk": {
-      "name": "nema",
-      "version": "0.1.0",
-      "bin": {
-        "nema-build": "./bin/nema-build.ts",
+    "packages/idl": {
+      "name": "@palanu/idl",
+      "version": "1.0.0",
+      "devDependencies": {
+        "@types/bun": "latest",
       },
     },
   },
@@ -87,6 +94,10 @@
     "@napi-rs/wasm-runtime": ["@napi-rs/wasm-runtime@1.1.4", "", { "dependencies": { "@tybys/wasm-util": "^0.10.1" }, "peerDependencies": { "@emnapi/core": "^1.7.1", "@emnapi/runtime": "^1.7.1" } }, "sha512-3NQNNgA1YSlJb/kMH1ildASP9HW7/7kYnRI2szWJaofaS1hWmbGI4H+d3+22aGzXXN9IJ+n+GiFVcGipJP18ow=="],
 
     "@oxc-project/types": ["@oxc-project/types@0.133.0", "", {}, "sha512-KzkdCd6Uxqnf6l3HOw1xfatAlUURA0g14cvBYFyJ5SaNOQbOUvBr9PKArcPcrNIeRsBdgcUzOGrhKveVpvOIGA=="],
+
+    "@palanu/app-sdk": ["@palanu/app-sdk@workspace:packages/app-sdk"],
+
+    "@palanu/idl": ["@palanu/idl@workspace:packages/idl"],
 
     "@polka/url": ["@polka/url@1.0.0-next.29", "", {}, "sha512-wwQAWhWSuHaag8c4q/KN/vCoeOJYshAIvMQwD4GpSb3OiZklFfvAgmj0VCBBImRpuF/aFgIRzllXlVX93Jevww=="],
 
@@ -349,8 +360,6 @@
     "mrmime": ["mrmime@2.0.1", "", {}, "sha512-Y3wQdFg2Va6etvQ5I82yUhGdsKrcYox6p7FfL1LbK2J4V01F9TGlepTIhnK24t7koZibmg82KGglhA1XK5IsLQ=="],
 
     "nanoid": ["nanoid@3.3.12", "", { "bin": { "nanoid": "bin/nanoid.cjs" } }, "sha512-ZB9RH/39qpq5Vu6Y+NmUaFhQR6pp+M2Xt76XBnEwDaGcVAqhlvxrl3B2bKS5D3NH3QR76v3aSrKaF/Kiy7lEtQ=="],
-
-    "nema": ["nema@workspace:packages/nema-app-sdk"],
 
     "node-fetch-native": ["node-fetch-native@1.6.7", "", {}, "sha512-g9yhqoedzIUm0nTnTqAQvueMPVOuIY16bqgAJJC8XOOubYFNwz6IER9qs0Gq2Xd0+CecCKFjtdDTMA4u4xG06Q=="],
 

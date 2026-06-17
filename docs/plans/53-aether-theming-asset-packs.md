@@ -4,7 +4,7 @@
 > settings (ganti font/scale/style/pack) — **milik Aether**, gaya Momentum Flipper.
 > (Server masa depan punya theming sendiri.)
 
-- Status: 🟧 Detail draft (belum diimplementasi)
+- Status: ✅ Implemented — StyleTokens + theme()/setTheme()/defaultTheme()/compactTheme()/largeTheme() done; icon handle system implemented (`nema/ui/icon_pack.h` + `icon_pack.cpp`): `findIcon(handle)` / `allIcons()` with 16 built-in 8×8 XBM bitmaps covering status.{wifi,bt,battery,charging}, feature.{apps,settings,gpio,subghz,nfc}, file.{folder,file,generic}, action.{warning,info,ok,spinner}; drawn via `aether::ui::draw::icon()`
 - Depends on: 50 (UI SDK model), 52 (rasterisasi Aether)
 
 ---
@@ -13,7 +13,7 @@
 
 - **Theme context Aether** (fontSet, scale, palette/style tokens, active pack)
   sebagai state milik Aether; widget & toolkit Aether membacanya.
-- **Asset pack**: handle logis (`icon("wifi")`, `font("primary")`) → resolve oleh
+- **Asset pack**: handle logis (`icon("status.wifi")`, `font("primary")`) → resolve oleh
   pack aktif; loader pack (fonts/icons/anims); persistence.
 - UI Settings: ganti font/scale/style/pack → semua app Aether re-skin.
 
@@ -76,9 +76,8 @@ enum class FontRole : uint8_t {           // handle logis (gaya Flipper Font enu
     Primary, Secondary, Caption, BigNumber, Keyboard
 };
 
-struct FontSet {                          // role → font konkret (di-resolve pack)
-    const nema::BitmapFont* roles[5];     // diisi dari pack aktif
-    uint8_t                 scaleFor[5];  // pixel-double sementara (Plan 25)
+struct FontSet {                          // role → font konkret (di-resolve pack aktif)
+    const Font* roles[5];                 // PROPORSIONAL & multi-size — lihat "Format font Aether"
 };
 
 struct Palette {                          // 1-bit sekarang; slot warna utk server warna
@@ -86,17 +85,20 @@ struct Palette {                          // 1-bit sekarang; slot warna utk serv
     // (server warna masa depan: fg/bg/accent RGB di sini)
 };
 
-struct StyleTokens {                      // konstanta yg KINI hardcoded di widgets/renderer
-    uint8_t  padding   = 2;
-    uint8_t  gap       = 2;
-    uint8_t  radius    = 2;               // sudut rounded frame/box
-    uint8_t  separator = 1;
+struct StyleTokens {                      // design tokens — SKALA BERNAMA (lihat "Token Scale")
+    // Spacing/radius — px LITERAL kontinu: nilai persis, "md 8→12" bekerja MULUS.
+    uint8_t spaceXs = 2, spaceSm = 4, spaceMd = 8, spaceLg = 12, spaceXl = 16;
+    uint8_t radiusSm = 1, radiusMd = 2, radiusLg = 4;
+    // Font — TARGET tinggi px; di-resolve ke font bitmap diskret TERDEKAT (atau
+    // font dasar × zoom integer). Lompatan BERTINGKAT, bukan mulus (jujur soal bitmap).
+    uint8_t fontXs = 6, fontSm = 8, fontMd = 10, fontLg = 14, fontXl = 20;
+    uint8_t separator = 1;
     enum FocusStyle { Invert, Ring } focus = Invert;
 };
 
 struct Theme {                            // DIMILIKI Aether (bukan global lintas-server)
     FontSet           fonts;
-    uint8_t           scale  = 1;         // 1..3 — resolution-independence (Plan 25)
+    uint8_t           scale  = 1;         // ZOOM global 1..3 (Plan 25) — BEDA dari token ukuran StyleTokens
     Palette           palette;
     StyleTokens       tokens;
     const AssetPack*  pack;               // pack aktif (resolve icon/font/anim)
@@ -109,22 +111,129 @@ struct Theme {                            // DIMILIKI Aether (bukan global linta
 **renderer** (`paint()`): `padding`/`radius`/`focus`/`separator` tak lagi
 hardcoded, font lewat `fonts.roles[role]`, ikon lewat `pack->icon(...)`.
 
+### Token Scale (skala bernama: spacing mulus, font diskret)
+
+`StyleTokens` memperluas token tersebar menjadi **skala bernama**
+yang konsisten — ganti dari konstanta `padding/gap/radius` ad-hoc (sekarang
+hardcoded di `widgets.cpp`/`renderer.cpp`, audit `text_style.h`) menjadi tangga
+nilai yang dirujuk komponen. **Dua keluarga token dengan nuansa berbeda:**
+
+| Keluarga | Token | Sifat | Kejujuran |
+|---|---|---|---|
+| **Spacing/radius** | `spaceXs..spaceXl`, `radiusSm..radiusLg` | **px literal kontinu** | `md = 10 → 12` bekerja **persis** (mulus) — geometri 1-bit menerima nilai apa pun |
+| **Font** | `fontXs..fontXl` | **TARGET tinggi px** | di-resolve ke **font bitmap diskret terdekat** (atau font dasar × scale integer, Plan 25) → lompatan **bertingkat, bukan mulus**. Bitmap tak bisa di-skala pecahan tanpa antialias (Plan 25 §2.1) — token font itu *permintaan*, bukan jaminan tinggi-persis |
+
+> Nuansa ini sengaja eksplisit: app yang minta `fontMd=10` di font yang hanya punya
+> 8px & 16px akan dapat 8px (terdekat ≤) — **bukan** 10px interpolasi. Spacing tak
+> punya batasan itu. Memisahkan keduanya mencegah ekspektasi "font mulus" yang
+> mustahil di 1-bit pixelete.
+
+**Berlapis (primitif ← role semantik ← komponen):**
+
+```
+Token primitif  : tokens.fontXs/Sm/Md/Lg/Xl · tokens.spaceXs..Xl · tokens.radius*
+        ▲ dirujuk oleh
+Role semantik   : TextRole::Title → {FontRole::Primary, fontLg} · Body → {Primary, fontMd} · Caption → {Secondary, fontSm}
+        ▲ dirujuk oleh
+Komponen        : Header pakai TextRole::Title, ListRow pakai Body, Footer pakai Caption
+```
+
+App menggambar lewat **`TextRole` default** (`Title/Body/Caption` yang sudah ada di
+`node.h:14`) → seragam lintas app & otomatis ikut reskin. **Jembatan role**: Theme
+memetakan tiap `TextRole` → `{FontRole (slot font di FontSet) + token ukuran}` —
+`FontSet` di-index oleh `FontRole`, bukan `TextRole`. `FontRole` ekstra
+(`BigNumber`, `Keyboard`) dialamati **langsung** oleh widget khusus (jam/counter,
+virtual keyboard), di luar 3 `TextRole`. Token primitif (`tokens.fontLg` dst.)
+tetap tersedia untuk kebutuhan khusus, tapi bukan jalur utama.
+
+**Override scoped (read-only sistem, lokal per-surface):**
+
+- Token sistem (`theme().tokens`) **read-only** bagi app → menjamin reskin
+  global (Settings, di bawah) **dan** keseragaman antar-app.
+- App boleh `surface.themeOverride({ ... })` (Plan 52 `Surface`) **TAPI lokal ke
+  surface-nya saja — bukan mutasi `ThemeContext` global**. Analogi: scope CSS /
+  `ThemeProvider` React — override turun hanya ke subtree surface itu.
+- Di-nudge lewat **ergonomi, bukan larangan**: konsumsi role default = satu baris
+  gampang; override = opt-in eksplisit (`themeOverride(...)`, "tidak disarankan"
+  tersirat dari friksi API), agar app nakal tak diam-diam pecahkan keseragaman.
+
+```cpp
+// Default (disarankan): role → token sistem, ikut reskin global.
+Header(a, "Settings");                        // TextRole::Title → {FontRole::Primary, tokens.fontLg} sistem
+
+// Override LOKAL surface (opt-in, tak menyentuh ThemeContext global):
+surface.themeOverride({ .fontMd = 16 });      // hanya surface ini (StyleTokens datar)
+```
+
+### Format font Aether (proporsional + multi-size) — konsep dikunci, tweak nanti
+
+`nema::BitmapFont` sekarang = grid **monospace tetap** (`charW×charH`, `FONT_5X8`)
+— cukup untuk CLI, tapi **tak cukup** untuk "ganti font ala Momentum": font Flipper
+**proporsional** (lebar per-glyph beda) dan **multi-size** (FontPrimary vs
+FontBigNumbers = font *berbeda*, bukan satu font di-zoom). Maka `FontSet` memegang
+tipe `Font` yang lebih kaya — **formatnya dikunci sekarang, implementasi belakangan**:
+
+```cpp
+namespace aether::ui {
+
+struct Glyph {                 // satu karakter — PROPORSIONAL
+    uint8_t  width;            // lebar glyph (px), beda per-karakter
+    uint8_t  advance;          // jarak ke glyph berikut (width + kerning)
+    int8_t   offsetX, offsetY; // bearing relatif baseline
+    const uint8_t* bitmap;     // 1-bit, tinggi = Font.height
+};
+
+struct Font {                  // tipe font Theme (menggantikan BitmapFont sbg acuan)
+    const char* name;          // "primary", "big_numbers", "haxrcorp_4089", ...
+    uint8_t  height;           // tinggi baris (px)
+    uint8_t  baseline;         // posisi baseline dari atas
+    uint8_t  spacing;          // jarak antar-glyph default
+    uint16_t firstCp, lastCp;  // rentang codepoint (ASCII 0x20–0x7E v1)
+    const Glyph* glyphs;       // tabel [firstCp..lastCp]
+};
+
+} // namespace aether::ui
+```
+
+- **Pengukuran teks proporsional**: `textWidth(font, s) = Σ glyph.advance` — bukan
+  `len × charW`. `layout()` (Plan 52) memakai ini lewat `TextMetrics` yang sudah
+  injectable → layout & paint tetap sepakat (invarian `text_style`).
+- **`FONT_5X8` = kasus degenerasi**: di-bungkus jadi `Font` monospace (semua
+  `glyph.advance` sama). Font lama **muat di struct baru tanpa perubahan visual**;
+  font proporsional asli tinggal di-slot belakangan.
+- **File `.afont`** (di pack, `fonts/<role>.afont`): header (`height/baseline/
+  spacing/firstCp/lastCp`) + tabel glyph (width/advance/offset + bitmap packed).
+  Loader (Fase 3) parse ke `Font`. **Jalur adopsi `.u8f` (u8g2/Momentum) tetap
+  terbuka** → bisa pakai pack font Flipper langsung nanti.
+- **`Theme.scale`** (1..3, Plan 25) = zoom **global** resolution-independence di ATAS
+  font; berbeda dari multi-size (font berbeda per-role). Keduanya komposable.
+
+> **v1 dikirim**: hanya `FONT_5X8`-sebagai-`Font` (monospace) — cukup jalan.
+> **Disiapkan sekarang**: struct `Font`/`Glyph` proporsional + format `.afont` +
+> `textWidth` berbasis `advance`. Jadi menambah font asli & ganti-font ala Momentum
+> nanti = **isi data + loader, TANPA ubah arsitektur**.
+
 ### Struktur `AssetPack` (handle logis → resolve)
 
 ```cpp
 namespace aether::ui {
 
-using IconHandle = const char*;           // "wifi", "battery", "warning", ...
+using IconHandle = const char*;           // BER-NAMESPACE: "status.wifi", "file.folder",
+                                          // "feature.apps", "action.warning" (lihat Icon system)
 using AnimHandle = const char*;           // "spinner", "boot", ...
 
-struct Icon { uint16_t w, h; const uint8_t* xbm; };      // 1-bit XBM (drawBitmap)
-struct AnimAsset { const Icon* frames; uint8_t count; uint8_t fps; };
+struct Icon {                             // 1-bit XBM (Canvas::drawBitmap, canvas.h:41)
+    uint16_t       w, h;                  // ukuran base px (tile ~16×16, list-glyph ~10×10)
+    const uint8_t* xbm;                   // bitmap base
+    const uint8_t* xbm2x = nullptr;       // @2x OPSIONAL; null → integer-scale nearest-neighbor base
+};
+struct AnimAsset { const Icon* frames; uint8_t count; uint8_t fps; };  // spinner/loading
 
 struct AssetPack {
     const char* name;                     // "Default", "Momentum", "WatchDogs"
 
     // Resolve handle logis: override pack → fallback ke built-in flash.
-    const nema::BitmapFont* font(FontRole r)   const;
+    const Font*             font(FontRole r)   const;     // Font proporsional (lihat di atas)
     const Icon*             icon(IconHandle h) const;     // ala asset_packs_swap_icon
     const AnimAsset*        anim(AnimHandle h) const;
 
@@ -146,9 +255,52 @@ aether_packs/<PackName>/
   anims/<name>/          # frame*.xbm + meta (count, fps)
 ```
 
-> **Built-in pack "Default"** = di flash (font `FONT_5X8` + ikon sistem inti:
-> wifi/battery/warning/charging). Selalu ada → fallback aman saat storage kosong.
-> Pack user di storage hanya **override** handle yang ia sediakan.
+> **Built-in pack "Default"** = di flash (font `FONT_5X8` + system icon set inti
+> di bawah). Selalu ada → fallback aman saat storage kosong. Pack user di storage
+> hanya **override** handle yang ia sediakan.
+
+### Icon system (handle ber-namespace + set built-in)
+
+Ikon = **handle logis ber-namespace**, bukan bitmap mentah (app/sistem tak pernah
+pegang `const uint8_t*` — selalu lewat `pack->icon(handle)` → reskin global). Empat
+namespace, pemisah `.`:
+
+| Namespace | Contoh handle | Pakai |
+|---|---|---|
+| `status.*` | `status.wifi`, `status.bt`, `status.battery`, `status.charging` | status bar (Plan 52 compositor) |
+| `feature.*` | `feature.apps`, `feature.settings`, `feature.gpio`, `feature.subghz`, `feature.nfc` | launcher / MainMenu (Plan 52), icon manifest app sistem (Plan 59) |
+| `file.*` | `file.folder`, `file.file`, `file.generic` (+ per-ekstensi: `file.txt`, `file.img`, …) | FileBrowser (Plan 52) resolve via ekstensi |
+| `action.*` | `action.warning`, `action.info`, `action.ok`, `action.spinner` | Dialog/Popup/Loading (Plan 52) |
+
+**Format & rendering:**
+
+- **1-bit XBM**, ukuran base: **tile ~16×16** (launcher/MainMenu/feature),
+  **list-glyph ~10×10** (ListView/FileBrowser baris). Cocok `Canvas::drawBitmap`
+  (`canvas.h:41`).
+- **Integer-scale nearest-neighbor (crisp)** — sama prinsip dengan font/scale Plan 25
+  (tanpa antialias). Pack boleh sediakan `xbm2x` (@2x) opsional untuk display padat;
+  bila null, renderer integer-scale base.
+
+**System icon set built-in (di flash, kontrak no-null):** daftar konkret yang
+**selalu** ada walau storage kosong / handle tak dikenal (fallback → `file.generic`
+atau kotak placeholder, **tak pernah null** — invarian `AssetPack`):
+
+```
+status  : wifi · bt · battery · charging
+feature : apps · settings · gpio · subghz · nfc
+file    : folder · file · generic
+action  : warning · info · ok · spinner
+```
+
+Cukup untuk **OS UI inti** (status bar, launcher, settings, file browser, dialog).
+Pack user hanya meng-**override** handle yang ia sediakan; sisanya jatuh ke built-in.
+
+**Authoring & toolchain** (gaya Flipper `assets`): sumber **PNG/XBM** →
+**header C ter-generate** (`firmware/core/assets/icons/*.xbm` atau `.h`, lihat "File
+yang disentuh") → built-in tertanam di flash (XIP, nol RAM). Pack user dari storage
+(`aether_packs/<name>/icons/*.xbm`) di-load loader (Fase 3) sebagai override.
+`AnimAsset` (frames + fps, gaya Flipper `IconAnimation`) untuk `action.spinner` /
+loading.
 
 ### ThemeContext + reskin global
 
@@ -206,7 +358,7 @@ Aether yang berjalan re-skin tanpa restart (live preview).
 
 ```cpp
 // App TIDAK pernah pegang bitmap; selalu handle logis → reskin global gratis.
-draw::icon(c, x, y, "wifi");                 // resolve pack aktif
+draw::icon(c, x, y, "status.wifi");          // resolve pack aktif (handle ber-namespace)
 draw::text(c, x, y, "Battery", TextRole::Caption /*→FontRole via theme*/);
 Header(a, "Settings");                        // Header pakai FontRole::Primary dari Theme
 ```
@@ -267,7 +419,7 @@ Header(a, "Settings");                        // Header pakai FontRole::Primary 
 
 ## Test
 
-- **Host — resolve handle:** `pack->icon("wifi")` kembalikan override saat ada,
+- **Host — resolve handle:** `pack->icon("status.wifi")` kembalikan override saat ada,
   fallback built-in saat tidak, **tak pernah null** (handle tak dikenal → default).
 - **Host — Theme tokens:** render tree dengan dua `StyleTokens` berbeda
   (padding/radius/focus) → snapshot beda; dengan token default → parity sekarang.
@@ -296,3 +448,6 @@ Header(a, "Settings");                        // Header pakai FontRole::Primary 
 | Format font/icon Aether vs `.u8f` Momentum | Tak kompatibel pack Flipper | v1 pakai XBM 1-bit + font Aether sederhana; adopsi `.u8f`/u8g2 = opsi nanti, slot disiapkan |
 | Tema bocor jadi global lintas-server (melanggar keputusan) | Arsitektur rusak | `Theme`/`ThemeContext` hidup di namespace `aether::ui`, dimiliki AetherServer — server lain instansiasi sendiri |
 | Manifest pack korup / versi beda | Pack gagal muat senyap | Validasi manifest + versi; gagal → fallback "Default" + `rt.log().error` jelas |
+| Token font (`fontXs..Xl`) diharap mulus padahal bitmap diskret | Teks tak persis target / janggal | Token font = **target** di-resolve ke font terdekat (didokumentasikan); spacing kontinu dipisah dari font; uji resolve target→font |
+| `themeOverride` per-surface bocor jadi mutasi global | Keseragaman pecah | Override **lokal** ke `Surface` (Plan 52), token sistem read-only; ThemeContext satu-satunya jalur reskin global; test isolasi scope |
+| Handle ikon namespace salah-eja (`status.wifi` vs `wifi`) | Ikon hilang | Kontrak no-null → fallback `file.generic`/placeholder + `rt.log().warn`; system set built-in sebagai lantai |

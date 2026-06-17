@@ -3,6 +3,8 @@
 #include "nema/app/app_host_manager.h"
 #include "nema/service.h"
 #include "nema/ui/view_dispatcher.h"
+#include "nema/ui/display_server.h"
+#include "nema/system/capability_registry.h"
 #include "nema/runtime.h"
 #include "nema/log/logger.h"
 #include "nema/event/event_bus.h"
@@ -25,6 +27,12 @@ void AppRegistry::install(IApp& app, const char* version) {
 void AppRegistry::installCustom(IApp& app, const char* version) {
     add({app.id(), app.name(), version, AppKind::Custom, AppType::App},
         {&app, nullptr, nullptr});
+}
+
+void AppRegistry::installCustom(IApp& app, AppManifest manifest) {
+    manifest.kind = AppKind::Custom;
+    manifest.type = AppType::App;
+    add(manifest, {&app, nullptr, nullptr});
 }
 
 void AppRegistry::installScreen(const char* id, const char* name, IScreen& screen,
@@ -88,7 +96,31 @@ bool AppRegistry::isInstalled(const char* id) const {
 bool AppRegistry::launch(const char* id) {
     for (size_t i = 0; i < manifests_.size(); i++) {
         if (!idEq(manifests_[i].id, id)) continue;
+        const AppManifest& m = manifests_[i];
         const Target& t = targets_[i];
+
+        // Plan 51 — negotiate display server before launching the app.
+        // Check requiredCaps() eligibility first; deny the launch if the
+        // board lacks a capability the target server needs (e.g. "display").
+        if (m.displayServer && m.displayServer[0]) {
+            if (IDisplayServer* srv = rt_.findDisplayServer(m.displayServer)) {
+                if (const char* const* caps = srv->requiredCaps()) {
+                    for (const char* const* c = caps; *c; c++) {
+                        if (!rt_.capabilities().has(*c)) {
+                            rt_.log().warn("AppRegistry",
+                                std::string("launch: server '") + m.displayServer
+                                + "' requires cap '" + *c + "' — unavailable for " + id);
+                            return false;
+                        }
+                    }
+                }
+            }
+            if (!rt_.switchDisplayServer(m.displayServer)) {
+                rt_.log().warn("AppRegistry", std::string("launch: server '")
+                    + m.displayServer + "' unavailable for " + id);
+            }
+        }
+
         if (t.app)         { rt_.appHost().launch(*t.app); return true; }  // own thread
         if (t.screen)      { rt_.view().push(*t.screen);   return true; }  // UI-thread view
         // Services aren't launchable — they're already running in background.
@@ -97,6 +129,13 @@ bool AppRegistry::launch(const char* id) {
     }
     rt_.log().warn("AppRegistry", std::string("launch: unknown app ") + (id ? id : "(null)"));
     return false;
+}
+
+IApp* AppRegistry::getApp(const char* id) const {
+    for (size_t i = 0; i < manifests_.size(); i++) {
+        if (idEq(manifests_[i].id, id)) return targets_[i].app;
+    }
+    return nullptr;
 }
 
 } // namespace nema

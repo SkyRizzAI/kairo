@@ -1,0 +1,15 @@
+// nema:input — Hardware input abstraction.
+// Source: services/input_service.h
+// @future — not yet exposed in JS v0 (js_api.cpp).
+package nema:input@1.0
+
+/// Input funnel: physical buttons → input::Code + input::Action.
+/// Maps to InputService (services/input_service.h:24–55).
+@capability("input")
+interface input {
+    /// Get the hardware-specific hint label for an Action.
+    hint: func(action: string) -> string
+
+    /// List all supported actions on this device.
+    actions: func() -> list<string>
+}

@@ -4,7 +4,7 @@
 > Flipper, font/widget/theme milik Aether, layout flexbox + node-tree (Ink-style),
 > compositor + surfaces. Di-expose ke 3 runtime.
 
-- Status: 🟧 Detail draft (belum diimplementasi)
+- Status: ✅ Implemented — renderer/layout/widget/draw toolkit done (Plan 60); `SmartLabel(a, text)` widget added (TextRole::Smart); `setRenderTick(ms)` called by GuiService each frame; renderer `paint()` handles Smart text with `draw::marquee()` when focused and `draw::ellipsis()` otherwise, with `inFocused` flag propagated through the tree
 - Depends on: 50 (UI SDK model), 51 (negosiasi), 53 (theming/assets)
 - Blocks: 55 (surface compositing)
 
@@ -58,8 +58,9 @@ sekarang (semua di `firmware/core/`):
 - **Font/text/shape/icon rasterizer** — `text_style.{h,cpp}` (`FontSpec`,
   `fontForRole`, `setTextSize`) sekarang cuma role→font+scale. Diangkat jadi
   **tier-1 drawing toolkit** (`aether::ui::draw`): semua paint resmi lewat sini,
-  baca Theme. Ikon/handle logis = baru (Plan 53); font masih `FONT_5X8` +
-  pixel-double (multi-size font menyusul).
+  baca Theme. Ikon/handle logis = baru (Plan 53); font v1 = `FONT_5X8` (monospace),
+  tapi **format `Font` proporsional + multi-size sudah dikunci di Plan 53** (font
+  asli menyusul, arsitektur sudah siap).
 - **Compositor + Surface** — `AetherServer` sekarang nimpa 1 screen fullscreen ke
   Canvas. Diperluas jadi compositor N-surface (status bar + app), z-order,
   kebijakan v1 single-foreground (siap multi-window, Plan 55).
@@ -74,7 +75,7 @@ sekarang (semua di `firmware/core/`):
 | **Model UI** | Immediate-mode: tiap `View` punya `draw_callback(canvas, model)` — gambar manual tiap frame. Tak ada layout engine | LVGL retained `lv_obj` tree + flexbox bawaan, tapi **berat** (heap, anim engine) | **Node-tree retained + flexbox-subset** (`node.h`/`layout.cpp`) — deklaratif tanpa berat LVGL. Sudah ada |
 | **Renderer** | `Canvas`→u8g2, 1-bit crisp. `elements.c` (33KB) = pustaka draw bersama: `frame`, `bubble`, `slightly_rounded_box`, `scrollbar`, `multiline`, `marquee` | LVGL draw (anti-alias, warna) compile-time | Tiru `elements.c`: **pixelete toolkit ber-tema** sbg tier-1, dipakai renderer node + raw |
 | **Font handle** | `Font` enum: `FontPrimary/Secondary/Keyboard/BigNumbers/BatteryPercent` — handle logis, bukan bitmap mentah | `lv_font_t` statis di `fonts.c`, compile-time | Tiru: `TextRole`→handle logis, di-resolve **pack aktif** (Plan 53) → reskin global |
-| **Ikon** | `Icon*` + `IconAnimation` (multi-frame, fps); `canvas_draw_icon` by name | Asset LVGL compile-time | `icon("wifi")` handle logis → pack resolve (Plan 53). Canvas sudah punya `drawBitmap` |
+| **Ikon** | `Icon*` + `IconAnimation` (multi-frame, fps); `canvas_draw_icon` by name | Asset LVGL compile-time | `icon("status.wifi")` handle logis ber-namespace → pack resolve (Plan 53). Canvas sudah punya `drawBitmap` |
 | **Modul GUI** | **View modules** retained: `submenu`, `dialog_ex` (text+3 tombol+ikon), `popup` (timed+ikon), `variable_item_list` (label+nilai cycling), `loading` (spinner), `text_input`/`byte_input`/`number_input`, `menu`, `text_box`, `empty_screen` | LVGL widgets (`lv_list`, `lv_btn`, …) | **Port idiom modul** jadi builder node Aether — bukan import-mode tiap frame, tapi sub-tree + state |
 | **View stack/compositor** | `ViewDispatcher` + `Gui` layer (status bar + fullscreen + `view_stack` overlay). Status bar **persist** di atas app | LVGL screen tunggal, nimpa destruktif | `ViewDispatcher` ada; tambah **compositor surface** (status bar persist + app), v1 single-foreground |
 | **Escape hatch** | `canvas_get_buffer()` direct framebuffer (game) | `lv_canvas` | `Canvas::blitRgb565` + raw `Canvas` surface (sudah ada) |
@@ -117,9 +118,16 @@ namespace draw {
     void frame  (nema::Canvas&, Rect r);                       // border 1px, sudut rounded
     void box    (nema::Canvas&, Rect r, bool filled);          // slightly_rounded_box
     void separator(nema::Canvas&, int y);
-    void scrollbar(nema::Canvas&, Rect track, int pos, int total, int view);
+    // scrollbar DASHED: thumb solid di atas TRACK garis putus-putus. Motif sama utk
+    // vertikal (list) & horizontal (carousel MainMenu) — set `horizontal`.
+    void scrollbar(nema::Canvas&, Rect track, int pos, int total, int view,
+                   bool horizontal = false);
     void multiline(nema::Canvas&, Rect r, const char* s, TextRole role);
     void marquee (nema::Canvas&, Rect r, const char* s, TextRole role, uint32_t tick);
+    void ellipsis(nema::Canvas&, Rect r, const char* s, TextRole role);  // potong + "…" bila kepanjangan
+    // Chrome MainMenu (carousel DSi, lihat "Komponen krusial"):
+    void banner  (nema::Canvas&, Rect r, const char* title, int notchX); // banner + notch ▼ ke tile
+    void posbar  (nema::Canvas&, Rect track, int index, int count);      // indikator: segmen solid + dashed
 }
 
 // Tier 2 — node-tree (widgets.h, sudah ada). Default.
@@ -145,10 +153,118 @@ namespace draw {
 | **Loading** | `loading.c` | Overlay spinner ber-animasi (anim handle, Plan 53); blok input | `LoadingState{tick}` |
 | **(opsional nanti)** | `byte_input`/`number_input`/`text_box`/`empty_screen` | varian TextInput / ScrollView teks | — |
 
+**C. Komponen krusial (BARU — anatomi konkret di "Komponen krusial" di bawah):**
+`ListView` (baris ikon+label smart+aksesori, scrollbar dashed) · `SmartLabel`
+(Text sadar fokus+lebar: biasa/ellipsis/marquee) · `FileBrowser` (varian ListView,
+ikon per-tipe-file) · `MainMenu` (carousel gaya Nintendo DSi, module setingkat
+Submenu). Plus tier-1 `draw::scrollbar` dashed (vertikal + horizontal).
+
 > Semua modul B = **builder yang mengembalikan `UiNode*`** dari `NodeArena` +
 > struct state caller-owned (pola `ScrollState` yang sudah ada). Bukan
 > immediate-mode Flipper — tetap node-tree, jadi otomatis dapat layout, fokus,
 > momentum, dan binding 3-runtime gratis.
+
+### Komponen krusial (anatomi konkret)
+
+Lima komponen ini = idiom yang **paling sering dipakai** OS UI. Semua dibangun dari
+node-tree flexbox (`widgets.h`) + chrome tier-1 (`draw::*`) — bukan widget monolitik
+baru. Ikon lewat icon system (Plan 53) ber-namespace.
+
+**ListView** (komponen paling sering) — anatomi baris:
+
+```
+┌───────────────────────────────────────────┬─┐
+│ [ikon kiri] [label smart .......... fill] [›]│┊│   ← scrollbar DASHED kanan
+└───────────────────────────────────────────┴─┘
+  fixed         flexGrow=1            fixed    track putus-putus
+```
+
+- Tiap baris = `Row` (`widgets.h:54`) flexbox: **ikon kiri** (`width` fixed, mis.
+  `icon("file.folder")` 10×10) | **label** `flexGrow=1` (SmartLabel, di bawah) |
+  **ikon aksesori kanan** fixed (chevron/centang, opsional, `width` fixed).
+- Kontainer = `ScrollView` (`widgets.h:45`) align=Stretch; **scrollbar dashed**
+  (`draw::scrollbar`, vertikal) di kanan viewport. Fokus & auto-scroll =
+  `renderComponentFrame` (`component_runtime.h:47`).
+
+**SmartLabel** — varian `Text` (`widgets.h:35`) yang **sadar fokus + lebar tersedia**:
+
+| Kondisi | Perilaku |
+|---|---|
+| Teks **muat** di `w` baris | render biasa (`draw::text`) |
+| Kepanjangan **& tak fokus** | truncate `…` (`draw::ellipsis`) |
+| Kepanjangan **& fokus** | **marquee** geser (`draw::marquee`, tick-driven) |
+
+Lebar tersedia = hasil `layout()` (`w` node, `layout.h:23`); status fokus + `tick`
+dari `ComponentState`/`tickMomentum` (`component_runtime.h:23,66`). `draw::marquee`
+sudah ada di tier-1; tambah `draw::ellipsis` untuk jalur truncate.
+
+**FileBrowser** — varian ListView: **ikon kiri = tipe** (folder vs file, resolve via
+**ekstensi** ke icon system: `icon("file.folder")`, `icon("file.txt")`,
+`icon("file.generic")` fallback — Plan 53 namespace `file.*`), label = SmartLabel
+(nama file panjang → marquee saat fokus), aksesori kanan opsional (mis. ukuran/›),
+scrollbar dashed. Sama tulang dengan ListView, beda **resolver ikon baris**.
+
+**MainMenu (carousel gaya Nintendo DSi)** — module setingkat Submenu (retained view
+module + state). Anatomi (dari `refs/images/mainmenu-dsi.png`):
+
+```
+        ╭───────────── Apps ─────────────╮          ← banner judul (rounded)
+        ╰──────────────┬─╲╱─┬────────────╯          ← notch ▼ segitiga → tile terpilih
+                   ╭────┴────╮
+   ┌────┐  ┌────┐  ┃        ┃  ┌────┐  ┌────┐        ← deret tile-ikon horizontal (rounded)
+   │ ☰  │  │ ✳  │  ┃  icon  ┃  │((•))│  │ 🜂 │
+   └────┘  └────┘  ┃ START  ┃  └────┘  └────┘        ← tile terpilih: border TEBAL + sub-label
+                   ╰─────────╯
+   ▂▂▂▂▂▂┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄        ← indikator posisi: segmen solid + dashed
+```
+
+- Bangun dari **`Row`** node-tree (deret tile, ikon dari icon system Plan 53) +
+  chrome tier-1: `draw::banner` (banner + notch ▼ ke tile terpilih), `draw::box`
+  (tile rounded; terpilih = border tebal), `draw::posbar` (indikator segmen solid +
+  garis putus-putus), `draw::scrollbar` horizontal motif sama. Tile terpilih di
+  **tengah**, geser saat Prev/Next (carousel) — state `MainMenuState{selected}`.
+- **Menu-style = opsi tema/settings** (ala Momentum, Plan 53): default = gaya DSi
+  ini; alternatif (grid/list) bisa ditambah belakangan tanpa ubah registry.
+- **Sumber item = registry app + ikon manifest** (Plan 59): launcher & MainMenu
+  render ikon app lewat icon system yang sama (rujuk-silang Plan 53/59).
+
+**scrollbar dashed** (tier-1 `draw::scrollbar`) — motif bersama: **thumb solid** di
+atas **track garis putus-putus**. Orientasi **vertikal** (ListView/FileBrowser) &
+**horizontal** (carousel MainMenu) — satu helper, flag `horizontal`.
+
+### Responsive / scale / ratio (board-agnostic)
+
+Melanjutkan resolution-independence Plan 25 — Aether menambah lapisan **scale**,
+**reflow**, dan **fit mode** di atasnya, board-agnostic (tak ada cabang nama board).
+
+**Base logical resolution** = lantai desain (mis. **128×64**, kelas Flipper). Semua
+komponen menggambar dari `canvas.width()/height()` (Plan 25 §1) relatif terhadap
+logical ini, bukan piksel fisik.
+
+```
+logical = physical / scale          // scale INTEGER (pixelete crisp, nearest-neighbor)
+```
+
+- **Scale auto** = integer **terbesar** yang menjaga `logical ≥ base`:
+  - `256×128 → scale 2 → 128×64`
+  - `320×240 → scale 2 → 160×120`
+  - Manual override via `Theme.scale` / Settings (Plan 53 "Text Size").
+- **Reflow (bukan cuma zoom)**: area logical mengisi flexbox → display lebih besar =
+  **lebih banyak baris ListView kelihatan**, bukan baris yang membesar. Karena
+  komponen sudah baca `canvas.width/height` (Plan 25), reflow **otomatis** — tak ada
+  kode khusus per-board.
+- **Fit mode**:
+
+  | Mode | Arti | Crisp? |
+  |---|---|---|
+  | `fill` (default) | logical = physical/scale, **reflow** isi penuh | ✅ |
+  | `letterbox` | jaga **rasio base** + center, scale integer, sisa = border | ✅ (base ratio) |
+  | `stretch` | paksa penuh, rasio rusak | ❌ **tidak disarankan** (rusak crisp) |
+
+- **Board deklarasi** physical res + dpi (`IDisplayDriver::dpi()`, Plan 25 §2.4) +
+  **default fit mode**; renderer + `Theme.scale` (Plan 53) turunkan logical. Settings
+  override. Ikon & font integer-scale crisp (nearest-neighbor — Plan 25, Plan 53
+  icon system).
 
 ### Compositor + Surface
 
@@ -230,7 +346,7 @@ UiNode* build(NodeArena& a, AppState& st) {
     });
 }
 UiNode* buildModal(NodeArena& a, AppState& st) {        // dipanggil saat st.confirming
-    return Dialog(a, { .icon=icon("warning"), .title="Forget network?",
+    return Dialog(a, { .icon=icon("action.warning"), .title="Forget network?",
                        .left="Cancel", .right="Forget",
                        .onResult=onForgetResult, .ctx=&st });
 }
@@ -257,8 +373,14 @@ UiNode* buildModal(NodeArena& a, AppState& st) {        // dipanggil saat st.con
 - [ ] **Fase 5 — Ekspos `aether:ui` ke 3 runtime.** Generator (Plan 49) + import
       (Plan 50): JS `aether/ui` (perluas `reify` untuk modul baru), header C
       `<aether/ui.h>`, interface WASM. Wire via manifest `display_server`.
+- [ ] **Fase 6 — Komponen krusial + responsive/scale.** `ListView`/`SmartLabel`/
+      `FileBrowser` (Row+ScrollView + `draw::ellipsis`/`marquee`/`scrollbar` dashed);
+      `MainMenu` carousel DSi (`draw::banner`/`posbar` + Row tile, ikon Plan 53).
+      Responsive: base logical res + scale auto + fit mode (`fill`/`letterbox`),
+      lanjutan Plan 25. Ikon app dari registry+manifest (Plan 59). Snapshot host
+      tiap komponen di beberapa logical size.
 
-**Build/uji:** host + WASM tiap fase; ESP32 build-only Fase 2 & 4.
+**Build/uji:** host + WASM tiap fase; ESP32 build-only Fase 2, 4 & 6.
 
 ---
 
@@ -284,6 +406,13 @@ UiNode* buildModal(NodeArena& a, AppState& st) {        // dipanggil saat st.con
 - `firmware/core/include/nema/ui/compositor.h` · `src/ui/compositor.cpp` — `Compositor`.
 - `firmware/core/include/nema/ui/modules/` — submenu/dialog/popup/list/loading
   (builder + state), promosi `text_input.*`/`virtual_keyboard.*`.
+- `firmware/core/include/nema/ui/components/` — komponen krusial:
+  `list_view.*`, `smart_label.*` (fokus+lebar → biasa/ellipsis/marquee),
+  `file_browser.*` (resolve ikon per-ekstensi), `main_menu.*` (carousel DSi +
+  `MainMenuState`). Dibangun dari `widgets.h` + `draw_toolkit.h`.
+- `firmware/core/include/nema/ui/responsive.h` · `src/ui/responsive.cpp` — base
+  logical res, scale auto (`logical ≥ base`), fit mode (`fill`/`letterbox`/`stretch`);
+  baca `IDisplayDriver::dpi()` (Plan 25) + `Theme.scale` (Plan 53).
 
 **Backend / binding:**
 - `firmware/core/src/ui/aether_server.cpp` — drive compositor.
@@ -307,7 +436,14 @@ UiNode* buildModal(NodeArena& a, AppState& st) {        // dipanggil saat st.con
   single-foreground policy; raw surface tak terhapus toolkit.
 - **WASM:** muat app JS contoh (Submenu+Dialog) lewat `reify`, verifikasi node-tree
   & redraw flag (regresi "app blank" yg sudah difix).
-- **ESP32 build-only:** Fase 2 & 4 — kompilasi bersih, tak ada heap per-frame
+- **Komponen krusial:** ListView baris = Row(ikon|label flexGrow|aksesori) + scrollbar
+  dashed; SmartLabel pilih biasa/ellipsis/marquee menurut fokus+lebar; FileBrowser
+  resolve ikon per-ekstensi (`file.folder`/`file.txt`/`file.generic`); MainMenu
+  carousel — tile terpilih di tengah, notch banner ikut, posbar segmen+dashed.
+- **Responsive/scale:** scale auto = integer terbesar `logical ≥ base` (256×128→2,
+  320×240→2); reflow tambah baris ListView di logical besar; `letterbox` jaga rasio
+  base + center; ikon/font integer-scale crisp (nearest-neighbor).
+- **ESP32 build-only:** Fase 2, 4 & 6 — kompilasi bersih, tak ada heap per-frame
   (NodeArena), cek ukuran flash/RAM.
 
 ---
@@ -322,4 +458,8 @@ UiNode* buildModal(NodeArena& a, AppState& st) {        // dipanggil saat st.con
 | Compositor menambah overhead per-frame di MCU | FPS turun | v1 single-foreground = komposit 2 surface saja; dirty-rect menyusul bila perlu |
 | Tema dibaca renderer (Plan 53) belum siap saat Fase 2 | Blok | Sediakan `Theme` default statis di Plan 52; Plan 53 isi pack/persistence |
 | Binding 3-runtime drift dari node-desc | SDK tak konsisten | Node-desc = sumber kebenaran tunggal; generator (Plan 49) hasilkan semua dari satu IDL |
-| Multi-size font belum ada (pixel-double saja) | Teks besar kasar | Diterima v1 (CLAUDE.md/Plan 25); slot `FontSpec.font` siap font asli nanti |
+| Multi-size font belum ada (v1 FONT_5X8 monospace) | Teks besar kasar | Diterima v1; **format `Font` proporsional + `.afont` sudah dikunci di Plan 53** → tambah font asli = isi data + loader, tanpa ubah arsitektur |
+| Marquee SmartLabel = tick per-frame di banyak baris | CPU/redraw boros | Marquee hanya baris **fokus** (satu); sisa = ellipsis statis; tick reuse `tickMomentum` (`component_runtime.h:66`) |
+| MainMenu carousel (chrome banner/notch/posbar) di luar node-tree flexbox | Chrome custom sulit & off-grid | Tile = `Row` node-tree (dapat layout/fokus); hanya chrome (banner/notch/posbar) lewat `draw::*` tier-1 — terpisah rapi |
+| Fit `stretch` merusak crisp pixelete | Visual jelek | Default `fill` (reflow); `letterbox` jaga rasio base; `stretch` ada tapi ditandai "tidak disarankan" (board/settings, bukan default) |
+| Base logical terlalu besar utk display kelas Flipper | Konten terpotong | Base = lantai 128×64; scale auto jamin `logical ≥ base`; reflow tambah baris di display besar, tak memotong di base |

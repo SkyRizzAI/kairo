@@ -3,7 +3,7 @@
 > App jalan sebagai **proses** di atas shell (Plan 44–46): argv, stdin, stdout,
 > stderr, exit code, cwd/env. Mendukung pipe. Parsing arg ala commander = userspace.
 
-- Status: 🟧 Detail draft (belum diimplementasi)
+- Status: ✅ Implemented — ProcessContext/IInputStream/IOutputStream/Pipe/ProcessHost/ProcessManager all implemented; shell `run <app> [args…]` command done with single-process and `A | B` pipe chaining; exit code propagated to `session.lastExit`
 - Depends on: 44 (CLI shell), 45 (multi-session), 46 (process monitor)
 - Blocks: 55, 56/57/58
 

@@ -1,7 +1,12 @@
-# Nema Core — hardware-agnostic C++ runtime.
+# Nema Core - hardware-agnostic C++ runtime.
 # Dual-build: host (plain CMake, for simulator) and ESP-IDF (idf_component_register).
 
 include("${CMAKE_CURRENT_LIST_DIR}/../cmake/nema_version.cmake")
+
+# Plan 48/49: IDL codegen paths (host build only - IDF uses pre-generated files)
+set(NEMA_IDL_ROOT  "${CMAKE_CURRENT_SOURCE_DIR}/../../")
+set(NEMA_IDL_AST   "${NEMA_IDL_ROOT}/api/build/nema-api.json")
+set(NEMA_GENERATED "${NEMA_IDL_ROOT}/generated")
 
 set(NEMA_CORE_SRCS
     src/link/plp_codec.cpp
@@ -36,26 +41,24 @@ src/input/gesture.cpp
     src/app/app_host.cpp
     src/app/app_host_manager.cpp
     src/app/component_app.cpp
-    src/apps/counter_app.cpp
-    src/apps/clock_app.cpp
-    src/apps/stopwatch_app.cpp
-    src/apps/task_demo_app.cpp
-    src/apps/wifi_app.cpp
-    src/apps/bluetooth_app.cpp
-    src/apps/ticker_app.cpp
-    src/apps/touch_test_app.cpp
-    src/apps/camera_app.cpp
-    src/apps/ui_showcase_app.cpp
+    src/app/papp_package.cpp
+    src/app/papp_installer.cpp
+    src/apps/hello_app.cpp
     src/apps/js_app.cpp
     src/apps/js_app_store.cpp
     src/ui/text_input.cpp
     src/ui/virtual_keyboard.cpp
     src/ui/canvas.cpp
     src/ui/layout.cpp
+    src/ui/draw.cpp
     src/ui/widgets.cpp
     src/ui/text_style.cpp
+    src/ui/style_tokens.cpp
     src/ui/renderer.cpp
+    src/ui/icon_pack.cpp
+    src/ui/single_foreground_policy.cpp
     src/ui/aether_server.cpp
+    src/ui/aether_abi.cpp
     src/ui/fbcon_server.cpp
     src/ui/focus.cpp
     src/ui/component_runtime.cpp
@@ -77,12 +80,23 @@ src/input/gesture.cpp
     src/screens/touch_settings_screen.cpp
     src/screens/sounds_settings_screen.cpp
     src/screens/camera_settings_screen.cpp
+    src/screens/developer_screen.cpp
     src/screens/profile_settings_screen.cpp
     src/services/display_power_manager.cpp
     src/services/audio_service.cpp
     src/services/camera_service.cpp
     src/js/js_engine.cpp
     src/js/js_api.cpp
+    src/js/js_runtime.cpp
+    src/js/nema_host_impl.cpp
+    src/proc/stream.cpp
+    src/proc/process_host.cpp
+    src/proc/process_manager.cpp
+    src/proc/pipe.cpp
+    src/wasm/wasm_engine.cpp
+    src/wasm/wasm_wasi.cpp
+    src/wasm/wasm_runtime.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../generated/host/nema_api_quickjs.gen.cpp
 )
 
 if(ESP_PLATFORM)
@@ -90,8 +104,8 @@ if(ESP_PLATFORM)
     list(APPEND NEMA_CORE_SRCS src/nema/thread_esp32.cpp)
     idf_component_register(
         SRCS ${NEMA_CORE_SRCS}
-        INCLUDE_DIRS "include" "${CMAKE_BINARY_DIR}/nema_generated"
-        REQUIRES quickjs
+        INCLUDE_DIRS "include" "${CMAKE_BINARY_DIR}/nema_generated" "${CMAKE_CURRENT_SOURCE_DIR}/../../generated" "${CMAKE_CURRENT_SOURCE_DIR}/../vendor"
+        REQUIRES quickjs wasm3
     )
 else()
     # --- Host build (simulator) ---
@@ -99,8 +113,28 @@ else()
     add_library(nema_core STATIC ${NEMA_CORE_SRCS})
     target_include_directories(nema_core PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/include
-        ${CMAKE_BINARY_DIR}/nema_generated)
+        ${CMAKE_BINARY_DIR}/nema_generated
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../generated)
     target_compile_features(nema_core PUBLIC cxx_std_17)
     find_package(Threads REQUIRED)
-    target_link_libraries(nema_core PUBLIC Threads::Threads quickjs)
+    target_link_libraries(nema_core PUBLIC Threads::Threads quickjs wasm3 nema_vendor)
+
+    # Plan 48/49: IDL codegen - only needed for the host build (pre-generated
+    # files are committed and used by the IDF build directly).
+    find_program(BUN_EXECUTABLE bun)
+    if(BUN_EXECUTABLE)
+        add_custom_target(nema_idl_codegen
+            COMMAND ${BUN_EXECUTABLE} run "${NEMA_IDL_ROOT}/packages/idl/src/parser.ts"
+                        --out "${NEMA_IDL_AST}"
+            COMMAND ${BUN_EXECUTABLE} run "${NEMA_IDL_ROOT}/packages/idl/src/gen.ts"
+                        --ast "${NEMA_IDL_AST}"
+                        --out "${NEMA_GENERATED}"
+            WORKING_DIRECTORY "${NEMA_IDL_ROOT}"
+            COMMENT "Regenerating Nema SDK bindings from api/*.pidl"
+            VERBATIM
+        )
+        add_dependencies(nema_core nema_idl_codegen)
+    else()
+        message(STATUS "bun not found - skipping IDL codegen (Plan 48/49); using pre-generated files")
+    endif()
 endif()

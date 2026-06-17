@@ -1,0 +1,19 @@
+// nema:bt — Bluetooth Low Energy interface.
+// Source: hal/bluetooth.h
+// @future — not yet exposed in JS v0 (js_api.cpp).
+package nema:bt@1.0
+
+/// BLE controller + GATT peripheral + pairing/bonding.
+/// Maps to IBleAdapter (hal/bluetooth.h:36–81).
+@capability("bt.ble")
+interface ble {
+    /// Whether the BLE controller is enabled.
+    @blocking
+    enable: func() -> result<tuple<>, string>
+
+    /// Stop the BLE controller.
+    disable: func()
+
+    /// Whether BLE is active and advertising/connected.
+    is-enabled: func() -> bool
+}

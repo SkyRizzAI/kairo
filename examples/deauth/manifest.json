@@ -1,0 +1,12 @@
+{
+  "id": "com.palanu.example.deauth",
+  "name": "Deauth",
+  "version": "1.0.0",
+  "entry": "app.js",
+  "needs": ["net.wifi"],
+  "api_version": "1.0",
+  "display_server": "aether",
+  "runtime": "js",
+  "category": "WiFi",
+  "icon": "feature.subghz"
+}

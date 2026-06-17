@@ -30,6 +30,7 @@ struct IFileSystem : IDriver {
     virtual bool write (const std::string& path, const uint8_t* data, size_t len) = 0;
     virtual bool mkdir (const std::string& path) = 0;
     virtual bool remove(const std::string& path) = 0;
+    virtual bool rename(const std::string& src, const std::string& dst) = 0;
 };
 
 } // namespace nema

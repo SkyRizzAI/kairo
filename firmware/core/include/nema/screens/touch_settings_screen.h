@@ -1,22 +1,15 @@
 #pragma once
 #include "nema/ui/component_screen.h"
-#include "nema/apps/touch_test_app.h"
 
 namespace nema {
 
 class Runtime;
 
-// Settings → Touch. Component-migrated (Plan 30). Launches the Touch Test
-// diagnostic app via AppHostManager; room for calibration / sensitivity later.
+// Settings → Touch. Plan 60 cleanup — TouchTestApp removed. Shows touch status.
 class TouchSettingsScreen : public ComponentScreen {
 public:
     explicit TouchSettingsScreen(Runtime& rt);
     ui::UiNode* build(ui::NodeArena& a, Runtime& rt) override;
-
-private:
-    TouchTestApp touchApp_;
-
-    static void onTouchTest(void* u);
 };
 
 } // namespace nema

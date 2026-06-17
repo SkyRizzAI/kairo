@@ -1,168 +1,201 @@
-#include "nema/system/capabilities.h"
+// js_api.cpp — Thin bridge between JsEngine and generated QuickJS bindings.
+// Plan 49 Fase 2: replaces the hand-written installApi() with a call to
+// generated installNemaApi(). The marshalling + registration code lives in
+// generated/host/nema_api_quickjs.gen.cpp (produced by tools/idl/gen.ts).
+//
+// The hand-written HostApi implementation is in nema_host_impl.cpp.
+// This file just wires the two together at setHost() time.
+
 #include "nema/js/js_engine.h"
+#include "nema/proc/process_context.h"
 #include "nema/runtime.h"
-#include "nema/log/logger.h"
-#include "nema/system/capability_registry.h"
-#include "nema/system/system_info.h"
-#include "nema/service/service_container.h"
-#include "nema/config/config_store.h"
-#include "nema/hal/http_client.h"
-#include "nema/services/profile_service.h"
-#include <string>
-#include <utility>
+#include "host/nema_api.gen.h"
+#include <cstring>
 
-// The `nema` system API exposed to custom JS apps (Plan 37 Fase 4). Host C
-// functions retrieve the engine (and thus Runtime) via the context opaque. All
-// capability-gated: a method is only present if the board supports it. Blocking
-// calls (http) run on the app thread (off the UI thread) — fine for apps.
+// Forward declaration from generated/host/nema_api_quickjs.gen.cpp (Plan 49).
+// Defined in the generated file alongside all the function wrappers.
+void installNemaApi(JSContext* ctx, HostApi* host, nema::CapabilityRegistry& caps);
+
+// Forward declaration from nema_host_impl.cpp (hand-written).
+HostApi* createNemaHost(nema::Runtime& rt, std::string appId);
+
+// ── Convenience shortcuts ─────────────────────────────────────────────────────
+// The generated API uses deep paths (nema.storage.kv.get, nema.sys.device.name).
+// App code (and the hello example) expects flat paths: nema.storage.get,
+// nema.device.name, nema.log(). These shims are added on top of the generated
+// global after installNemaApi — no changes to the generated file needed.
+
+static JSValue shim_log(JSContext* ctx, JSValueConst, int argc, JSValueConst* argv) {
+    auto* e = static_cast<nema::js::JsEngine*>(JS_GetContextOpaque(ctx));
+    HostApi* h = e ? e->hostApi() : nullptr;
+    if (!h || argc < 3) return JS_UNDEFINED;
+    const char* lv  = JS_ToCString(ctx, argv[0]);
+    const char* tag = JS_ToCString(ctx, argv[1]);
+    const char* msg = JS_ToCString(ctx, argv[2]);
+    if (lv && tag && msg) h->log_log(lv, tag, msg);
+    if (lv)  JS_FreeCString(ctx, lv);
+    if (tag) JS_FreeCString(ctx, tag);
+    if (msg) JS_FreeCString(ctx, msg);
+    return JS_UNDEFINED;
+}
+static JSValue shim_kv_get(JSContext* ctx, JSValueConst, int argc, JSValueConst* argv) {
+    auto* e = static_cast<nema::js::JsEngine*>(JS_GetContextOpaque(ctx));
+    HostApi* h = e ? e->hostApi() : nullptr;
+    if (!h || argc < 1) return JS_NULL;
+    const char* k = JS_ToCString(ctx, argv[0]);
+    if (!k) return JS_NULL;
+    auto v = h->kv_get(k);
+    JS_FreeCString(ctx, k);
+    return v.has_value() ? JS_NewString(ctx, v->c_str()) : JS_NULL;
+}
+static JSValue shim_kv_set(JSContext* ctx, JSValueConst, int argc, JSValueConst* argv) {
+    auto* e = static_cast<nema::js::JsEngine*>(JS_GetContextOpaque(ctx));
+    HostApi* h = e ? e->hostApi() : nullptr;
+    if (!h || argc < 2) return JS_UNDEFINED;
+    const char* k = JS_ToCString(ctx, argv[0]);
+    const char* v = JS_ToCString(ctx, argv[1]);
+    if (k && v) h->kv_set(k, v);
+    if (k) JS_FreeCString(ctx, k);
+    if (v) JS_FreeCString(ctx, v);
+    return JS_UNDEFINED;
+}
+static JSValue shim_kv_remove(JSContext* ctx, JSValueConst, int argc, JSValueConst* argv) {
+    auto* e = static_cast<nema::js::JsEngine*>(JS_GetContextOpaque(ctx));
+    HostApi* h = e ? e->hostApi() : nullptr;
+    if (!h || argc < 1) return JS_FALSE;
+    const char* k = JS_ToCString(ctx, argv[0]);
+    if (!k) return JS_FALSE;
+    bool ok = h->kv_remove(k);
+    JS_FreeCString(ctx, k);
+    return JS_NewBool(ctx, ok);
+}
+
+static void installNemaApiShims(JSContext* ctx, HostApi* host) {
+    JSValue g    = JS_GetGlobalObject(ctx);
+    JSValue nema = JS_GetPropertyStr(ctx, g, "nema");
+    if (!JS_IsObject(nema)) { JS_FreeValue(ctx, nema); JS_FreeValue(ctx, g); return; }
+
+    // nema.log(level, tag, msg) — flat shortcut
+    JS_SetPropertyStr(ctx, nema, "log",
+        JS_NewCFunction(ctx, shim_log, "log", 3));
+
+    // nema.device.name, .caps() — flat shortcut (mirrors nema.sys.device)
+    JSValue dev = JS_NewObject(ctx);
+    JS_SetPropertyStr(ctx, dev, "name",
+        JS_NewString(ctx, host->device_name().c_str()));
+    {
+        auto caps = host->device_caps();
+        JSValue arr = JS_NewArray(ctx);
+        for (uint32_t i = 0; i < (uint32_t)caps.size(); i++)
+            JS_SetPropertyUint32(ctx, arr, i, JS_NewString(ctx, caps[i].c_str()));
+        JS_SetPropertyStr(ctx, dev, "caps", arr);
+    }
+    JS_SetPropertyStr(ctx, nema, "device", dev);
+
+    // nema.storage.get/set/remove — flat shortcuts (the generated path is .kv.*)
+    JSValue storage = JS_GetPropertyStr(ctx, nema, "storage");
+    if (JS_IsObject(storage)) {
+        JS_SetPropertyStr(ctx, storage, "get",    JS_NewCFunction(ctx, shim_kv_get,    "get",    1));
+        JS_SetPropertyStr(ctx, storage, "set",    JS_NewCFunction(ctx, shim_kv_set,    "set",    2));
+        JS_SetPropertyStr(ctx, storage, "remove", JS_NewCFunction(ctx, shim_kv_remove, "remove", 1));
+    }
+    JS_FreeValue(ctx, storage);
+    JS_FreeValue(ctx, nema);
+    JS_FreeValue(ctx, g);
+}
+
 namespace nema::js {
-
-static JsEngine* self(JSContext* ctx) { return static_cast<JsEngine*>(JS_GetContextOpaque(ctx)); }
-
-static std::string argStr(JSContext* ctx, JSValueConst v) {
-    std::string r; const char* s = JS_ToCString(ctx, v);
-    if (s) { r = s; JS_FreeCString(ctx, s); }
-    return r;
-}
-
-// nema.log(level, tag, msg)
-static JSValue api_log(JSContext* ctx, JSValueConst, int argc, JSValueConst* argv) {
-    auto* e = self(ctx); if (!e || !e->host() || argc < 3) return JS_UNDEFINED;
-    std::string lvl = argStr(ctx, argv[0]), tag = argStr(ctx, argv[1]), msg = argStr(ctx, argv[2]);
-    auto& log = e->host()->log();
-    if      (lvl == "error") log.error(tag.c_str(), msg.c_str());
-    else if (lvl == "warn")  log.warn (tag.c_str(), msg.c_str());
-    else if (lvl == "debug") log.debug(tag.c_str(), msg.c_str());
-    else if (lvl == "trace") log.trace(tag.c_str(), msg.c_str());
-    else                     log.info (tag.c_str(), msg.c_str());
-    return JS_UNDEFINED;
-}
-
-// nema.device.has(cap) — static: this box was built able to do X.
-static JSValue api_has(JSContext* ctx, JSValueConst, int argc, JSValueConst* argv) {
-    auto* e = self(ctx); if (!e || !e->host() || argc < 1) return JS_FALSE;
-    return JS_NewBool(ctx, e->host()->capabilities().has(argStr(ctx, argv[0])));
-}
-
-// nema.device.available(cap) — dynamic: X is up and usable right now (Plan 42).
-static JSValue api_available(JSContext* ctx, JSValueConst, int argc, JSValueConst* argv) {
-    auto* e = self(ctx); if (!e || !e->host() || argc < 1) return JS_FALSE;
-    return JS_NewBool(ctx, e->host()->capabilities().available(argStr(ctx, argv[0])));
-}
-
-// nema.storage.get/set/remove — per-app namespace in the config store.
-static JSValue api_store_get(JSContext* ctx, JSValueConst, int argc, JSValueConst* argv) {
-    auto* e = self(ctx); if (!e || !e->host() || argc < 1) return JS_NULL;
-    std::string v;
-    if (e->host()->config().getString(e->appId().c_str(), argStr(ctx, argv[0]).c_str(), v))
-        return JS_NewString(ctx, v.c_str());
-    return JS_NULL;
-}
-static JSValue api_store_set(JSContext* ctx, JSValueConst, int argc, JSValueConst* argv) {
-    auto* e = self(ctx); if (!e || !e->host() || argc < 2) return JS_UNDEFINED;
-    e->host()->config().setString(e->appId().c_str(), argStr(ctx, argv[0]).c_str(), argStr(ctx, argv[1]));
-    return JS_UNDEFINED;
-}
-static JSValue api_store_remove(JSContext* ctx, JSValueConst, int argc, JSValueConst* argv) {
-    auto* e = self(ctx); if (!e || !e->host() || argc < 1) return JS_UNDEFINED;
-    e->host()->config().remove(e->appId().c_str(), argStr(ctx, argv[0]).c_str());
-    return JS_UNDEFINED;
-}
-
-// nema.profile.* — read-only identity + verify API for custom apps (Plan 40).
-// Setters are intentionally absent: apps cannot change the owner's identity.
-static JSValue api_profile_userName(JSContext* ctx, JSValueConst, int, JSValueConst*) {
-    auto* e = self(ctx); if (!e || !e->host()) return JS_NULL;
-    auto* p = e->host()->container().resolve<ProfileService>();
-    return p ? JS_NewString(ctx, p->userName().c_str()) : JS_NULL;
-}
-static JSValue api_profile_deviceName(JSContext* ctx, JSValueConst, int, JSValueConst*) {
-    auto* e = self(ctx); if (!e || !e->host()) return JS_NULL;
-    auto* p = e->host()->container().resolve<ProfileService>();
-    return p ? JS_NewString(ctx, p->deviceName().c_str()) : JS_NULL;
-}
-static JSValue api_profile_hasPassword(JSContext* ctx, JSValueConst, int, JSValueConst*) {
-    auto* e = self(ctx); if (!e || !e->host()) return JS_FALSE;
-    auto* p = e->host()->container().resolve<ProfileService>();
-    return p ? JS_NewBool(ctx, p->hasPassword()) : JS_FALSE;
-}
-static JSValue api_profile_verifyPassword(JSContext* ctx, JSValueConst, int argc, JSValueConst* argv) {
-    auto* e = self(ctx); if (!e || !e->host() || argc < 1) return JS_FALSE;
-    auto* p = e->host()->container().resolve<ProfileService>();
-    return p ? JS_NewBool(ctx, p->verifyPassword(argStr(ctx, argv[0]))) : JS_FALSE;
-}
-
-// nema.http.get(url) → { status, body }. Blocking on the app thread (off UI).
-static JSValue api_http_get(JSContext* ctx, JSValueConst, int argc, JSValueConst* argv) {
-    auto* e = self(ctx); if (!e || !e->host() || argc < 1) return JS_NULL;
-    auto* client = e->host()->container().resolve<IHttpClient>();
-    if (!client) return JS_ThrowTypeError(ctx, "http not available");
-    HttpResponse r = client->get(argStr(ctx, argv[0]).c_str());
-    JSValue o = JS_NewObject(ctx);
-    JS_SetPropertyStr(ctx, o, "status", JS_NewInt32(ctx, r.status));
-    JS_SetPropertyStr(ctx, o, "body",   JS_NewString(ctx, r.body.c_str()));
-    return o;   // `await` unwraps the plain object too
-}
-
-static void setFn(JSContext* ctx, JSValue obj, const char* name, JSCFunction* fn, int argc) {
-    JS_SetPropertyStr(ctx, obj, name, JS_NewCFunction(ctx, fn, name, argc));
-}
 
 void JsEngine::setHost(nema::Runtime* rt, std::string appId) {
     host_  = rt;
     appId_ = std::move(appId);
-    if (ok()) installApi();
+    if (!ok()) return;
+
+    // Create the hand-written HostApi implementation (Plan 49 Fase 2).
+    // The engine owns this pointer; it is deleted in ~JsEngine().
+    setHostApi(createNemaHost(*rt, appId_));
+
+    // Install the generated `nema` global into the JS context.
+    // Gating by capability is handled by the generated code.
+    installNemaApi(static_cast<JSContext*>(ctx_), hostApi_, rt->capabilities());
+
+    // Add flat convenience shortcuts on top of the generated namespaced API.
+    installNemaApiShims(static_cast<JSContext*>(ctx_), hostApi_);
 }
 
-void JsEngine::installApi() {
-    if (!host_) return;
-    JSContext* ctx = ctx_;
-    JSValue g = JS_GetGlobalObject(ctx);
-    JSValue api = JS_NewObject(ctx);
+// ── Plan 58 — process global ─────────────────────────────────────────────────
+// Install `process` into the QuickJS context. The ProcessContext pointer is
+// stored in the JSRuntime opaque so C callbacks can reach it without captures.
+// Calling convention: JSContext opaque → JsEngine → proc_.
 
-    setFn(ctx, api, "log", api_log, 3);
+namespace {
 
-    // device { name, caps[], has(), available() } — clean query API; JS apps
-    // never touch the registry directly. has() = static, available() = live.
-    JSValue dev = JS_NewObject(ctx);
-    JS_SetPropertyStr(ctx, dev, "name", JS_NewString(ctx, host_->info().boardName.c_str()));
-    const auto& caps = host_->capabilities().list();
-    JSValue arr = JS_NewArray(ctx);
-    for (uint32_t i = 0; i < caps.size(); i++)
-        JS_SetPropertyUint32(ctx, arr, i, JS_NewString(ctx, caps[i].c_str()));
-    JS_SetPropertyStr(ctx, dev, "caps", arr);
-    setFn(ctx, dev, "has", api_has, 1);
-    setFn(ctx, dev, "available", api_available, 1);
-    JS_SetPropertyStr(ctx, api, "device", dev);
-
-    // storage (always available — config store)
-    JSValue st = JS_NewObject(ctx);
-    setFn(ctx, st, "get", api_store_get, 1);
-    setFn(ctx, st, "set", api_store_set, 2);
-    setFn(ctx, st, "remove", api_store_remove, 1);
-    JS_SetPropertyStr(ctx, api, "storage", st);
-
-    // http (gated): present only if the board can do networked requests.
-    if (host_->capabilities().has(caps::NetHttp) || host_->capabilities().has(caps::NetWifi)) {
-        JSValue http = JS_NewObject(ctx);
-        setFn(ctx, http, "get", api_http_get, 1);
-        JS_SetPropertyStr(ctx, api, "http", http);
+JSValue process_exit(JSContext* ctx, JSValueConst, int argc, JSValueConst* argv) {
+    auto* eng = static_cast<JsEngine*>(JS_GetContextOpaque(ctx));
+    int32_t code = 0;
+    if (argc > 0) JS_ToInt32(ctx, &code, argv[0]);
+    if (eng && eng->host()) {
+        // Reach the ProcessContext stored in the engine.
+        nema::ProcessContext* proc = eng->proc();
+        if (proc) proc->requestExit(code);
     }
+    // Throw a sentinel to unwind the JS call stack cleanly.
+    return JS_ThrowReferenceError(ctx, "process.exit(%ld)", (long)code);
+}
 
-    // profile — expose the object iff the service is actually registered.
-    // (Inside running code, resolve<T>() is the single source of truth; the
-    // redundant has("profile") || resolve<>() gate is gone — Plan 42 Fase 5.)
-    if (host_->container().resolve<ProfileService>()) {
-        JSValue prof = JS_NewObject(ctx);
-        setFn(ctx, prof, "userName",       api_profile_userName,       0);
-        setFn(ctx, prof, "deviceName",     api_profile_deviceName,     0);
-        setFn(ctx, prof, "hasPassword",    api_profile_hasPassword,    0);
-        setFn(ctx, prof, "verifyPassword", api_profile_verifyPassword, 1);
-        JS_SetPropertyStr(ctx, api, "profile", prof);
+JSValue stdout_write(JSContext* ctx, JSValueConst, int argc, JSValueConst* argv) {
+    auto* eng = static_cast<JsEngine*>(JS_GetContextOpaque(ctx));
+    if (argc < 1 || !eng) return JS_UNDEFINED;
+    nema::ProcessContext* proc = eng->proc();
+    if (!proc) return JS_UNDEFINED;
+    const char* s = JS_ToCString(ctx, argv[0]);
+    if (s) {
+        proc->out().write(reinterpret_cast<const uint8_t*>(s), std::strlen(s));
+        JS_FreeCString(ctx, s);
     }
+    return JS_UNDEFINED;
+}
 
-    JS_SetPropertyStr(ctx, g, "nema", api);
-    JS_FreeValue(ctx, g);
+JSValue stdin_read(JSContext* ctx, JSValueConst, int, JSValueConst*) {
+    // Blocking stdin reads are not yet implemented for UI apps; return empty string.
+    // Headless (Plan 54 pipe integration) will replace this with a real read.
+    return JS_NewString(ctx, "");
+}
+
+} // anon namespace
+
+void JsEngine::setProcessContext(nema::ProcessContext* ctx) {
+    proc_ = ctx;
+    if (!ok() || !ctx) return;
+    JSContext* jctx = static_cast<JSContext*>(ctx_);
+
+    // Build process.argv array.
+    const auto& args = ctx->args();
+    JSValue argv = JS_NewArray(jctx);
+    for (size_t i = 0; i < args.size(); i++)
+        JS_SetPropertyUint32(jctx, argv, (uint32_t)i, JS_NewString(jctx, args[i].c_str()));
+
+    // Build process.stdout object.
+    JSValue pstdout = JS_NewObject(jctx);
+    JS_SetPropertyStr(jctx, pstdout, "write",
+        JS_NewCFunction(jctx, stdout_write, "write", 1));
+
+    // Build process.stdin object.
+    JSValue pstdin = JS_NewObject(jctx);
+    JS_SetPropertyStr(jctx, pstdin, "read",
+        JS_NewCFunction(jctx, stdin_read, "read", 0));
+
+    // Assemble process object.
+    JSValue proc = JS_NewObject(jctx);
+    JS_SetPropertyStr(jctx, proc, "argv",   argv);
+    JS_SetPropertyStr(jctx, proc, "exit",   JS_NewCFunction(jctx, process_exit, "exit", 1));
+    JS_SetPropertyStr(jctx, proc, "stdout", pstdout);
+    JS_SetPropertyStr(jctx, proc, "stdin",  pstdin);
+
+    // Install as a global.
+    JSValue global = JS_GetGlobalObject(jctx);
+    JS_SetPropertyStr(jctx, global, "process", proc);
+    JS_FreeValue(jctx, global);
 }
 
 } // namespace nema::js

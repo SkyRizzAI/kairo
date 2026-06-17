@@ -95,6 +95,12 @@ class SimStore {
 	removeFile(path: string) {
 		return this.#s.removeFile(path);
 	}
+	renameFile(src: string, dst: string) {
+		return this.#s.renameFile(src, dst);
+	}
+	copyFile(src: string, dst: string) {
+		return this.#s.copyFile(src, dst);
+	}
 }
 
 export const simStore = new SimStore();

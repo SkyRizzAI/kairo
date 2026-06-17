@@ -3,7 +3,7 @@
 > Jahitan app↔compositor: app headless bisa "mengangkat window" via UI API
 > (ala Linux app connect ke display server). Satu window/app sekarang, siap multi.
 
-- Status: 🟧 Detail draft (belum diimplementasi)
+- Status: ✅ Implemented — ISurface interface defined; AppHost implements AppContext (surface + process); IWindowPolicy interface defined (`window_policy.h`); `SingleForegroundPolicy` concrete class implemented (`single_foreground_policy.{h,cpp}`): tracks foreground surface via `onSurfaceCreated`/`Destroyed`, `visibleSurfaces()` returns `{foreground}`, `focused()` returns the foreground surface
 - Depends on: 51 (negosiasi), 52 (compositor), 54 (process)
 - Blocks: runtimes (sisi UI)
 

@@ -1,4 +1,5 @@
 #pragma once
+#include "nema/app/runtime_tier.h"
 
 namespace nema {
 
@@ -16,10 +17,16 @@ enum class AppKind { BuiltIn, Custom };
 // Flipper's apptype=APP/SERVICE — both live in the same manifest table.
 enum class AppType { App, Service };
 
+// Plan 59 — app execution mode (orthogonal to runtime tier and display server).
+//   Cli    — stdio only; no surface needed; pipe-able.
+//   Ui     — requires a surface (display server must be available).
+//   Hybrid — can run headless or lift a UI window, decided at runtime.
+enum class AppMode { Cli, Ui, Hybrid };
+
 // AppManifest — an installed entry's header: the metadata the launcher and
 // system need without touching the entry's code. For built-ins it's derived
 // from the app (id/name); for custom apps it's parsed from the package's
-// kapp.json. This is the on-device twin of packages/nema-app-sdk kapp.json.
+// papp.json (Plan 59 §1). This is the on-device twin of kapp.json.
 //
 // Strings are non-owning (the same lifetime contract as IApp::id()/name()): a
 // built-in points at string literals, a custom app at the JsApp's std::strings,
@@ -30,6 +37,35 @@ struct AppManifest {
     const char* version;   // "1.0.0"
     AppKind     kind;      // BuiltIn (compiled-in) or Custom (installed at runtime)
     AppType     type;      // App (launchable) or Service (background daemon)
+
+    // Plan 56 — which execution sandbox this app runs in.
+    RuntimeTier runtimeTier = RuntimeTier::CBuiltin;
+
+    // Plan 51 — preferred display server ("aether", "fbcon", or nullptr = any).
+    // GuiService switches to this server before the app thread starts.
+    const char* displayServer = nullptr;
+
+    // Plan 59 — extended manifest fields (parsed from papp.json for custom apps;
+    // defaults for built-ins).
+
+    // cli | ui | hybrid (default Ui for display-server apps, Cli for headless).
+    AppMode mode = AppMode::Ui;
+
+    // Launcher group label (default "Apps").
+    const char* category = "Apps";
+
+    // Icon handle (Plan 53 icon system — e.g. "feature.apps") or bundle-relative
+    // path ("icons/app.xbm"). nullptr = generic icon per runtimeTier.
+    const char* iconPath = nullptr;
+
+    // Null-terminated array of required capability strings ("net.http", "storage",
+    // …). nullptr or empty = no requirements. Checked against device capabilities
+    // at launch; missing capability → launch rejected with a user-visible error.
+    const char* const* needs = nullptr;
+
+    // Target System API version ("major.minor", Plan 48). Major mismatch vs host
+    // api_version → install rejected. nullptr = "1.0".
+    const char* apiVersion = "1.0";
 };
 
 } // namespace nema

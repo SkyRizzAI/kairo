@@ -28,7 +28,8 @@ namespace SysOp {
 // FILE channel opcodes (first payload byte). Request host→device, reply
 // device→host as [op][status][path\0][...]; status 0=ok, 1=not found, 2=error.
 namespace FileOp {
-    enum : uint8_t { List = 0x01, Read = 0x03, Write = 0x04, Mkdir = 0x05, Remove = 0x06 };
+    enum : uint8_t { List = 0x01, Read = 0x03, Write = 0x04, Mkdir = 0x05, Remove = 0x06,
+                     Rename = 0x07, Copy = 0x08 };
 }
 
 // OTA channel opcodes (host→device firmware push, Plan 39). Reply on the same

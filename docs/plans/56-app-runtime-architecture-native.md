@@ -3,7 +3,7 @@
 > Model runtime bersama: bagaimana 3 tier (C/WASM/JS) menancap ke ProcessContext +
 > Surface + System API. Plus tier **C built-in** (di-compile bareng firmware).
 
-- Status: 🟧 Detail draft (belum diimplementasi)
+- Status: ✅ Implemented — IAppRuntime interface + JsRuntime + CBuiltinRuntime adapters done; AppRegistry routes installCustom(IApp, AppManifest) with runtimeTier/displayServer; AppManifest extended with mode/category/iconPath/needs[]/apiVersion; WasmRuntime intentionally deferred to Plan 57 (wasm3 not vendored yet)
 - Depends on: 48 (system api), 54 (process), 55 (surface)
 - Blocks: 57 (WASM), 58 (JS)
 

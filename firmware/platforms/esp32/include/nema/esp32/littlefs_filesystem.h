@@ -24,6 +24,7 @@ public:
     bool write (const std::string& path, const uint8_t* data, size_t len) override;
     bool mkdir (const std::string& path) override;
     bool remove(const std::string& path) override;
+    bool rename(const std::string& src, const std::string& dst) override;
 
 private:
     std::string real(const std::string& vpath) const;  // VFS path → POSIX path

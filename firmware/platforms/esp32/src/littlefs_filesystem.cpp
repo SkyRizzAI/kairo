@@ -96,4 +96,11 @@ bool LittleFsFileSystem::remove(const std::string& path) {
     return S_ISDIR(st.st_mode) ? (rmdir(rp.c_str()) == 0) : (unlink(rp.c_str()) == 0);
 }
 
+bool LittleFsFileSystem::rename(const std::string& src, const std::string& dst) {
+    if (!mounted_) return false;
+    std::string rs = real(src), rd = real(dst);
+    mkdirsFor(rd);
+    return ::rename(rs.c_str(), rd.c_str()) == 0;
+}
+
 } // namespace nema

@@ -214,6 +214,7 @@ ServiceState Runtime::serviceState(IService* svc) const {
 const SystemInfo&   Runtime::info()    const { assert(systemInfo_);  return *systemInfo_; }
 AppRegistry&        Runtime::apps()          { assert(appRegistry_); return *appRegistry_; }
 AppHostManager&     Runtime::appHost()       { assert(appHosts_); return *appHosts_; }
+ProcessManager&     Runtime::processes()     { return processes_; }
 
 void Runtime::adoptService(IService* svc) {
     assert(svc && container_ && serviceManager_);
@@ -240,7 +241,22 @@ const char* Runtime::displayServerName() const { return gui_ ? gui_->activeServe
 std::vector<const char*> Runtime::displayServerList() const {
     return gui_ ? gui_->serverNames() : std::vector<const char*>{};
 }
+IDisplayServer* Runtime::displayServer()     const { return gui_ ? gui_->activeServer() : nullptr; }
+IDisplayServer* Runtime::findDisplayServer(const char* name) const {
+    return gui_ ? gui_->findServer(name) : nullptr;
+}
 BootPhase           Runtime::phase()   const { return phase_; }
 int                 Runtime::exitCode() const { return exitCode_; }
+
+void Runtime::logForEach(void (*fn)(void* ctx, const LogEntry&), void* ctx) const {
+    auto* ms = dynamic_cast<MemorySink*>(memorySink_.get());
+    if (!ms || !fn) return;
+    for (const LogEntry& e : ms->entries()) fn(ctx, e);
+}
+
+size_t Runtime::logCount() const {
+    auto* ms = dynamic_cast<MemorySink*>(memorySink_.get());
+    return ms ? ms->entries().size() : 0;
+}
 
 } // namespace nema

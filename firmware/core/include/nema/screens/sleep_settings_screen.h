@@ -20,27 +20,31 @@ private:
     static const Option kLockOpts[];
     static constexpr int kSleepCount = 5;
     static constexpr int kLockCount  = 5;
-    static const char*  kScaleLabels[];
-    static const float  kScaleValues[];
-    static constexpr int kScaleCount = 8;
+    static const char*  kThemeNames[];      // "default" | "compact" | "large"
+    static constexpr int kThemeCount = 3;
 
     int  findSleepIdx() const;
     int  findLockIdx()  const;
-    int  findScaleIdx() const;
-    void applyScale(int idx);
+    int  findThemeIdx() const;
+    void applyTheme(int idx);
 
     void cycleSleep(int dir);
     void cycleLock(int dir);
-    void cycleScale(int dir);
+    void cycleTheme(int dir);
     void toggleFps();
 
     static void sleepAdj(void* u, int dir);
     static void lockAdj(void* u, int dir);
-    static void scaleAdj(void* u, int dir);
+    static void themeAdj(void* u, int dir);
     static void onFps(void* u);
 
     ui::ScrollState scroll_;
-    int sleepIdx_ = 0, lockIdx_ = 0, scaleIdx_ = 0;
+    int sleepIdx_ = 0, lockIdx_ = 0, themeIdx_ = 0;
+
+    // Display info strings — formatted in enter(), used by build().
+    char infoLogical_[16]  = {};  // "264x176"
+    char infoPhysical_[16] = {};  // "528x352"
+    char infoScale_[16]    = {};  // "2x" / "1.5x"
 };
 
 } // namespace nema

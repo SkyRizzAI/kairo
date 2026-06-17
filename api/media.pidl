@@ -1,0 +1,30 @@
+// nema:media — Audio and Camera interfaces.
+// Sources: services/audio_service.h, services/camera_service.h
+// @future — not yet exposed in JS v0 (js_api.cpp).
+package nema:media@1.0
+
+/// Audio input/output device enumeration.
+/// Maps to AudioService (services/audio_service.h:11–21).
+@capability("audio.input")
+interface audio-input {
+    /// List available audio input devices.
+    list: func() -> list<string>
+}
+
+@capability("audio.output")
+interface audio-output {
+    /// List available audio output devices.
+    list: func() -> list<string>
+}
+
+/// Camera capture. Maps to CameraService (services/camera_service.h:10–14).
+@capability("camera")
+interface camera {
+    /// List available camera devices.
+    list: func() -> list<string>
+
+    /// Capture a frame from the default camera.
+    /// @blocking — runs on worker.
+    @blocking
+    capture: func() -> result<string, string>
+}

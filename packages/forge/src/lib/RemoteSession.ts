@@ -78,7 +78,8 @@ export function frameDims(frame: ScreenFrame | null): string {
 	return frame ? `${frame.w}×${frame.h}` : '—';
 }
 const ExtOp = { InjectEvent: 0x01, WifiSetNetworks: 0x02, AppInstall: 0x03 } as const;
-const FileOp = { List: 0x01, Read: 0x03, Write: 0x04, Mkdir: 0x05, Remove: 0x06 } as const;
+const FileOp = { List: 0x01, Read: 0x03, Write: 0x04, Mkdir: 0x05, Remove: 0x06,
+                 Rename: 0x07, Copy: 0x08 } as const;
 
 type Listeners = {
 	screen: Set<(f: ScreenFrame) => void>;
@@ -481,11 +482,30 @@ export class RemoteSession {
 		const r = await this.#fileReq(op, body);
 		return !!r && r.status === 0;
 	}
+	// Two-path op: [op][srcLen:2 LE][src][dst]
+	async #fileTwoPathOp(op: number, src: string, dst: string): Promise<boolean> {
+		const sb = new TextEncoder().encode(src);
+		const db = new TextEncoder().encode(dst);
+		const body = new Uint8Array(3 + sb.length + db.length);
+		body[0] = op;
+		body[1] = sb.length & 0xff;
+		body[2] = (sb.length >> 8) & 0xff;
+		body.set(sb, 3);
+		body.set(db, 3 + sb.length);
+		const r = await this.#fileReq(op, body);
+		return !!r && r.status === 0;
+	}
 	mkdir(path: string) {
 		return this.#filePathOp(FileOp.Mkdir, path);
 	}
 	removeFile(path: string) {
 		return this.#filePathOp(FileOp.Remove, path);
+	}
+	renameFile(src: string, dst: string) {
+		return this.#fileTwoPathOp(FileOp.Rename, src, dst);
+	}
+	copyFile(src: string, dst: string) {
+		return this.#fileTwoPathOp(FileOp.Copy, src, dst);
 	}
 	power(op: number) {
 		this.#t.send(encodeFrame(Channel.System, new Uint8Array([op])));
