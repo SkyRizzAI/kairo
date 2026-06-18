@@ -3,3 +3,11 @@
 dependencies:
   espressif/arduino-esp32:
     version: "3.3.8"
+  ## Raw TinyUSB library: provides tusb.h headers and the device stack.
+  ## arduino-esp32's esp32-hal-tinyusb.c wraps tusb_init() directly.
+  ## We do NOT use espressif/esp_tinyusb (the higher-level wrapper) because
+  ## it would duplicate tinyusb_driver_install() and CDC callbacks.
+  espressif/tinyusb:
+    version: ">=0.1.0"
+    rules:
+      - if: target in [esp32s2, esp32s3, esp32p4]

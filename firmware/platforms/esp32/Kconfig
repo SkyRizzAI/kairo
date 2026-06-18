@@ -1,0 +1,19 @@
+# ESP32 platform Kconfig
+# arduino-esp32 guards USB device code behind these three flags.
+# We own all three — no external component defines them.
+config TINYUSB_ENABLED
+    bool
+    default y
+
+config TINYUSB_CDC_ENABLED
+    bool
+    default y if TINYUSB_ENABLED
+
+config TINYUSB_HID_ENABLED
+    bool
+    default y if TINYUSB_ENABLED
+
+# CDC RX buffer size used by USBCDC.cpp (was previously provided by espressif/esp_tinyusb).
+config TINYUSB_CDC_RX_BUFSIZE
+    int
+    default 512

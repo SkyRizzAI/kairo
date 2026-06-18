@@ -11,6 +11,7 @@ namespace nema::skyrizze32 {
 //   BTN_MIDDLE (PB1)  short → Activate   long → Back
 //   BTN_RIGHT  (SW2)  short → Next       long → AdjustUp
 //
+// Side buttons (PB1 Up / PB2 Down) → AdjustUp / AdjustDown.
 // Floor guarantee: Prev, Next, Activate, Back — all reachable.
 // No native Up/Down/Left/Right codes → "input.2d" capability NOT declared.
 class E32KeyMap : public input::IKeyMap {

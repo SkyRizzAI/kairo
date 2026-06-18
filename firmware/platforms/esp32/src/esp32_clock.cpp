@@ -14,4 +14,11 @@ uint64_t Esp32Clock::epochMs() {
     return (uint64_t)tv.tv_sec * 1000ULL + tv.tv_usec / 1000ULL;
 }
 
+void Esp32Clock::setEpochMs(uint64_t epochMs) {
+    struct timeval tv;
+    tv.tv_sec = (time_t)(epochMs / 1000ULL);
+    tv.tv_usec = (suseconds_t)((epochMs % 1000ULL) * 1000ULL);
+    settimeofday(&tv, nullptr);
+}
+
 } // namespace nema

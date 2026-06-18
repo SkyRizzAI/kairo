@@ -19,14 +19,14 @@ enum class Action : uint8_t {
     None = 0,
 
     // ── Floor (must always be reachable) ──────────────────────────────────
-    Prev     = 1,   // navigate backward  (Up / Left / button-left)
-    Next     = 2,   // navigate forward   (Down / Right / button-right)
+    Prev     = 1,   // navigate backward  (Left / Up / button-left)
+    Next     = 2,   // navigate forward   (Right / Down / button-right)
     Activate = 3,   // confirm / enter
     Back     = 4,   // go back / escape
 
     // ── Optional (may be absent) ──────────────────────────────────────────
-    AdjustUp   = 11,  // increment value  (Right / long-right)
-    AdjustDown = 12,  // decrement value  (Left  / long-left)
+    AdjustUp   = 11,  // increment value  (Up / long-right)
+    AdjustDown = 12,  // decrement value  (Down / long-left)
     Menu       = 13,  // context menu
     Pause      = 14,  // pause foreground app → home (long-hold Back/OK; Plan 22)
 };
@@ -46,13 +46,14 @@ inline const char* actionName(Action a) {
 }
 
 // Default reduction: Code → Action. Boards may override in their IKeyMap.
+// Primary nav axis = Left/Right; Up/Down = secondary (adjust).
 inline Action defaultAction(Code c) {
     // (include input_code.h before this)
     switch (static_cast<uint8_t>(c)) {
-        case 1:  return Action::Prev;        // Up
-        case 2:  return Action::Next;        // Down
-        case 3:  return Action::AdjustDown;  // Left
-        case 4:  return Action::AdjustUp;    // Right
+        case 1:  return Action::AdjustUp;    // Up
+        case 2:  return Action::AdjustDown;  // Down
+        case 3:  return Action::Prev;        // Left
+        case 4:  return Action::Next;        // Right
         case 10: return Action::Activate;    // Enter
         case 11: return Action::Back;        // Escape
         case 12: return Action::Menu;        // Menu
@@ -63,12 +64,12 @@ inline Action defaultAction(Code c) {
 // Map Action → legacy Key for backward-compat forward in IScreen::onAction().
 inline nema::Key keyFromAction(Action a) {
     switch (a) {
-        case Action::Prev:       return nema::Key::Up;
-        case Action::Next:       return nema::Key::Down;
+        case Action::Prev:       return nema::Key::Left;
+        case Action::Next:       return nema::Key::Right;
         case Action::Activate:   return nema::Key::Select;
         case Action::Back:       return nema::Key::Cancel;
-        case Action::AdjustUp:   return nema::Key::Right;
-        case Action::AdjustDown: return nema::Key::Left;
+        case Action::AdjustUp:   return nema::Key::Up;
+        case Action::AdjustDown: return nema::Key::Down;
         default:                 return nema::Key::None;
     }
 }

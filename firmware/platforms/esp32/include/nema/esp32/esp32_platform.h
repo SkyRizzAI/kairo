@@ -6,6 +6,7 @@
 #include "nema/esp32/esp32_ble.h"
 #include "nema/esp32/nvs_config_store.h"
 #include "nema/esp32/esp32_usb_cdc.h"
+#include "nema/esp32/esp32_usb_hid.h"
 #include "nema/esp32/esp32_ota.h"
 #include "nema/link/link_service.h"
 #include "nema/link/ble_link_transport.h"
@@ -32,6 +33,7 @@ public:
     void postRegister(Runtime& rt) override;   // wrap display + wire PLP-over-BLE
     void idle() override;   // vTaskDelay(5ms)
     void power(PowerAction action) override;   // esp_restart / esp_deep_sleep_start
+    bool syncNtp() override;   // Plan 62 — SNTP client
 
     Esp32WifiDriver& wifi() { return wifi_; }
     Esp32Ble&        ble()  { return ble_; }
@@ -45,6 +47,7 @@ private:
     Esp32WifiDriver  wifi_;
     Esp32HttpClient  http_;
     Esp32Ble         ble_;
+    Esp32UsbHid      usbHid_;
     NvsConfigStore   config_;
 
     // PLP remote layer over BLE (Plan 35). Only wired when the board has a

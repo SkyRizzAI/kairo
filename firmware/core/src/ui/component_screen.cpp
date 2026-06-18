@@ -39,9 +39,9 @@ void ComponentScreen::onAction(input::Action a) {
         // Left/Right: fine-adjust a focused value control (slider/stepper); if the
         // focused node isn't adjustable, fall back to moving focus.
         case A::AdjustUp:   dirty = ui::dispatchAdjust(root_, state_, +1) ||
-                                    ui::dispatchNav(root_, state_, ui::Nav::Next);     break;
-        case A::AdjustDown: dirty = ui::dispatchAdjust(root_, state_, -1) ||
                                     ui::dispatchNav(root_, state_, ui::Nav::Prev);     break;
+        case A::AdjustDown: dirty = ui::dispatchAdjust(root_, state_, -1) ||
+                                    ui::dispatchNav(root_, state_, ui::Nav::Next);     break;
         case A::Back:
             if (!onBack()) rt_.view().pop();   // pop() requests its own redraw
             return;

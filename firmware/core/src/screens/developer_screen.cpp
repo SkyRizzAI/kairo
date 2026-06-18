@@ -18,8 +18,16 @@ void DeveloperScreen::stopAether() {
     rt_.switchDisplayServer("fbcon");
 }
 
+void DeveloperScreen::rebootBootloader() {
+    rt_.requestBootloader();
+}
+
 void DeveloperScreen::onStopAether(void* u) {
     static_cast<DeveloperScreen*>(u)->stopAether();
+}
+
+void DeveloperScreen::onRebootBootloader(void* u) {
+    static_cast<DeveloperScreen*>(u)->rebootBootloader();
 }
 
 UiNode* DeveloperScreen::build(NodeArena& a, Runtime&) {
@@ -32,6 +40,7 @@ UiNode* DeveloperScreen::build(NodeArena& a, Runtime&) {
     return View(a, root, {
         TitleBar(a, "DEVELOPER"),
         ScrollView(a, scroll_, sv, {
+            ListItem(a, "Reboot to Bootloader", ">", onRebootBootloader, this),
             ListItem(a, "Stop Aether Server", ">", onStopAether, this),
         }),
     });

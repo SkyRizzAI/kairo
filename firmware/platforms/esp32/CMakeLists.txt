@@ -5,6 +5,7 @@ idf_component_register(
         "src/esp32_http_client.cpp"
         "src/esp32_ble.cpp"
         "src/esp32_usb_cdc.cpp"
+        "src/esp32_usb_hid.cpp"
         "src/esp32_platform.cpp"
         "src/esp32_ota.cpp"
         "src/nvs_config_store.cpp"
@@ -23,4 +24,5 @@ idf_component_register(
         mbedtls
         app_update
         bt
+        espressif__tinyusb
 )

@@ -22,12 +22,12 @@ const char* InputService::hintFor(input::Action a) const {
     if (keyMap_) return keyMap_->hintFor(a);
     // Fallback hints when no keymap (simulator / host)
     switch (a) {
-        case input::Action::Prev:       return "Up";
-        case input::Action::Next:       return "Down";
+        case input::Action::Prev:       return "Left";
+        case input::Action::Next:       return "Right";
         case input::Action::Activate:   return "Select";
         case input::Action::Back:       return "Cancel";
-        case input::Action::AdjustUp:   return "Right";
-        case input::Action::AdjustDown: return "Left";
+        case input::Action::AdjustUp:   return "Up";
+        case input::Action::AdjustDown: return "Down";
         default:                        return "";
     }
 }

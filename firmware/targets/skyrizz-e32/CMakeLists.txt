@@ -13,3 +13,25 @@ set(EXTRA_COMPONENT_DIRS
 
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
 project(palanu-skyrizz-e32)
+
+# Inject our tusb_config.h globally so espressif__tinyusb can find it.
+# arduino-esp32's esp32-hal-tinyusb.h includes tusb_config.h by name;
+# adding main/ to the global include path satisfies that search.
+idf_build_set_property(COMPILE_OPTIONS
+    "-I${CMAKE_CURRENT_LIST_DIR}/main"
+    APPEND)
+idf_build_set_property(COMPILE_OPTIONS
+    "-I${CMAKE_CURRENT_LIST_DIR}/managed_components/espressif__tinyusb/src"
+    APPEND)
+# CFG_TUSB_MCU activates the Espressif-specific spinlock path in osal_freertos.h.
+# espressif__tinyusb sets this PUBLIC on its own target, but espressif__arduino-esp32
+# does not REQUIRE that component, so esp32-hal-tinyusb.c never sees the flag.
+# Injecting it globally ensures the correct vPortEnterCritical(mux) path is used.
+idf_build_set_property(COMPILE_OPTIONS
+    "-DCFG_TUSB_MCU=OPT_MCU_ESP32S3"
+    APPEND)
+# Plan 66 — CDC+HID composite. Preloader in esp32_usb_hid.cpp pre-loads the HID
+# descriptor in main_task context (8KB stack) before usb_device_task (4KB) starts,
+# preventing stack overflow on GET_HID_REPORT_DESCRIPTOR. PSRAM ensures malloc succeeds.
+idf_build_set_property(COMPILE_OPTIONS "-DARDUINO_USB_CDC_ON_BOOT=1" APPEND)
+idf_build_set_property(COMPILE_OPTIONS "-DARDUINO_USB_ON_BOOT=1"     APPEND)

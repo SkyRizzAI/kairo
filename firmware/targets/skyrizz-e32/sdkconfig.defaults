@@ -1,58 +1,42 @@
-# SkyRizz E32 — sdkconfig defaults.
-# ESP32-S3-WROOM-1-N16R8: 16 MB flash, 8 MB Octal PSRAM.
-#
-# GPIO conflict note:
-#   GPIO43 (UART0 TXD default) → used as XL9535 INT#
-#   GPIO44 (UART0 RXD default) → used as SCLK3 (microSD SPI clock)
-# Therefore UART0 console is disabled; log output via USB CDC (GPIO19/20).
+# SkyRizz E32 — default sdkconfig overrides
+# These are applied on first build (or after deleting sdkconfig).
+# Change these to override defaults without editing sdkconfig directly.
 
-# Target
-CONFIG_IDF_TARGET="esp32s3"
-
-# Arduino-as-component: auto-run setup()/loop()
-CONFIG_AUTOSTART_ARDUINO=y
+# ── Arduino-ESP32 requirements ────────────────────────────────────────────────
 CONFIG_FREERTOS_HZ=1000
+# arduino-esp32 provides app_main() which calls setup()/loop().
+CONFIG_AUTOSTART_ARDUINO=y
 
-# 16 MB flash, QIO mode
+# ── C++ features required by core ─────────────────────────────────────────────
+# service_container.h uses typeid (RTTI); service_manager.cpp catches std::exception.
+CONFIG_COMPILER_CXX_RTTI=y
+CONFIG_COMPILER_CXX_EXCEPTIONS=y
+
+# ── Arduino loop task ─────────────────────────────────────────────────────────
+# Default is 8192 bytes; setup() initialises LCD, touch, camera, audio, KLP stack
+# and can exhaust that easily. 16384 bytes gives comfortable headroom.
+CONFIG_ARDUINO_LOOP_STACK_SIZE=16384
+
+# ── Flash / partition table (ESP32-S3-WROOM-1-N16R8: 16 MB flash) ─────────────
 CONFIG_ESPTOOLPY_FLASHSIZE_16MB=y
-CONFIG_ESPTOOLPY_FLASHMODE_QIO=y
-
-# Custom partition table — A/B OTA slots (Plan 39)
+CONFIG_ESPTOOLPY_FLASHSIZE="16MB"
+# Use partitions.csv (A/B OTA, 5 MB slots). Binary is ~2.1 MB.
 CONFIG_PARTITION_TABLE_CUSTOM=y
 CONFIG_PARTITION_TABLE_CUSTOM_FILENAME="partitions.csv"
-# Firmware OTA: enable A/B rollback (new image boots on probation; reverts if it
-# fails to confirm via esp_ota_mark_app_valid_cancel_rollback).
-CONFIG_BOOTLOADER_APP_ROLLBACK_ENABLE=y
 
-# Octal PSRAM (N16R8)
+# ── PSRAM (ESP32-S3-WROOM-1-N16R8: 8 MB Octal PSRAM) ─────────────────────────
+# Without this, malloc/new only sees ~290 KB DRAM; WiFi+BLE exhaust it before
+# the UI arena can allocate, causing std::bad_alloc → boot loop.
 CONFIG_SPIRAM=y
 CONFIG_SPIRAM_MODE_OCT=y
 CONFIG_SPIRAM_SPEED_80M=y
+CONFIG_SPIRAM_USE_MALLOC=y
+# Allocs ≤ 4 KB stay in fast DRAM; larger allocs (frame buffers, arenas) go to PSRAM.
+CONFIG_SPIRAM_MALLOC_ALWAYSINTERNAL=4096
+# Move WiFi/LwIP buffers to PSRAM so DRAM is free for task stacks and small allocs.
+CONFIG_SPIRAM_TRY_ALLOCATE_WIFI_LWIP=y
 
-# WiFi
-CONFIG_ESP_WIFI_ENABLED=y
-
-# Bluetooth — NimBLE host (BLE-only; ESP32-S3 has no Classic BT). Plan 34.
-CONFIG_BT_ENABLED=y
-CONFIG_BT_NIMBLE_ENABLED=y
-
-# Console + USB transport.
-# GPIO43/44 (UART0) are taken by XL9535 INT + SPI clock, so UART console is out.
-# Use the hardware USB-Serial-JTAG — the SAME interface the ROM bootloader and
-# esptool use. This makes flashing auto-reset reliable and keeps the serial port
-# stable across resets (no flaky "No serial data received").
-# NOTE: ARDUINO_USB_MODE / ARDUINO_USB_CDC_ON_BOOT are Arduino-IDE build flags,
-# NOT IDF Kconfig symbols — setting them here does nothing, so Arduino `Serial`
-# stays mapped to UART0. Code must use HWCDCSerial explicitly for the USB port
-# (see esp32_usb_cdc.cpp and main.cpp).
-CONFIG_ESP_CONSOLE_USB_SERIAL_JTAG=y
-
-# Logging
-CONFIG_LOG_DEFAULT_LEVEL_INFO=y
-
-# Stack size for Arduino task
-CONFIG_ARDUINO_LOOP_STACK_SIZE=16384
-
-# C++ features used by Palanu Core
-CONFIG_COMPILER_CXX_EXCEPTIONS=y
-CONFIG_COMPILER_CXX_RTTI=y
+# ── Main task stack (global C++ constructors run here) ────────────────────────
+# Default 3584 bytes is too small for the HID preloader which calls
+# esp_hid_parse_report_map() before app_main(). 8 KB gives comfortable headroom.
+CONFIG_ESP_MAIN_TASK_STACK_SIZE=8192

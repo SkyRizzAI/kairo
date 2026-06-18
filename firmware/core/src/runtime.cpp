@@ -24,6 +24,8 @@
 #include "nema/services/display_power_manager.h"
 #include "nema/config/config_store.h"
 #include "nema/hal/display.h"
+#include "nema/services/dummy_battery_driver.h"
+#include "nema/services/ntp_service.h"
 #include "nema/version.h"
 #include <cassert>
 
@@ -131,6 +133,22 @@ void Runtime::registerServices() {
     eventBus_->subscribe(events::BtDisconnected,
         [this](const Event&) { capabilities_->setState(caps::BtBle, ResourceState::Absent); });
 
+    // Plan 64 — crash recovery subscriptions.
+    appHosts_->initCrashRecovery();
+
+    // Plan 65 — dummy battery driver (on platforms with display).
+    if (capabilities_->has(caps::Display)) {
+        dummyBattery_ = std::make_unique<DummyBatteryDriver>();
+        dummyBattery_->onRegister(*this);
+        adoptService(dummyBattery_.get());
+    }
+
+    // Plan 62 — NTP time sync (on platforms with networking).
+    if (capabilities_->has(caps::NetWifi)) {
+        ntp_ = std::make_unique<NtpService>(*this);
+        adoptService(ntp_.get());
+    }
+
     std::string caps;
     for (const auto& c : capabilities_->list()) caps += c + " ";
     logger_->info("Runtime", "Capabilities: " + caps);
@@ -197,6 +215,10 @@ bool Runtime::isShutdownRequested() const { return shutdownRequested_; }
 void Runtime::requestRestart()  {
     exitCode_ = 75; shutdownRequested_ = true;         // host/sim: run() loop exits (75 = restart)
     if (platform_) platform_->power(IPlatform::PowerAction::Restart);  // hardware: reboot now
+}
+void Runtime::requestBootloader() {
+    exitCode_ = 75; shutdownRequested_ = true;         // host/sim: run() loop exits (75 = restart)
+    if (platform_) platform_->power(IPlatform::PowerAction::Bootloader);  // hardware: GPIO0 low + reboot
 }
 
 IPlatform&          Runtime::platform()      { assert(platform_); return *platform_; }

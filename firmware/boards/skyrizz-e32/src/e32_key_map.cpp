@@ -43,13 +43,13 @@ const char* E32KeyMap::buttonLabel(uint8_t id) const {
 
 const char* E32KeyMap::hintFor(Action a) const {
     switch (a) {
-        case Action::Prev:       return "Up";       // side top (PB1)
-        case Action::Next:       return "Dn";       // side bottom (PB2)
+        case Action::Prev:       return "Left";     // below left (SW1)
+        case Action::Next:       return "Right";    // below right (SW3)
         case Action::Activate:   return "OK";       // center (SW2), single tap
         case Action::Back:       return "2x OK";    // center (SW2), double tap
         case Action::Pause:      return "Hold OK";  // center (SW2), long-hold
-        case Action::AdjustUp:   return "Right";    // below right (SW3)
-        case Action::AdjustDown: return "Left";     // below left (SW1)
+        case Action::AdjustUp:   return "Up";       // side top (PB1)
+        case Action::AdjustDown: return "Dn";       // side bottom (PB2)
         default:                 return "";
     }
 }
@@ -98,12 +98,12 @@ Code E32KeyMap::idToCode(uint8_t id, Gesture g) {
 // static
 Action E32KeyMap::idToAction(uint8_t id, Gesture g) {
     switch (id) {
-        // Below-left / below-right = horizontal arrows. Tap or hold-repeat.
-        case BTN_LEFT:   return Action::AdjustDown;  // Left
-        case BTN_RIGHT:  return Action::AdjustUp;    // Right
-        // Side buttons = vertical nav (list up/down). Tap or hold-repeat.
-        case BTN_UP:     return Action::Prev;        // Up
-        case BTN_DOWN:   return Action::Next;        // Down
+        // Below-left / below-right = primary nav (horizontal carousel).
+        case BTN_LEFT:   return Action::Prev;        // Left
+        case BTN_RIGHT:  return Action::Next;        // Right
+        // Side buttons = secondary adjust (up/down).
+        case BTN_UP:     return Action::AdjustUp;    // Up
+        case BTN_DOWN:   return Action::AdjustDown;  // Down
         case BTN_MIDDLE:
             // Board gesture profile: tap = OK, double = Back, long-hold = Pause.
             if (g == Gesture::Hold)   return Action::Pause;

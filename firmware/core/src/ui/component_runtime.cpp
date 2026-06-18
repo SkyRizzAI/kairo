@@ -190,7 +190,7 @@ bool dispatchNav(UiNode* root, ComponentState& st, Nav nav) {
         if (handleFocusKey(*root, st.focus, Key::Select)) return true;
         return dispatchAdjust(root, st, +1);
     }
-    Key k = nav == Nav::Prev ? Key::Up : Key::Down;
+    Key k = nav == Nav::Prev ? Key::Left : Key::Right;
     if (handleFocusKey(*root, st.focus, k)) return true;
     // No focusable target moved (e.g. a read-only scrolling text screen) — fall
     // back to nudging the scroll view so Prev/Next still pans the content.

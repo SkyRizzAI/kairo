@@ -35,6 +35,8 @@ src/input/gesture.cpp
     src/crypto/sha256.cpp
     src/services/profile_service.cpp
     src/services/clock_service.cpp
+    src/services/dummy_battery_driver.cpp
+    src/services/ntp_service.cpp
     src/services/cli_service.cpp
     src/services/gui_service.cpp
     src/app/app_registry.cpp
@@ -46,6 +48,8 @@ src/input/gesture.cpp
     src/apps/hello_app.cpp
     src/apps/js_app.cpp
     src/apps/js_app_store.cpp
+    src/apps/bad_usb_app.cpp
+    src/apps/badusb_parser.cpp
     src/ui/text_input.cpp
     src/ui/virtual_keyboard.cpp
     src/ui/canvas.cpp

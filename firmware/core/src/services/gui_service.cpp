@@ -71,6 +71,11 @@ void GuiService::start() {
         }
         if (isDisplay && notAvailable) requestServer("fbcon");
     });
+    rt_.events().subscribe(events::BatteryChanged, [this](const Event& e) {
+        for (const auto& f : e.payload) {
+            if (std::string(f.key) == "level") status_.battery = std::stoi(f.value);
+        }
+    });
 
     dpm_.init(rt_.view(), display_, rt_.clock(), lockScreen_, sleepMs, lockMs);
     lockScreen_.setDpm(dpm_);
