@@ -14,7 +14,7 @@ public:
 
     void setDpm(DisplayPowerManager& dpm) { dpm_ = &dpm; }
 
-    void        enter() override;
+    void        onResume() override;
     void        onAction(input::Action a) override;
     ui::UiNode* build(ui::NodeArena& a, Runtime& rt) override;
 

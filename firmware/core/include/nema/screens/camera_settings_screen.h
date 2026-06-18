@@ -12,7 +12,7 @@ class Runtime;
 class CameraSettingsScreen : public ComponentScreen {
 public:
     explicit CameraSettingsScreen(Runtime& rt);
-    void        enter() override;
+    void        onResume() override;
     ui::UiNode* build(ui::NodeArena& a, Runtime& rt) override;
 
 private:

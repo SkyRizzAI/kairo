@@ -14,7 +14,7 @@ using namespace ui;
 
 ControlsScreen::ControlsScreen(Runtime& rt) : ComponentScreen(rt, 96) {}
 
-void ControlsScreen::enter() {
+void ControlsScreen::onResume() {
     scroll_.scrollMain = 0;
     rt_.view().requestRedraw();
 }

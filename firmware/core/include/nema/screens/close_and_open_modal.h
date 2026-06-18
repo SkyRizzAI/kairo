@@ -1,5 +1,6 @@
 #pragma once
 #include "nema/ui/screen.h"
+#include "nema/ui/component_screen.h"
 
 namespace nema {
 
@@ -7,10 +8,11 @@ class Runtime;
 struct IApp;
 class AppHostManager;
 
-// Confirm dialog shown when launching an app while another is paused (Plan 22
-// single-slot policy). "Close & Open" kills the paused app and launches the new
-// one; "Cancel" keeps the paused app. Small immediate-mode Modal screen.
-class CloseAndOpenModal : public IScreen {
+// Plan 70 rewrite: confirmation dialog using the Dialog widget builder.
+// Shown when launching an app while another is paused (Plan 22 single-slot
+// policy). "Close & Open" kills the paused app and launches the new one;
+// "Cancel" keeps the paused app.
+class CloseAndOpenModal : public ComponentScreen {
 public:
     CloseAndOpenModal(Runtime& rt, AppHostManager& mgr, IApp& target);
 
@@ -18,15 +20,17 @@ public:
     uint16_t   modalWidth()  const override { return 220; }
     uint16_t   modalHeight() const override { return 86; }
 
-    void enter() override;
-    void onAction(input::Action a) override;
-    void draw(Canvas& c) override;
+    void onResume() override;
+
+    ui::UiNode* build(ui::NodeArena& a, Runtime& rt) override;
 
 private:
-    Runtime&        rt_;
     AppHostManager& mgr_;
     IApp&           target_;
-    int             cursor_ = 0;   // 0 = Close & Open, 1 = Cancel
+    char            title_[48] = "";
+
+    static void onCloseAndOpen(void* ctx);
+    static void onCancel(void* ctx);
 };
 
 } // namespace nema

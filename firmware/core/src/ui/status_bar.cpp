@@ -43,7 +43,7 @@ void StatusBar::draw(Canvas& c, const StatusBarData& d) {
     uint16_t ty  = (barH > CHAR_H) ? (uint16_t)((barH - CHAR_H) / 2) : 0;
     uint16_t icy = (barH > 8)      ? (uint16_t)((barH - 8) / 2)      : 0;
     FontSpec fs  = fontForRole(TextRole::Caption);
-    c.setFont(*fs.font);
+    c.setFont(fs.handle);
     c.drawText(2, ty, clk, textOn);
 
     // Right side — work left from edge

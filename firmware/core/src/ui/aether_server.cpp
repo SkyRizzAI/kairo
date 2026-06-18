@@ -35,12 +35,18 @@ void AetherServer::renderFrame(Canvas& c, ViewDispatcher& vd, const StatusBarDat
                 if (bg->mode() == ScreenMode::Normal) StatusBar::draw(c, status);
                 bg->draw(c);
             }
+            // Plan 70: dim the background with a 50% dither pattern before drawing the modal
             uint16_t mw = s->modalWidth();
             uint16_t mh = s->modalHeight();
             uint16_t mx = (uint16_t)((c.width()  > mw) ? (c.width()  - mw) / 2 : 0);
             uint16_t my = (uint16_t)((c.height() > mh) ? (c.height() - mh) / 2 : 0);
-            c.fillRect(mx, my, mw, mh, false);          // clear interior
-            aether::ui::draw::box_rounded(c, mx, my, mw, mh, false);  // rounded border
+            // Dither backdrop: checkerboard pattern for 1-bit ~50% dim effect
+            for (uint16_t row = 0; row < c.height(); row++)
+                for (uint16_t col = (row % 2); col < c.width(); col += 2)
+                    c.drawPixel(col, row, true);
+            // Clear modal box interior + rounded border
+            c.fillRect(mx, my, mw, mh, false);
+            aether::ui::draw::box_rounded(c, mx, my, mw, mh, false);
             break;
         }
         case ScreenMode::Fullscreen:

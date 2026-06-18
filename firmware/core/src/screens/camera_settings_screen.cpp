@@ -10,7 +10,7 @@ using namespace ui;
 
 CameraSettingsScreen::CameraSettingsScreen(Runtime& rt) : ComponentScreen(rt, 64) {}
 
-void CameraSettingsScreen::enter() {
+void CameraSettingsScreen::onResume() {
     scroll_.scrollMain = 0;
     rt_.view().requestRedraw();
 }

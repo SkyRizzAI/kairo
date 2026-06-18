@@ -3,6 +3,8 @@
 #include "nema/board.h"
 #include "nema/ui/view_dispatcher.h"
 #include "nema/ui/ascii_board_renderer.h"
+#include "nema/ui/widgets.h"
+#include "nema/input/input_action.h"
 #include "nema/system/system_info.h"
 #include "nema/system/capability_registry.h"
 #include "nema/clock.h"
@@ -12,11 +14,48 @@ namespace nema {
 
 using namespace ui;
 
-AboutScreen::AboutScreen(Runtime& rt) : ComponentScreen(rt, 96) {}
+// ── Plan 70: AboutModal — Dialog demo shown when Activate is pressed on About ─
 
-void AboutScreen::enter() {
+class AboutModal : public ComponentScreen {
+public:
+    explicit AboutModal(Runtime& rt) : ComponentScreen(rt, 16) {}
+
+    ScreenMode mode()        const override { return ScreenMode::Modal; }
+    uint16_t   modalWidth()  const override { return 210; }
+    uint16_t   modalHeight() const override { return 110; }
+
+    void onAction(input::Action a) override {
+        if (a == input::Action::Activate || a == input::Action::Back)
+            rt_.view().goBack();
+    }
+
+    UiNode* build(NodeArena& a, Runtime& rt) override {
+        const auto& info = rt.info();
+        char body[128];
+        std::snprintf(body, sizeof(body), "%s\n%s\nFW: %s",
+                      info.boardName.c_str(),
+                      info.platformName.c_str(),
+                      info.firmwareVersion.c_str());
+        DialogButton ok = {"OK", nullptr, nullptr};
+        return Dialog(a, "ABOUT PALANU", body, nullptr, 0, 0, &ok, 1);
+    }
+};
+
+AboutScreen::AboutScreen(Runtime& rt) : ComponentScreen(rt, 96) {
+    aboutModal_ = std::unique_ptr<ComponentScreen>(new AboutModal(rt));
+}
+
+void AboutScreen::onResume() {
     scroll_.scrollMain = 0;
     rt_.view().requestRedraw();
+}
+
+void AboutScreen::onAction(input::Action a) {
+    if (a == input::Action::Activate) {
+        if (aboutModal_) rt_.view().navigate(*aboutModal_);
+        return;
+    }
+    ComponentScreen::onAction(a);
 }
 
 UiNode* AboutScreen::build(NodeArena& a, Runtime& rt) {

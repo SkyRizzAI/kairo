@@ -1,6 +1,8 @@
 #include "nema/system/capabilities.h"
 #include "nema/services/gui_service.h"
 #include "nema/ui/style_tokens.h"
+#include "nema/ui/animation_manager.h"
+#include "nema/ui/font_registry.h"
 #include "nema/runtime.h"
 #include "nema/clock.h"
 #include "nema/service/service_container.h"
@@ -23,6 +25,14 @@
 namespace nema {
 
 void GuiService::start() {
+    // Plan 70: register built-in fonts with the FontRegistry.
+    auto& fontReg = ui::FontRegistry::instance();
+    fontReg.registerFont(ui::Fonts::Primary,   &FONT_5X8, "primary");
+    fontReg.registerFont(ui::Fonts::Secondary, &FONT_5X8, "secondary");
+    fontReg.registerFont(ui::Fonts::Mono,      &FONT_6X8, "mono");
+    fontReg.registerFont(ui::Fonts::Tiny,      &FONT_5X8, "tiny");
+    fontReg.registerFont(ui::Fonts::BigNum,    &FONT_5X8, "bignum");
+
     display_ = rt_.container().resolve<IDisplayDriver>();
 
     // Display servers (Plan 43). Default = AetherServer (1-bit canvas UI);
@@ -140,8 +150,13 @@ void GuiService::refreshStatus(uint64_t now) {
 
 void GuiService::loop() {
     const bool hasDisplay = rt_.capabilities().has(caps::Display);
+    // Plan 70: target ~30 fps (33 ms). On headless servers we spin tighter
+    // for lower input latency; the sleep is the budget that remains.
+    constexpr uint32_t TARGET_FRAME_MS = 33;
+
     while (!thread_.shouldStop()) {
-        uint64_t now = rt_.clock().millis();
+        uint64_t frameStart = rt_.clock().millis();
+        uint64_t now = frameStart;
         auto& vd = rt_.view();
 
         // 0. Apply a pending display-server swap (requested from another thread,
@@ -188,7 +203,11 @@ void GuiService::loop() {
         //    can safely touch screen/app UI state.
         rt_.tasks().drainCompletions();
 
-        // 5. Render — skip while sleeping; flush one blank frame on sleep entry.
+        // 5. Plan 70: Tick animations. If any frame advanced, we need a redraw.
+        if (anim::AnimationManager::instance().tickAll((uint32_t)now))
+            vd.requestRedraw();
+
+        // 6. Render — skip while sleeping; flush one blank frame on sleep entry.
         if (hasDisplay) {
             if (dpm_.isSleeping() && dpm_.takeEnteredSleep()) {
                 rt_.canvas().clear(false);
@@ -202,11 +221,21 @@ void GuiService::loop() {
                 else
                     setTheme(defaultTheme());
                 rt_.canvas().setScale(server_->serverScale());
+                // Plan 70: partial redraw — clip to dirty region if available.
+                uint16_t dx, dy, dw, dh;
+                if (vd.getDirtyBounds(dx, dy, dw, dh))
+                    rt_.canvas().setClip(dx, dy, dw, dh);
                 server_->renderFrame(rt_.canvas(), vd, status_);
+                rt_.canvas().clearClip();
             }
         }
 
-        nema::Thread::sleepMs(5);   // tighter loop → quicker redraw pickup
+        // Plan 70 frame pacing: sleep only the remaining budget so frames
+        // arrive at a steady cadence. If we overshot the target the loop
+        // spins again immediately (sleepMs(0) is a yield).
+        uint64_t elapsed = rt_.clock().millis() - frameStart;
+        if (elapsed < TARGET_FRAME_MS)
+            nema::Thread::sleepMs((uint32_t)(TARGET_FRAME_MS - elapsed));
     }
 }
 

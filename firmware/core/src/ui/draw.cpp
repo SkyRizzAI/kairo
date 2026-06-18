@@ -1,6 +1,7 @@
 // Plan 60 Fase 1 — tier-1 draw toolkit implementation.
 #include "nema/ui/draw.h"
 #include "nema/ui/text_style.h"
+#include "nema/ui/font_registry.h"
 #include <cstring>
 #include <cstdlib>
 
@@ -9,15 +10,21 @@ namespace aether::ui::draw {
 using nema::Canvas;
 using nema::ui::TextRole;
 using nema::ui::FontSpec;
+using nema::ui::FontHandle;
+using nema::ui::FontRegistry;
 using nema::ui::fontForRole;
 using nema::ui::measureTextW;
 using nema::ui::measureTextH;
 
 // ── Internal helpers ──────────────────────────────────────────────────────────
 
+static const nema::BitmapFont& resolve(nema::ui::FontHandle h) {
+    return *FontRegistry::instance().get(h);
+}
+
 static void drawText(Canvas& c, uint16_t x, uint16_t y, const char* s,
                      const FontSpec& fs, bool on = true) {
-    c.setFont(*fs.font);
+    c.setFont(fs.handle);
     if (fs.scale <= 1) c.drawText(x, y, s, on);
     else               c.drawTextScaled(x, y, s, fs.scale, on);
 }
@@ -116,8 +123,8 @@ void multiline(Canvas& c, uint16_t x, uint16_t y, uint16_t w,
                const char* text, TextRole role) {
     if (!text || !*text || w == 0) return;
     FontSpec fs = fontForRole(role);
-    uint16_t charW_px = (uint16_t)((fs.font->charW + fs.font->spacing) * fs.scale);
-    uint16_t lineH    = (uint16_t)(fs.font->charH * fs.scale + 1);
+    uint16_t charW_px = (uint16_t)((resolve(fs.handle).charW + resolve(fs.handle).spacing) * fs.scale);
+    uint16_t lineH    = (uint16_t)(resolve(fs.handle).charH * fs.scale + 1);
     uint16_t cy = y;
 
     size_t len = strlen(text);
@@ -173,7 +180,7 @@ void marquee(Canvas& c, uint16_t x, uint16_t y, uint16_t w,
     uint32_t cycle  = (uint32_t)textW + GAP;
     uint32_t offset = tick % cycle;  // pixels to scroll left
 
-    uint16_t charW_px = (uint16_t)((fs.font->charW + fs.font->spacing) * fs.scale);
+    uint16_t charW_px = (uint16_t)((resolve(fs.handle).charW + resolve(fs.handle).spacing) * fs.scale);
 
     // Find first visible char and sub-char pixel offset
     uint16_t skipChars = (uint16_t)(offset / charW_px);
@@ -214,7 +221,7 @@ void ellipsis(Canvas& c, uint16_t x, uint16_t y, uint16_t w,
     }
 
     uint16_t available = w - dotsW;
-    uint16_t charW_px  = (uint16_t)((fs.font->charW + fs.font->spacing) * fs.scale);
+    uint16_t charW_px  = (uint16_t)((resolve(fs.handle).charW + resolve(fs.handle).spacing) * fs.scale);
     size_t   n         = available / charW_px;
     size_t   len       = strlen(text);
     if (n > len) n = len;

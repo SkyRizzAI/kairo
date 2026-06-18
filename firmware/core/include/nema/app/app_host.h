@@ -39,7 +39,7 @@ public:
     // IScreen (GUI thread). mode follows the app: fullscreen apps take the whole
     // screen; otherwise Normal so GuiService draws the status bar above the app.
     ScreenMode mode() const override;
-    void enter()         override;   // spawn app thread (or resume if already running)
+    void onResume()      override;   // spawn app thread (or resume if already running)
 
     // Pause/resume (Plan 22). Paused: the app thread parks inside waitInput()
     // (CPU ~0, stack+state preserved); resume = enter() again (re-push) clears it.

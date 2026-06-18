@@ -4,6 +4,7 @@
 #include "nema/ui/renderer.h"
 #include "nema/ui/draw.h"
 #include "nema/ui/text_style.h"
+#include "nema/ui/animation_player.h"
 #include "nema/ui/canvas.h"
 #include <cstring>
 
@@ -31,7 +32,7 @@ static void paint(const UiNode* n, Canvas& c, const UiNode* focused, bool inFocu
 
     if (n->type == NodeType::Text && n->text) {
         FontSpec fs = fontForRole(n->role);
-        c.setFont(*fs.font);
+        c.setFont(fs.handle);
         uint16_t tx = (uint16_t)(n->x + s.padding);
         uint16_t ty = (uint16_t)(n->y + s.padding);
         bool on = !s.background;
@@ -56,6 +57,17 @@ static void paint(const UiNode* n, Canvas& c, const UiNode* focused, bool inFocu
         uint16_t ix = (uint16_t)(n->x + s.padding);
         uint16_t iy = (uint16_t)(n->y + s.padding);
         aether::ui::draw::icon(c, ix, iy, n->iconBitmap, n->iconW, n->iconH);
+        return;
+    }
+
+    // Plan 70: AnimatedIcon — draw the current frame from the player.
+    if (n->type == NodeType::AnimatedIcon && n->animPlayer) {
+        uint16_t ix = (uint16_t)(n->x + s.padding);
+        uint16_t iy = (uint16_t)(n->y + s.padding);
+        aether::ui::draw::icon(c, ix, iy,
+            n->animPlayer->currentFrameData(),
+            (uint8_t)n->animPlayer->width(),
+            (uint8_t)n->animPlayer->height());
         return;
     }
 

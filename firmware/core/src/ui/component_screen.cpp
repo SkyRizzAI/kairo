@@ -11,13 +11,26 @@ void ComponentScreen::requestRedraw() { rt_.view().requestRedraw(); }
 
 void ComponentScreen::enter() {
     state_.modality = input::InputModality::Button;
+    dirty_ = true;   // force tree rebuild on next draw (Plan 70)
+    requestRedraw();
+}
+
+void ComponentScreen::onResume() {
+    state_.modality = input::InputModality::Button;
+    dirty_ = true;
     requestRedraw();
 }
 
 void ComponentScreen::draw(Canvas& c) {
-    arena_.reset();
-    state_.pressed = nullptr;          // arena reset invalidates node pointers
-    root_ = build(arena_, rt_);
+    // Plan 70 FPS opt: only rebuild the tree if model data changed.
+    // Layout + render always runs (scroll momentum, marquee, ellipsis
+    // need fresh positional data even when the tree is unchanged).
+    if (dirty_) {
+        arena_.reset();
+        state_.pressed = nullptr;          // arena reset invalidates node pointers
+        root_ = build(arena_, rt_);
+        dirty_ = false;
+    }
     if (!root_) return;
     uint16_t w = c.width();
     uint16_t h = c.height();
@@ -30,29 +43,36 @@ void ComponentScreen::draw(Canvas& c) {
 
 void ComponentScreen::onAction(input::Action a) {
     if (!root_) return;
-    bool dirty = false;
+    bool changed = false;
     using A = input::Action;
     switch (a) {
-        case A::Prev:       dirty = ui::dispatchNav(root_, state_, ui::Nav::Prev);     break;
-        case A::Next:       dirty = ui::dispatchNav(root_, state_, ui::Nav::Next);     break;
-        case A::Activate:   dirty = ui::dispatchNav(root_, state_, ui::Nav::Activate); break;
+        case A::Prev:       changed = ui::dispatchNav(root_, state_, ui::Nav::Prev);     break;
+        case A::Next:       changed = ui::dispatchNav(root_, state_, ui::Nav::Next);     break;
+        case A::Activate:   changed = ui::dispatchNav(root_, state_, ui::Nav::Activate); break;
         // Left/Right: fine-adjust a focused value control (slider/stepper); if the
         // focused node isn't adjustable, fall back to moving focus.
-        case A::AdjustUp:   dirty = ui::dispatchAdjust(root_, state_, +1) ||
-                                    ui::dispatchNav(root_, state_, ui::Nav::Prev);     break;
-        case A::AdjustDown: dirty = ui::dispatchAdjust(root_, state_, -1) ||
-                                    ui::dispatchNav(root_, state_, ui::Nav::Next);     break;
+        case A::AdjustUp:   changed = ui::dispatchAdjust(root_, state_, +1) ||
+                                       ui::dispatchNav(root_, state_, ui::Nav::Prev);     break;
+        case A::AdjustDown: changed = ui::dispatchAdjust(root_, state_, -1) ||
+                                       ui::dispatchNav(root_, state_, ui::Nav::Next);     break;
         case A::Back:
-            if (!onBack()) rt_.view().pop();   // pop() requests its own redraw
+            // Plan 70: try IScreen::onBackPressed first (new), then ComponentScreen::onBack (legacy)
+            if (!onBackPressed() && !onBack()) rt_.view().goBack();
             return;
         default: break;
     }
-    if (dirty) requestRedraw();
+    if (changed) {
+        dirty_ = true;   // Plan 70: interaction may have changed model data
+        requestRedraw();
+    }
 }
 
 void ComponentScreen::onPointer(const input::PointerEvent& e) {
     if (!root_) return;
-    if (ui::dispatchPointer(root_, state_, e)) requestRedraw();
+    if (ui::dispatchPointer(root_, state_, e)) {
+        dirty_ = true;   // Plan 70: pointer interaction may have changed model data
+        requestRedraw();
+    }
 }
 
 void ComponentScreen::tick(uint64_t) {

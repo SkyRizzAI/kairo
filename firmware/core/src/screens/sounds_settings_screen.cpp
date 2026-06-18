@@ -10,7 +10,7 @@ using namespace ui;
 
 SoundsSettingsScreen::SoundsSettingsScreen(Runtime& rt) : ComponentScreen(rt, 96) {}
 
-void SoundsSettingsScreen::enter() {
+void SoundsSettingsScreen::onResume() {
     scroll_.scrollMain = 0;
     rt_.view().requestRedraw();
 }

@@ -5,6 +5,7 @@
 // own lv_obj tree). It is NOT part of the shared System API (Plan 48).
 // Status: library reuse, not interface standard.
 #include "nema/ui/node.h"
+#include "nema/ui/animation_player.h"
 #include <cstddef>
 #include <initializer_list>
 
@@ -147,5 +148,41 @@ UiNode* Menu(NodeArena& a, const MenuItem* items, int count);
 // prompt + a Row of Buttons inside. Size defaults to ~¾×½ of the screen; set
 // style.width/height on the result to override. Padding/gap/Stretch preset.
 UiNode* Modal(NodeArena& a, std::initializer_list<UiNode*> children = {});
+
+// ── Plan 70: Modal dialog widgets ─────────────────────────────────────────
+
+// DialogButton: a single button in a Dialog.
+struct DialogButton {
+    const char* label;
+    void      (*onClick)(void*);
+    void*       userdata;
+};
+
+// Dialog: a full modal dialog with title, body, optional icon, and up to 3
+// buttons (Left/Center/Right). The dialog is vertically centered and surrounded
+// by a rounded box. Use inside a screen with ScreenMode::Modal.
+//   - title: centered, Title-role (large bold)
+//   - body:  centered, Body-role, supports \n for multiline
+//   - icon:  can be nullptr for no icon
+//   - buttons: nullptr or array of DialogButton, buttonCount 1-3
+UiNode* Dialog(NodeArena& a, const char* title, const char* body,
+               const uint8_t* icon = nullptr, uint8_t iconW = 0, uint8_t iconH = 0,
+               const DialogButton* buttons = nullptr, uint8_t buttonCount = 0);
+
+// Popup: a lightweight notification popup with icon + text + optional auto-
+// dismiss timeout. Simpler than Dialog — single action, no button array.
+UiNode* Popup(NodeArena& a, const char* text,
+              const uint8_t* icon = nullptr, uint8_t iconW = 0, uint8_t iconH = 0);
+
+// Toast: a non-blocking bottom-of-screen notification bar. Passes input through
+// to the screen behind it. Designed for system notifications.
+UiNode* Toast(NodeArena& a, const char* message);
+
+// ── Plan 70: Animated Icon ────────────────────────────────────────────────
+
+// AnimatedIcon: a leaf node that draws the current frame of an AnimationPlayer.
+// The player is caller-owned (lives as a screen/app member). The renderer
+// calls animPlayer->currentFrameData() each frame.
+UiNode* AnimatedIcon(NodeArena& a, anim::AnimationPlayer& player);
 
 } // namespace nema::ui
