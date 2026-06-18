@@ -46,15 +46,16 @@ void ComponentScreen::onAction(input::Action a) {
     bool changed = false;
     using A = input::Action;
     switch (a) {
+        // Up/Down = primary vertical navigation (Plan 70 fix)
         case A::Prev:       changed = ui::dispatchNav(root_, state_, ui::Nav::Prev);     break;
         case A::Next:       changed = ui::dispatchNav(root_, state_, ui::Nav::Next);     break;
         case A::Activate:   changed = ui::dispatchNav(root_, state_, ui::Nav::Activate); break;
         // Left/Right: fine-adjust a focused value control (slider/stepper); if the
         // focused node isn't adjustable, fall back to moving focus.
         case A::AdjustUp:   changed = ui::dispatchAdjust(root_, state_, +1) ||
-                                       ui::dispatchNav(root_, state_, ui::Nav::Prev);     break;
-        case A::AdjustDown: changed = ui::dispatchAdjust(root_, state_, -1) ||
                                        ui::dispatchNav(root_, state_, ui::Nav::Next);     break;
+        case A::AdjustDown: changed = ui::dispatchAdjust(root_, state_, -1) ||
+                                       ui::dispatchNav(root_, state_, ui::Nav::Prev);     break;
         case A::Back:
             // Plan 70: try IScreen::onBackPressed first (new), then ComponentScreen::onBack (legacy)
             if (!onBackPressed() && !onBack()) rt_.view().goBack();

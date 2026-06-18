@@ -46,14 +46,14 @@ inline const char* actionName(Action a) {
 }
 
 // Default reduction: Code → Action. Boards may override in their IKeyMap.
-// Primary nav axis = Left/Right; Up/Down = secondary (adjust).
+// Primary nav axis = Up/Down; Left/Right = secondary (adjust).
 inline Action defaultAction(Code c) {
     // (include input_code.h before this)
     switch (static_cast<uint8_t>(c)) {
-        case 1:  return Action::AdjustUp;    // Up
-        case 2:  return Action::AdjustDown;  // Down
-        case 3:  return Action::Prev;        // Left
-        case 4:  return Action::Next;        // Right
+        case 1:  return Action::Prev;        // Up    → navigate previous
+        case 2:  return Action::Next;        // Down  → navigate next
+        case 3:  return Action::AdjustDown;  // Left  → adjust decrement
+        case 4:  return Action::AdjustUp;    // Right → adjust increment
         case 10: return Action::Activate;    // Enter
         case 11: return Action::Back;        // Escape
         case 12: return Action::Menu;        // Menu
