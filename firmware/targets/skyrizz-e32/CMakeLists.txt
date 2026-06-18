@@ -8,7 +8,7 @@ set(EXTRA_COMPONENT_DIRS
     "${CMAKE_CURRENT_LIST_DIR}/../../platforms/esp32"    # → esp32
     "${CMAKE_CURRENT_LIST_DIR}/../../boards/skyrizz-e32" # → skyrizz-e32
     "${CMAKE_CURRENT_LIST_DIR}/../../vendor/quickjs"     # → quickjs (Plan 37)
-    "${CMAKE_CURRENT_LIST_DIR}/../../vendor/wasm3"       # → wasm3 (Plan 57)
+    "${CMAKE_CURRENT_LIST_DIR}/../../vendor/wasm3_idf"   # → wasm3_idf — IDF wrapper (Plan 57)
 )
 
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)

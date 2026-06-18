@@ -115,7 +115,7 @@ if(ESP_PLATFORM)
     idf_component_register(
         SRCS ${NEMA_CORE_SRCS}
         INCLUDE_DIRS "include" "${CMAKE_BINARY_DIR}/nema_generated" "${CMAKE_CURRENT_SOURCE_DIR}/../../generated" "${CMAKE_CURRENT_SOURCE_DIR}/../vendor"
-        REQUIRES quickjs wasm3
+        REQUIRES quickjs wasm3_idf
     )
 else()
     # --- Host build (simulator) ---
