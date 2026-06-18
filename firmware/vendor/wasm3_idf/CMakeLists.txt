@@ -25,3 +25,6 @@ idf_component_register(
         "${wasm3_dir}/source"
 )
 target_compile_definitions(${COMPONENT_LIB} PRIVATE d_m3HasTracer)
+# ESP32 has uint32_t = unsigned long; wasm3 uses %d which triggers -Werror=format.
+# The tracer is non-critical; suppress format warnings for this component.
+target_compile_options(${COMPONENT_LIB} PRIVATE -Wno-format)
