@@ -35,6 +35,8 @@ class GuiService;
 class DisplayPowerManager;
 class IConfigStore;
 struct IDisplayServer;
+class DummyBatteryDriver;
+class NtpService;
 
 class Runtime {
 public:
@@ -50,6 +52,7 @@ public:
     void step();     // one iteration (tick + render) — Arduino loop() calls this
     void requestShutdown();
     void requestRestart();
+    void requestBootloader();
     bool isShutdownRequested() const;
 
     IPlatform&          platform();
@@ -148,6 +151,8 @@ private:
     CliService*                        cli_           = nullptr;
     IFileSystem*                       fs_            = nullptr;
     CameraService                      cameraService_; // value member — always alive
+    std::unique_ptr<DummyBatteryDriver> dummyBattery_;
+    std::unique_ptr<NtpService>        ntp_;
 };
 
 } // namespace nema

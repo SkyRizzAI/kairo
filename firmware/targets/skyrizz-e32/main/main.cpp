@@ -10,6 +10,7 @@
 #include "nema/app/app_registry.h"
 #include "nema/apps/js_app_store.h"
 #include "nema/apps/hello_app.h"
+#include "nema/apps/bad_usb_app.h"
 #include "nema/screens/home_screen.h"
 #include "nema/ui/view_dispatcher.h"
 
@@ -20,10 +21,6 @@ nema::Runtime                  rt = nema::Runtime::create();
 }
 
 void setup() {
-    nema::usbSerialJtag().begin();
-    delay(200);
-    nema::usbSerialJtag().println("\n[nema] booting skyrizz-e32...");
-
     rt.loadPlatform(platform);
     rt.loadBoard(board);
     rt.initCore();
@@ -36,6 +33,9 @@ void setup() {
 
     static nema::HelloApp helloApp;
     rt.apps().install(helloApp);
+
+    static nema::BadUsbApp badUsbApp;
+    rt.apps().install(badUsbApp);
 
     nema::loadEmbeddedJsApps(rt);
 

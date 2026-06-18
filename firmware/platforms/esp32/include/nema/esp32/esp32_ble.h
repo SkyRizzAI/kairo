@@ -54,6 +54,13 @@ public:
     void   forget(const uint8_t addr[6]) override;
     void   forgetAll() override;
 
+    // ── IBleAdapter central role (Plan 67) ──
+    bool startScan(uint32_t durationMs, ScanCallback cb, void* user) override;
+    void stopScan() override;
+    bool isScanning() const override { return scanning_; }
+    bool connectTo(const char* mac) override;
+    void disconnectFrom(const char* mac) override;
+
     // Called from the NimBLE host task (internal).
     int  onGapEvent(void* event);
     void onSync();
@@ -81,6 +88,13 @@ private:
 
     WriteFn writeFn_ = nullptr; void* writeUser_ = nullptr;
     PairFn  pairFn_  = nullptr; void* pairUser_  = nullptr;
+
+    // Central role (Plan 67)
+    bool         scanning_ = false;
+    bool         connecting_ = false;
+    ScanCallback scanCb_ = nullptr;
+    void*        scanCbUser_ = nullptr;
+    uint16_t     centConnHandle_ = 0xFFFF;
 };
 
 } // namespace nema

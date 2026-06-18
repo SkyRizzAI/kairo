@@ -428,13 +428,14 @@ void registerCoreCliCommands(CliService& cli, Runtime& rt) {
             c.out("push a new image from Forge → \"Update firmware\" (PLP over USB/BLE)");
         });
 
-    cli.add("power", "power control: power restart|shutdown",
+    cli.add("power", "power control: power restart|shutdown|bootloader",
         [r](CliContext& c) {
             const auto& args = c.args; const auto& out = c.out;
-            if (args.empty()) { out("usage: power restart|shutdown"); return; }
-            if (args[0] == "restart")  { out("restarting…");   r->requestRestart(); }
-            else if (args[0] == "shutdown") { out("shutting down…"); r->requestShutdown(); }
-            else out("unknown: " + args[0] + " (restart|shutdown)");
+            if (args.empty()) { out("usage: power restart|shutdown|bootloader"); return; }
+            if (args[0] == "restart")    { out("restarting…");   r->requestRestart(); }
+            else if (args[0] == "shutdown")   { out("shutting down…"); r->requestShutdown(); }
+            else if (args[0] == "bootloader") { out("entering bootloader…"); r->requestBootloader(); }
+            else out("unknown: " + args[0] + " (restart|shutdown|bootloader)");
         });
 
     auto wlan = [r](CliContext& c) {

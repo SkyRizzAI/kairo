@@ -33,12 +33,12 @@ const char* DevBoardKeyMap::buttonLabel(uint8_t id) const {
 
 const char* DevBoardKeyMap::hintFor(Action a) const {
     switch (a) {
-        case Action::Prev:       return "Up";
-        case Action::Next:       return "Down";
+        case Action::Prev:       return "Left";
+        case Action::Next:       return "Right";
         case Action::Activate:   return "Select";
         case Action::Back:       return "Cancel";
-        case Action::AdjustUp:   return "Right";
-        case Action::AdjustDown: return "Left";
+        case Action::AdjustUp:   return "Up";
+        case Action::AdjustDown: return "Down";
         default:                 return "";
     }
 }
@@ -69,10 +69,10 @@ Code DevBoardKeyMap::idToCode(uint8_t id) {
 
 Action DevBoardKeyMap::idToAction(uint8_t id) {
     switch (id) {
-        case BTN_LEFT:   return Action::AdjustDown;
-        case BTN_DOWN:   return Action::Next;
-        case BTN_UP:     return Action::Prev;
-        case BTN_RIGHT:  return Action::AdjustUp;
+        case BTN_LEFT:   return Action::Prev;
+        case BTN_DOWN:   return Action::AdjustDown;
+        case BTN_UP:     return Action::AdjustUp;
+        case BTN_RIGHT:  return Action::Next;
         case BTN_SELECT: return Action::Activate;
         case BTN_CANCEL: return Action::Back;
         default:         return Action::None;

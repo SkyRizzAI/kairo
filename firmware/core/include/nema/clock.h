@@ -9,6 +9,7 @@ struct IClock {
     virtual ~IClock() = default;
     virtual uint64_t millis() = 0;    // monotonic ms since process start
     virtual uint64_t epochMs() = 0;   // wall-clock ms (UTC) for log timestamps
+    virtual void setEpochMs(uint64_t /*epochMs*/) {}  // set wall clock (NTP sync)
 };
 
 } // namespace nema

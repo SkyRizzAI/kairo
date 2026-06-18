@@ -120,8 +120,9 @@ void WasmPlatform::readyThunk(void* user) {
 void WasmPlatform::powerThunk(void* user, uint8_t op) {
     auto* s = static_cast<WasmPlatform*>(user);
     if (!s->rt_) return;
-    if (op == SysOp::Restart)       s->rt_->requestRestart();
-    else if (op == SysOp::Shutdown) s->rt_->requestShutdown();
+    if (op == SysOp::Restart)         s->rt_->requestRestart();
+    else if (op == SysOp::Shutdown)   s->rt_->requestShutdown();
+    else if (op == SysOp::Bootloader) s->rt_->requestBootloader();
 }
 
 } // namespace nema

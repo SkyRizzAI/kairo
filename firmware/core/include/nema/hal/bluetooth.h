@@ -78,6 +78,26 @@ struct IBleAdapter : IDriver {
     virtual bool   bondedAt(size_t i, BtPeer& out) const = 0;
     virtual void   forget(const uint8_t addr[6]) = 0;
     virtual void   forgetAll() = 0;
+
+    // ── Central role (Plan 67) — optional, default no-ops ──
+
+    // Scan result delivered per advertisement.
+    struct ScanResult {
+        char    mac[18] = {};       // "AA:BB:CC:DD:EE:FF"
+        char    name[32] = {};
+        int8_t  rssi = 0;
+        bool    connectable = false;
+    };
+    using ScanCallback = void (*)(void* user, const ScanResult& r);
+
+    virtual bool startScan(uint32_t durationMs, ScanCallback cb, void* user) { (void)durationMs; (void)cb; (void)user; return false; }
+    virtual void stopScan()  {}
+    virtual bool isScanning() const { return false; }
+
+    // Connect to a scanned peripheral.
+    virtual bool connectTo(const char* mac) { (void)mac; return false; }
+    // Disconnect a central connection.
+    virtual void disconnectFrom(const char* mac) { (void)mac; }
 };
 
 // ── Classic adapter — interface only (future; no impl on ESP32-S3) ──

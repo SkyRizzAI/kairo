@@ -7,7 +7,7 @@ struct IClock;
 
 struct IPlatform {
     enum class OutputMode { Human, Json };
-    enum class PowerAction { Restart, Shutdown };
+    enum class PowerAction { Restart, Shutdown, Bootloader };
 
     virtual ~IPlatform() = default;
     virtual const char* name() const = 0;
@@ -27,6 +27,10 @@ struct IPlatform {
     virtual void postRegister(Runtime& rt) { (void)rt; }
     // Called each loop iteration — platform I/O, stdin poll, etc.
     virtual void idle() {}
+
+    // NTP time sync (Plan 62). Platform overrides with actual SNTP implementation.
+    // Called from the TaskRunner worker (may block for several seconds).
+    virtual bool syncNtp() { return false; }
 };
 
 } // namespace nema

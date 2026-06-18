@@ -33,6 +33,9 @@ namespace events {
     // App registry (install/remove a launchable app — built-in or custom)
     inline constexpr const char* AppInstalled         = "AppInstalled";        // {"id","name"}
     inline constexpr const char* AppRemoved           = "AppRemoved";          // {"id"}
+    // AppHost lifecycle — emitted when an app thread exits (clean or crash).
+    // payload: {{"id","<app-id>"}, {"name","<app-name>"}, {"exitCode","<int>"}}
+    inline constexpr const char* AppHostExited        = "AppHostExited";
     // Non-MVP (declared for future use)
     inline constexpr const char* NotificationCreated  = "NotificationCreated";
 }

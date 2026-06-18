@@ -22,7 +22,7 @@ struct IOtaUpdater;
 
 // SYSTEM channel opcodes (first payload byte).
 namespace SysOp {
-    enum : uint8_t { GetInfo = 0x01, Restart = 0x10, Sleep = 0x11, Shutdown = 0x12 };
+    enum : uint8_t { GetInfo = 0x01, Restart = 0x10, Sleep = 0x11, Shutdown = 0x12, Bootloader = 0x13 };
 }
 
 // FILE channel opcodes (first payload byte). Request host→device, reply

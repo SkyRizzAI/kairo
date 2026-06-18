@@ -8,6 +8,8 @@
 #include "nema/hal/buffer_display.h"
 #include "nema/hal/display.h"
 #include "nema/service/service_container.h"
+#include "nema/event/event.h"
+#include "nema/event/async_event_poster.h"
 #include <cstdlib>
 #include <cstring>
 #include <string>
@@ -158,7 +160,24 @@ void AppHost::tick(uint64_t) {
 
 void AppHost::threadEntry(void* self) {
     auto* h = static_cast<AppHost*>(self);
-    h->app_.run(*h);   // blocks here for the app's whole lifetime
+    int exitCode = 0;
+    try {
+        h->app_.run(*h);
+    } catch (const std::exception& e) {
+        h->rt_.log().error("AppHost", "app crashed",
+            {{"app", h->app_.name()}, {"what", e.what()}});
+        exitCode = 1;
+    } catch (...) {
+        h->rt_.log().error("AppHost", "app crashed (unknown)",
+            {{"app", h->app_.name()}});
+        exitCode = 1;
+    }
+    if (exitCode != 0) {
+        h->rt_.asyncPoster().post({events::AppHostExited, {
+            {"id", std::string(h->app_.id())},
+            {"name", h->app_.name()},
+            {"exitCode", std::to_string(exitCode)}}});
+    }
 }
 
 Canvas& AppHost::canvas() { return *appCanvas_; }

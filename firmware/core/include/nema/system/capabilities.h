@@ -42,7 +42,9 @@ inline constexpr const char* SensorsMotion = "sensors.motion";
 // Net & connectivity (taxonomy tidied: net.* replaces scattered wifi/networking/http)
 inline constexpr const char* NetWifi       = "net.wifi";
 inline constexpr const char* NetHttp       = "net.http";
-inline constexpr const char* BtBle         = "bt.ble";
+    inline constexpr const char* BtBle         = "bt.ble";
+    inline constexpr const char* BtBleCentral  = "bt.ble.central";   // Plan 67
+    inline constexpr const char* UsbHid         = "usb.hid";          // Plan 66 — BLE scanner
 
 // System
 inline constexpr const char* Storage       = "storage";

@@ -24,6 +24,7 @@ void Esp32Ble::onRegister(Runtime& rt) {
     rt.container().registerAs<IBleAdapter>(this);
     rt.hardware().add({"bluetooth", DriverKind::Bluetooth, "ESP32-S3 BLE (NimBLE)"});
     rt.capabilities().add(caps::BtBle);
+    rt.capabilities().add(caps::BtBleCentral);
 }
 
 } // namespace nema
@@ -208,23 +209,61 @@ int Esp32Ble::onGapEvent(void* ev) {
     switch (event->type) {
         case BLE_GAP_EVENT_CONNECT:
             if (event->connect.status == 0) {
-                connHandle_ = event->connect.conn_handle;
-                struct ble_gap_conn_desc desc{};
-                if (ble_gap_conn_find(connHandle_, &desc) == 0) {
-                    std::memcpy(peer_.addr, desc.peer_id_addr.val, 6);
+                if (connecting_) {
+                    centConnHandle_ = event->connect.conn_handle;
+                    connecting_ = false;
+                    if (log_) log_->info("Esp32Ble", "central connected",
+                        {{"handle", std::to_string(centConnHandle_)}});
+                } else {
+                    connHandle_ = event->connect.conn_handle;
+                    struct ble_gap_conn_desc desc{};
+                    if (ble_gap_conn_find(connHandle_, &desc) == 0) {
+                        std::memcpy(peer_.addr, desc.peer_id_addr.val, 6);
+                    }
+                    std::snprintf(peer_.name, sizeof(peer_.name), "peer");
+                    advertising_ = false;
+                    if (poster_) poster_->post({events::BtConnected, {{"name", peer_.name}}});
                 }
-                std::snprintf(peer_.name, sizeof(peer_.name), "peer");
-                advertising_ = false;
-                if (poster_) poster_->post({events::BtConnected, {{"name", peer_.name}}});
             } else {
-                startAdvertisingInternal();   // failed → keep advertising
+                connecting_ = false;
+                startAdvertisingInternal();
             }
             break;
         case BLE_GAP_EVENT_DISCONNECT:
-            connHandle_ = 0xFFFF;
-            peer_ = BtPeer{};
-            if (poster_) poster_->post({events::BtDisconnected, {}});
-            startAdvertisingInternal();
+            if (event->disconnect.conn.conn_handle == centConnHandle_) {
+                centConnHandle_ = 0xFFFF;
+                if (log_) log_->info("Esp32Ble", "central disconnected");
+            } else {
+                connHandle_ = 0xFFFF;
+                peer_ = BtPeer{};
+                if (poster_) poster_->post({events::BtDisconnected, {}});
+                startAdvertisingInternal();
+            }
+            break;
+        case BLE_GAP_EVENT_DISC: {
+            if (!scanning_ || !scanCb_) break;
+            ScanResult r{};
+            if (event->disc.event_type == BLE_HCI_ADV_RPT_EVTYPE_ADV_IND ||
+                event->disc.event_type == BLE_HCI_ADV_RPT_EVTYPE_SCAN_RSP) {
+                r.connectable = true;
+            }
+            r.rssi = event->disc.rssi;
+            std::snprintf(r.mac, sizeof(r.mac),
+                "%02X:%02X:%02X:%02X:%02X:%02X",
+                event->disc.addr.val[5], event->disc.addr.val[4],
+                event->disc.addr.val[3], event->disc.addr.val[2],
+                event->disc.addr.val[1], event->disc.addr.val[0]);
+            if (event->disc.length_data > 0) {
+                size_t nameLen = std::min((size_t)event->disc.length_data, sizeof(r.name) - 1);
+                std::memcpy(r.name, event->disc.data, nameLen);
+                r.name[nameLen] = '\0';
+            }
+            scanCb_(scanCbUser_, r);
+            break;
+        }
+        case BLE_GAP_EVENT_DISC_COMPLETE:
+            scanning_ = false;
+            if (log_) log_->info("Esp32Ble", "scan complete");
             break;
         case BLE_GAP_EVENT_PASSKEY_ACTION:
             if (event->passkey.params.action == BLE_SM_IOACT_NUMCMP) {
@@ -319,6 +358,69 @@ void Esp32Ble::forgetAll() {
     for (int i = 0; i < num; i++) ble_gap_unpair(&addrs[i]);
 }
 
+// ── Central role (Plan 67) ─────────────────────────────────────────────────
+
+bool Esp32Ble::startScan(uint32_t durationMs, ScanCallback cb, void* user) {
+    if (!enabled_) return false;
+    if (scanning_) stopScan();
+
+    scanCb_ = cb;
+    scanCbUser_ = user;
+
+    ble_gap_disc_params params = {};
+    params.passive = 0;          // active scan → gets device names
+    params.filter_duplicates = 1;
+    params.limited = 0;
+
+    uint8_t own_addr_type = BLE_OWN_ADDR_PUBLIC;
+    ble_hs_id_infer_auto(0, &own_addr_type);
+    int rc = ble_gap_disc(own_addr_type, (int32_t)durationMs, &params,
+                          gap_event_thunk, nullptr);
+    scanning_ = (rc == 0);
+    if (log_) log_->info("Esp32Ble", scanning_ ? "scanning started" : "scan start failed",
+                         {{"durMs", std::to_string(durationMs)}});
+    return scanning_;
+}
+
+void Esp32Ble::stopScan() {
+    if (!scanning_) return;
+    ble_gap_disc_cancel();
+    scanning_ = false;
+    scanCb_ = nullptr;
+    scanCbUser_ = nullptr;
+}
+
+bool Esp32Ble::connectTo(const char* mac) {
+    if (!enabled_ || !mac || !mac[0]) return false;
+
+    ble_addr_t addr{};
+    addr.type = BLE_ADDR_PUBLIC;
+    // Parse "AA:BB:CC:DD:EE:FF" → uint8_t[6]
+    unsigned int v[6];
+    if (std::sscanf(mac, "%02X:%02X:%02X:%02X:%02X:%02X",
+                    &v[5], &v[4], &v[3], &v[2], &v[1], &v[0]) != 6)
+        return false;
+    for (int i = 0; i < 6; i++) addr.val[i] = (uint8_t)v[i];
+
+    connecting_ = true;
+    int rc = ble_gap_connect(BLE_OWN_ADDR_PUBLIC, &addr, 5000, nullptr,
+                             gap_event_thunk, nullptr);
+    if (rc != 0) {
+        connecting_ = false;
+        if (log_) log_->warn("Esp32Ble", "connect failed", {{"mac", mac}});
+        return false;
+    }
+    if (log_) log_->info("Esp32Ble", "connecting", {{"mac", mac}});
+    return true;
+}
+
+void Esp32Ble::disconnectFrom(const char* mac) {
+    (void)mac;
+    if (centConnHandle_ != 0xFFFF) {
+        ble_gap_terminate(centConnHandle_, BLE_ERR_REM_USER_CONN_TERM);
+    }
+}
+
 } // namespace nema
 
 #else  // ── BT disabled: no-op stubs so non-BT boards still link ──
@@ -340,5 +442,9 @@ size_t Esp32Ble::bondedCount() const { return 0; }
 bool Esp32Ble::bondedAt(size_t, BtPeer&) const { return false; }
 void Esp32Ble::forget(const uint8_t[6]) {}
 void Esp32Ble::forgetAll() {}
+bool Esp32Ble::startScan(uint32_t, ScanCallback, void*) { return false; }
+void Esp32Ble::stopScan() {}
+bool Esp32Ble::connectTo(const char*) { return false; }
+void Esp32Ble::disconnectFrom(const char*) {}
 } // namespace nema
 #endif

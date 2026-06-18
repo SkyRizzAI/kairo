@@ -13,8 +13,10 @@ public:
 
 private:
     void stopAether();
+    void rebootBootloader();
 
     static void onStopAether(void* u);
+    static void onRebootBootloader(void* u);
 
     ui::ScrollState scroll_;
 };
