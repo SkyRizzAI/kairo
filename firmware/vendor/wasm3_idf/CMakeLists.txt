@@ -8,8 +8,6 @@ idf_component_register(
     SRCS
         "${wasm3_dir}/source/m3_api_libc.c"
         "${wasm3_dir}/source/m3_api_meta_wasi.c"
-        "${wasm3_dir}/source/m3_api_tracer.c"
-        "${wasm3_dir}/source/m3_api_uvwasi.c"
         "${wasm3_dir}/source/m3_api_wasi.c"
         "${wasm3_dir}/source/m3_bind.c"
         "${wasm3_dir}/source/m3_code.c"
@@ -25,6 +23,3 @@ idf_component_register(
         "${wasm3_dir}/source"
 )
 target_compile_definitions(${COMPONENT_LIB} PRIVATE d_m3HasTracer)
-# ESP-IDF has -Werror globally; upstream wasm3 has benign warnings we cannot fix.
-# Suppress -Werror for this component only.
-target_compile_options(${COMPONENT_LIB} PRIVATE -Wno-error)
