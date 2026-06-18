@@ -23,3 +23,9 @@ idf_component_register(
         "${wasm3_dir}/source"
 )
 target_compile_definitions(${COMPONENT_LIB} PRIVATE d_m3HasTracer)
+
+# Upstream wasm3 has warnings that become errors under IDF's -Werror.
+set_source_files_properties(
+    "${wasm3_dir}/source/m3_parse.c"
+    PROPERTIES COMPILE_FLAGS "-Wno-maybe-uninitialized"
+)
