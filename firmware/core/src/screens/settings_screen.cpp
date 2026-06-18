@@ -15,7 +15,7 @@ SettingsScreen::SettingsScreen(Runtime& rt)
       touchSettings_(rt), sounds_(rt), cameraSettings_(rt), developer_(rt),
       profileSettings_(rt) {}
 
-void SettingsScreen::enter() {
+void SettingsScreen::onResume() {
     scroll_.scrollMain = 0;
     state_.focus.focused = 0;
     rt_.view().requestRedraw();
@@ -28,14 +28,14 @@ void SettingsScreen::onSelect(void* u) {
 
 void SettingsScreen::launch(Kind k) {
     switch (k) {
-        case About:      rt_.view().push(about_);          break;
-        case Display:    rt_.view().push(sleepSettings_);  break;
-        case Controls:   rt_.view().push(controls_);       break;
-        case Touch:      rt_.view().push(touchSettings_);  break;
-        case Sounds:     rt_.view().push(sounds_);         break;
-        case Camera:     rt_.view().push(cameraSettings_);    break;
-        case Developer:  rt_.view().push(developer_);        break;
-        case Profile:    rt_.view().push(profileSettings_);   break;
+        case About:      rt_.view().navigate(about_);          break;
+        case Display:    rt_.view().navigate(sleepSettings_);  break;
+        case Controls:   rt_.view().navigate(controls_);       break;
+        case Touch:      rt_.view().navigate(touchSettings_);  break;
+        case Sounds:     rt_.view().navigate(sounds_);         break;
+        case Camera:     rt_.view().navigate(cameraSettings_);    break;
+        case Developer:  rt_.view().navigate(developer_);        break;
+        case Profile:    rt_.view().navigate(profileSettings_);   break;
     }
 }
 

@@ -67,7 +67,13 @@ src/input/gesture.cpp
     src/ui/focus.cpp
     src/ui/component_runtime.cpp
     src/ui/component_screen.cpp
+    src/ui/app_window.cpp
+    src/ui/animation_player.cpp
+    src/ui/animation_manager.cpp
+    src/ui/builtin_animations.cpp
+    src/ui/font_registry.cpp
     src/ui/font_5x8.cpp
+    src/ui/font_6x8.cpp
     src/ui/view_dispatcher.cpp
     src/ui/status_bar.cpp
     src/ui/components.cpp

@@ -54,7 +54,7 @@ AppHost::~AppHost() {
 
 // ── GUI thread ────────────────────────────────────────────────────────────
 
-void AppHost::enter() {
+void AppHost::onResume() {
     if (started_) {
         // Re-enter. Either revealed by a child screen pop (no-op), or resumed
         // from pause (Plan 22) — clear the pause flag so the parked app thread

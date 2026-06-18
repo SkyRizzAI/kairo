@@ -32,11 +32,11 @@ static const IconDef* iconForApp(const AppManifest& m) {
     return findIcon("feature.apps");
 }
 
-void AppListScreen::enter() {
+void AppListScreen::onResume() {
     loadInstalledPapps(rt_);  // auto-scan /flash/apps on every open
     scroll_.scrollMain = 0;
     state_.focus.focused = 0;
-    ComponentScreen::enter();
+    ComponentScreen::onResume();
 }
 
 void AppListScreen::onLaunch(void* u) {

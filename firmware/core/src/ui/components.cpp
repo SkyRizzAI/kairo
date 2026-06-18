@@ -60,14 +60,14 @@ void drawConfirm(Canvas& c, const char* prompt, int cursor, uint16_t w, uint16_t
             uint16_t tw = measureTextW(label, TextRole::Body);
             uint16_t tx = (tw < bw) ? (uint16_t)(bx + (bw - tw) / 2) : bx;
             FontSpec fs = fontForRole(TextRole::Body);
-            c.setFont(*fs.font);
+            c.setFont(fs.handle);
             c.drawText(tx, (uint16_t)(btnY + pad), label, false);
         } else {
             aether::ui::draw::box_rounded(c, bx, btnY, bw, bh, false);
             uint16_t tw = measureTextW(label, TextRole::Body);
             uint16_t tx = (tw < bw) ? (uint16_t)(bx + (bw - tw) / 2) : bx;
             FontSpec fs = fontForRole(TextRole::Body);
-            c.setFont(*fs.font);
+            c.setFont(fs.handle);
             c.drawText(tx, (uint16_t)(btnY + pad), label, true);
         }
     };

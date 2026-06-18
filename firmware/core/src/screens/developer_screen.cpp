@@ -9,7 +9,7 @@ using namespace ui;
 
 DeveloperScreen::DeveloperScreen(Runtime& rt) : ComponentScreen(rt) {}
 
-void DeveloperScreen::enter() {
+void DeveloperScreen::onResume() {
     scroll_.scrollMain = 0;
     rt_.view().requestRedraw();
 }

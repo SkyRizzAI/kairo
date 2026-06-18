@@ -12,7 +12,7 @@ namespace nema {
 class ProfileSettingsScreen : public ComponentScreen {
 public:
     explicit ProfileSettingsScreen(Runtime& rt);
-    void        enter() override;
+    void        onResume() override;
     ui::UiNode* build(ui::NodeArena& a, Runtime& rt) override;
     void        onAction(input::Action a) override;
     void        draw(Canvas& c) override;

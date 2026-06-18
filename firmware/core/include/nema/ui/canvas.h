@@ -1,5 +1,6 @@
 #pragma once
 #include "nema/hal/display.h"
+#include "nema/ui/font_registry.h"
 #include <cstdint>
 #include <cstddef>
 
@@ -14,8 +15,9 @@ struct BitmapFont {
     uint8_t        spacing;   // extra pixels between chars (usually 1)
 };
 
-// Declared in font_5x8.cpp
+// Built-in fonts
 extern const BitmapFont FONT_5X8;
+extern const BitmapFont FONT_6X8;
 
 // Canvas — logical-pixel drawing surface over a physical display.
 //
@@ -42,7 +44,8 @@ public:
     void invertRect(uint16_t x, uint16_t y, uint16_t w, uint16_t h);  // XOR invert
 
     // Text
-    void setFont(const BitmapFont& font);
+    void setFont(const BitmapFont& font);             // legacy
+    void setFont(ui::FontHandle handle);              // Plan 70: resolve from registry
     void drawText(uint16_t x, uint16_t y, const char* text, bool on = true);
     void drawChar(uint16_t x, uint16_t y, char ch, bool on = true);
     uint16_t textWidth(const char* text) const;

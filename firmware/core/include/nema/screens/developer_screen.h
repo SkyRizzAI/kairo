@@ -8,7 +8,7 @@ class Runtime;
 class DeveloperScreen : public ComponentScreen {
 public:
     explicit DeveloperScreen(Runtime& rt);
-    void        enter() override;
+    void        onResume() override;
     ui::UiNode* build(ui::NodeArena& a, Runtime& rt) override;
 
 private:

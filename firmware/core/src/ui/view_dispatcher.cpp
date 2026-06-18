@@ -5,25 +5,82 @@
 
 namespace nema {
 
-void ViewDispatcher::push(IScreen& screen) {
+// ── Plan 70: Android-style navigation API ─────────────────────────────────────
+
+void ViewDispatcher::navigate(IScreen& screen) {
+    if (auto* cur = active()) cur->onPause();
     stack_.push_back(&screen);
-    screen.enter();
+    screen.onResume();
     requestRedraw();
 }
 
-void ViewDispatcher::pop() {
-    if (stack_.size() <= 1) return;  // don't pop the last screen
+void ViewDispatcher::navigate(IScreen& screen, Bundle args) {
+    args_ = std::move(args);
+    navigate(screen);
+}
+
+void ViewDispatcher::replace(IScreen& screen) {
+    if (auto* cur = active()) {
+        cur->onPause();
+        cur->onStop();
+        stack_.pop_back();
+    }
+    stack_.push_back(&screen);
+    screen.onResume();
+    requestRedraw();
+}
+
+bool ViewDispatcher::goBack() {
+    if (stack_.size() <= 1) return false;
+    if (auto* cur = active()) {
+        cur->onPause();
+        cur->onStop();
+    }
     stack_.pop_back();
     if (!stack_.empty()) {
-        stack_.back()->enter();
+        stack_.back()->onResume();
+        requestRedraw();
+    }
+    return true;
+}
+
+bool ViewDispatcher::canGoBack() const { return stack_.size() > 1; }
+
+void ViewDispatcher::clearBackStack() {
+    if (stack_.size() <= 1) return;
+    IScreen* top = stack_.back();
+    stack_.clear();
+    stack_.push_back(top);
+}
+
+void ViewDispatcher::popTo(IScreen& target) {
+    while (stack_.size() > 1 && stack_.back() != &target) {
+        stack_.back()->onStop();
+        stack_.pop_back();
+    }
+    if (stack_.back() == &target) {
+        stack_.back()->onResume();
         requestRedraw();
     }
 }
 
+// ── Legacy API (deprecated, Plan 70: forwards to new API) ──────────────────────
+
+void ViewDispatcher::push(IScreen& screen) {
+    navigate(screen);
+}
+
+void ViewDispatcher::pop() {
+    goBack();
+}
+
 void ViewDispatcher::popToRoot() {
     if (stack_.size() <= 1) return;
-    stack_.resize(1);            // drop everything above the base (Home)
-    stack_.back()->enter();
+    while (stack_.size() > 1) {
+        stack_.back()->onStop();
+        stack_.pop_back();
+    }
+    stack_.back()->onResume();
     requestRedraw();
 }
 
@@ -37,10 +94,42 @@ IScreen* ViewDispatcher::previous() const {
 
 bool ViewDispatcher::empty() const { return stack_.empty(); }
 
-void ViewDispatcher::requestRedraw() { redrawPending_.store(true, std::memory_order_release); }
+void ViewDispatcher::requestRedraw() {
+    dirtyAll_ = true;
+    hasDirty_ = false;
+    redrawPending_.store(true, std::memory_order_release);
+}
+
+void ViewDispatcher::requestRedraw(uint16_t x, uint16_t y, uint16_t w, uint16_t h) {
+    if (dirtyAll_) return;   // already full redraw
+    if (!hasDirty_) {
+        dirtyX_ = x; dirtyY_ = y; dirtyW_ = w; dirtyH_ = h;
+        hasDirty_ = true;
+    } else {
+        // Union: expand the bounding box to include the new rect
+        uint16_t x2 = (uint16_t)(x + w), y2 = (uint16_t)(y + h);
+        uint16_t dx2 = (uint16_t)(dirtyX_ + dirtyW_), dy2 = (uint16_t)(dirtyY_ + dirtyH_);
+        if (x < dirtyX_) dirtyX_ = x;
+        if (y < dirtyY_) dirtyY_ = y;
+        if (x2 > dx2) dirtyW_ = (uint16_t)(x2 - dirtyX_);
+        if (y2 > dy2) dirtyH_ = (uint16_t)(y2 - dirtyY_);
+    }
+    redrawPending_.store(true, std::memory_order_release);
+}
 
 bool ViewDispatcher::takeRedraw() {
-    return redrawPending_.exchange(false, std::memory_order_acquire);
+    bool was = redrawPending_.exchange(false, std::memory_order_acquire);
+    if (was) {
+        // Consume: read dirty state for this frame, then reset for next
+        hasDirty_  = false;
+    }
+    return was;
+}
+
+bool ViewDispatcher::getDirtyBounds(uint16_t& x, uint16_t& y, uint16_t& w, uint16_t& h) const {
+    if (dirtyAll_ || !hasDirty_) return false;   // full redraw
+    x = dirtyX_; y = dirtyY_; w = dirtyW_; h = dirtyH_;
+    return true;
 }
 
 void ViewDispatcher::handleAction(input::Action a) {

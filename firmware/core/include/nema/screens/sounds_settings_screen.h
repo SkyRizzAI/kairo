@@ -11,7 +11,7 @@ class Runtime;
 class SoundsSettingsScreen : public ComponentScreen {
 public:
     explicit SoundsSettingsScreen(Runtime& rt);
-    void        enter() override;
+    void        onResume() override;
     void        tick(uint64_t nowMs) override;   // live meter refresh
     ui::UiNode* build(ui::NodeArena& a, Runtime& rt) override;
 

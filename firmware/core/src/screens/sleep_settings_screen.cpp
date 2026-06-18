@@ -82,7 +82,7 @@ void SleepSettingsScreen::lockAdj(void* u, int dir) { static_cast<SleepSettingsS
 void SleepSettingsScreen::themeAdj(void* u, int dir){ static_cast<SleepSettingsScreen*>(u)->cycleTheme(dir); }
 void SleepSettingsScreen::onFps(void* u)            { static_cast<SleepSettingsScreen*>(u)->toggleFps(); }
 
-void SleepSettingsScreen::enter() {
+void SleepSettingsScreen::onResume() {
     sleepIdx_ = findSleepIdx();
     lockIdx_  = findLockIdx();
     themeIdx_ = findThemeIdx();

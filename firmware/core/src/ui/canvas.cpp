@@ -114,17 +114,31 @@ void Canvas::invertRect(uint16_t x, uint16_t y, uint16_t w, uint16_t h) {
 
 void Canvas::setFont(const BitmapFont& font) { font_ = &font; }
 
+void Canvas::setFont(ui::FontHandle handle) {
+    font_ = ui::FontRegistry::instance().get(handle);
+}
+
 void Canvas::drawChar(uint16_t x, uint16_t y, char ch, bool on) {
     if ((uint8_t)ch < font_->firstChar) return;
     uint8_t idx = (uint8_t)ch - font_->firstChar;
     if (idx >= font_->numChars) return;
     const uint8_t* glyph = font_->data + idx * font_->charW;
+    // Plan 70 FPS opt: scan each column for contiguous runs of lit pixels and
+    // batch them into fillRect calls instead of per-pixel drawPixel. For a 5×8
+    // glyph this reduces from ~20 drawPixel calls to ~2-5 fillRect calls.
     for (uint8_t col = 0; col < font_->charW; col++) {
-        uint8_t colBits = glyph[col];
-        for (uint8_t row = 0; row < font_->charH; row++) {
-            if (colBits & (1 << row)) {  // bit 0 = top row
-                drawPixel(x + col, y + row, on);
-            }
+        uint8_t bits = glyph[col];
+        if (bits == 0) continue;           // fast: empty column
+        uint8_t row = 0;
+        while (row < font_->charH) {
+            // Skip dark pixels
+            while (row < font_->charH && !(bits & (1 << row))) row++;
+            if (row >= font_->charH) break;
+            uint8_t runStart = row;
+            // Count contiguous lit pixels
+            while (row < font_->charH && (bits & (1 << row))) row++;
+            uint8_t runLen = row - runStart;
+            fillRect(x + col, y + runStart, 1, runLen, on);
         }
     }
 }

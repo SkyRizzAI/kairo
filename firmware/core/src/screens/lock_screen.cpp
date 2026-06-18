@@ -14,7 +14,7 @@ using namespace ui;
 
 LockScreen::LockScreen(Runtime& rt) : ComponentScreen(rt, 16) {}
 
-void LockScreen::enter() {
+void LockScreen::onResume() {
     selectCount_ = 0;
     hintVisible_ = false;
     rt_.view().requestRedraw();

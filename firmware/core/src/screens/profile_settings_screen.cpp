@@ -17,7 +17,7 @@ using namespace ui;
 ProfileSettingsScreen::ProfileSettingsScreen(Runtime& rt)
     : ComponentScreen(rt, 160) {}
 
-void ProfileSettingsScreen::enter() {
+void ProfileSettingsScreen::onResume() {
     editing_ = false;
     scroll_.scrollMain = 0;
     state_.focus.focused = 0;

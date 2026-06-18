@@ -1,13 +1,15 @@
 #pragma once
 #include <cstdint>
 
+namespace nema::anim { class AnimationPlayer; }
+
 namespace nema::ui {
 
 // Retained-mode UI node. A tree of these is built each render, laid out by the
 // layout engine (layout.h), and painted by the renderer (renderer.h). Both the
 // C builder (widgets.h) and a future JS reconciler produce this same structure.
 
-enum class NodeType : uint8_t { View, Text, Pressable, Scroll, Slider, Icon };
+enum class NodeType : uint8_t { View, Text, Pressable, Scroll, Slider, Icon, AnimatedIcon };
 enum class FlexDir  : uint8_t { Row, Col };
 enum class Align    : uint8_t { Start, Center, End, Stretch };       // cross-axis
 enum class Justify  : uint8_t { Start, Center, End, SpaceBetween };  // main-axis
@@ -15,6 +17,7 @@ enum class TextRole : uint8_t {
     Body,     // normal text
     Title,    // large/heading
     Caption,  // small hint/label
+    Mono,     // Plan 70: monospace (logs, hex, terminal)
     Smart,    // Plan 52 SmartLabel: ellipsis when too-wide+unfocused, marquee when focused
 };
 
@@ -79,6 +82,10 @@ struct UiNode {
     const uint8_t* iconBitmap = nullptr;
     uint8_t        iconW      = 0;
     uint8_t        iconH      = 0;
+
+    // Plan 70: AnimatedIcon leaf (type == AnimatedIcon). Caller-owned player;
+    // the renderer draws the current frame on each paint.
+    anim::AnimationPlayer* animPlayer = nullptr;
 
     // Scroll container (type == Scroll): persistent state, caller-owned.
     ScrollState* scroll = nullptr;

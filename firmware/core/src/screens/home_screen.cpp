@@ -1,10 +1,12 @@
 // Plan 60 — HomeScreen: DSi-style carousel launcher.
+// Plan 70 — animated spinner in banner corner.
 #include "nema/screens/home_screen.h"
 #include "nema/ui/view_dispatcher.h"
 #include "nema/ui/draw.h"
 #include "nema/ui/text_style.h"
 #include "nema/ui/style_tokens.h"
 #include "nema/ui/ui_constants.h"
+#include "nema/ui/animation_manager.h"
 #include "nema/app/app_host_manager.h"
 #include "nema/input/input_action.h"
 #include "nema/runtime.h"
@@ -17,8 +19,8 @@ using namespace ui;
 HomeScreen::HomeScreen(Runtime& rt)
     : ComponentScreen(rt), appList_(rt), logs_(rt), settings_(rt) {}
 
-void HomeScreen::enter() {
-    ComponentScreen::enter();
+void HomeScreen::onResume() {
+    ComponentScreen::onResume();
     nItems_ = hasContinue() ? 4 : 3;
     if (cursor_ >= nItems_) cursor_ = nItems_ - 1;
     if (hasContinue()) {
@@ -26,6 +28,9 @@ void HomeScreen::enter() {
         std::snprintf(continueLabel_, sizeof(continueLabel_),
                       "Continue: %s", name ? name : "app");
     }
+    // Plan 70: start the banner spinner and register for global tick
+    spinner_.start();
+    anim::AnimationManager::instance().registerPlayer(spinner_);
 }
 
 bool HomeScreen::hasContinue() const {
@@ -51,9 +56,9 @@ void HomeScreen::activate(int i) {
         i--;
     }
     switch (i) {
-        case 0: rt_.view().push(appList_);  break;
-        case 1: rt_.view().push(logs_);     break;
-        case 2: rt_.view().push(settings_); break;
+        case 0: rt_.view().navigate(appList_);  break;
+        case 1: rt_.view().navigate(logs_);     break;
+        case 2: rt_.view().navigate(settings_); break;
     }
 }
 
@@ -88,6 +93,11 @@ void HomeScreen::draw(Canvas& c) {
     uint16_t bannerY = CONTENT_Y;
     banner(c, 0, bannerY, W, bannerH, "PALANU", /*notch=*/true);
 
+    // Plan 70: spinner animation in banner right corner
+    uint16_t sx = (uint16_t)(W - 12);
+    uint16_t sy = (uint16_t)(bannerY + (bannerH > 8 ? (bannerH - 8) / 2 : 0));
+    c.drawBitmap(sx, sy, 8, 8, spinner_.currentFrameData());
+
     // ── Carousel tiles ────────────────────────────────────────────────────────
     uint16_t tileW  = (uint16_t)(W / 2);
     uint16_t tileH  = (uint16_t)(H / 4);
@@ -105,7 +115,7 @@ void HomeScreen::draw(Canvas& c) {
         uint16_t th  = measureTextH(TextRole::Title);
         uint16_t tx  = (tw < tileW - 4) ? (uint16_t)(cx + (tileW - tw) / 2) : (uint16_t)(cx + 2);
         uint16_t ty  = (uint16_t)(tileCY + (tileH > th ? (tileH - th) / 2 : 0));
-        c.setFont(*fs.font);
+        c.setFont(fs.handle);
         if (fs.scale <= 1) c.drawText(tx, ty, lbl, false);
         else               c.drawTextScaled(tx, ty, lbl, fs.scale, false);
     }
@@ -142,7 +152,7 @@ void HomeScreen::draw(Canvas& c) {
 
     // ── Navigation hints ─────────────────────────────────────────────────────
     FontSpec cap = fontForRole(TextRole::Caption);
-    c.setFont(*cap.font);
+    c.setFont(cap.handle);
     uint16_t hintH = measureTextH(TextRole::Caption);
     uint16_t hintY = (uint16_t)(posbarY > hintH + 2 ? posbarY - hintH - 2 : 0);
     const char* hint = rt_.input().hintFor(input::Action::Prev);

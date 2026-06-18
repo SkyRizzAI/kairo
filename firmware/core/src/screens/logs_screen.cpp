@@ -12,9 +12,9 @@ using namespace ui;
 
 LogsScreen::LogsScreen(Runtime& rt) : ComponentScreen(rt, 256) {}
 
-void LogsScreen::enter() {
+void LogsScreen::onResume() {
     scroll_.scrollMain = 0x7FFF;   // renderer clamps to bottom → show newest
-    ComponentScreen::enter();
+    ComponentScreen::onResume();
 }
 
 static char levelTag(LogLevel l) {
@@ -67,7 +67,7 @@ UiNode* LogsScreen::build(NodeArena& a, Runtime& rt) {
     UiNode* list = ScrollView(a, scroll_, sv, {});
     UiNode* prev = nullptr;
     for (auto& r : rows_) {
-        UiNode* t = Text(a, r.c_str(), TextRole::Caption);
+        UiNode* t = Text(a, r.c_str(), TextRole::Mono);
         if (!t) break;
         if (!prev) list->firstChild = t; else prev->nextSibling = t;
         prev = t;

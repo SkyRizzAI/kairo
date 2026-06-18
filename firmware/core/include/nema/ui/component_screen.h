@@ -22,17 +22,19 @@ public:
     // Subclass entry point — return this frame's node tree (built from `arena`).
     virtual ui::UiNode* build(ui::NodeArena& arena, Runtime& rt) = 0;
 
-    // Optional Back hook. Return true to consume; default pops the screen.
+    // Plan 70: Optional Back hook. Return true to consume (prevent pop).
+    // Deprecated: override onBackPressed() instead (from IScreen).
     virtual bool onBack() { return false; }
 
     // IScreen
     void enter() override;    // resets modality → focus ring re-appears on wake
+    void onResume() override; // Plan 70: called when screen becomes active
     void onAction(input::Action a) override;
     void onPointer(const input::PointerEvent& e) override;
     void draw(Canvas& c) override;
     void tick(uint64_t nowMs) override;
     ScreenMode mode() const override { return fullscreen() ? ScreenMode::Fullscreen
-                                                          : ScreenMode::Normal; }
+                                                           : ScreenMode::Normal; }
 
 protected:
     // Override to paint over the whole canvas (no status bar strip); the tree is
@@ -44,7 +46,8 @@ protected:
     Runtime&           rt_;
     ui::NodeArena      arena_;
     ui::ComponentState state_;
-    ui::UiNode*        root_ = nullptr;
+    ui::UiNode*        root_   = nullptr;
+    bool               dirty_  = true;   // Plan 70: only rebuild tree when model changed
 };
 
 } // namespace nema

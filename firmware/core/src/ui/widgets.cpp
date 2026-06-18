@@ -3,6 +3,7 @@
 // nema::theme() so compact/large theme tokens propagate to all components.
 #include "nema/ui/widgets.h"
 #include "nema/ui/style_tokens.h"
+#include <vector>
 
 namespace nema::ui {
 
@@ -248,6 +249,93 @@ UiNode* Modal(NodeArena& a, std::initializer_list<UiNode*> children) {
     Style s; s.dir = FlexDir::Col; s.padding = pad; s.gap = gap;
     s.align = Align::Stretch; s.justify = Justify::Center;
     return View(a, s, children);
+}
+
+// ── Plan 70: Modal dialog widgets ─────────────────────────────────────────────
+
+UiNode* Dialog(NodeArena& a, const char* title, const char* body,
+               const uint8_t* icon, uint8_t iconW, uint8_t iconH,
+               const DialogButton* buttons, uint8_t buttonCount) {
+    uint8_t pad = nema::theme().space.md;
+    uint8_t gap = nema::theme().space.sm;
+
+    // Collect children: icon, title, body, button row
+    std::vector<UiNode*> kids;
+    if (icon && iconW > 0 && iconH > 0)
+        kids.push_back(Icon(a, icon, iconW, iconH, 0));
+    if (title && *title)
+        kids.push_back(Text(a, title, TextRole::Title));
+    if (body && *body)
+        kids.push_back(Text(a, body, TextRole::Body));
+
+    // Button row: Left | Center | Right
+    if (buttons && buttonCount > 0 && buttonCount <= 3) {
+        Style row; row.dir = FlexDir::Row; row.gap = gap;
+        row.align = Align::Center; row.justify = Justify::Center;
+        UiNode* btnRow = View(a, row, {});
+        UiNode* prev = nullptr;
+        for (uint8_t i = 0; i < buttonCount; i++) {
+            UiNode* btn = Pressable(a, buttons[i].onClick, buttons[i].userdata,
+                                    Style{}, {Text(a, buttons[i].label, TextRole::Body)});
+            if (!btn) break;
+            if (!prev) btnRow->firstChild = btn;
+            else       prev->nextSibling = btn;
+            prev = btn;
+        }
+        kids.push_back(btnRow);
+    }
+
+    // Wrap in a centered column container
+    Style col; col.dir = FlexDir::Col; col.padding = pad; col.gap = gap;
+    col.align = Align::Center;
+    UiNode* root = View(a, col, {});
+    UiNode* prev = nullptr;
+    for (auto* k : kids) {
+        if (!prev) root->firstChild = k;
+        else       prev->nextSibling = k;
+        prev = k;
+    }
+    return root;
+}
+
+UiNode* Popup(NodeArena& a, const char* text,
+              const uint8_t* icon, uint8_t iconW, uint8_t iconH) {
+    uint8_t pad = nema::theme().space.md;
+    uint8_t gap = nema::theme().space.sm;
+
+    Style col; col.dir = FlexDir::Col; col.padding = pad; col.gap = gap;
+    col.align = Align::Center;
+    UiNode* root = View(a, col, {});
+    UiNode* prev = nullptr;
+
+    if (icon && iconW > 0 && iconH > 0) {
+        UiNode* ic = Icon(a, icon, iconW, iconH, 0);
+        root->firstChild = ic;
+        prev = ic;
+    }
+    if (text && *text) {
+        UiNode* t = Text(a, text, TextRole::Body);
+        if (!prev) root->firstChild = t;
+        else       prev->nextSibling = t;
+    }
+    return root;
+}
+
+UiNode* Toast(NodeArena& a, const char* message) {
+    uint8_t pad = nema::theme().space.sm;
+    Style s; s.dir = FlexDir::Row; s.padding = pad; s.align = Align::Center;
+    s.background = true;   // dark background, white text
+    return View(a, s, {Text(a, message, TextRole::Caption)});
+}
+
+UiNode* AnimatedIcon(NodeArena& a, anim::AnimationPlayer& player) {
+    UiNode* n = a.alloc();
+    if (!n) return nullptr;
+    n->type = NodeType::AnimatedIcon;
+    n->animPlayer = &player;
+    n->iconW = player.width();
+    n->iconH = player.height();
+    return n;
 }
 
 } // namespace nema::ui

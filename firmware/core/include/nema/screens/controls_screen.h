@@ -13,7 +13,7 @@ class Runtime;
 class ControlsScreen : public ComponentScreen {
 public:
     explicit ControlsScreen(Runtime& rt);
-    void        enter() override;
+    void        onResume() override;
     ui::UiNode* build(ui::NodeArena& a, Runtime& rt) override;
 
 private:
