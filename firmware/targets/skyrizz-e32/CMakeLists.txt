@@ -33,5 +33,6 @@ idf_build_set_property(COMPILE_OPTIONS
 # Plan 66 — CDC+HID composite. Preloader in esp32_usb_hid.cpp pre-loads the HID
 # descriptor in main_task context (8KB stack) before usb_device_task (4KB) starts,
 # preventing stack overflow on GET_HID_REPORT_DESCRIPTOR. PSRAM ensures malloc succeeds.
-idf_build_set_property(COMPILE_OPTIONS "-DARDUINO_USB_CDC_ON_BOOT=1" APPEND)
-idf_build_set_property(COMPILE_OPTIONS "-DARDUINO_USB_ON_BOOT=1"     APPEND)
+# Uncomment the two lines below to re-enable USB HID/CDC mode.
+# idf_build_set_property(COMPILE_OPTIONS "-DARDUINO_USB_CDC_ON_BOOT=1" APPEND)
+# idf_build_set_property(COMPILE_OPTIONS "-DARDUINO_USB_ON_BOOT=1"     APPEND)

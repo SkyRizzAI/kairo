@@ -85,3 +85,39 @@ Anywhere else, raw stdio for logging is a bug.
 
 - Resolution-independent: draw from `canvas.width()`/`canvas.height()`, never
   hardcode screen dimensions. (Plan 25 — Adaptive UI.)
+
+---
+
+## SkyRizz E32 — USB mode toggle
+
+The E32 has two USB modes. Toggle between them by commenting/uncommenting **2 lines**
+in `firmware/targets/skyrizz-e32/CMakeLists.txt` (lines 36-37):
+
+**USB HID/CDC mode (default when uncommented):**
+```cmake
+idf_build_set_property(COMPILE_OPTIONS "-DARDUINO_USB_CDC_ON_BOOT=1" APPEND)
+idf_build_set_property(COMPILE_OPTIONS "-DARDUINO_USB_ON_BOOT=1"     APPEND)
+```
+- USB CDC serial + HID keyboard active
+- Flash via USB OTG port
+- Used for production / BadUSB functionality
+
+**Serial/JTAG mode (default when commented — faster flashing/debugging):**
+```cmake
+# idf_build_set_property(COMPILE_OPTIONS "-DARDUINO_USB_CDC_ON_BOOT=1" APPEND)
+# idf_build_set_property(COMPILE_OPTIONS "-DARDUINO_USB_ON_BOOT=1"     APPEND)
+```
+- USB HID/CDC disabled, TinyUSB not initialized
+- Flash via built-in USB Serial/JTAG (separate hardware block on ESP32-S3)
+- Faster flashing, JTAG debugging available
+- **Current state: Serial/JTAG mode (USB HID commented out)**
+
+After toggling, clean build is required:
+```bash
+rm -rf firmware/targets/skyrizz-e32/build && bun run build:skyrizz-e32
+```
+
+Flash in Serial/JTAG mode:
+```bash
+idf.py -p /dev/cu.usbmodem* -B firmware/targets/skyrizz-e32/build flash monitor
+```
