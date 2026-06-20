@@ -34,9 +34,9 @@ public:
     void registerBindings(IUiBindingHost& host) override;
 
     // FPS overlay — actual display flushes/sec over a rolling 1s window.
-    uint16_t fps()        const { return fps_; }
-    bool     showFps()    const { return showFps_; }
-    void     setShowFps(bool b) { showFps_ = b; }
+    uint16_t fps()        const override { return fps_; }
+    bool     showFps()    const override { return showFps_; }
+    void     setShowFps(bool b) override { showFps_ = b; }
 
     // Theme is Aether-owned (ADR 0002 — not on the IDisplayServer contract).
     // renderFrame() installs it as the active theme before drawing.

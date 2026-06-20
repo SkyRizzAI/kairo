@@ -3,13 +3,14 @@
 #include <unordered_map>
 #include <string>
 #include <cstdint>
+#include <functional>
 
 namespace nema {
 
 class Runtime;
 struct IApp;
 class AppHost;
-class CloseAndOpenModal;
+struct IScreen;
 struct Event;
 
 // AppHostManager — single authority for launching apps and the Plan 22
@@ -47,6 +48,14 @@ public:
     // Unconditional launch — used by the modal after killing the paused app.
     void doLaunch(IApp& app);
 
+    // Plan 80: the app-switch transition ("Close & Open?" modal) is a presentation
+    // screen owned by the display server (aether), not the kernel. The display
+    // server installs a factory at boot; with no factory (headless) the manager
+    // falls back to killing the paused app and launching immediately.
+    using TransitionModalFactory =
+        std::function<std::unique_ptr<IScreen>(Runtime&, AppHostManager&, IApp&)>;
+    void setTransitionModalFactory(TransitionModalFactory f) { modalFactory_ = std::move(f); }
+
     // Plan 64 — crash recovery event handlers.
     void onAppExited(const Event& e);
     void onClockTick(const Event& e);
@@ -72,7 +81,8 @@ private:
     Runtime&                           rt_;
     std::unique_ptr<AppHost>           foreground_;
     std::unique_ptr<AppHost>           paused_;
-    std::unique_ptr<CloseAndOpenModal> modal_;
+    std::unique_ptr<IScreen>           modal_;       // the active transition modal
+    TransitionModalFactory             modalFactory_;// installed by the display server
     std::unordered_map<std::string, CrashRecord> crashMap_;
     std::unique_ptr<PendingRestart>    pendingRestart_;
 };

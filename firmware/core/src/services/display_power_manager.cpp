@@ -1,5 +1,5 @@
 #include "nema/services/display_power_manager.h"
-#include "nema/screens/lock_screen.h"
+#include "nema/ui/screen.h"
 #include "nema/ui/view_dispatcher.h"
 #include "nema/hal/display.h"
 #include "nema/clock.h"
@@ -7,7 +7,7 @@
 namespace nema {
 
 void DisplayPowerManager::init(ViewDispatcher& vd, IDisplayDriver* display,
-                                IClock& clock, LockScreen& lockScreen,
+                                IClock& clock, IScreen& lockScreen,
                                 uint64_t sleepMs, uint64_t lockMs) {
     vd_          = &vd;
     display_     = display;

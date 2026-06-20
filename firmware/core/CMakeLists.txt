@@ -17,7 +17,6 @@ src/hal/remote_screen_tap.cpp
 src/input/gesture.cpp
     src/input/i_key_map.cpp
     src/input/i_touch_driver.cpp
-    src/ui/hit_test.cpp
     src/services/input_service.cpp
     src/runtime.cpp
     src/log/logger.cpp
@@ -39,43 +38,13 @@ src/input/gesture.cpp
     src/services/dummy_battery_driver.cpp
     src/services/ntp_service.cpp
     src/services/cli_service.cpp
-    src/services/gui_service.cpp
     src/app/app_registry.cpp
     src/app/app_host.cpp
     src/app/app_host_manager.cpp
-    src/app/component_app.cpp
     src/app/papp_package.cpp
     src/app/papp_installer.cpp
-    src/apps/hello_app.cpp
-    src/apps/js_app.cpp
-    src/apps/js_app_store.cpp
-    src/apps/bad_usb_app.cpp
-    src/apps/badusb_parser.cpp
-    src/apps/dolphin_app.cpp
-    src/ui/text_input.cpp
-    src/ui/virtual_keyboard.cpp
     src/ui/canvas.cpp
-    src/ui/layout.cpp
-    src/ui/draw.cpp
-    src/ui/widgets.cpp
-    src/ui/text_style.cpp
-    src/ui/style_tokens.cpp
-    src/ui/renderer.cpp
-    src/ui/icon_pack.cpp
-    src/ui/single_foreground_policy.cpp
-    src/ui/aether_server.cpp
-    src/ui/aether_abi.cpp
     src/ui/fbcon_server.cpp
-    src/ui/focus.cpp
-    src/ui/component_runtime.cpp
-    src/ui/component_screen.cpp
-    src/ui/app_window.cpp
-    src/ui/animation_player.cpp
-    src/ui/animation_manager.cpp
-    src/ui/builtin_animations.cpp
-    src/ui/dolphin_showcase.cpp
-    src/ui/asset_loader.cpp
-    src/ui/asset_arena.cpp
     src/ui/font_registry.cpp
     src/ui/font_5x8.cpp
     src/ui/font_6x8.cpp
@@ -86,37 +55,9 @@ src/input/gesture.cpp
     src/ui/font_reg12.cpp
     src/ui/font_bold12.cpp
     src/ui/view_dispatcher.cpp
-    src/ui/status_bar.cpp
-    src/ui/components.cpp
-    src/ui/ascii_board_renderer.cpp
-    src/screens/home_screen.cpp
-    src/screens/app_list_screen.cpp
-    src/screens/file_browser_screen.cpp
-    src/screens/logs_screen.cpp
-    src/screens/settings_screen.cpp
-    src/screens/wifi_settings_screen.cpp
-    src/screens/wifi_network_detail_screen.cpp
-    src/screens/wifi_ip_config_screen.cpp
-    src/screens/bluetooth_settings_screen.cpp
-    src/screens/remote_settings_screen.cpp
-    src/screens/about_screen.cpp
-    src/screens/lock_screen.cpp
-    src/screens/close_and_open_modal.cpp
-    src/screens/sleep_settings_screen.cpp
-    src/screens/controls_screen.cpp
-    src/screens/touch_settings_screen.cpp
-    src/screens/sounds_settings_screen.cpp
-    src/screens/camera_settings_screen.cpp
-    src/screens/developer_screen.cpp
-    src/screens/profile_settings_screen.cpp
-    src/screens/dolphin_demo.cpp
     src/services/display_power_manager.cpp
     src/services/audio_service.cpp
     src/services/camera_service.cpp
-    src/js/js_engine.cpp
-    src/js/js_api.cpp
-    src/js/js_runtime.cpp
-    src/js/nema_host_impl.cpp
     src/proc/stream.cpp
     src/proc/process_host.cpp
     src/proc/process_manager.cpp

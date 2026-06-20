@@ -2,7 +2,7 @@
 #include "nema/app/app_host.h"
 #include "nema/app/app.h"
 #include "nema/app/app_registry.h"
-#include "nema/screens/close_and_open_modal.h"
+#include "nema/ui/screen.h"   // IScreen — modal_ is a server-supplied IScreen (Plan 80)
 #include "nema/runtime.h"
 #include "nema/log/logger.h"
 #include "nema/event/event.h"
@@ -30,9 +30,13 @@ void AppHostManager::doLaunch(IApp& app) {
 
 void AppHostManager::launch(IApp& app) {
     if (paused_) {
-        modal_ = std::make_unique<CloseAndOpenModal>(rt_, *this, app);
-        rt_.view().push(*modal_);
-        return;
+        if (modalFactory_) {
+            // Display server installed a transition modal ("Close & Open?").
+            modal_ = modalFactory_(rt_, *this, app);
+            if (modal_) { rt_.view().push(*modal_); return; }
+        }
+        // Headless / no transition UI: enforce the single-slot policy directly.
+        killPaused();
     }
     doLaunch(app);
 }

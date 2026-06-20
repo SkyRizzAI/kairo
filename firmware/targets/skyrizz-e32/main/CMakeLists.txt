@@ -3,6 +3,7 @@ idf_component_register(
     INCLUDE_DIRS "."
     REQUIRES
         core
+        aether
         esp32
         skyrizz-e32
         espressif__arduino-esp32

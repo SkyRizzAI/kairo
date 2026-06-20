@@ -20,7 +20,7 @@
 #include "nema/ui/screen.h"
 #include "nema/ui/canvas.h"
 #include "nema/event/async_event_poster.h"
-#include "nema/services/gui_service.h"
+#include "nema/ui/display_server.h"
 #include "nema/services/display_power_manager.h"
 #include "nema/config/config_store.h"
 #include "nema/hal/display.h"
@@ -162,8 +162,9 @@ void Runtime::start() {
     assert(phase_ == BootPhase::ServicesRegistered);
     serviceManager_->startAll();
     taskRunner_.start();   // spawn background worker — UI thread never blocks
-    gui_ = std::make_unique<GuiService>(*this);
-    gui_->start();         // spawn GUI thread — owns render + input dispatch
+    // Plan 80: the UI render loop (GuiService) + display servers are constructed
+    // and started by the target main (it links the display-server lib). Core no
+    // longer owns the loop; it only exposes the DPM + the IDisplayServer registry.
     phase_ = BootPhase::Running;
     eventBus_->publish({events::SystemReady, {}});
     logger_->info("Runtime", "Started");
@@ -179,7 +180,7 @@ void Runtime::run() {
         step();
     }
     logger_->info("Runtime", "Shutdown requested — stopping");
-    if (gui_) gui_->stop();   // stop UI thread first — it touches screens/apps
+    // GuiService (owned by main) stops itself on teardown; core only stops its own.
     taskRunner_.stop();       // join worker before services tear down
     serviceManager_->stopAll();
     logger_->info("Runtime", "Shutdown complete");
@@ -253,19 +254,41 @@ void Runtime::dropService(IService* svc) {
 }
 ViewDispatcher&     Runtime::view()          { assert(viewDispatcher_); return *viewDispatcher_; }
 Canvas&             Runtime::canvas()        { assert(canvas_); return *canvas_; }
-DisplayPowerManager& Runtime::dpm()          { assert(gui_); return gui_->dpm(); }
+DisplayPowerManager& Runtime::dpm()          { return dpm_; }
 IConfigStore&        Runtime::config()       { auto* c = container_->resolve<IConfigStore>(); assert(c); return *c; }
-uint16_t            Runtime::fps()     const { return gui_ ? gui_->fps() : 0; }
-bool                Runtime::showFps() const { return gui_ ? gui_->showFps() : false; }
-void                Runtime::setShowFps(bool on) { if (gui_) gui_->setShowFps(on); }
-bool Runtime::switchDisplayServer(const char* name) { return gui_ && gui_->requestServer(name); }
-const char* Runtime::displayServerName() const { return gui_ ? gui_->activeServerName() : "none"; }
-std::vector<const char*> Runtime::displayServerList() const {
-    return gui_ ? gui_->serverNames() : std::vector<const char*>{};
+// FPS is forwarded to the active server (the IDisplayServer contract carries it;
+// non-graphical servers default to 0/false/no-op).
+uint16_t            Runtime::fps()     const { return activeServer_ ? activeServer_->fps() : 0; }
+bool                Runtime::showFps() const { return activeServer_ && activeServer_->showFps(); }
+void                Runtime::setShowFps(bool on) { if (activeServer_) activeServer_->setShowFps(on); }
+
+void Runtime::registerDisplayServer(IDisplayServer* s, bool boot) {
+    if (!s) return;
+    displayServers_.push_back(s);
+    if (boot || !activeServer_) activeServer_ = s;   // first/boot becomes active
 }
-IDisplayServer* Runtime::displayServer()     const { return gui_ ? gui_->activeServer() : nullptr; }
+bool Runtime::applyPendingServer() {
+    if (auto* next = pendingServer_.exchange(nullptr)) { activeServer_ = next; return true; }
+    return false;
+}
+bool Runtime::switchDisplayServer(const char* name) {
+    IDisplayServer* t = findDisplayServer(name);
+    if (!t) return false;
+    pendingServer_.store(t);   // GUI thread applies it via applyPendingServer()
+    return true;
+}
+const char* Runtime::displayServerName() const { return activeServer_ ? activeServer_->name() : "none"; }
+std::vector<const char*> Runtime::displayServerList() const {
+    std::vector<const char*> v;
+    for (IDisplayServer* s : displayServers_) v.push_back(s->name());
+    return v;
+}
+IDisplayServer* Runtime::displayServer()     const { return activeServer_; }
 IDisplayServer* Runtime::findDisplayServer(const char* name) const {
-    return gui_ ? gui_->findServer(name) : nullptr;
+    if (!name) return nullptr;
+    for (IDisplayServer* s : displayServers_)
+        if (std::string(s->name()) == name) return s;
+    return nullptr;
 }
 BootPhase           Runtime::phase()   const { return phase_; }
 int                 Runtime::exitCode() const { return exitCode_; }

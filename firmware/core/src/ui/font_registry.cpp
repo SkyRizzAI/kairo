@@ -56,4 +56,4 @@ const char* FontRegistry::nameOf(FontHandle handle) const {
     return "unknown";
 }
 
-} // namespace aether::ui
+} // namespace nema::display

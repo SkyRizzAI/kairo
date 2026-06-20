@@ -6,8 +6,10 @@
 #include "nema/services/camera_service.h"
 #include "nema/task_runner.h"
 #include "nema/proc/process_manager.h"
+#include "nema/services/display_power_manager.h"
 #include <memory>
 #include <vector>
+#include <atomic>
 
 namespace nema {
 
@@ -31,8 +33,6 @@ class AppHostManager;
 class ProcessManager;
 class ViewDispatcher;
 class Canvas;
-class GuiService;
-class DisplayPowerManager;
 class IConfigStore;
 struct IDisplayServer;
 class DummyBatteryDriver;
@@ -96,6 +96,15 @@ public:
     std::vector<const char*> displayServerList() const;
     IDisplayServer*          displayServer() const;      // Plan 50/51: active server
     IDisplayServer*          findDisplayServer(const char* name) const;  // Plan 51: by name
+
+    // Plan 80 — the display servers are constructed and owned by the target's
+    // main (in the aether lib / a server module), then registered here so core
+    // (AppRegistry caps-checks, CLI `display`) can address them via the neutral
+    // IDisplayServer contract without depending on any server type. `boot=true`
+    // makes this server the initially-active one. applyPendingServer() is called
+    // on the GUI thread to fulfil a switchDisplayServer() requested elsewhere.
+    void registerDisplayServer(IDisplayServer* s, bool boot = false);
+    bool applyPendingServer();   // GUI thread: pending→active; true if swapped
     AudioService&        audio();
     CameraService&       camera();
 
@@ -143,7 +152,13 @@ private:
     ProcessManager                     processes_;      // value member — always alive
     std::unique_ptr<ViewDispatcher>    viewDispatcher_;
     std::unique_ptr<Canvas>            canvas_;
-    std::unique_ptr<GuiService>        gui_;           // UI thread (owns render)
+    // Plan 80: the UI render loop (GuiService) is owned by the target main and
+    // lives in the display-server lib, not here. Core keeps only the neutral
+    // sleep/lock state machine + the registry of IDisplayServer backends.
+    DisplayPowerManager                dpm_;           // sleep/lock (GuiService inits it)
+    std::vector<IDisplayServer*>       displayServers_;// registered backends (owned by main)
+    IDisplayServer*                    activeServer_ = nullptr;
+    std::atomic<IDisplayServer*>       pendingServer_{nullptr};
     AsyncEventPoster                   asyncPoster_;   // value member — always alive
     InputService                       inputService_;  // value member — always alive
     nema::TaskRunner                   taskRunner_;    // value member — always alive

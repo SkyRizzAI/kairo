@@ -41,6 +41,13 @@ struct IDisplayServer {
     // the action (GuiService will not forward it to the view dispatcher).
     virtual bool onAction(input::Action) { return false; }
 
+    // FPS overlay (Plan 70) — only pixel servers track flush cadence. Defaults
+    // make non-graphical servers (fbcon) no-ops, so Runtime can forward
+    // rt.fps()/showFps()/setShowFps() to the active server without knowing its type.
+    virtual uint16_t fps()        const { return 0; }
+    virtual bool     showFps()    const { return false; }
+    virtual void     setShowFps(bool)   {}
+
     // ── Presentational state ──────────────────────────────────────────
     // Theme is NOT on this contract (ADR 0002): it is a presentation concern
     // owned internally by each server (e.g. AetherServer applies its own theme
