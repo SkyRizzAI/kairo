@@ -4,7 +4,7 @@
 > Detail per-stage ada di [`plans/`](plans/00-overview.md). Master plan: [`concept_plan.md`](concept_plan.md).
 > Reference arsitektur per-subsistem: [`architecture/`](architecture/README.md).
 >
-> **Last updated:** 2026-06-20
+> **Last updated:** 2026-06-21
 
 ---
 
@@ -20,6 +20,7 @@ Palanu = platform handheld bergaya Flipper Zero, **1-bit retro/pixel UI**, denga
 
 | Area | Status | Bukti |
 |---|---|---|
+| **Aether display server = lib terpisah (Plan 80)** | ✅ build (host+wasm+esp32) | `nema_core` 0 ref ke `aether` (IDF strict-link); semua UI/screens/GuiService → `libaether`; ganti server = ganti lib + `aether::bootDisplay(rt)` |
 | Core Runtime (boot, logger, event bus, services, introspection) | ✅ HW | jalan di sim + esp32 |
 | App Registry (AppManifest, AppRegistry — built-in/custom apps + services; menggantikan Plugin Runtime) | ✅ HW | install/list/launch |
 | UI Runtime retro (Canvas 1-bit, font 5×8, ViewDispatcher) | ✅ HW | semua screen render |

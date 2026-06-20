@@ -11,24 +11,34 @@
 
 ---
 
-## Status (2026-06-21)
+## Status (2026-06-21) — ✅ DONE (host+wasm+esp32 green, 12/12 tests)
 
-**Namespace + shared-layer migration COMPLETE & validated on host+wasm+esp32** (9 commits
-on `feat/ui-aether-foundations`):
-- All presentation → `aether::` (widgets, layout, renderer, draw, components, screens,
-  themes/StyleTokens, text_style role→font).
-- **Shared `nema::display` primitive layer** (BitmapFont, glyph helpers, FONT_* tables,
-  FontRegistry) used by Aether AND FbCon — so Canvas keeps its text API with no server
-  dependency (no Canvas-text extraction needed; the font circular-dep is gone).
-- `IDisplayServer` decoupled from `StyleTokens` (themes are server-internal).
+**The display server is a separate library.** `nema_core` compiles + links with ZERO
+references to `aether` — proven by the ESP-IDF strict link (host links were lenient).
+Swapping servers = link a different lib and call its bring-up; core names no server.
 
-**Remaining = physical lib split only** (the swappability payoff). Core→aether refs to
-cut are concentrated in 6 files: `component_app.{h,cpp}` (uses widgets → move to aether),
-`app_host.cpp`, `js_engine.cpp` (JS apps render UiNode → aether seam), `cli_service.cpp`
-(theme cmd), `gui_service.cpp` (owns/constructs the servers → construction moves to each
-target `main.cpp`). Then move the ~30 `aether::` files to `firmware/aether/` + CMake, and
-`fbcon` to `firmware/servers/fbcon/`. `IScreen`+`ViewDispatcher` stay in `nema::` core as
-the shared view base (Runtime owns ViewDispatcher → must not be aether).
+Delivered in order:
+1. `IDisplayServer` decoupled from `StyleTokens` (themes server-internal).
+2. All presentation → `aether::` namespace; **shared `nema::display`** primitive layer
+   (BitmapFont + glyph helpers + FONT_* + FontRegistry + ui_constants) so `Canvas` keeps
+   its text API with no server dep — **no Canvas-text extraction needed**, font/circular
+   dep gone. `IScreen` + `ViewDispatcher` stay in core as the shared view base.
+3. **Physical lib split**: ~59 UI sources (widgets/layout/renderer/draw/themes/text_style/
+   component-system/animations/AetherServer/all screens/JS-app-runtime/built-in apps + the
+   `GuiService` render loop) compile into **`libaether`**, not `nema_core` (files stay under
+   `core/src/*`, `AETHER_SRCS` lists them via `../core/src` — no file moves / include rewrite).
+4. **Kernel decouple** (so core names no aether type): `Runtime` drops GuiService ownership,
+   keeps only the neutral `DisplayPowerManager` + an `IDisplayServer*` registry; FPS forwards
+   via the contract (new virtual `fps()/showFps()/setShowFps()`); `DisplayPowerManager`
+   pushes the lock screen via `IScreen&`; `AppHostManager` gets the "Close & Open?" transition
+   modal from a server-installed factory; `fbcon` dropped its theme include.
+5. **Bring-up**: `aether::bootDisplay(rt)` — one call each target main makes after `rt.start()`
+   (constructs the servers, configures theme/scale/FPS, registers them, installs the modal
+   factory, starts the GUI loop). Wired into wasm / skyrizz-e32 / dev-board.
+
+**Remaining nicety (not a boundary violation):** `fbcon` still lives in `nema_core` (it is
+core-dependency-only — Canvas + nema::display + IDisplayServer). Promoting it to its own
+`firmware/servers/fbcon/` lib is a clean follow-up, not required for swappability.
 
 ## 1. Goal & invariants
 
@@ -142,9 +152,12 @@ later shared `ui-runtime`).
 
 ## Tasks
 
-- [ ] Phase 0 scaffold + boundary lock
-- [ ] Phase 1 Canvas text extraction + IDisplayServer decouple
-- [ ] Phase 2 themes + text_style → aether
-- [ ] Phase 3 UI model + renderer → aether
-- [ ] Phase 4 component system + screens + server → aether
-- [ ] Phase 5 build wiring + "new server" doc
+- [x] Phase 0 scaffold + boundary lock
+- [x] Phase 1 IDisplayServer decouple — **+ shared `nema::display` layer instead of Canvas
+  text extraction** (Canvas keeps text over `nema::display::BitmapFont`; no extraction needed)
+- [x] Phase 2 themes + text_style → aether
+- [x] Phase 3 UI model + renderer → aether
+- [x] Phase 4 component system + screens + server → aether (incl. JS app runtime + GuiService)
+- [x] Phase 5 build wiring: `libaether` (host + IDF component), `aether::bootDisplay(rt)` is
+  the "new server" recipe; targets link it. Kernel decoupled (Runtime/DPM/AppHostManager).
+- [ ] Follow-up: promote `fbcon` to its own `firmware/servers/fbcon/` lib (core-only today)
