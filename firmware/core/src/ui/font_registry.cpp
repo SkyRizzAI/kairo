@@ -2,7 +2,6 @@
 #include <string>
 
 namespace aether::ui {
-using namespace nema;  // Plan 80: nema core symbols (Canvas/Key/input/anim/fonts) in scope
 
 FontRegistry& FontRegistry::instance() {
     static FontRegistry reg;

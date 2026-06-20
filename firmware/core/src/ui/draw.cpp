@@ -18,7 +18,7 @@ using aether::ui::measureTextH;
 
 // ── Internal helpers ──────────────────────────────────────────────────────────
 
-static const nema::BitmapFont& resolve(aether::ui::FontHandle h) {
+static const aether::BitmapFont& resolve(aether::ui::FontHandle h) {
     return *FontRegistry::instance().get(h);
 }
 

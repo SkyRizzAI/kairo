@@ -4,7 +4,7 @@
 #include <cstdint>
 #include <cstddef>
 
-namespace nema {
+namespace aether {
 
 // Bitmap font. Glyphs are column-major: for each pixel column, `bytesPerCol`
 // bytes hold the column top-to-bottom (bit 0 = topmost row; for tall glyphs the
@@ -50,6 +50,10 @@ extern const BitmapFont FONT_BOLD10;
 extern const BitmapFont FONT_REG12;
 extern const BitmapFont FONT_BOLD12;
 
+}  // namespace aether
+
+namespace nema {
+
 // Canvas — logical-pixel drawing surface over a physical display.
 //
 // All public coordinates are LOGICAL pixels. With scale > 1, one logical pixel
@@ -79,7 +83,7 @@ public:
     void invertRect(uint16_t x, uint16_t y, uint16_t w, uint16_t h);  // XOR invert
 
     // Text
-    void setFont(const BitmapFont& font);             // legacy
+    void setFont(const aether::BitmapFont& font);             // legacy
     void setFont(aether::ui::FontHandle handle);              // Plan 70: resolve from registry
     void drawText(uint16_t x, uint16_t y, const char* text, bool on = true);
     void drawChar(uint16_t x, uint16_t y, char ch, bool on = true);
@@ -114,7 +118,7 @@ private:
     bool inClip(uint16_t x, uint16_t y) const;
 
     IDisplayDriver&   driver_;
-    const BitmapFont* font_  = &FONT_5X8;
+    const aether::BitmapFont* font_ = &aether::FONT_5X8;
     float             scale_ = 1.0f;
 
     // Clip rectangle in LOGICAL px. clipX1_/clipY1_ are exclusive bounds.
