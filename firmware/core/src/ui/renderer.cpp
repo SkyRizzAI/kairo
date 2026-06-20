@@ -17,6 +17,21 @@ uint32_t renderTick() { return s_renderTick; }
 
 namespace {
 
+// Focus highlight. Plain square invert by default; rounded (r=1) inverted box
+// when the node opts into Style::selectBox (ListView rows, Flipper style).
+static void highlightBox(Canvas& c, const UiNode* n) {
+    if (n->style.selectBox && n->w >= 10 && n->h >= 3) {
+        // Inset the right edge so the rounded box clears the dashed scrollbar.
+        const uint16_t GUTTER = 5;
+        uint16_t w = (uint16_t)(n->w - GUTTER);
+        c.invertRect(n->x, (uint16_t)(n->y + 1), w, (uint16_t)(n->h - 2)); // middle band
+        c.invertRect((uint16_t)(n->x + 1), n->y, (uint16_t)(w - 2), 1);    // top cap
+        c.invertRect((uint16_t)(n->x + 1), (uint16_t)(n->y + n->h - 1), (uint16_t)(w - 2), 1); // bottom cap
+    } else {
+        c.invertRect(n->x, n->y, n->w, n->h);
+    }
+}
+
 // inFocused: true when this node is a descendant of the focused Pressable.
 // Propagated downward so SmartLabel children of a focused row know to marquee.
 static void paint(const UiNode* n, Canvas& c, const UiNode* focused, bool inFocused = false) {
@@ -87,7 +102,7 @@ static void paint(const UiNode* n, Canvas& c, const UiNode* focused, bool inFocu
         uint16_t knobX = (uint16_t)(n->x + fillW);
         aether::ui::draw::box_rounded(c, knobX, (uint16_t)(n->y + 1), 4,
                                       (uint16_t)(n->h - 2), true);
-        if (focused && n == focused) c.invertRect(n->x, n->y, n->w, n->h);
+        if (focused && n == focused) highlightBox(c, n);
         return;
     }
 
@@ -107,26 +122,19 @@ static void paint(const UiNode* n, Canvas& c, const UiNode* focused, bool inFocu
                 paint(k, c, focused, childIn);
             c.setClip(ox, oy, ow, oh);
         }
-        // Dashed scrollbar (Plan 60: aether::ui::draw)
+        // Dashed scrollbar (Plan 60: aether::ui::draw). Thumb size/position derive
+        // from the real pixel lengths: track = viewport, total content, scroll offset.
         if (n->scroll && n->scroll->contentMain > n->scroll->viewportMain &&
             n->style.dir == FlexDir::Col && n->scroll->viewportMain > 0) {
             const ScrollState& sc = *n->scroll;
             uint16_t bx = (uint16_t)(n->x + n->w - 3);
-            uint16_t total = (uint16_t)(sc.contentMain > 0
-                ? (n->h * sc.viewportMain / sc.contentMain) : 1);
-            if (total < 1) total = 1;
-            // Compute pos from scroll offset
-            int32_t maxScroll = sc.maxScroll();
-            uint16_t pos = (maxScroll > 0)
-                ? (uint16_t)((uint32_t)sc.scrollMain * (n->h - 4) / maxScroll)
-                : 0;
             aether::ui::draw::scrollbar(c, bx, n->y, n->h,
-                                        sc.scrollMain,
-                                        (uint16_t)(maxScroll > 0 ? maxScroll : 1),
+                                        (uint16_t)(sc.scrollMain < 0 ? 0 : sc.scrollMain),
+                                        sc.viewportMain,
+                                        sc.contentMain,
                                         false);
-            (void)total; (void)pos;
         }
-        if (focused && n == focused) c.invertRect(n->x, n->y, n->w, n->h);
+        if (focused && n == focused) highlightBox(c, n);
         return;
     }
 
@@ -136,7 +144,7 @@ static void paint(const UiNode* n, Canvas& c, const UiNode* focused, bool inFocu
 
     // Focus highlight: invert the focused Pressable's bounding box
     if (focused && n == focused)
-        c.invertRect(n->x, n->y, n->w, n->h);
+        highlightBox(c, n);
 }
 
 } // anon

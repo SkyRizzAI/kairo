@@ -44,7 +44,8 @@ struct IconTokens {
 struct FontTokens {
     uint8_t caption;  // 1 — small labels, hints
     uint8_t body;     // 1 — list rows, body text
-    uint8_t title;    // 2 — screen headings
+    uint8_t title;    // 2 — screen headings (page title bars)
+    uint8_t subhead;  // 1 — list section headers (bold, smaller than title)
 };
 
 // The complete token set for one theme.

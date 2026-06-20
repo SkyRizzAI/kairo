@@ -15,14 +15,24 @@ using FontHandle = uint8_t;
 // Named handles for built-in fonts. Custom fonts are registered at runtime
 // and receive handles >= CUSTOM_BASE.
 namespace Fonts {
-    constexpr FontHandle Primary   = 0;
-    constexpr FontHandle Secondary = 1;
-    constexpr FontHandle Mono      = 2;
-    constexpr FontHandle Tiny      = 3;
-    constexpr FontHandle BigNum    = 4;
-    constexpr FontHandle COUNT     = 5;
-    constexpr FontHandle CUSTOM_BASE = 8;   // first runtime-registered slot
-    constexpr FontHandle MAX         = 12;  // max total fonts
+    // Role handles — what TextRole maps to (see text_style.cpp). These point at
+    // the proportional Helvetica family below.
+    constexpr FontHandle Primary   = 0;   // bold (subheaders / titles)
+    constexpr FontHandle Secondary = 1;   // regular (body / list items)
+    constexpr FontHandle Mono      = 2;   // monospace (CLI / terminal)
+    constexpr FontHandle Tiny      = 3;   // smallest regular
+    constexpr FontHandle BigNum    = 4;   // large bold (clocks / numbers)
+    // Explicit size/weight handles — for Layer-3 components that pick a precise
+    // metric (e.g. ListView subheader = Bold10, item = Reg8).
+    constexpr FontHandle Reg8      = 5;
+    constexpr FontHandle Bold8     = 6;
+    constexpr FontHandle Reg10     = 7;
+    constexpr FontHandle Bold10    = 8;
+    constexpr FontHandle Reg12     = 9;
+    constexpr FontHandle Bold12    = 10;
+    constexpr FontHandle COUNT     = 11;
+    constexpr FontHandle CUSTOM_BASE = 16;  // first runtime-registered slot
+    constexpr FontHandle MAX         = 20;  // max total fonts
 }
 
 // FontRegistry — singleton that owns all loaded font data.

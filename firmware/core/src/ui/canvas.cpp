@@ -75,6 +75,25 @@ void Canvas::drawRect(uint16_t x, uint16_t y, uint16_t w, uint16_t h, bool on) {
     fillRect(x + w - 1, y, 1, h, on);  // right
 }
 
+void Canvas::fillRoundRect(uint16_t x, uint16_t y, uint16_t w, uint16_t h,
+                           uint8_t r, bool on) {
+    if (r == 0 || w < 2 * r + 1 || h < 2 * r + 1) { fillRect(x, y, w, h, on); return; }
+    // Full-width middle band + top/bottom caps inset by r → the 2r×2r corners
+    // are left untouched (radius-r rounding, matches Flipper's canvas_draw_rbox).
+    fillRect(x,     (uint16_t)(y + r), w,                  (uint16_t)(h - 2 * r), on);
+    fillRect((uint16_t)(x + r), y,     (uint16_t)(w - 2 * r), r,                  on);
+    fillRect((uint16_t)(x + r), (uint16_t)(y + h - r), (uint16_t)(w - 2 * r), r,  on);
+}
+
+void Canvas::drawRoundRect(uint16_t x, uint16_t y, uint16_t w, uint16_t h,
+                           uint8_t r, bool on) {
+    if (r == 0 || w < 2 * r + 1 || h < 2 * r + 1) { drawRect(x, y, w, h, on); return; }
+    fillRect((uint16_t)(x + r), y,                  (uint16_t)(w - 2 * r), 1, on); // top
+    fillRect((uint16_t)(x + r), (uint16_t)(y + h - 1), (uint16_t)(w - 2 * r), 1, on); // bottom
+    fillRect(x,                 (uint16_t)(y + r), 1, (uint16_t)(h - 2 * r), on);  // left
+    fillRect((uint16_t)(x + w - 1), (uint16_t)(y + r), 1, (uint16_t)(h - 2 * r), on); // right
+}
+
 void Canvas::drawLine(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, bool on) {
     // Bresenham
     int dx = abs((int)x1 - (int)x0), dy = abs((int)y1 - (int)y0);
@@ -122,23 +141,21 @@ void Canvas::drawChar(uint16_t x, uint16_t y, char ch, bool on) {
     if ((uint8_t)ch < font_->firstChar) return;
     uint8_t idx = (uint8_t)ch - font_->firstChar;
     if (idx >= font_->numChars) return;
-    const uint8_t* glyph = font_->data + idx * font_->charW;
+    const uint8_t* glyph = fontGlyphData(*font_, idx);
+    const uint8_t  gw    = fontGlyphWidth(*font_, idx);
+    const uint8_t  bpc   = fontBytesPerCol(*font_);
     // Plan 70 FPS opt: scan each column for contiguous runs of lit pixels and
-    // batch them into fillRect calls instead of per-pixel drawPixel. For a 5×8
-    // glyph this reduces from ~20 drawPixel calls to ~2-5 fillRect calls.
-    for (uint8_t col = 0; col < font_->charW; col++) {
-        uint8_t bits = glyph[col];
-        if (bits == 0) continue;           // fast: empty column
+    // batch them into fillRect calls instead of per-pixel drawPixel. Tall glyphs
+    // (bpc==2) pack rows 0..7 in byte 0 and rows 8..15 in byte 1 of each column.
+    for (uint8_t col = 0; col < gw; col++) {
+        const uint8_t* cb = glyph + (size_t)col * bpc;
         uint8_t row = 0;
         while (row < font_->charH) {
-            // Skip dark pixels
-            while (row < font_->charH && !(bits & (1 << row))) row++;
+            while (row < font_->charH && !(cb[row >> 3] & (1 << (row & 7)))) row++;
             if (row >= font_->charH) break;
             uint8_t runStart = row;
-            // Count contiguous lit pixels
-            while (row < font_->charH && (bits & (1 << row))) row++;
-            uint8_t runLen = row - runStart;
-            fillRect(x + col, y + runStart, 1, runLen, on);
+            while (row < font_->charH && (cb[row >> 3] & (1 << (row & 7)))) row++;
+            fillRect(x + col, y + runStart, 1, (uint16_t)(row - runStart), on);
         }
     }
 }
@@ -146,40 +163,46 @@ void Canvas::drawChar(uint16_t x, uint16_t y, char ch, bool on) {
 void Canvas::drawText(uint16_t x, uint16_t y, const char* text, bool on) {
     uint16_t cx = x;
     for (const char* p = text; *p; p++) {
-        if (cx + font_->charW >= width()) break;
+        uint8_t c = (uint8_t)*p;
+        uint8_t gw = (c >= font_->firstChar && (uint8_t)(c - font_->firstChar) < font_->numChars)
+                     ? fontGlyphWidth(*font_, (uint8_t)(c - font_->firstChar)) : font_->charW;
+        if (cx + gw > width()) break;
         drawChar(cx, y, *p, on);
-        cx += font_->charW + font_->spacing;
+        cx += gw + font_->spacing;
     }
 }
 
 uint16_t Canvas::textWidth(const char* text) const {
-    uint16_t len = 0;
-    for (const char* p = text; *p; p++) len++;
-    if (len == 0) return 0;
-    return len * (font_->charW + font_->spacing) - font_->spacing;
+    uint32_t w = 0;
+    for (const char* p = text; *p; p++) {
+        uint8_t c = (uint8_t)*p;
+        uint8_t gw = (c >= font_->firstChar && (uint8_t)(c - font_->firstChar) < font_->numChars)
+                     ? fontGlyphWidth(*font_, (uint8_t)(c - font_->firstChar)) : font_->charW;
+        w += gw + font_->spacing;
+    }
+    return w ? (uint16_t)(w - font_->spacing) : 0;
 }
 
 uint16_t Canvas::textHeight() const { return font_->charH; }
 
 void Canvas::drawTextScaled(uint16_t x, uint16_t y, const char* text, uint8_t scale, bool on) {
     uint16_t cx = x;
-    uint16_t charStep = (uint16_t)(font_->charW + font_->spacing) * scale;
+    const uint8_t bpc = fontBytesPerCol(*font_);
     for (const char* p = text; *p; p++) {
-        if ((uint8_t)*p >= font_->firstChar) {
-            uint8_t idx = (uint8_t)*p - font_->firstChar;
-            if (idx < font_->numChars) {
-                const uint8_t* glyph = font_->data + idx * font_->charW;
-                for (uint8_t col = 0; col < font_->charW; col++) {
-                    uint8_t colBits = glyph[col];
-                    for (uint8_t row = 0; row < font_->charH; row++) {
-                        if (colBits & (1 << row)) {
-                            fillRect(cx + col * scale, y + row * scale, scale, scale, on);
-                        }
-                    }
-                }
+        uint8_t c = (uint8_t)*p;
+        if (c < font_->firstChar) continue;
+        uint8_t idx = (uint8_t)(c - font_->firstChar);
+        if (idx >= font_->numChars) continue;
+        const uint8_t* glyph = fontGlyphData(*font_, idx);
+        uint8_t gw = fontGlyphWidth(*font_, idx);
+        for (uint8_t col = 0; col < gw; col++) {
+            const uint8_t* cb = glyph + (size_t)col * bpc;
+            for (uint8_t row = 0; row < font_->charH; row++) {
+                if (cb[row >> 3] & (1 << (row & 7)))
+                    fillRect(cx + col * scale, y + row * scale, scale, scale, on);
             }
         }
-        cx += charStep;
+        cx += (uint16_t)(gw + font_->spacing) * scale;
     }
 }
 

@@ -147,6 +147,14 @@ static void arrange(UiNode* n) {
     int nKids = childCount(n);
     if (nKids == 0) return;
 
+    // flex-basis:0 — grow children that opt in contribute 0 to the base sum, so
+    // the leftover (and thus the ratio split) ignores their content width.
+    for (UiNode* k = n->firstChild; k; k = k->nextSibling) {
+        if (k->style.flexZero && k->style.flexGrow > 0) {
+            if (isRow) k->w = 0; else k->h = 0;
+        }
+    }
+
     // Sum measured main sizes + collect grow weights.
     int sumMain = 0, growWeight = 0;
     for (UiNode* k = n->firstChild; k; k = k->nextSibling) {

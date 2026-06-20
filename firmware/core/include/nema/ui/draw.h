@@ -28,11 +28,17 @@ void separator(nema::Canvas& c, uint16_t x, uint16_t y, uint16_t len,
 
 // ── Scrollbar ─────────────────────────────────────────────────────────────────
 
-// Dashed track + solid thumb. size = track length in px; pos/total = current position.
-// horizontal=false → vertical bar (3px wide) at (x,y).
-// horizontal=true  → horizontal bar (3px tall) at (x,y).
+// Dashed track + solid thumb (Flipper-style). All lengths in pixels:
+//   size         = track length (the on-screen viewport length along the axis)
+//   scrollOffset = current scroll position, 0..(content-viewport)
+//   viewport     = visible content length (usually == size)
+//   content      = total content length
+// Thumb shrinks proportionally as content grows (clamped to a minimum), and its
+// far edge never passes the track end (no overshoot).
+// horizontal=false → vertical bar (3px wide) at (x,y); true → horizontal (3px tall).
 void scrollbar(nema::Canvas& c, uint16_t x, uint16_t y, uint16_t size,
-               uint16_t pos, uint16_t total, bool horizontal = false);
+               uint16_t scrollOffset, uint16_t viewport, uint16_t content,
+               bool horizontal = false);
 
 // ── Text helpers ──────────────────────────────────────────────────────────────
 

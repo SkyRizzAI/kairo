@@ -12,7 +12,7 @@ const StyleTokens& defaultTheme() {
         /*space*/   {2, 4, 8, 12, 16},
         /*radius*/  {0, 2, 4, 255},
         /*icon*/    {8, 12, 16, 24, 32},
-        /*font*/    {1, 1, 2},   // caption=1x, body=1x(5x8), title=2x(10x16)
+        /*font*/    {1, 1, 1, 1},   // all 1x — roles map to real-size proportional fonts
         /*invertedStatusBar*/ true,
     };
     return t;
@@ -24,7 +24,7 @@ const StyleTokens& compactTheme() {
         /*space*/   {1, 2, 4, 6, 8},
         /*radius*/  {0, 1, 2, 255},
         /*icon*/    {6, 8, 12, 16, 24},
-        /*font*/    {1, 1, 1},   // caption=1x, body=1x, title=1x — everything tiny
+        /*font*/    {1, 1, 1, 1},   // caption=1x, body=1x, title=1x, subhead=1x — everything tiny
         /*invertedStatusBar*/ true,
     };
     return t;
@@ -36,7 +36,7 @@ const StyleTokens& largeTheme() {
         /*space*/   {4, 8, 12, 16, 24},
         /*radius*/  {0, 4, 8, 255},
         /*icon*/    {12, 16, 24, 32, 48},
-        /*font*/    {1, 2, 3},   // caption=1x, body=2x(10x16), title=3x(15x24)
+        /*font*/    {1, 2, 3, 2},   // caption=1x, body=2x, title=3x, subhead=2x (scales with items)
         /*invertedStatusBar*/ true,
     };
     return t;

@@ -3,6 +3,7 @@
 // nema::theme() so compact/large theme tokens propagate to all components.
 #include "nema/ui/widgets.h"
 #include "nema/ui/style_tokens.h"
+#include "nema/ui/text_style.h"
 #include <vector>
 
 namespace nema::ui {
@@ -157,6 +158,105 @@ UiNode* ListItem(NodeArena& a, const char* label, const char* accessory,
         return Pressable(a, onPress, userdata, s,
                          { lbl, Text(a, accessory, TextRole::Caption) });
     return Pressable(a, onPress, userdata, s, { lbl });
+}
+
+// ── Plan 79: Flipper-style list (Layer 3) ───────────────────────────────────
+
+namespace {
+// Fixed-size empty box used to inset row content horizontally/vertically without
+// relying on uniform padding (which can't be left-only / top-only).
+UiNode* hspace(NodeArena& a, uint16_t w) {
+    Style s; s.width = w; s.height = 1;
+    return View(a, s, {});
+}
+UiNode* vspace(NodeArena& a, uint16_t h) {
+    Style s; s.height = h;
+    return View(a, s, {});
+}
+// Row content height = body glyph cell + breathing room (Flipper rows ≈ 16px).
+uint16_t listRowH() { return (uint16_t)(ui::measureTextH(TextRole::Body) + 4); }
+}  // namespace
+
+UiNode* ListContainer(NodeArena& a, ScrollState& st,
+                      std::initializer_list<UiNode*> rows) {
+    Style sv; sv.dir = FlexDir::Col; sv.align = Align::Stretch;
+    sv.flexGrow = 1; sv.padding = 2; sv.gap = 2;   // 2px inset = box edge offset
+    return ScrollView(a, st, sv, rows);
+}
+
+UiNode* ListSection(NodeArena& a, const char* title) {
+    // Bold section title (Subhead = Bold8), inset to align ~with row labels,
+    // with a little space above it.
+    Style col; col.dir = FlexDir::Col; col.align = Align::Start;
+    Style row; row.dir = FlexDir::Row; row.align = Align::Center;
+    return View(a, col, {
+        vspace(a, 4),
+        View(a, row, { hspace(a, 5), Text(a, title, TextRole::Subhead) }),
+        vspace(a, 1),
+    });
+}
+
+UiNode* ListItemRow(NodeArena& a, const ListEntry& e) {
+    Style s; s.dir = FlexDir::Row; s.align = Align::Center;
+    s.height = listRowH();
+    s.selectBox = true;                 // rounded inverted box when focused
+    s.gap = nema::theme().space.xs;     // 2px between label/value/chevron
+
+    // label marquees on focus (TextRole::Smart) and grows to push the value right
+    UiNode* label = SmartLabel(a, e.label ? e.label : "");
+    if (label) label->style.flexGrow = 1;
+
+    // Children: [5px inset] [icon?] label [value?] [chevron?] [right inset]
+    UiNode* row = Pressable(a, e.onPress, e.user, s, {});
+    UiNode* prev = nullptr;
+    auto add = [&](UiNode* n) {
+        if (!n) return;
+        if (!prev) row->firstChild = n; else prev->nextSibling = n;
+        prev = n;
+    };
+    add(hspace(a, 5));                                  // label 5px inside the box
+    if (e.leftIcon && e.iconW && e.iconH) {
+        add(Icon(a, e.leftIcon, e.iconW, e.iconH, 0));
+        add(hspace(a, 3));
+    }
+    add(label);
+    if (e.value && *e.value) add(Text(a, e.value, TextRole::Body));
+    if (e.chevron)           add(Text(a, ">", TextRole::Body));
+    add(hspace(a, 4));                                  // clear the right rounding
+    if (row) row->focusable = (e.onPress != nullptr);   // display-only rows aren't selectable
+    return row;
+}
+
+UiNode* ListInputRow(NodeArena& a, const ListInput& e) {
+    // FIXED split, content-independent: the label column and the value column are
+    // flex-basis:0 grow children, so they divide the row by a constant ratio no
+    // matter how long the label is — the split line, chevrons and value line up
+    // on EVERY row. The label clips/marquees inside its column.
+    constexpr uint16_t LEFT_W  = 11;   // label column ≈55% of the grow space
+    constexpr uint16_t RIGHT_W = 9;    // value column ≈45%
+    constexpr uint16_t CHEV_W  = 12;   // fixed chevron column (reserved either way)
+
+    UiNode* label = SmartLabel(a, e.label ? e.label : "");
+    if (label) { label->style.flexGrow = LEFT_W; label->style.flexZero = true; }
+
+    // Fixed-width chevron columns — glyph centered; reserved even when not shown
+    // so the value stays vertically aligned across rows.
+    Style cv; cv.dir = FlexDir::Row; cv.align = Align::Center; cv.justify = Justify::Center;
+    cv.width = CHEV_W;
+    UiNode* lchev = View(a, cv, { e.canPrev ? Text(a, "<", TextRole::Body) : nullptr });
+    UiNode* rchev = View(a, cv, { e.canNext ? Text(a, ">", TextRole::Body) : nullptr });
+
+    // Value column — centered between the chevrons, also flex-basis:0.
+    Style vc; vc.dir = FlexDir::Row; vc.align = Align::Center; vc.justify = Justify::Center;
+    vc.flexGrow = RIGHT_W; vc.flexZero = true;
+    UiNode* vbox = View(a, vc, { Text(a, e.value ? e.value : "", TextRole::Body) });
+
+    // Flat row: [5px] label | < | value | > | [4px]
+    Style s; s.dir = FlexDir::Row; s.align = Align::Center;
+    s.height = listRowH(); s.selectBox = true;
+    UiNode* n = View(a, s, { hspace(a, 5), label, lchev, vbox, rchev, hspace(a, 4) });
+    if (n) { n->focusable = true; n->onAdjust = e.onAdjust; n->userdata = e.user; }
+    return n;
 }
 
 // ── Native input controls ──────────────────────────────────────────────────

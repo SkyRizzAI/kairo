@@ -111,6 +111,7 @@ const BitmapFont FONT_5X8 = {
     0x20, // firstChar (space)
     95,   // numChars (0x20..0x7E)
     1,    // spacing between chars
+    nullptr, nullptr, 1,  // monospace: no width/offset tables, 1 byte/column
 };
 
 } // namespace nema

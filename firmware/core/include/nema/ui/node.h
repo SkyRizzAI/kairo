@@ -19,6 +19,7 @@ enum class TextRole : uint8_t {
     Caption,  // small hint/label
     Mono,     // Plan 70: monospace (logs, hex, terminal)
     Smart,    // Plan 52 SmartLabel: ellipsis when too-wide+unfocused, marquee when focused
+    Subhead,  // Plan 79: bold section header (smaller than Title) — ListView sections
 };
 
 // width/height == SIZE_AUTO → measured from content; otherwise fixed logical px.
@@ -35,6 +36,15 @@ struct Style {
     Justify  justify    = Justify::Start;
     bool     border     = false;        // drawRect outline
     bool     background = false;        // fillRect fill
+    // Flipper-style focus highlight: when this focusable node is the focused one,
+    // the renderer paints a rounded (r=1) inverted box over its bbox instead of a
+    // square full-bleed invert. Used by ListView rows (Layer 3).
+    bool     selectBox  = false;
+    // flex-basis: 0 — when set (with flexGrow>0), the node's own content size is
+    // ignored when distributing main-axis space, so grow children split the line
+    // by pure ratio regardless of their content width. Lets a list row keep a
+    // FIXED label/value split independent of label length (content clips/marquees).
+    bool     flexZero   = false;
 };
 
 // Persistent scroll state for a NodeType::Scroll node. Lives OUTSIDE the arena

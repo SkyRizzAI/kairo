@@ -12,6 +12,7 @@ set(NEMA_CORE_SRCS
     src/link/plp_codec.cpp
 src/link/link_service.cpp
 src/services/remote_service.cpp
+src/services/remote_auth.cpp
 src/hal/remote_screen_tap.cpp
 src/input/gesture.cpp
     src/input/i_key_map.cpp
@@ -78,6 +79,12 @@ src/input/gesture.cpp
     src/ui/font_registry.cpp
     src/ui/font_5x8.cpp
     src/ui/font_6x8.cpp
+    src/ui/font_reg8.cpp
+    src/ui/font_bold8.cpp
+    src/ui/font_reg10.cpp
+    src/ui/font_bold10.cpp
+    src/ui/font_reg12.cpp
+    src/ui/font_bold12.cpp
     src/ui/view_dispatcher.cpp
     src/ui/status_bar.cpp
     src/ui/components.cpp
@@ -87,6 +94,11 @@ src/input/gesture.cpp
     src/screens/file_browser_screen.cpp
     src/screens/logs_screen.cpp
     src/screens/settings_screen.cpp
+    src/screens/wifi_settings_screen.cpp
+    src/screens/wifi_network_detail_screen.cpp
+    src/screens/wifi_ip_config_screen.cpp
+    src/screens/bluetooth_settings_screen.cpp
+    src/screens/remote_settings_screen.cpp
     src/screens/about_screen.cpp
     src/screens/lock_screen.cpp
     src/screens/close_and_open_modal.cpp

@@ -111,7 +111,8 @@ static const uint8_t FONT_6X8_DATA[] = {
 };
 
 const BitmapFont FONT_6X8 = {
-    FONT_6X8_DATA, 6, 8, 0x20, 95, 0   // 6px wide, 8px tall, no spacing (monospace)
+    FONT_6X8_DATA, 6, 8, 0x20, 95, 0,  // 6px wide, 8px tall, no spacing (monospace)
+    nullptr, nullptr, 1,               // no width/offset tables, 1 byte/column
 };
 
 } // namespace nema

@@ -100,6 +100,53 @@ UiNode* ListRow(NodeArena& a, const char* label, void (*onPress)(void*), void* u
 UiNode* ListItem(NodeArena& a, const char* label, const char* accessory,
                  void (*onPress)(void*), void* userdata);
 
+// ── Plan 79: Flipper-style list (Layer 3 component) ─────────────────────────
+// Built FROM Layer-2 primitives (Pressable/Text/Icon/Spacer). Put rows inside a
+// ListContainer (a ScrollView preset: align=Stretch, 2px inset, gap). The focused
+// row paints a rounded inset selection box (Style::selectBox) and its label
+// marquees when too long to fit. Tokens match the reference: box inset 2px from
+// the screen edge, label 5px inside the box, subheaders in bold.
+
+// ListContainer: the scroll viewport for list rows — preset padding/inset/gap so
+// rows + selection box sit at the right offsets. `st` is caller-owned (scroll pos).
+UiNode* ListContainer(NodeArena& a, ScrollState& st,
+                      std::initializer_list<UiNode*> rows = {});
+
+// ListSection: a bold section subheader (not selectable). Place between groups
+// of rows; may appear at the top or anywhere mid-list.
+UiNode* ListSection(NodeArena& a, const char* title);
+
+// One selectable list row. Fields beyond `label` are optional:
+//   value    — right-aligned value text (e.g. "15s", "<default>")
+//   leftIcon — XBM drawn before the label (file/app lists); set iconW/iconH
+//   chevron  — append a ">" affordance at the far right
+struct ListEntry {
+    const char*    label    = nullptr;
+    const char*    value    = nullptr;
+    const uint8_t* leftIcon = nullptr;
+    uint8_t        iconW    = 0;
+    uint8_t        iconH    = 0;
+    bool           chevron  = false;
+    void         (*onPress)(void*) = nullptr;
+    void*          user     = nullptr;
+};
+UiNode* ListItemRow(NodeArena& a, const ListEntry& e);
+
+// ListInputRow: the split "label  < value >" row (Flipper variable-item style).
+// The row is divided at a center point — label fills the left half, value the
+// right half — each CLIPPED to its half and marquee-scrolling when the row is
+// focused and the text overflows the half. Chevrons appear per canPrev/canNext.
+// Focusable: Left/Right calls onAdjust(dir) to change the value.
+struct ListInput {
+    const char* label    = nullptr;
+    const char* value    = nullptr;
+    bool        canPrev  = true;    // show left chevron "<"
+    bool        canNext  = true;    // show right chevron ">"
+    void      (*onAdjust)(void* u, int dir) = nullptr;
+    void*       user     = nullptr;
+};
+UiNode* ListInputRow(NodeArena& a, const ListInput& e);
+
 // ── Native input controls (Plan 30/31) ────────────────────────────────────
 // All are composed from primitives (except Slider, a native node) so the same
 // shapes map cleanly to a future TSX/JS reconciler.
