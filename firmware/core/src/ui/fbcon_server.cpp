@@ -36,8 +36,8 @@ static int snapActionCol(int col) {
     return ACT_ENT;
 }
 
-static constexpr uint16_t KEY_W  = aether::ui::CHAR_W + 2;          // 8 px per cell
-static constexpr uint16_t KEY_H  = aether::ui::CHAR_H + 2;          // 11 px per cell
+static constexpr uint16_t KEY_W  = nema::display::CHAR_W + 2;          // 8 px per cell
+static constexpr uint16_t KEY_H  = nema::display::CHAR_H + 2;          // 11 px per cell
 static constexpr uint16_t KBD_W  = KBD_COLS * KEY_W;        // 80 px wide
 static constexpr uint16_t KBD_H  = (KBD_CHAR_ROWS + 1) * KEY_H; // 55 px tall
 
@@ -70,7 +70,7 @@ void FbconServer::renderFrame(Canvas& c, ViewDispatcher&, const StatusBarData&) 
     aether::setTheme(aether::defaultTheme());
     c.clear();
 
-    const uint16_t lh = aether::ui::CHAR_H + 1;
+    const uint16_t lh = nema::display::CHAR_H + 1;
     if (c.height() < lh * 2) { c.flush(); return; }
 
     const uint16_t kbdH    = kbdOpen_ ? KBD_H : 0;
@@ -115,7 +115,7 @@ void FbconServer::drawKeyboard(Canvas& c) const {
 
     // Helper: draw one key cell. Selected key = white fill + dark glyph.
     auto cell = [&](uint16_t cx, uint16_t cy, uint16_t cw, const char* label, bool sel) {
-        uint16_t tx = cx + (cw - (uint16_t)(std::strlen(label) * aether::ui::CHAR_W)) / 2;
+        uint16_t tx = cx + (cw - (uint16_t)(std::strlen(label) * nema::display::CHAR_W)) / 2;
         uint16_t ty = cy + 1;
         if (sel) {
             c.fillRect(cx, cy, cw, KEY_H, true);

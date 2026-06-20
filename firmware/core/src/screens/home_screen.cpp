@@ -99,7 +99,7 @@ void HomeScreen::draw(Canvas& c) {
     uint16_t H = c.height();
 
     uint16_t bannerH = (uint16_t)(measureTextH(TextRole::Title) + 2 * t.space.sm);
-    uint16_t bannerY = CONTENT_Y;
+    uint16_t bannerY = nema::display::CONTENT_Y;
     banner(c, 0, bannerY, W, bannerH, "PALANU", /*notch=*/true);
 
     uint16_t sx = (uint16_t)(W - 12);

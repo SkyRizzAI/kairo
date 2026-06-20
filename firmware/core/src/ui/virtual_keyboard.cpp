@@ -151,7 +151,7 @@ static void drawKey(Canvas& c, int kx, int ky, int kw, int kh,
                     const char* label, bool sel) {
     if (sel) { c.fillRect(kx, ky, kw, kh, true); }
     else     { c.drawRect(kx, ky, kw, kh); }
-    int lw = (int)std::strlen(label) * aether::ui::CHAR_W;
+    int lw = (int)std::strlen(label) * nema::display::CHAR_W;
     c.drawText(kx + (kw - lw) / 2, ky + (kh - 8) / 2, label, !sel);
 }
 
@@ -165,7 +165,7 @@ static void drawCapsKey(Canvas& c, int kx, int ky, int kw, int kh,
     else     { c.drawRect(kx, ky, kw, kh); }
 
     // "Ca" label — centered, same as normal keys
-    const int lw = 2 * aether::ui::CHAR_W;
+    const int lw = 2 * nema::display::CHAR_W;
     c.drawText(kx + (kw - lw) / 2, ky + (kh - 8) / 2, "Ca", !sel);
 
     // Indicator dot: 3×3 filled circle to the left of the label
@@ -183,7 +183,7 @@ void VirtualKeyboard::draw(Canvas& c, const char* prompt) const {
 
     // The host blits Normal-mode app frames below the status-bar strip, so keep
     // all keyboard content below SEP1_Y (~y15) — otherwise the top is clipped.
-    const int TOP = aether::ui::SEP1_Y + 3;
+    const int TOP = nema::display::SEP1_Y + 3;
 
     // Header: prompt
     c.drawText(2, TOP, prompt);
@@ -195,7 +195,7 @@ void VirtualKeyboard::draw(Canvas& c, const char* prompt) const {
     else    { std::strncpy(shown, buf, sizeof(shown) - 1); shown[sizeof(shown)-1] = '\0'; }
     char field_s[72];
     std::snprintf(field_s, sizeof(field_s), "%s_", shown);
-    int maxc = (c.width() - 6) / aether::ui::CHAR_W;
+    int maxc = (c.width() - 6) / nema::display::CHAR_W;
     const char* fp = field_s;
     int fl = (int)std::strlen(field_s);
     if (fl > maxc) fp = field_s + (fl - maxc);

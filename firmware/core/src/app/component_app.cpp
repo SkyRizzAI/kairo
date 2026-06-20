@@ -54,8 +54,8 @@ void ComponentApp::run(AppContext& ctx) {
 
                 uint16_t w = c.width();
                 uint16_t h = c.height();
-                int16_t  oy = fullscreen() ? 0 : (int16_t)aether::ui::CONTENT_Y;
-                uint16_t ah = fullscreen() ? h : (uint16_t)(h - aether::ui::CONTENT_Y);
+                int16_t  oy = fullscreen() ? 0 : (int16_t)nema::display::CONTENT_Y;
+                uint16_t ah = fullscreen() ? h : (uint16_t)(h - nema::display::CONTENT_Y);
 
                 if (root) {
                     // Base frame. When a modal is up, suppress the base focus ring

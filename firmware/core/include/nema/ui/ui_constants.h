@@ -1,8 +1,9 @@
 #pragma once
 #include <cstdint>
 
-namespace aether::ui {
-using namespace nema;  // Plan 80: nema core symbols (Canvas/Key/input/anim/fonts) in scope
+// Shared display layout/text-metric constants (Plan 80) — used by core (AppHost),
+// the FbCon server, and Aether alike, so they live in the shared nema::display layer.
+namespace nema::display {
 
 // Font 5×8 metrics with 1px spacing — these are font-relative, NOT resolution-
 // dependent, so they stay as constants.

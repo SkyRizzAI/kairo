@@ -60,10 +60,10 @@ void TextInput::draw(Canvas& c, const char* prompt) const {
     const char* label = (CHARSET[idx] == ' ') ? "space" : pick;
     uint16_t px = mx + w / 2 - c.textWidth(label) / 2;
     uint16_t py = my + 44;
-    c.invertRect(px - 4, py - 2, c.textWidth(label) + 8, aether::ui::CHAR_H + 4);
+    c.invertRect(px - 4, py - 2, c.textWidth(label) + 8, nema::display::CHAR_H + 4);
     c.drawText(px, py, label, false);
 
-    c.drawText(mx + 8, my + h - aether::ui::CHAR_H - 6,
+    c.drawText(mx + 8, my + h - nema::display::CHAR_H - 6,
                "UP/DN pick  >add <del  OK done");
 }
 
