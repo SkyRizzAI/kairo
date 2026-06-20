@@ -1,7 +1,7 @@
 #include "nema/ui/canvas.h"
 #include "nema/ui/font_registry.h"
 
-namespace aether {
+namespace nema::display {
 
 // ── Plan 70: Monospace 6×8 bitmap font ────────────────────────────────────────
 //
@@ -115,4 +115,4 @@ const BitmapFont FONT_6X8 = {
     nullptr, nullptr, 1,               // no width/offset tables, 1 byte/column
 };
 
-} // namespace aether
+} // namespace nema::display

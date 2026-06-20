@@ -10,15 +10,15 @@ namespace aether::ui::draw {
 using nema::Canvas;
 using aether::ui::TextRole;
 using aether::ui::FontSpec;
-using aether::ui::FontHandle;
-using aether::ui::FontRegistry;
+using nema::display::FontHandle;
+using nema::display::FontRegistry;
 using aether::ui::fontForRole;
 using aether::ui::measureTextW;
 using aether::ui::measureTextH;
 
 // ── Internal helpers ──────────────────────────────────────────────────────────
 
-static const aether::BitmapFont& resolve(aether::ui::FontHandle h) {
+static const nema::display::BitmapFont& resolve(nema::display::FontHandle h) {
     return *FontRegistry::instance().get(h);
 }
 

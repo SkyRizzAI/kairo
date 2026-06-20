@@ -2,7 +2,7 @@
 // Source: helvR10.bdf
 #include "nema/ui/canvas.h"
 
-namespace aether {
+namespace nema::display {
 
 static const uint8_t REG10_DATA[] = {
     0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xFE,0x0D,0x00,0x00,
@@ -123,4 +123,4 @@ const BitmapFont FONT_REG10 = {
     2,     // bytesPerCol
 };
 
-} // namespace aether
+} // namespace nema::display

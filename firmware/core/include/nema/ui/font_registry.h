@@ -1,9 +1,9 @@
 #pragma once
 #include <cstdint>
 
-namespace aether { struct BitmapFont; }   // defined in canvas.h
+namespace nema::display { struct BitmapFont; }   // defined in canvas.h
 
-namespace aether::ui {
+namespace nema::display {
 
 // Plan 70: Font handle — logical font name, resolved by FontRegistry.
 // Apps and screen code reference fonts by handle, not raw pointer, so custom

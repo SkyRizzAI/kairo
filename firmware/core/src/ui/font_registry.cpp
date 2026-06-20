@@ -1,7 +1,7 @@
 #include "nema/ui/font_registry.h"
 #include <string>
 
-namespace aether::ui {
+namespace nema::display {
 
 FontRegistry& FontRegistry::instance() {
     static FontRegistry reg;

@@ -4,7 +4,10 @@
 #include <cstdint>
 #include <cstddef>
 
-namespace aether {
+// Shared display primitives (Plan 80) — the truly low-level types every display
+// server (Aether, FbCon, …) builds on: bitmap fonts here, Canvas below. Lives in
+// nema:: core so Canvas can use it with no dependency on any server.
+namespace nema::display {
 
 // Bitmap font. Glyphs are column-major: for each pixel column, `bytesPerCol`
 // bytes hold the column top-to-bottom (bit 0 = topmost row; for tall glyphs the
@@ -83,8 +86,8 @@ public:
     void invertRect(uint16_t x, uint16_t y, uint16_t w, uint16_t h);  // XOR invert
 
     // Text
-    void setFont(const aether::BitmapFont& font);             // legacy
-    void setFont(aether::ui::FontHandle handle);              // Plan 70: resolve from registry
+    void setFont(const nema::display::BitmapFont& font);             // legacy
+    void setFont(nema::display::FontHandle handle);              // Plan 70: resolve from registry
     void drawText(uint16_t x, uint16_t y, const char* text, bool on = true);
     void drawChar(uint16_t x, uint16_t y, char ch, bool on = true);
     uint16_t textWidth(const char* text) const;
@@ -118,7 +121,7 @@ private:
     bool inClip(uint16_t x, uint16_t y) const;
 
     IDisplayDriver&   driver_;
-    const aether::BitmapFont* font_ = &aether::FONT_5X8;
+    const nema::display::BitmapFont* font_ = &nema::display::FONT_5X8;
     float             scale_ = 1.0f;
 
     // Clip rectangle in LOGICAL px. clipX1_/clipY1_ are exclusive bounds.

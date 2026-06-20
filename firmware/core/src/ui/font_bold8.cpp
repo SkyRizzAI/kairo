@@ -2,7 +2,7 @@
 // Source: helvB08.bdf
 #include "nema/ui/canvas.h"
 
-namespace aether {
+namespace nema::display {
 
 static const uint8_t BOLD8_DATA[] = {
     0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x7E,0x01,0x1E,0x01,0x00,0x00,0x00,0x00,
@@ -105,4 +105,4 @@ const BitmapFont FONT_BOLD8 = {
     2,     // bytesPerCol
 };
 
-} // namespace aether
+} // namespace nema::display

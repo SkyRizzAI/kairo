@@ -26,21 +26,21 @@ namespace nema {
 
 void GuiService::start() {
     // Plan 70: register built-in fonts with the FontRegistry.
-    auto& fontReg = aether::ui::FontRegistry::instance();
+    auto& fontReg = nema::display::FontRegistry::instance();
     // Explicit size/weight handles (proportional Helvetica, Plan 79).
-    fontReg.registerFont(aether::ui::Fonts::Reg8,   &aether::FONT_REG8,   "reg8");
-    fontReg.registerFont(aether::ui::Fonts::Bold8,  &aether::FONT_BOLD8,  "bold8");
-    fontReg.registerFont(aether::ui::Fonts::Reg10,  &aether::FONT_REG10,  "reg10");
-    fontReg.registerFont(aether::ui::Fonts::Bold10, &aether::FONT_BOLD10, "bold10");
-    fontReg.registerFont(aether::ui::Fonts::Reg12,  &aether::FONT_REG12,  "reg12");
-    fontReg.registerFont(aether::ui::Fonts::Bold12, &aether::FONT_BOLD12, "bold12");
+    fontReg.registerFont(nema::display::Fonts::Reg8,   &nema::display::FONT_REG8,   "reg8");
+    fontReg.registerFont(nema::display::Fonts::Bold8,  &nema::display::FONT_BOLD8,  "bold8");
+    fontReg.registerFont(nema::display::Fonts::Reg10,  &nema::display::FONT_REG10,  "reg10");
+    fontReg.registerFont(nema::display::Fonts::Bold10, &nema::display::FONT_BOLD10, "bold10");
+    fontReg.registerFont(nema::display::Fonts::Reg12,  &nema::display::FONT_REG12,  "reg12");
+    fontReg.registerFont(nema::display::Fonts::Bold12, &nema::display::FONT_BOLD12, "bold12");
     // Role handles map onto the family: titles/subheaders bold-10, body regular-8,
     // tiny regular-8, big numbers bold-12, mono stays the 6×8 fixed-width font.
-    fontReg.registerFont(aether::ui::Fonts::Primary,   &aether::FONT_BOLD10, "primary");
-    fontReg.registerFont(aether::ui::Fonts::Secondary, &aether::FONT_REG8,   "secondary");
-    fontReg.registerFont(aether::ui::Fonts::Mono,      &aether::FONT_6X8,    "mono");
-    fontReg.registerFont(aether::ui::Fonts::Tiny,      &aether::FONT_REG8,   "tiny");
-    fontReg.registerFont(aether::ui::Fonts::BigNum,    &aether::FONT_BOLD12, "bignum");
+    fontReg.registerFont(nema::display::Fonts::Primary,   &nema::display::FONT_BOLD10, "primary");
+    fontReg.registerFont(nema::display::Fonts::Secondary, &nema::display::FONT_REG8,   "secondary");
+    fontReg.registerFont(nema::display::Fonts::Mono,      &nema::display::FONT_6X8,    "mono");
+    fontReg.registerFont(nema::display::Fonts::Tiny,      &nema::display::FONT_REG8,   "tiny");
+    fontReg.registerFont(nema::display::Fonts::BigNum,    &nema::display::FONT_BOLD12, "bignum");
 
     display_ = rt_.container().resolve<IDisplayDriver>();
 

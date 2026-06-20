@@ -131,19 +131,19 @@ void Canvas::invertRect(uint16_t x, uint16_t y, uint16_t w, uint16_t h) {
     driver_.invertRect(px, py, pw, ph);
 }
 
-void Canvas::setFont(const aether::BitmapFont& font) { font_ = &font; }
+void Canvas::setFont(const nema::display::BitmapFont& font) { font_ = &font; }
 
-void Canvas::setFont(aether::ui::FontHandle handle) {
-    font_ = aether::ui::FontRegistry::instance().get(handle);
+void Canvas::setFont(nema::display::FontHandle handle) {
+    font_ = nema::display::FontRegistry::instance().get(handle);
 }
 
 void Canvas::drawChar(uint16_t x, uint16_t y, char ch, bool on) {
     if ((uint8_t)ch < font_->firstChar) return;
     uint8_t idx = (uint8_t)ch - font_->firstChar;
     if (idx >= font_->numChars) return;
-    const uint8_t* glyph = aether::fontGlyphData(*font_, idx);
-    const uint8_t  gw    = aether::fontGlyphWidth(*font_, idx);
-    const uint8_t  bpc   = aether::fontBytesPerCol(*font_);
+    const uint8_t* glyph = nema::display::fontGlyphData(*font_, idx);
+    const uint8_t  gw    = nema::display::fontGlyphWidth(*font_, idx);
+    const uint8_t  bpc   = nema::display::fontBytesPerCol(*font_);
     // Plan 70 FPS opt: scan each column for contiguous runs of lit pixels and
     // batch them into fillRect calls instead of per-pixel drawPixel. Tall glyphs
     // (bpc==2) pack rows 0..7 in byte 0 and rows 8..15 in byte 1 of each column.
@@ -165,7 +165,7 @@ void Canvas::drawText(uint16_t x, uint16_t y, const char* text, bool on) {
     for (const char* p = text; *p; p++) {
         uint8_t c = (uint8_t)*p;
         uint8_t gw = (c >= font_->firstChar && (uint8_t)(c - font_->firstChar) < font_->numChars)
-                     ? aether::fontGlyphWidth(*font_, (uint8_t)(c - font_->firstChar)) : font_->charW;
+                     ? nema::display::fontGlyphWidth(*font_, (uint8_t)(c - font_->firstChar)) : font_->charW;
         if (cx + gw > width()) break;
         drawChar(cx, y, *p, on);
         cx += gw + font_->spacing;
@@ -177,7 +177,7 @@ uint16_t Canvas::textWidth(const char* text) const {
     for (const char* p = text; *p; p++) {
         uint8_t c = (uint8_t)*p;
         uint8_t gw = (c >= font_->firstChar && (uint8_t)(c - font_->firstChar) < font_->numChars)
-                     ? aether::fontGlyphWidth(*font_, (uint8_t)(c - font_->firstChar)) : font_->charW;
+                     ? nema::display::fontGlyphWidth(*font_, (uint8_t)(c - font_->firstChar)) : font_->charW;
         w += gw + font_->spacing;
     }
     return w ? (uint16_t)(w - font_->spacing) : 0;
@@ -187,14 +187,14 @@ uint16_t Canvas::textHeight() const { return font_->charH; }
 
 void Canvas::drawTextScaled(uint16_t x, uint16_t y, const char* text, uint8_t scale, bool on) {
     uint16_t cx = x;
-    const uint8_t bpc = aether::fontBytesPerCol(*font_);
+    const uint8_t bpc = nema::display::fontBytesPerCol(*font_);
     for (const char* p = text; *p; p++) {
         uint8_t c = (uint8_t)*p;
         if (c < font_->firstChar) continue;
         uint8_t idx = (uint8_t)(c - font_->firstChar);
         if (idx >= font_->numChars) continue;
-        const uint8_t* glyph = aether::fontGlyphData(*font_, idx);
-        uint8_t gw = aether::fontGlyphWidth(*font_, idx);
+        const uint8_t* glyph = nema::display::fontGlyphData(*font_, idx);
+        uint8_t gw = nema::display::fontGlyphWidth(*font_, idx);
         for (uint8_t col = 0; col < gw; col++) {
             const uint8_t* cb = glyph + (size_t)col * bpc;
             for (uint8_t row = 0; row < font_->charH; row++) {

@@ -14,17 +14,17 @@ TextSize textSize()               { return g_size; }
 FontSpec fontForRole(TextRole role) {
     const aether::FontTokens& f = aether::theme().font;
     switch (role) {
-        case TextRole::Title:   return { Fonts::Primary,   f.title };
-        case TextRole::Subhead: return { Fonts::Bold8,     f.subhead };   // bold section header
-        case TextRole::Mono:    return { Fonts::Mono,      1 };
-        case TextRole::Caption: return { Fonts::Secondary, f.caption };
+        case TextRole::Title:   return { nema::display::Fonts::Primary,   f.title };
+        case TextRole::Subhead: return { nema::display::Fonts::Bold8,     f.subhead };   // bold section header
+        case TextRole::Mono:    return { nema::display::Fonts::Mono,      1 };
+        case TextRole::Caption: return { nema::display::Fonts::Secondary, f.caption };
         case TextRole::Smart:   [[fallthrough]];
         case TextRole::Body:
-        default:                return { Fonts::Secondary, f.body };
+        default:                return { nema::display::Fonts::Secondary, f.body };
     }
 }
 
-static const BitmapFont& resolve(FontHandle h) { return *FontRegistry::instance().get(h); }
+static const nema::display::BitmapFont& resolve(nema::display::FontHandle h) { return *nema::display::FontRegistry::instance().get(h); }
 
 uint16_t measureTextW(const char* s, TextRole role) {
     if (!s || !*s) return 0;

@@ -14,7 +14,7 @@ using namespace nema;  // Plan 80: nema core symbols (Canvas/Key/input/anim/font
 // setTextSize(). Until multi-size fonts exist (Plan 25 Phase 3), larger roles
 // use pixel-doubling (drawTextScaled) of FONT_5X8.
 struct FontSpec {
-    FontHandle handle;   // Plan 70: resolved via FontRegistry
+    nema::display::FontHandle handle;   // Plan 70: resolved via nema::display::FontRegistry
     uint8_t    scale;    // 1 = normal, 2 = pixel-doubled, ...
 };
 

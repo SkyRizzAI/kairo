@@ -1,6 +1,6 @@
 #include "nema/ui/canvas.h"
 
-namespace aether {
+namespace nema::display {
 
 // Classic 5×8 bitmap pixel font — 95 glyphs covering ASCII 0x20..0x7E.
 // Format: 5 bytes per glyph (one per column, left→right).
@@ -114,4 +114,4 @@ const BitmapFont FONT_5X8 = {
     nullptr, nullptr, 1,  // monospace: no width/offset tables, 1 byte/column
 };
 
-} // namespace aether
+} // namespace nema::display

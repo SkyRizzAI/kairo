@@ -2,7 +2,7 @@
 // Source: helvB08.bdf
 #include "nema/ui/canvas.h"
 
-namespace aether {
+namespace nema::display {
 
 static const uint8_t FONT_PRIMARY_DATA[] = {
     0x00,0x00,0x00,0x00,0x00, // 0x20 ' '
@@ -111,4 +111,4 @@ const BitmapFont FONT_PRIMARY = {
     1,     // spacing
 };
 
-} // namespace aether
+} // namespace nema::display
