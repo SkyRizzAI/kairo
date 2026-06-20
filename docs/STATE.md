@@ -142,14 +142,34 @@ packages/forge/          SvelteKit web client: /simulator (WASM), /remote, /flas
 - **Web panel tsconfig** kurang `lib:["dom"]` → tsc lapor error `window`/`document` (pre-existing, bukan bug; Bun bundler tetap jalan).
 - **Persistence flaky** selama sesi konektivitas: beberapa file simulator/web berkali revert; semua sudah di-verifikasi di disk + re-apply.
 - Dev Board tak punya battery monitoring (no ADC). Built-in apps masih di-install static di `main.cpp` (custom apps: OTA via KLP; microSD menunggu Plan 38).
+- **✅ Regresi UI WiFi/BLE DIPERBAIKI (2026-06-20, plan 72-73):** rewrite UI/Aether (commit `1230296`) sempat menghapus UI WiFi/BLE. Sekarang dibangun ulang sebagai `WifiSettingsScreen` + `BluetoothSettingsScreen` (ComponentScreen, digate caps) di Settings. **Build hijau host+wasm+esp32.** Juga ditemukan **BLE mati di sdkconfig skyrizz** (`CONFIG_BT_ENABLED` tak diset → esp32_ble = stub) — sudah diaktifkan (NimBLE + WiFi/BLE coexistence). Tinggal flash & HW-verify.
 
 ---
 
-## Kandidat kerja berikutnya
+## Seri aktif: Connectivity & Network MVP (plan 72–78)
 
-- **Flash & verifikasi HW**: WiFi end-to-end (scan→keyboard→connect), Ticker over real WiFi, keyboard di e-ink.
+> Fokus berikutnya yang dikunci: matangkan konektivitas → remote-over-network ber-auth →
+> deploy app/daemon → Forge CLI. Semua sudah diplan-detailkan (teknis + acceptance).
+> **Eksekusi berantai** — tiap plan menunggu yang sebelumnya:
+
+1. **[72](plans/72-connectivity-hal-maturation.md)** — ✅ **CODE DONE (build host+wasm+esp32)**: WiFi state machine + rssi + saved-networks + liveness + WifiStateChanged + country code; BLE liveness. _(extras: IDL/contract-test/doc ditunda)_
+2. **[73](plans/73-connectivity-settings-ui.md)** — ✅ **CODE DONE (build 3 target)**: `WifiSettingsScreen` + `BluetoothSettingsScreen` di Settings (digate caps). **Fix kritis: BLE diaktifkan di sdkconfig skyrizz** (NimBLE + coexistence) — sebelumnya stub. _HW-verify = user._
+3. **[74](plans/74-remote-access-auth.md)** — 🔴 **DITUNDA** (kode keamanan tak diburu): tier channel + Settings→Remote + auth password + BLE bond-as-cache. _Goal konek WiFi/BLE sudah jalan tanpa auth di observation tier._
+4. **[75](plans/75-network-link-transport.md)** — ✅ **CODE DONE (build skyrizz + forge typecheck)**: `Esp32WsTransport` (WS `/plp@8477`) + mux + lifecycle gating + mDNS; Forge web `WebSocketTransport` + opsi "Network (Wi-Fi)" di `/remote`. → **Forge web bisa remote via WiFi**. _HW-verify = user._
+5. **[76](plans/76-app-service-daemon-model.md)** — Model App vs Service/daemon headless + autostart + deploy (pakai persist [38](plans/38-storage-filesystem-hal.md)). _(nunggu 38, 74)_
+6. **[77](plans/77-palanu-link-shared-lib.md)** — `@palanu/link`: ekstrak codec+session+auth shared (Forge web ⇄ CLI). _(nunggu 74)_
+7. **[78](plans/78-forge-cli.md)** — Forge CLI (`palanu`): cli/logs/deploy/ota/fs over USB/BLE/TCP. _(nunggu 77, 75, 76)_
+
+> Persistence app = **plan 38** (sudah ada, dipakai oleh 76). Urutan kritis-path:
+> 72→73→74→75 (network), lalu 76+77 paralel, lalu 78.
+
+---
+
+## Kandidat kerja lain (di luar seri aktif)
+
 - **Plan 21** (screen sleep + lock) — UX polish.
 - **Plan 22** (app pause/resume) — butuh 19.6 Fase C/D tuntas.
 - **Fase 19.6 D**: per-core tuning + crash isolation demo.
-- WiFi: static IP apply (esp_netif), multiple saved networks (NVS profiles).
+- WiFi: static IP apply (esp_netif) — sebagian masuk plan 72 (saved networks).
 - **Palanu Board V1**: desain PCB + board layer (reuse platform esp32).
+- **Utang doc:** `overview.md`/`STATE.md` belum mencerminkan Aether/IDL/app-runtime; **rename KLP→PLP** belum tuntas di docs (kode sudah PLP). Selesaikan sebelum codebase membesar.

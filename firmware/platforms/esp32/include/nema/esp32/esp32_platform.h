@@ -12,6 +12,7 @@
 #include "nema/link/ble_link_transport.h"
 #include "nema/link/usb_cdc_link_transport.h"
 #include "nema/link/mux_transport.h"
+#include "nema/esp32/esp32_ws_transport.h"
 #include "nema/hal/remote_screen_tap.h"
 #include "nema/services/remote_service.h"
 #include "nema/services/cli_service.h"
@@ -57,9 +58,12 @@ private:
     Esp32UsbCdc        usbCdc_;
     UsbCdcLinkTransport usbLink_;
     BleLinkTransport   cable_;
-    MuxTransport       mux_;        // BLE + USB → one link (Plan 37)
+    Esp32WsTransport   wsLink_;     // PLP over WebSocket (Plan 75) — Forge web over WiFi
+    MuxTransport       mux_;        // BLE + USB + WS → one link (Plan 37/75)
+    bool               mdnsStarted_ = false;
     LinkService        link_;
     RemoteScreenTap    tap_;
+    RemoteAuthStore    authStore_;   // session auth policy (Plan 74)
     RemoteService      remote_;
     Esp32OtaUpdater    otaUpdater_;   // firmware OTA via esp_ota (Plan 39)
     CliService         cli_;

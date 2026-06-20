@@ -7,6 +7,7 @@ idf_component_register(
         "src/esp32_usb_cdc.cpp"
         "src/esp32_usb_hid.cpp"
         "src/esp32_platform.cpp"
+        "src/esp32_ws_transport.cpp"
         "src/esp32_ota.cpp"
         "src/nvs_config_store.cpp"
         "src/littlefs_filesystem.cpp"
@@ -25,6 +26,8 @@ idf_component_register(
         nvs_flash
         esp_netif
         esp_http_client
+        esp_http_server
+        mdns
         esp-tls
         mbedtls
         app_update

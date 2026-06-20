@@ -32,10 +32,17 @@ public:
     DriverKind  kind() const override { return DriverKind::Wifi; }
 
     // IWifiDriver
+    bool isEnabled() const override { return enabled_; }
+    void setEnabled(bool on) override;
     bool connect(const char* ssid, const char* password = "") override;
+    bool connectSaved(const char* ssid) override;
     void disconnect() override;
     bool isConnected() const override { return connected_; }
     const char* ssid() const override { return ssid_.c_str(); }
+
+    WifiState state()     const override { return state_; }
+    WifiError lastError() const override { return lastError_; }
+    int8_t    rssi()      const override;
 
     void                            scan() override;
     const std::vector<WifiNetwork>& scanResults() const override { return scan_; }
@@ -43,10 +50,18 @@ public:
     WifiIpConfig ipConfig() const override { return ipcfg_; }
     void         setIpConfig(const WifiIpConfig& c) override { ipcfg_ = c; }
 
+    // Saved networks (RAM — volatile, but full behavior for UI testing)
+    void   saveNetwork(const char* ssid, const char* password) override;
+    void   forgetNetwork(const char* ssid) override;
+    void   setAutoJoin(const char* ssid, bool on) override;
+    size_t savedCount() const override { return saved_.size(); }
+    bool   savedAt(size_t i, WifiProfile& out) const override;
+    void   autoConnect() override;
+
     // Web "router" panel sets the full list of nearby networks.
     void setNetworks(std::vector<SimNet> nets);
     // True only when connected AND that network is online — gates HTTP.
-    bool isOnline() const;
+    bool isOnline() const override;
 
     // IService
     void start() override;
@@ -60,10 +75,15 @@ private:
     EventBus*         events_  = nullptr;
     AsyncEventPoster* poster_  = nullptr;
     bool              connected_ = false;
+    bool              enabled_   = true;
+    WifiState         state_     = WifiState::Idle;
+    WifiError         lastError_ = WifiError::None;
     std::string       ssid_;
     std::string       ip_ = "0.0.0.0";
     WifiIpConfig      ipcfg_;
 
+    struct SavedProfile { std::string ssid; std::string pass; bool autojoin = true; };
+    std::vector<SavedProfile> saved_;  // RAM-backed saved networks
     std::vector<SimNet>      nets_;    // the router's known networks
     std::vector<WifiNetwork> scan_;    // last scan() projection
 };

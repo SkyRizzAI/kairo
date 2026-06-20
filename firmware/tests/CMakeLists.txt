@@ -44,3 +44,7 @@ add_test(NAME cli_test COMMAND cli_test)
 add_executable(asset_test asset_test.cpp)
 target_link_libraries(asset_test PRIVATE nema_core)
 add_test(NAME asset_test COMMAND asset_test)
+
+add_executable(wifi_contract_test wifi_contract_test.cpp)
+target_link_libraries(wifi_contract_test PRIVATE nema_core)
+add_test(NAME wifi_contract_test COMMAND wifi_contract_test)

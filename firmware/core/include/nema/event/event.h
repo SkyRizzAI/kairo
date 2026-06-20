@@ -22,6 +22,8 @@ namespace events {
     // payload: {{"resource","<cap>"}, {"state","available"|"absent"|"fault"}}
     inline constexpr const char* ResourceChanged      = "ResourceChanged";
     inline constexpr const char* WifiScanComplete     = "WifiScanComplete";   // {"count":"N"}
+    // WiFi connection lifecycle (Plan 72). payload: {{"state","connecting"|...},{"err","none"|...}}
+    inline constexpr const char* WifiStateChanged     = "WifiStateChanged";
     inline constexpr const char* ClockTick            = "ClockTick";
     // Bluetooth/BLE (Plan 34)
     inline constexpr const char* BtEnabled            = "BtEnabled";
@@ -30,6 +32,9 @@ namespace events {
     inline constexpr const char* BtPaired             = "BtPaired";            // {"name":"iPhone"}
     inline constexpr const char* BtConnected          = "BtConnected";         // {"name":"iPhone"}
     inline constexpr const char* BtDisconnected       = "BtDisconnected";
+    // Remote master switch changed (Plan 74) — RemoteService drops the live
+    // session when toggled off so the screen-tap stops mirroring immediately.
+    inline constexpr const char* RemoteToggled        = "RemoteToggled";
     // App registry (install/remove a launchable app — built-in or custom)
     inline constexpr const char* AppInstalled         = "AppInstalled";        // {"id","name"}
     inline constexpr const char* AppRemoved           = "AppRemoved";          // {"id"}

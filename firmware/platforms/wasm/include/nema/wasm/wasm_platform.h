@@ -37,6 +37,7 @@ private:
     WasmCableTransport cable_;
     LinkService        link_;
     RemoteScreenTap    tap_;
+    RemoteAuthStore    authStore_;   // session auth policy (Plan 74)
     RemoteService      remote_;
     SimOtaUpdater      otaUpdater_;   // OTA dry-run for in-browser flow testing (Plan 39)
     CliService         cli_;

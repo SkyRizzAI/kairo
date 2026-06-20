@@ -7,6 +7,7 @@
 #include "nema/event/event_bus.h"
 #include "nema/event/event.h"
 #include "nema/ui/key.h"
+#include "nema/crypto/sha256.h"
 #include <cstring>
 #include <string>
 #include <vector>
@@ -18,12 +19,72 @@ void RemoteService::init(LinkService& link, InputService& input) {
     input_ = &input;
     logSink_.link = &link;
     link_->onFrame(&RemoteService::onFrameThunk, this);
+    link_->onReady(&RemoteService::onReadyThunk, this);            // handshake → auth
+    link_->onHandshakeGate(&RemoteService::gateThunk, this);       // refuse if disabled
     link_->onDisconnect(&RemoteService::onDisconnectThunk, this);  // drop all sessions
+}
+
+bool RemoteService::gateThunk(void* user) {
+    auto* self = static_cast<RemoteService*>(user);
+    return !self->auth_ || self->auth_->enabled();   // Remote master switch
 }
 
 void RemoteService::onDisconnectThunk(void* user) {
     auto* self = static_cast<RemoteService*>(user);
     if (self->sessions_) self->sessions_->clear();   // tear down every shell session
+    self->nonce_.clear();
+    // Re-lock for the next session (unless there's no password = always open).
+    self->authorized_ = !(self->auth_ && self->auth_->hasPassword());
+    if (self->link_) self->link_->setAuthorized(self->authorized_);
+}
+
+void RemoteService::onReadyThunk(void* user) {
+    auto* self = static_cast<RemoteService*>(user);
+    self->startAuth();
+    if (self->readyFn_) self->readyFn_(self->readyUser_);   // platform screen-push
+}
+
+void RemoteService::sendCtrl(uint8_t op, const uint8_t* data, size_t len) {
+    if (!link_) return;
+    std::vector<uint8_t> buf;
+    buf.reserve(1 + len);
+    buf.push_back(op);
+    if (data && len) buf.insert(buf.end(), data, data + len);
+    link_->send(plp::Channel::Control, buf.data(), buf.size());
+}
+
+// Handshake just completed. With a password set, challenge the host; otherwise
+// privileged channels stay open (backward-compatible no-auth default).
+void RemoteService::startAuth() {
+    if (auth_ && auth_->hasPassword()) {
+        authorized_ = false;
+        if (link_) link_->setAuthorized(false);          // blank the screen-tap pre-auth
+        nonce_ = randomHexSalt(8);
+        std::string ch = auth_->salt() + ":" + nonce_;   // "salt:nonce"
+        sendCtrl(LinkService::AUTH_CHALLENGE, (const uint8_t*)ch.data(), ch.size());
+    } else {
+        authorized_ = true;
+        if (link_) link_->setAuthorized(true);
+    }
+}
+
+void RemoteService::handleAuthControl(const plp::Frame& f) {
+    if (f.payload.empty() || !auth_) return;
+    if (f.payload[0] != LinkService::AUTH_RESPONSE) return;   // device only consumes responses
+    if (f.payload.size() < 2) { sendCtrl(LinkService::AUTH_FAIL, nullptr, 0); return; }
+    char kind = (char)f.payload[1];
+    std::string value((const char*)f.payload.data() + 2, f.payload.size() - 2);
+    bool ok = (kind == 'T') ? auth_->validateToken(value)
+                            : auth_->verify(nonce_, value);
+    if (ok) {
+        authorized_ = true;
+        std::string token = (kind == 'T') ? value : auth_->issueToken();
+        sendCtrl(LinkService::AUTH_OK, (const uint8_t*)token.data(), token.size());
+        if (link_) link_->setAuthorized(true);           // unblank: screen-tap resumes
+        if (readyFn_) readyFn_(readyUser_);              // re-push the current screen now
+    } else {
+        sendCtrl(LinkService::AUTH_FAIL, nullptr, 0);
+    }
 }
 
 // Send a CLI-channel frame for session `sid`: payload = [sid][text]. (Plan 45)
@@ -42,6 +103,14 @@ void RemoteService::attachLog(Logger& log) {
 
 void RemoteService::attachEvents(EventBus& bus) {
     events_ = &bus;
+    // Remote master switch turned off → drop the live session immediately so the
+    // screen-tap stops mirroring (inbound is already gated in dispatch()).
+    bus.subscribe(events::RemoteToggled, [this](const Event&) {
+        if (auth_ && !auth_->enabled() && link_) {
+            link_->setAuthorized(false);
+            link_->markDisconnected();
+        }
+    });
     // Stream every event to the host EVENT channel: [name\0][key\0val\0]...
     bus.subscribe("*", [this](const Event& e) {
         if (!link_ || !link_->ready()) return;
@@ -65,7 +134,19 @@ void RemoteService::onFrameThunk(void* user, const plp::Frame& f) {
 }
 
 void RemoteService::dispatch(const plp::Frame& f) {
-    switch ((plp::Channel)f.channel) {
+    // Remote master switch (Plan 74): when disabled, ignore everything.
+    if (auth_ && !auth_->enabled()) return;
+    plp::Channel ch = (plp::Channel)f.channel;
+    // Session auth handshake (Control channel) is always processed.
+    if (ch == plp::Channel::Control) { handleAuthControl(f); return; }
+    // Until authorized, drop ALL inbound app channels (input/system/cli/file/ota/ext).
+    // With a password set this is what makes the device un-controllable pre-auth;
+    // the outbound screen-tap is blanked in parallel by LinkService::send().
+    if (!authorized_) {
+        sendCtrl(LinkService::AUTH_REQUIRED, nullptr, 0);
+        return;
+    }
+    switch (ch) {
         case plp::Channel::Input:
             if (!f.payload.empty() && input_)
                 input_->post((Key)f.payload[0]);

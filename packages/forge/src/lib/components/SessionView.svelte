@@ -50,6 +50,20 @@
 		const offProfile = session.on('profile', (p) => (profile = p));
 		const offScreen = session.on('screen', (f) => (frame = f));
 		const offLog = session.on('log', (l) => (logs = [...logs.slice(-200), { c: l.component, m: l.message }]));
+		const offAuth = session.on('auth', () => {
+			authNeeded = true;
+		});
+		const offAuthd = session.on('authorized', () => {
+			authNeeded = false;
+			authError = '';
+			authPw = '';
+		});
+		const offAuthFail = session.on('authfail', () => {
+			authError = 'Wrong password';
+		});
+		const offRejected = session.on('rejected', () => {
+			rejected = true;
+		});
 		const onKey = (e: KeyboardEvent) => {
 			const t = (e.target as HTMLElement)?.tagName;
 			if (t === 'INPUT' || t === 'TEXTAREA') return;
@@ -66,8 +80,22 @@
 			offProfile();
 			offScreen();
 			offLog();
+			offAuth();
+			offAuthd();
+			offAuthFail();
+			offRejected();
 		};
 	});
+
+	// Plan 74 — device challenged for a password before privileged channels open.
+	let authNeeded = $state(false);
+	let authPw = $state('');
+	let authError = $state('');
+	let rejected = $state(false);
+	async function submitAuth() {
+		authError = '';
+		await session.submitPassword(authPw);
+	}
 </script>
 
 <div class="flex h-full flex-col">
@@ -127,6 +155,27 @@
 			</Button>
 		</div>
 	</header>
+
+	{#if rejected}
+		<div class="flex items-center gap-2 border-b border-red-500/40 bg-red-500/10 px-4 py-2">
+			<span class="text-sm text-red-300">⛔ Remote is disabled on this device (Settings → Remote).</span>
+		</div>
+	{/if}
+
+	{#if authNeeded}
+		<div class="flex items-center gap-2 border-b border-amber-500/40 bg-amber-500/10 px-4 py-2">
+			<span class="text-sm text-amber-300">🔒 This device needs a password for CLI / files / OTA.</span>
+			<input
+				type="password"
+				class="border-border bg-background ml-auto w-48 rounded-md border px-2 py-1 text-sm"
+				placeholder="Remote password"
+				bind:value={authPw}
+				onkeydown={(e) => e.key === 'Enter' && submitAuth()}
+			/>
+			<Button size="sm" onclick={submitAuth}>Unlock</Button>
+			{#if authError}<span class="text-xs text-red-400">{authError}</span>{/if}
+		</div>
+	{/if}
 
 	<div class="flex flex-1 overflow-hidden">
 		<div class="flex flex-1 flex-col overflow-hidden">
