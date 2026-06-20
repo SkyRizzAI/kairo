@@ -12,7 +12,7 @@
 
 namespace nema {
 
-using namespace ui;
+using namespace aether::ui;
 
 DolphinDemoScreen::DolphinDemoScreen(Runtime& rt) : ComponentScreen(rt) {}
 

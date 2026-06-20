@@ -8,17 +8,17 @@
 namespace aether::ui::draw {
 
 using nema::Canvas;
-using nema::ui::TextRole;
-using nema::ui::FontSpec;
-using nema::ui::FontHandle;
-using nema::ui::FontRegistry;
-using nema::ui::fontForRole;
-using nema::ui::measureTextW;
-using nema::ui::measureTextH;
+using aether::ui::TextRole;
+using aether::ui::FontSpec;
+using aether::ui::FontHandle;
+using aether::ui::FontRegistry;
+using aether::ui::fontForRole;
+using aether::ui::measureTextW;
+using aether::ui::measureTextH;
 
 // ── Internal helpers ──────────────────────────────────────────────────────────
 
-static const nema::BitmapFont& resolve(nema::ui::FontHandle h) {
+static const nema::BitmapFont& resolve(aether::ui::FontHandle h) {
     return *FontRegistry::instance().get(h);
 }
 
@@ -254,9 +254,9 @@ void banner(Canvas& c, uint16_t x, uint16_t y, uint16_t w, uint16_t h,
 
     // Centered title — white text (on=false on filled background)
     if (title && *title) {
-        FontSpec fs = fontForRole(nema::ui::TextRole::Title);
-        uint16_t tw = measureTextW(title, nema::ui::TextRole::Title);
-        uint16_t th = measureTextH(nema::ui::TextRole::Title);
+        FontSpec fs = fontForRole(aether::ui::TextRole::Title);
+        uint16_t tw = measureTextW(title, aether::ui::TextRole::Title);
+        uint16_t th = measureTextH(aether::ui::TextRole::Title);
         uint16_t tx = (tw < w) ? (uint16_t)(x + (w - tw) / 2) : x;
         uint16_t ty = (th < h) ? (uint16_t)(y + (h - th) / 2) : y;
         drawText(c, tx, ty, title, fs, false);

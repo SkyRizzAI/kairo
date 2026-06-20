@@ -11,7 +11,7 @@
 
 namespace nema {
 
-using namespace ui;
+using namespace aether::ui;
 
 static char* fieldPtr(WifiIpConfig& c, WifiIpConfigScreen::Field f) {
     switch (f) {

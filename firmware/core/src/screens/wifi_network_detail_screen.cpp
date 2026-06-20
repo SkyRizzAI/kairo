@@ -8,7 +8,7 @@
 
 namespace nema {
 
-using namespace ui;
+using namespace aether::ui;
 
 WifiNetworkDetailScreen::WifiNetworkDetailScreen(Runtime& rt)
     : ComponentScreen(rt, 192), ipConfig_(rt) {}

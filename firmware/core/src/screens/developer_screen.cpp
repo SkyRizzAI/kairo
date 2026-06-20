@@ -5,7 +5,7 @@
 
 namespace nema {
 
-using namespace ui;
+using namespace aether::ui;
 
 DeveloperScreen::DeveloperScreen(Runtime& rt) : ComponentScreen(rt) {}
 

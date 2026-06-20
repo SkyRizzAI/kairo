@@ -44,18 +44,18 @@ void scrollbar(nema::Canvas& c, uint16_t x, uint16_t y, uint16_t size,
 
 // Word-wrapped text within w pixels. Newlines advance by font height + 1.
 void multiline(nema::Canvas& c, uint16_t x, uint16_t y, uint16_t w,
-               const char* text, nema::ui::TextRole role = nema::ui::TextRole::Body);
+               const char* text, aether::ui::TextRole role = aether::ui::TextRole::Body);
 
 // Tick-driven marquee scroll. Clips text to w pixels, scrolling left each tick.
 // When text fits, draws statically. tick must be incremented by caller each frame.
 void marquee(nema::Canvas& c, uint16_t x, uint16_t y, uint16_t w,
              const char* text, uint32_t tick,
-             nema::ui::TextRole role = nema::ui::TextRole::Body);
+             aether::ui::TextRole role = aether::ui::TextRole::Body);
 
 // Truncate with "…" if text overflows w pixels.
 void ellipsis(nema::Canvas& c, uint16_t x, uint16_t y, uint16_t w,
               const char* text,
-              nema::ui::TextRole role = nema::ui::TextRole::Body);
+              aether::ui::TextRole role = aether::ui::TextRole::Body);
 
 // ── Icon ──────────────────────────────────────────────────────────────────────
 

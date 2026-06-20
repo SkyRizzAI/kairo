@@ -24,7 +24,7 @@ class SettingsScreen : public ComponentScreen {
 public:
     explicit SettingsScreen(Runtime& rt);
     void        onResume() override;
-    ui::UiNode* build(ui::NodeArena& a, Runtime& rt) override;
+    aether::ui::UiNode* build(aether::ui::NodeArena& a, Runtime& rt) override;
 
 private:
     enum Kind { Display, Controls, Wifi, Bluetooth, Remote, Touch, Sounds, Camera, Developer, About, Profile };
@@ -42,7 +42,7 @@ private:
     DeveloperScreen      developer_;
     ProfileSettingsScreen profileSettings_;
 
-    ui::ScrollState   scroll_;
+    aether::ui::ScrollState   scroll_;
     std::vector<Item> items_;
 
     static void onSelect(void* u);

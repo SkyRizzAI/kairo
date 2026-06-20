@@ -14,10 +14,10 @@ class ControlsScreen : public ComponentScreen {
 public:
     explicit ControlsScreen(Runtime& rt);
     void        onResume() override;
-    ui::UiNode* build(ui::NodeArena& a, Runtime& rt) override;
+    aether::ui::UiNode* build(aether::ui::NodeArena& a, Runtime& rt) override;
 
 private:
-    ui::ScrollState          scroll_;
+    aether::ui::ScrollState          scroll_;
     std::vector<std::string> rows_;
 };
 

@@ -12,7 +12,7 @@
 
 namespace nema {
 
-using namespace ui;
+using namespace aether::ui;
 
 void BadUsbApp::onStart(AppContext& ctx) {
     auto& rt = ctx.runtime();
@@ -35,7 +35,7 @@ void BadUsbApp::scanScripts(AppContext& ctx) {
     }
 }
 
-ui::UiNode* BadUsbApp::build(ui::NodeArena& arena, AppContext& ctx) {
+aether::ui::UiNode* BadUsbApp::build(aether::ui::NodeArena& arena, AppContext& ctx) {
     (void)ctx;
     Style root; root.dir = FlexDir::Col; root.flexGrow = 1;
     root.padding = theme().space.sm; root.gap = theme().space.sm;

@@ -6,7 +6,7 @@
 
 namespace nema {
 
-using namespace ui;
+using namespace aether::ui;
 
 CameraSettingsScreen::CameraSettingsScreen(Runtime& rt) : ComponentScreen(rt, 64) {}
 

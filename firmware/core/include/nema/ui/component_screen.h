@@ -20,7 +20,7 @@ public:
         : rt_(rt), arena_(arenaCap) {}
 
     // Subclass entry point — return this frame's node tree (built from `arena`).
-    virtual ui::UiNode* build(ui::NodeArena& arena, Runtime& rt) = 0;
+    virtual aether::ui::UiNode* build(aether::ui::NodeArena& arena, Runtime& rt) = 0;
 
     // Plan 70: Optional Back hook. Return true to consume (prevent pop).
     // Deprecated: override onBackPressed() instead (from IScreen).
@@ -44,9 +44,9 @@ protected:
     void requestRedraw();   // marks the view dirty (defined in .cpp; needs Runtime)
 
     Runtime&           rt_;
-    ui::NodeArena      arena_;
-    ui::ComponentState state_;
-    ui::UiNode*        root_   = nullptr;
+    aether::ui::NodeArena      arena_;
+    aether::ui::ComponentState state_;
+    aether::ui::UiNode*        root_   = nullptr;
     bool               dirty_  = true;   // Plan 70: only rebuild tree when model changed
 };
 

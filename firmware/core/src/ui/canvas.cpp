@@ -133,8 +133,8 @@ void Canvas::invertRect(uint16_t x, uint16_t y, uint16_t w, uint16_t h) {
 
 void Canvas::setFont(const BitmapFont& font) { font_ = &font; }
 
-void Canvas::setFont(ui::FontHandle handle) {
-    font_ = ui::FontRegistry::instance().get(handle);
+void Canvas::setFont(aether::ui::FontHandle handle) {
+    font_ = aether::ui::FontRegistry::instance().get(handle);
 }
 
 void Canvas::drawChar(uint16_t x, uint16_t y, char ch, bool on) {

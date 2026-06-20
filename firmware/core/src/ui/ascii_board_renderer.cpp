@@ -3,7 +3,8 @@
 #include <algorithm>
 #include <cmath>
 
-namespace nema::ui {
+namespace aether::ui {
+using namespace nema;  // Plan 80: nema core symbols (Canvas/Key/input/anim/fonts) in scope
 
 namespace {
 
@@ -132,4 +133,4 @@ std::vector<std::string> AsciiBoardRenderer::renderLegend(
     return lines;
 }
 
-} // namespace nema::ui
+} // namespace aether::ui

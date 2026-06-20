@@ -7,7 +7,7 @@
 // marquee for long names when a row is focused. Folders descend on Activate;
 // Back goes up one level (and exits to Home at root).
 #include "nema/ui/component_screen.h"
-#include "nema/ui/node.h"            // ui::ScrollState
+#include "nema/ui/node.h"            // aether::ui::ScrollState
 #include "nema/hal/filesystem.h"     // FsEntry
 #include <vector>
 #include <string>
@@ -22,7 +22,7 @@ public:
 
     void        onResume()      override;   // (re)list the current directory
     bool        onBackPressed() override;   // Back = up a dir, else exit to Home
-    ui::UiNode* build(ui::NodeArena& a, Runtime& rt) override;
+    aether::ui::UiNode* build(aether::ui::NodeArena& a, Runtime& rt) override;
 
 private:
     // Per-row callback payload. entryIndex == -1 is the synthetic ".." row.
@@ -40,7 +40,7 @@ private:
     std::vector<FsEntry>     entries_;
     std::vector<Row>         rows_;      // stable userdata for Pressable rows
     std::vector<std::string> accStrs_;   // stable accessory text (sizes / ">")
-    ui::ScrollState          scroll_;
+    aether::ui::ScrollState          scroll_;
     char                     pathBuf_[128] = "/";
 };
 

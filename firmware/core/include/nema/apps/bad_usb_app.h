@@ -19,7 +19,7 @@ public:
 
 protected:
     void onStart(AppContext& ctx) override;
-    ui::UiNode* build(ui::NodeArena& arena, AppContext& ctx) override;
+    aether::ui::UiNode* build(aether::ui::NodeArena& arena, AppContext& ctx) override;
     bool onKey(Key k, AppContext& ctx) override;
     uint32_t tickIntervalMs() const override { return running_ ? 50u : 0u; }
     bool onTick(AppContext& ctx) override;

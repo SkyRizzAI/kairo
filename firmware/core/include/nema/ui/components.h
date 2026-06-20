@@ -6,7 +6,10 @@ namespace nema {
 class Canvas;
 
 // Shared UI widgets. Status bar lives in status_bar.*.
-namespace ui {
+} // namespace nema
+
+namespace aether::ui {
+using namespace nema;  // Plan 80: nema core symbols (Canvas/Key/input/anim/fonts) in scope
 
 // Draw a centered screen title with breathing room below the status bar and an
 // underline separator, then return the y where body content should begin.
@@ -27,4 +30,4 @@ void drawConfirm(Canvas& c, const char* prompt, int cursor,
                  uint16_t w = 210, uint16_t h = 56);
 
 } // namespace ui
-} // namespace nema
+

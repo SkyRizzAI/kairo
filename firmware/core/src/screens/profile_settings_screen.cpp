@@ -12,7 +12,7 @@
 
 namespace nema {
 
-using namespace ui;
+using namespace aether::ui;
 
 ProfileSettingsScreen::ProfileSettingsScreen(Runtime& rt)
     : ComponentScreen(rt, 160) {}
@@ -104,7 +104,7 @@ void ProfileSettingsScreen::draw(Canvas& c) {
     ComponentScreen::draw(c);
 }
 
-ui::UiNode* ProfileSettingsScreen::build(NodeArena& a, Runtime& rt) {
+aether::ui::UiNode* ProfileSettingsScreen::build(NodeArena& a, Runtime& rt) {
     items_.clear();
 
     auto* p = rt.container().resolve<ProfileService>();

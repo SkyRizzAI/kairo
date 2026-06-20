@@ -80,7 +80,7 @@ public:
 
     // Text
     void setFont(const BitmapFont& font);             // legacy
-    void setFont(ui::FontHandle handle);              // Plan 70: resolve from registry
+    void setFont(aether::ui::FontHandle handle);              // Plan 70: resolve from registry
     void drawText(uint16_t x, uint16_t y, const char* text, bool on = true);
     void drawChar(uint16_t x, uint16_t y, char ch, bool on = true);
     uint16_t textWidth(const char* text) const;

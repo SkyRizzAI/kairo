@@ -5,7 +5,10 @@ namespace nema {
 
 struct BitmapFont;   // forward — defined in canvas.h
 
-namespace ui {
+} // namespace nema
+
+namespace aether::ui {
+using namespace nema;  // Plan 80: nema core symbols (Canvas/Key/input/anim/fonts) in scope
 
 // Plan 70: Font handle — logical font name, resolved by FontRegistry.
 // Apps and screen code reference fonts by handle, not raw pointer, so custom
@@ -66,4 +69,4 @@ private:
 };
 
 } // namespace ui
-} // namespace nema
+

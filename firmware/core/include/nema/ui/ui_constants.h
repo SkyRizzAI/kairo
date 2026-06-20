@@ -1,7 +1,8 @@
 #pragma once
 #include <cstdint>
 
-namespace nema::ui {
+namespace aether::ui {
+using namespace nema;  // Plan 80: nema core symbols (Canvas/Key/input/anim/fonts) in scope
 
 // Font 5×8 metrics with 1px spacing — these are font-relative, NOT resolution-
 // dependent, so they stay as constants.
@@ -24,4 +25,4 @@ inline uint16_t contentRows(uint16_t h) { return contentH(h) / CHAR_H; }
 // Character columns that fit a given canvas width.
 inline uint16_t cols(uint16_t w) { return w / CHAR_W; }
 
-} // namespace nema::ui
+} // namespace aether::ui

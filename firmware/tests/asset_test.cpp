@@ -187,7 +187,7 @@ static void test_icon_registry_fallback() {
     asset::AssetPackRegistry::instance().registerIcon("custom.wifi", wifi);
 
     // findIcon should still return built-in "status.wifi" first
-    const ui::IconDef* builtin = ui::findIcon("status.wifi");
+    const aether::ui::IconDef* builtin = aether::ui::findIcon("status.wifi");
     CHECK(builtin != nullptr, "builtin status.wifi found");
 
     // Custom icon should be found via registry
@@ -196,7 +196,7 @@ static void test_icon_registry_fallback() {
     CHECK(custom->valid(), "  valid");
 
     // findIconDef should work
-    const ui::IconDef* idef = asset::AssetPackRegistry::instance().findIconDef("custom.wifi");
+    const aether::ui::IconDef* idef = asset::AssetPackRegistry::instance().findIconDef("custom.wifi");
     CHECK(idef != nullptr, "IconDef bridge for custom.wifi");
     CHECK(idef->w == 8 && idef->h == 8, "  dimensions");
     CHECK(idef->bitmap[1] == wifiData[1], "  data matches");

@@ -3,7 +3,8 @@
 
 namespace nema::anim { class AnimationPlayer; }
 
-namespace nema::ui {
+namespace aether::ui {
+using namespace nema;  // Plan 80: nema core symbols (Canvas/Key/input/anim/fonts) in scope
 
 // Retained-mode UI node. A tree of these is built each render, laid out by the
 // layout engine (layout.h), and painted by the renderer (renderer.h). Both the
@@ -109,4 +110,7 @@ struct UiNode {
     uint16_t w = 0, h = 0;
 };
 
-} // namespace nema::ui
+} // namespace aether::ui
+
+// Plan 80 migration bridge: core code still spells the UI lib `nema::ui`.
+namespace nema { namespace ui = ::aether::ui; }

@@ -9,7 +9,8 @@
 #include <cstddef>
 #include <initializer_list>
 
-namespace nema::ui {
+namespace aether::ui {
+using namespace nema;  // Plan 80: nema core symbols (Canvas/Key/input/anim/fonts) in scope
 
 // NodeArena — one fixed pool of UiNodes per app/screen. Build the whole tree
 // from it each render, then reset() at the start of the next render. O(1) reset,
@@ -232,4 +233,4 @@ UiNode* Toast(NodeArena& a, const char* message);
 // calls animPlayer->currentFrameData() each frame.
 UiNode* AnimatedIcon(NodeArena& a, anim::AnimationPlayer& player);
 
-} // namespace nema::ui
+} // namespace aether::ui

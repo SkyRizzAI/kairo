@@ -8,7 +8,8 @@
 #include "nema/ui/canvas.h"
 #include <cstring>
 
-namespace nema::ui {
+namespace aether::ui {
+using namespace nema;  // Plan 80: nema core symbols (Canvas/Key/input/anim/fonts) in scope
 
 // Plan 52 — global tick for marquee animation (set by GuiService each frame).
 static uint32_t s_renderTick = 0;
@@ -155,4 +156,4 @@ void render(const UiNode& root, Canvas& c, const UiNode* focused) {
     c.clearClip();
 }
 
-} // namespace nema::ui
+} // namespace aether::ui

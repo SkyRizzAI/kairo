@@ -7,11 +7,11 @@
 
 namespace nema {
 
-using namespace ui;
+using namespace aether::ui;
 
 static void onToggle(void* u) { static_cast<HelloApp*>(u)->flipToggle(); }
 
-ui::UiNode* HelloApp::build(NodeArena& arena, AppContext&) {
+aether::ui::UiNode* HelloApp::build(NodeArena& arena, AppContext&) {
     Style root; root.dir = FlexDir::Col; root.flexGrow = 1;
     root.padding = theme().space.sm; root.gap = theme().space.sm;
     root.align = Align::Stretch;

@@ -13,7 +13,7 @@ public:
     void flipToggle() { toggleOn_ = !toggleOn_; }
 
 protected:
-    ui::UiNode* build(ui::NodeArena& arena, AppContext& ctx) override;
+    aether::ui::UiNode* build(aether::ui::NodeArena& arena, AppContext& ctx) override;
 
 private:
     bool toggleOn_ = false;

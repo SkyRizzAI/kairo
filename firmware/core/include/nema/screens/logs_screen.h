@@ -14,10 +14,10 @@ class LogsScreen : public ComponentScreen {
 public:
     explicit LogsScreen(Runtime& rt);
     void        onResume() override;
-    ui::UiNode* build(ui::NodeArena& a, Runtime& rt) override;
+    aether::ui::UiNode* build(aether::ui::NodeArena& a, Runtime& rt) override;
 
 private:
-    ui::ScrollState          scroll_;
+    aether::ui::ScrollState          scroll_;
     std::vector<std::string> rows_;
     char                     header_[64] = "";  // stable for the Text node
 

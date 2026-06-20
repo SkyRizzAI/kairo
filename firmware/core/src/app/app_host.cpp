@@ -152,7 +152,7 @@ void AppHost::draw(Canvas& c) {
     // Fullscreen apps own the whole canvas; clear first so physical-pixel gaps
     // left by non-integer scale don't show stale content at the edges.
     if (app_.fullscreen()) c.clear(false);
-    uint16_t top = app_.fullscreen() ? 0 : (uint16_t)(ui::SEP1_Y + 2);
+    uint16_t top = app_.fullscreen() ? 0 : (uint16_t)(aether::ui::SEP1_Y + 2);
     for (uint16_t y = top; y < h_; y++)
         for (uint16_t x = 0; x < w_; x++)
             c.drawPixel(x, y, readyBuf_[(size_t)y * w_ + x] != 0);

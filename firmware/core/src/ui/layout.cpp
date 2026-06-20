@@ -1,6 +1,7 @@
 #include "nema/ui/layout.h"
 
-namespace nema::ui {
+namespace aether::ui {
+using namespace nema;  // Plan 80: nema core symbols (Canvas/Key/input/anim/fonts) in scope
 
 static void arrange(UiNode* n);   // fwd: arrangeScroll recurses into it
 
@@ -236,4 +237,4 @@ void layout(UiNode& root, uint16_t rootW, uint16_t rootH, const TextMetrics& tm,
     arrange(&root);
 }
 
-} // namespace nema::ui
+} // namespace aether::ui

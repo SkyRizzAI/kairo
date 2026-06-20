@@ -23,7 +23,7 @@ protected:
     void       onStart(AppContext& ctx) override;
     uint32_t   tickIntervalMs() const override { return 33; }
     bool       onTick(AppContext& ctx) override;
-    ui::UiNode* build(ui::NodeArena& a, AppContext& ctx) override { (void)a; (void)ctx; return nullptr; }
+    aether::ui::UiNode* build(aether::ui::NodeArena& a, AppContext& ctx) override { (void)a; (void)ctx; return nullptr; }
 
 private:
     void seedDolphinAssets(AppContext& ctx);

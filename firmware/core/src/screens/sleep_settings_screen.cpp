@@ -13,7 +13,7 @@
 
 namespace nema {
 
-using namespace ui;
+using namespace aether::ui;
 
 const SleepSettingsScreen::Option SleepSettingsScreen::kSleepOpts[kSleepCount] = {
     {"15s", 15000}, {"30s", 30000}, {"1min", 60000}, {"5min", 300000},

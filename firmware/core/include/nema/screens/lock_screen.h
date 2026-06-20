@@ -16,7 +16,7 @@ public:
 
     void        onResume() override;
     void        onAction(input::Action a) override;
-    ui::UiNode* build(ui::NodeArena& a, Runtime& rt) override;
+    aether::ui::UiNode* build(aether::ui::NodeArena& a, Runtime& rt) override;
 
 protected:
     bool fullscreen() const override { return true; }

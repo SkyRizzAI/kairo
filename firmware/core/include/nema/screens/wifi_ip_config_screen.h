@@ -22,7 +22,7 @@ public:
     void        onAction(input::Action a) override;
     void        onCode(input::Code c) override;
     void        draw(Canvas& c) override;
-    ui::UiNode* build(ui::NodeArena& a, Runtime& rt) override;
+    aether::ui::UiNode* build(aether::ui::NodeArena& a, Runtime& rt) override;
 
 private:
     enum class St { Form, EditField };
@@ -42,9 +42,9 @@ private:
     WifiIpConfig        cfg_;                 // working copy
     Field               editing_ = F_IP;
     bool                swallowCode_ = false;
-    ui::VirtualKeyboard kbd_;
+    aether::ui::VirtualKeyboard kbd_;
     char                prompt_[40] = {};
-    ui::ScrollState     scroll_;
+    aether::ui::ScrollState     scroll_;
     // Stable backing for field rows (label + value), 0..F_COUNT-1 plus mode/apply.
     struct FieldRow { WifiIpConfigScreen* self; Field f; std::string text; };
     FieldRow            fieldRows_[F_COUNT];

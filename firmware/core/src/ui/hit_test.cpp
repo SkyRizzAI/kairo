@@ -1,6 +1,7 @@
 #include "nema/ui/hit_test.h"
 
-namespace nema::ui {
+namespace aether::ui {
+using namespace nema;  // Plan 80: nema core symbols (Canvas/Key/input/anim/fonts) in scope
 
 static UiNode* hit(UiNode* n, int16_t x, int16_t y) {
     UiNode* found = nullptr;
@@ -16,4 +17,4 @@ UiNode* hitTest(UiNode& root, int16_t x, int16_t y) {
     return hit(&root, x, y);
 }
 
-} // namespace nema::ui
+} // namespace aether::ui

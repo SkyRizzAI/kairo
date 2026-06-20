@@ -18,7 +18,7 @@ public:
     void onPause() override;
     void draw(Canvas& c) override;
     void onAction(input::Action a) override;
-    ui::UiNode* build(ui::NodeArena&, Runtime&) override { return nullptr; }
+    aether::ui::UiNode* build(aether::ui::NodeArena&, Runtime&) override { return nullptr; }
 
 private:
     std::unique_ptr<anim::AnimationPlayer> player_;

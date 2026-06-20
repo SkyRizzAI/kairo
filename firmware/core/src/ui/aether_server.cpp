@@ -72,7 +72,7 @@ void AetherServer::renderFrame(Canvas& c, ViewDispatcher& vd, const StatusBarDat
         uint16_t bx = (uint16_t)(c.width() > tw + 4 ? c.width() - tw - 4 : 0);
         // Small rounded pill background for FPS counter
         aether::ui::draw::box_rounded(c, bx, 0, (uint16_t)(tw + 4),
-                                      ui::CHAR_H + 1, true);
+                                      aether::ui::CHAR_H + 1, true);
         c.drawText((uint16_t)(bx + 2), 1, fb, false);  // white text on dark pill
     }
 

@@ -9,7 +9,7 @@ class DeveloperScreen : public ComponentScreen {
 public:
     explicit DeveloperScreen(Runtime& rt);
     void        onResume() override;
-    ui::UiNode* build(ui::NodeArena& a, Runtime& rt) override;
+    aether::ui::UiNode* build(aether::ui::NodeArena& a, Runtime& rt) override;
 
 private:
     void stopAether();
@@ -18,7 +18,7 @@ private:
     static void onStopAether(void* u);
     static void onRebootBootloader(void* u);
 
-    ui::ScrollState scroll_;
+    aether::ui::ScrollState scroll_;
 };
 
 } // namespace nema

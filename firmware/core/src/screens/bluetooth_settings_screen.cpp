@@ -11,7 +11,7 @@
 
 namespace nema {
 
-using namespace ui;
+using namespace aether::ui;
 
 BluetoothSettingsScreen::BluetoothSettingsScreen(Runtime& rt) : ComponentScreen(rt, 256) {
     // Pairing request → show the numeric-comparison passkey. redraw() sets dirty_

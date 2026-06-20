@@ -13,7 +13,7 @@
 // JS-layer .cpp files (js_engine/js_app include it); the rest of the firmware
 // forward-declares JsEngine.
 namespace nema { class Runtime; class CapabilityRegistry; class ProcessContext; }
-namespace nema::ui { struct UiNode; class NodeArena; struct ScrollState; }
+namespace aether::ui { struct UiNode; class NodeArena; struct ScrollState; }
 struct HostApi;  // generated/host/nema_api.gen.h (Plan 49)
 
 namespace nema::js {
@@ -42,7 +42,7 @@ public:
     // Render the loaded app to a native UiNode tree (built in `arena`). Call each
     // frame from JsApp::build(). null on error. Handlers/scroll state persist on
     // the engine across frames.
-    ui::UiNode* render(ui::NodeArena& arena);
+    aether::ui::UiNode* render(aether::ui::NodeArena& arena);
 
     // Fire a handler (onPress id). Runs JS + drains microtasks. Returns true if
     // the app requested a re-render (setState happened).
@@ -99,7 +99,7 @@ private:
     // rejection. Without this, a module that throws at load would look "loaded".
     bool     settleEval(JSValue res);
     void     freeHandlers();
-    ui::UiNode* reify(JSValueConst node, ui::NodeArena& arena);
+    aether::ui::UiNode* reify(JSValueConst node, aether::ui::NodeArena& arena);
 
     nema::Runtime*       host_ = nullptr;
     HostApi*             hostApi_ = nullptr;     // Plan 49 generated binding target
@@ -124,7 +124,7 @@ private:
 
     // Persistent state across frames for JS <ScrollView>/<Slider>, keyed by
     // render-order index (reset each render).
-    std::vector<ui::ScrollState*> scrolls_;
+    std::vector<aether::ui::ScrollState*> scrolls_;
     std::vector<int>              sliderVals_;
     int scrollCursor_ = 0;
     int sliderCursor_ = 0;

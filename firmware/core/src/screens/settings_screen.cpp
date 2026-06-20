@@ -7,7 +7,7 @@
 
 namespace nema {
 
-using namespace ui;
+using namespace aether::ui;
 
 SettingsScreen::SettingsScreen(Runtime& rt)
     : ComponentScreen(rt, 160), about_(rt), sleepSettings_(rt), wifiSettings_(rt),

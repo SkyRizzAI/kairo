@@ -17,7 +17,7 @@
 
 namespace nema {
 
-using namespace ui;
+using namespace aether::ui;
 
 // ── VFS seeding ──────────────────────────────────────────────────────────────
 

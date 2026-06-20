@@ -6,7 +6,8 @@
 #include "nema/ui/text_style.h"
 #include <vector>
 
-namespace nema::ui {
+namespace aether::ui {
+using namespace nema;  // Plan 80: nema core symbols (Canvas/Key/input/anim/fonts) in scope
 
 NodeArena::NodeArena(size_t capacity) : cap_(capacity) {
     pool_ = new UiNode[capacity];
@@ -174,7 +175,7 @@ UiNode* vspace(NodeArena& a, uint16_t h) {
     return View(a, s, {});
 }
 // Row content height = body glyph cell + breathing room (Flipper rows ≈ 16px).
-uint16_t listRowH() { return (uint16_t)(ui::measureTextH(TextRole::Body) + 4); }
+uint16_t listRowH() { return (uint16_t)(aether::ui::measureTextH(TextRole::Body) + 4); }
 }  // namespace
 
 UiNode* ListContainer(NodeArena& a, ScrollState& st,
@@ -438,4 +439,4 @@ UiNode* AnimatedIcon(NodeArena& a, anim::AnimationPlayer& player) {
     return n;
 }
 
-} // namespace nema::ui
+} // namespace aether::ui

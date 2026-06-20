@@ -9,7 +9,7 @@
 
 namespace nema {
 
-using namespace ui;
+using namespace aether::ui;
 
 // Bigger arena than the default: a directory builds ~4 nodes per row
 // (Pressable + Icon + SmartLabel + accessory) plus the chrome.
@@ -92,7 +92,7 @@ bool FileBrowserScreen::onBackPressed() {
 
 // ── view ─────────────────────────────────────────────────────────────────────
 
-ui::UiNode* FileBrowserScreen::build(NodeArena& a, Runtime&) {
+aether::ui::UiNode* FileBrowserScreen::build(NodeArena& a, Runtime&) {
     uint8_t pad = nema::theme().space.sm;
     uint8_t gap = nema::theme().space.xs;
 

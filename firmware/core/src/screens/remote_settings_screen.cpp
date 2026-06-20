@@ -14,7 +14,7 @@
 
 namespace nema {
 
-using namespace ui;
+using namespace aether::ui;
 
 RemoteSettingsScreen::RemoteSettingsScreen(Runtime& rt) : ComponentScreen(rt, 192) {}
 

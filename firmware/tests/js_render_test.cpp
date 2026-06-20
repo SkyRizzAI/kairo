@@ -7,7 +7,7 @@
 #include <cstring>
 
 using namespace nema;
-using namespace nema::ui;
+using namespace aether::ui;
 
 static int fail = 0;
 #define CHECK(c, m) do { if (!(c)) { std::printf("  FAIL: %s\n", m); fail++; } \

@@ -18,7 +18,7 @@ public:
     explicit BluetoothSettingsScreen(Runtime& rt);
 
     void        onResume() override;
-    ui::UiNode* build(ui::NodeArena& a, Runtime& rt) override;
+    aether::ui::UiNode* build(aether::ui::NodeArena& a, Runtime& rt) override;
 
 private:
     // name is std::string because ListItem stores the char* pointer (not a copy);
@@ -38,7 +38,7 @@ private:
 
     IBluetoothController* ctrl_ = nullptr;
     IBleAdapter*          ble_  = nullptr;
-    ui::ScrollState       scroll_;
+    aether::ui::ScrollState       scroll_;
     char                  statusBuf_[72] = {};
     bool                  pendingPair_ = false;
     std::string           passkey_;

@@ -6,7 +6,7 @@
 
 namespace nema {
 
-using namespace ui;
+using namespace aether::ui;
 
 SoundsSettingsScreen::SoundsSettingsScreen(Runtime& rt) : ComponentScreen(rt, 96) {}
 

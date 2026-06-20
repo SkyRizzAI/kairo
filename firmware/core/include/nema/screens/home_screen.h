@@ -21,7 +21,7 @@ public:
     void        onResume() override;
     void        draw(Canvas& c) override;
     void        onAction(input::Action a) override;
-    ui::UiNode* build(ui::NodeArena& a, Runtime& rt) override;
+    aether::ui::UiNode* build(aether::ui::NodeArena& a, Runtime& rt) override;
 
 private:
     AppListScreen     appList_;

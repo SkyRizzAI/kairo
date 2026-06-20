@@ -14,7 +14,7 @@
 
 namespace nema {
 
-using namespace ui;
+using namespace aether::ui;
 
 WifiSettingsScreen::WifiSettingsScreen(Runtime& rt)
     : ComponentScreen(rt, 320), detail_(rt) {

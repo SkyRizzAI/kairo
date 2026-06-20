@@ -31,12 +31,12 @@ void CloseAndOpenModal::onCancel(void* ctx) {
     self->rt_.view().goBack();
 }
 
-ui::UiNode* CloseAndOpenModal::build(ui::NodeArena& a, Runtime& /*rt*/) {
-    ui::DialogButton buttons[2] = {
+aether::ui::UiNode* CloseAndOpenModal::build(aether::ui::NodeArena& a, Runtime& /*rt*/) {
+    aether::ui::DialogButton buttons[2] = {
         {"Close & Open", onCloseAndOpen, this},
         {"Cancel",       onCancel,       this},
     };
-    return ui::Dialog(a, nullptr, title_, nullptr, 0, 0, buttons, 2);
+    return aether::ui::Dialog(a, nullptr, title_, nullptr, 0, 0, buttons, 2);
 }
 
 } // namespace nema

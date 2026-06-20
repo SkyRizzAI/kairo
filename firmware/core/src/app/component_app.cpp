@@ -11,29 +11,29 @@ namespace nema {
 
 // Map a physical Key to component navigation; returns true if it moved focus or
 // activated. Up/Left = Prev, Down/Right = Next, Select = Activate.
-static bool navFromKey(Key k, ui::UiNode* root, ui::ComponentState& st) {
+static bool navFromKey(Key k, aether::ui::UiNode* root, aether::ui::ComponentState& st) {
     switch (k) {
-        case Key::Up:     return ui::dispatchNav(root, st, ui::Nav::Prev);
-        case Key::Down:   return ui::dispatchNav(root, st, ui::Nav::Next);
-        case Key::Select: return ui::dispatchNav(root, st, ui::Nav::Activate);
+        case Key::Up:     return aether::ui::dispatchNav(root, st, aether::ui::Nav::Prev);
+        case Key::Down:   return aether::ui::dispatchNav(root, st, aether::ui::Nav::Next);
+        case Key::Select: return aether::ui::dispatchNav(root, st, aether::ui::Nav::Activate);
         // Left/Right: adjust a focused value control first, else move focus.
-        case Key::Left:   return ui::dispatchAdjust(root, st, -1) || ui::dispatchNav(root, st, ui::Nav::Prev);
-        case Key::Right:  return ui::dispatchAdjust(root, st, +1) || ui::dispatchNav(root, st, ui::Nav::Next);
+        case Key::Left:   return aether::ui::dispatchAdjust(root, st, -1) || aether::ui::dispatchNav(root, st, aether::ui::Nav::Prev);
+        case Key::Right:  return aether::ui::dispatchAdjust(root, st, +1) || aether::ui::dispatchNav(root, st, aether::ui::Nav::Next);
         default:          return false;
     }
 }
 
 void ComponentApp::run(AppContext& ctx) {
-    ui::NodeArena arena(arenaCapacity());
-    ui::UiNode* root  = nullptr;
-    ui::UiNode* modal = nullptr;
+    aether::ui::NodeArena arena(arenaCapacity());
+    aether::ui::UiNode* root  = nullptr;
+    aether::ui::UiNode* modal = nullptr;
     bool dirty = true;
 
     // Shared interaction state (Plan 30 runtime): focus + dual modality +
     // tap/drag/momentum. A SEPARATE state drives the modal layer so the base's
     // focus/scroll is frozen and untouched while a modal is up.
-    ui::ComponentState st;
-    ui::ComponentState modalSt;
+    aether::ui::ComponentState st;
+    aether::ui::ComponentState modalSt;
 
     onStart(ctx);
 
@@ -54,21 +54,21 @@ void ComponentApp::run(AppContext& ctx) {
 
                 uint16_t w = c.width();
                 uint16_t h = c.height();
-                int16_t  oy = fullscreen() ? 0 : (int16_t)ui::CONTENT_Y;
-                uint16_t ah = fullscreen() ? h : (uint16_t)(h - ui::CONTENT_Y);
+                int16_t  oy = fullscreen() ? 0 : (int16_t)aether::ui::CONTENT_Y;
+                uint16_t ah = fullscreen() ? h : (uint16_t)(h - aether::ui::CONTENT_Y);
 
                 if (root) {
                     // Base frame. When a modal is up, suppress the base focus ring
                     // (focus belongs to the modal) by rendering it pointer-modality.
                     input::InputModality saved = st.modality;
                     if (modal) st.modality = input::InputModality::Pointer;
-                    ui::renderComponentFrame(root, c, st, ui::roleMetrics(), 0, oy, w, ah);
+                    aether::ui::renderComponentFrame(root, c, st, aether::ui::roleMetrics(), 0, oy, w, ah);
                     if (modal) st.modality = saved;
                 }
 
                 if (modal) {
-                    uint16_t mw = modal->style.width  != ui::SIZE_AUTO ? modal->style.width  : (uint16_t)(w * 3 / 4);
-                    uint16_t mh = modal->style.height != ui::SIZE_AUTO ? modal->style.height : (uint16_t)(h / 2);
+                    uint16_t mw = modal->style.width  != aether::ui::SIZE_AUTO ? modal->style.width  : (uint16_t)(w * 3 / 4);
+                    uint16_t mh = modal->style.height != aether::ui::SIZE_AUTO ? modal->style.height : (uint16_t)(h / 2);
                     if (mw > w) mw = w;
                     if (mh > h) mh = h;
                     int16_t mx = (int16_t)((w - mw) / 2);
@@ -76,7 +76,7 @@ void ComponentApp::run(AppContext& ctx) {
                     // White backdrop + border so the modal masks the base behind it.
                     c.fillRect(mx, my, mw, mh, false);
                     c.drawRect(mx, my, mw, mh, true);
-                    ui::renderComponentFrame(modal, c, modalSt, ui::roleMetrics(), mx, my, mw, mh);
+                    aether::ui::renderComponentFrame(modal, c, modalSt, aether::ui::roleMetrics(), mx, my, mw, mh);
                 }
             }
             ctx.present();
@@ -84,8 +84,8 @@ void ComponentApp::run(AppContext& ctx) {
         }
 
         // While a modal is up it captures all interaction.
-        ui::UiNode*         active = modal ? modal    : root;
-        ui::ComponentState& ast    = modal ? modalSt  : st;
+        aether::ui::UiNode*         active = modal ? modal    : root;
+        aether::ui::ComponentState& ast    = modal ? modalSt  : st;
 
         uint32_t tick = tickIntervalMs();
         bool gliding = ast.dragScroll && ast.dragScroll->velocity != 0.0f;
@@ -98,7 +98,7 @@ void ComponentApp::run(AppContext& ctx) {
                 input::PointerEvent pe{ev.pphase, ev.px, ev.py};
                 if (onPointer(pe, ctx)) dirty = true;   // raw observer hook
                 if (active && !capturesInput())
-                    if (ui::dispatchPointer(active, ast, pe)) dirty = true;
+                    if (aether::ui::dispatchPointer(active, ast, pe)) dirty = true;
                 return;
             }
 
@@ -128,7 +128,7 @@ void ComponentApp::run(AppContext& ctx) {
             processEvent(ev);
             while (ctx.nextInput(ev)) processEvent(ev);
         } else if (gliding) {
-            if (ui::tickMomentum(ast)) dirty = true;   // animate flick inertia
+            if (aether::ui::tickMomentum(ast)) dirty = true;   // animate flick inertia
         } else if (tick) {
             // Periodic wake (no input) — rebuild only if state changed.
             if (onTick(ctx)) dirty = true;

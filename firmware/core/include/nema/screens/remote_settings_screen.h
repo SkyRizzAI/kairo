@@ -20,7 +20,7 @@ public:
     void        onAction(input::Action a) override;
     void        onCode(input::Code c) override;
     void        draw(Canvas& c) override;
-    ui::UiNode* build(ui::NodeArena& a, Runtime& rt) override;
+    aether::ui::UiNode* build(aether::ui::NodeArena& a, Runtime& rt) override;
 
 private:
     enum class St { List, EnterPass };
@@ -36,8 +36,8 @@ private:
     RemoteAuthStore*    store_ = nullptr;
     St                  st_    = St::List;
     bool                swallowCode_ = false;
-    ui::VirtualKeyboard kbd_;
-    ui::ScrollState     scroll_;
+    aether::ui::VirtualKeyboard kbd_;
+    aether::ui::ScrollState     scroll_;
     char                statusBuf_[48] = {};
 };
 

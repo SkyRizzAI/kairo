@@ -8,7 +8,7 @@
 
 namespace nema {
 
-using namespace ui;
+using namespace aether::ui;
 
 LogsScreen::LogsScreen(Runtime& rt) : ComponentScreen(rt, 256) {}
 

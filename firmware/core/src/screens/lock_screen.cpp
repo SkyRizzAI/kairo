@@ -10,7 +10,7 @@
 
 namespace nema {
 
-using namespace ui;
+using namespace aether::ui;
 
 LockScreen::LockScreen(Runtime& rt) : ComponentScreen(rt, 16) {}
 

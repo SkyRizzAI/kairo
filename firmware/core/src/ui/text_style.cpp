@@ -4,7 +4,8 @@
 #include "nema/ui/font_registry.h"
 #include <cstring>
 
-namespace nema::ui {
+namespace aether::ui {
+using namespace nema;  // Plan 80: nema core symbols (Canvas/Key/input/anim/fonts) in scope
 
 static TextSize g_size = TextSize::Normal;
 void     setTextSize(TextSize sz) { g_size = sz; }
@@ -54,4 +55,4 @@ TextMetrics roleMetrics() {
     return TextMetrics{ metricsW, metricsH, nullptr };
 }
 
-} // namespace nema::ui
+} // namespace aether::ui

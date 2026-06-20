@@ -7,7 +7,7 @@
 #include "nema/ui/icon_pack.h"
 #include <cstring>
 
-namespace nema::ui {
+namespace aether::ui {
 
 // ── status.wifi ───────────────────────────────────────────────────────────────
 static const uint8_t k_wifi[] = {
@@ -239,4 +239,4 @@ const IconDef* findIcon(const char* handle) {
 
 const IconDef* const* allIcons() { return k_iconPtrs; }
 
-} // namespace nema::ui
+} // namespace aether::ui

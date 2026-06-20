@@ -46,7 +46,7 @@ public:
 
 protected:
     void        onStart(AppContext& ctx) override;
-    ui::UiNode* build(ui::NodeArena& arena, AppContext& ctx) override;
+    aether::ui::UiNode* build(aether::ui::NodeArena& arena, AppContext& ctx) override;
     size_t      arenaCapacity() const override { return 1024; }
 
 private:

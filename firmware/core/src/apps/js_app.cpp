@@ -11,7 +11,7 @@
 
 namespace nema {
 
-using namespace ui;
+using namespace aether::ui;
 
 JsApp::JsApp(std::string id, std::string name, std::string version, std::string bundleJs,
              std::string displayServer)

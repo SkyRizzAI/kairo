@@ -15,7 +15,7 @@
 
 namespace nema {
 
-using namespace ui;
+using namespace aether::ui;
 
 HomeScreen::HomeScreen(Runtime& rt)
     : ComponentScreen(rt),
@@ -163,7 +163,7 @@ void HomeScreen::draw(Canvas& c) {
     c.drawText(2, hintY, hint, true);
 }
 
-ui::UiNode* HomeScreen::build(ui::NodeArena&, Runtime&) {
+aether::ui::UiNode* HomeScreen::build(aether::ui::NodeArena&, Runtime&) {
     return nullptr;
 }
 

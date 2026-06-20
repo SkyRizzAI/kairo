@@ -22,7 +22,7 @@ public:
     void setNetwork(const char* ssid, bool secured, bool current, bool saved);
 
     void        onResume() override;
-    ui::UiNode* build(ui::NodeArena& a, Runtime& rt) override;
+    aether::ui::UiNode* build(aether::ui::NodeArena& a, Runtime& rt) override;
 
 private:
     IWifiDriver* drv();
@@ -40,7 +40,7 @@ private:
     bool                secured_ = false;
     bool                current_ = false;
     bool                saved_   = false;
-    ui::ScrollState     scroll_;
+    aether::ui::ScrollState     scroll_;
     char                rowbuf_[5][40] = {};   // stable backing for IP info rows
 };
 

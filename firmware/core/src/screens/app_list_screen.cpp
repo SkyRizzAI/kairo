@@ -11,7 +11,7 @@
 
 namespace nema {
 
-using namespace ui;
+using namespace aether::ui;
 
 AppListScreen::AppListScreen(Runtime& rt) : ComponentScreen(rt, 256) {}
 

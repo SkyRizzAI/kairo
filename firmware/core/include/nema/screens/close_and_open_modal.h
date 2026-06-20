@@ -22,7 +22,7 @@ public:
 
     void onResume() override;
 
-    ui::UiNode* build(ui::NodeArena& a, Runtime& rt) override;
+    aether::ui::UiNode* build(aether::ui::NodeArena& a, Runtime& rt) override;
 
 private:
     AppHostManager& mgr_;

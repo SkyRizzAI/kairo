@@ -7,7 +7,10 @@
 #include "nema/ui/text_style.h"
 
 namespace nema {
-namespace ui {
+} // namespace nema
+
+namespace aether::ui {
+using namespace nema;  // Plan 80: nema core symbols (Canvas/Key/input/anim/fonts) in scope
 
 uint16_t drawTitle(Canvas& c, const char* title) {
     const nema::StyleTokens& t = nema::theme();
@@ -77,4 +80,4 @@ void drawConfirm(Canvas& c, const char* prompt, int cursor, uint16_t w, uint16_t
 }
 
 } // namespace ui
-} // namespace nema
+

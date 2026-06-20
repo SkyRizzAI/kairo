@@ -26,21 +26,21 @@ namespace nema {
 
 void GuiService::start() {
     // Plan 70: register built-in fonts with the FontRegistry.
-    auto& fontReg = ui::FontRegistry::instance();
+    auto& fontReg = aether::ui::FontRegistry::instance();
     // Explicit size/weight handles (proportional Helvetica, Plan 79).
-    fontReg.registerFont(ui::Fonts::Reg8,   &FONT_REG8,   "reg8");
-    fontReg.registerFont(ui::Fonts::Bold8,  &FONT_BOLD8,  "bold8");
-    fontReg.registerFont(ui::Fonts::Reg10,  &FONT_REG10,  "reg10");
-    fontReg.registerFont(ui::Fonts::Bold10, &FONT_BOLD10, "bold10");
-    fontReg.registerFont(ui::Fonts::Reg12,  &FONT_REG12,  "reg12");
-    fontReg.registerFont(ui::Fonts::Bold12, &FONT_BOLD12, "bold12");
+    fontReg.registerFont(aether::ui::Fonts::Reg8,   &FONT_REG8,   "reg8");
+    fontReg.registerFont(aether::ui::Fonts::Bold8,  &FONT_BOLD8,  "bold8");
+    fontReg.registerFont(aether::ui::Fonts::Reg10,  &FONT_REG10,  "reg10");
+    fontReg.registerFont(aether::ui::Fonts::Bold10, &FONT_BOLD10, "bold10");
+    fontReg.registerFont(aether::ui::Fonts::Reg12,  &FONT_REG12,  "reg12");
+    fontReg.registerFont(aether::ui::Fonts::Bold12, &FONT_BOLD12, "bold12");
     // Role handles map onto the family: titles/subheaders bold-10, body regular-8,
     // tiny regular-8, big numbers bold-12, mono stays the 6×8 fixed-width font.
-    fontReg.registerFont(ui::Fonts::Primary,   &FONT_BOLD10, "primary");
-    fontReg.registerFont(ui::Fonts::Secondary, &FONT_REG8,   "secondary");
-    fontReg.registerFont(ui::Fonts::Mono,      &FONT_6X8,    "mono");
-    fontReg.registerFont(ui::Fonts::Tiny,      &FONT_REG8,   "tiny");
-    fontReg.registerFont(ui::Fonts::BigNum,    &FONT_BOLD12, "bignum");
+    fontReg.registerFont(aether::ui::Fonts::Primary,   &FONT_BOLD10, "primary");
+    fontReg.registerFont(aether::ui::Fonts::Secondary, &FONT_REG8,   "secondary");
+    fontReg.registerFont(aether::ui::Fonts::Mono,      &FONT_6X8,    "mono");
+    fontReg.registerFont(aether::ui::Fonts::Tiny,      &FONT_REG8,   "tiny");
+    fontReg.registerFont(aether::ui::Fonts::BigNum,    &FONT_BOLD12, "bignum");
 
     display_ = rt_.container().resolve<IDisplayDriver>();
 
@@ -222,7 +222,7 @@ void GuiService::loop() {
                 rt_.canvas().clear(false);
                 rt_.canvas().flush();
             } else if (!dpm_.isSleeping() && vd.takeRedraw()) {
-                nema::ui::setRenderTick((uint32_t)now);
+                aether::ui::setRenderTick((uint32_t)now);
                 // Theme is applied by the server itself in renderFrame (ADR 0002).
                 // GuiService only drives the shared canvas scale (neutral).
                 rt_.canvas().setScale(server_->serverScale());

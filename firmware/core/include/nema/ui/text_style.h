@@ -4,7 +4,8 @@
 #include "nema/ui/font_registry.h"
 #include <cstdint>
 
-namespace nema::ui {
+namespace aether::ui {
+using namespace nema;  // Plan 80: nema core symbols (Canvas/Key/input/anim/fonts) in scope
 
 // Resolves a TextRole to a concrete font handle + integer render scale.
 // Layout (measure) and renderer (paint) BOTH go through here so sizes match.
@@ -31,4 +32,4 @@ uint16_t measureTextH(TextRole role);
 // A TextMetrics (for layout()) backed by the role table above. ctx unused.
 TextMetrics roleMetrics();
 
-} // namespace nema::ui
+} // namespace aether::ui
