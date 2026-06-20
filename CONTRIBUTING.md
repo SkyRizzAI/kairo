@@ -1,6 +1,6 @@
-# Contributing to Kairo
+# Contributing to Palanu
 
-Thanks for your interest in Kairo! This is a hardware-agnostic embedded firmware
+Thanks for your interest in Palanu! This is a hardware-agnostic embedded firmware
 runtime — one core, many boards. Contributions of all kinds are welcome: new
 boards and drivers, apps, core features, bug fixes, docs, and tests.
 
@@ -37,7 +37,7 @@ must keep this green.
 
 ## Architecture & layering
 
-Kairo is strictly layered — each layer may only depend on the one below it:
+Palanu is strictly layered — each layer may only depend on the one below it:
 
 ```
 targets/    buildable apps   (skyrizz-e32, dev-board, wasm, …)
@@ -58,7 +58,7 @@ screens, and UI come for free.
 These rules apply to **every board and every layer** — they are enforced in
 review:
 
-- **Logging** — all logging goes through the Kairo Logger (`rt.log()`). Never use
+- **Logging** — all logging goes through the Palanu Logger (`rt.log()`). Never use
   raw `Serial`, `printf`/`std::cout`, or `ESP_LOGx`. Use a stable component tag
   and structured fields: `rt.log().info("Xl9535", "started", {{"addr", "0x20"}})`.
 - **Hardware abstraction** — check capabilities, never board type. Use

@@ -17,7 +17,7 @@ struct CliContext;
 //
 // Built to extend. add() is the single entry point, shared by core built-ins
 // (registerCoreCliCommands), platform specializations (e.g. ESP32's live-heap
-// `ram`), and future `.kapp` apps that register their own commands.
+// `ram`), and future `.papp` apps that register their own commands.
 // Plan 57: CliService holds a Runtime pointer for auto-launch.
 class CliService {
 public:

@@ -1,4 +1,4 @@
-# Kairo firmware C++ style. Matches the existing hand-maintained style:
+# Palanu firmware C++ style. Matches the existing hand-maintained style:
 # 4-space indent, un-indented namespaces, K&R braces, left-aligned pointers,
 # switch cases aligned with `switch`, aligned consecutive assignments.
 Language:        Cpp

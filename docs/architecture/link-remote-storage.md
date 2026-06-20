@@ -73,7 +73,7 @@ Channel dispatch:
 - **File** (0x09): `handleFile()` (below).
 - **Ota** (0x05): `handleOta()` (below).
 - **Ext** (0x06): `InjectEvent(0x01)` publishes onto the EventBus; else (e.g. `WifiSetNetworks`,
-  `AppInstall` of a raw `.kapp`) → board `controlFn`.
+  `AppInstall` of a raw `.papp`) → board `controlFn`.
 - **Log/Event** (outbound only): `attachEvents` subscribes `"*"` and serializes events on the
   Event channel; `LinkLogSink` serializes log entries on the Log channel — **both gated on
   `link->ready()`**.

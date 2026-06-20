@@ -8,7 +8,7 @@ namespace nema {
 
 class Runtime;
 
-// JsAppStore — the custom-app store. A process-wide owner of JS apps (.kapp
+// JsAppStore — the custom-app store. A process-wide owner of JS apps (.papp
 // bundles): the built-in (embedded) ones AND any installed at runtime over the
 // wire (OTA via PLP). Each installed app is registered into the AppRegistry as
 // AppKind::Custom, so it appears in the launcher next to built-ins.
@@ -31,12 +31,11 @@ public:
                     std::string version, std::string js,
                     std::string displayServer = "");
 
-    // Install from a bundle container. Handles two formats (Plan 59):
-    //   KAPP1\n<manifest-json>\n<js>
+    // Install from a single-file PAPP1 container (Plan 59):
     //   PAPP1\n<manifest-json>\n<entry-filename>\n<js>
     // Parses manifest fields (id, name, version, display_server, api_version).
     // The OTA entry point; also used by the WASM platform for live installs.
-    bool installKapp(Runtime& rt, const char* bytes, size_t len);
+    bool installPappBytes(Runtime& rt, const char* bytes, size_t len);
 
     int count() const { return (int)apps_.size(); }
 

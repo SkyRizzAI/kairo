@@ -88,7 +88,7 @@ void CliService::execute(const std::string& line, CliSession& session) {
                 if (!endsWith(name, ".papp")) {
                     if (findAppInDir(dir + "/" + name)) return true;
                 }
-            } else if (name == argv[0] + ".papp" || name == argv[0] + ".kapp") {
+            } else if (name == argv[0] + ".papp") {
                 return true;
             }
         }
@@ -102,7 +102,7 @@ void CliService::execute(const std::string& line, CliSession& session) {
         }
     }
 
-    // Scan PATH directories recursively for .papp/.kapp files
+    // Scan PATH directories recursively for .papp files
     for (const auto& dir : session.path) {
         if (findAppInDir(dir)) {
             for (auto& c : cmds_) {

@@ -11,12 +11,12 @@ struct IService;
 
 // AppRegistry — the installed-app table. This is the device's app store index:
 // every launchable app lives here, whether it was compiled into the firmware
-// (install()) or installed at runtime (installCustom() — a .kapp pushed over PLP
+// (install()) or installed at runtime (installCustom() — a .papp pushed over PLP
 // or loaded from storage). The launcher reads list(); selecting an entry calls
 // launch(id), which spawns the app on its own thread via the AppHostManager.
 //
 // (Flipper analogy: built-ins are the fbt-generated .fam registry; custom apps
-// are FAPs. Palanu's custom apps are JS .kapp bundles — portable across boards,
+// are FAPs. Palanu's custom apps are JS .papp bundles — portable across boards,
 // unlike arch-specific native binaries.)
 //
 // Background daemons are manifest entries too (AppType::Service — Flipper's
@@ -32,7 +32,7 @@ public:
     // replaces the existing entry (so a rebuilt instance can swap in).
     void install(IApp& app, const char* version = "1.0.0");
 
-    // Install a custom app (installed at runtime — e.g. a JS .kapp). Same as
+    // Install a custom app (installed at runtime — e.g. a JS .papp). Same as
     // install() but tagged AppKind::Custom so the UI can distinguish origin.
     void installCustom(IApp& app, const char* version = "1.0.0");
 

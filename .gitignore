@@ -47,8 +47,8 @@ firmware/targets/*/managed_components/
 # Local DEV OTA build counter (build-dev-ota.sh) — local-only, never committed
 firmware/.dev-build
 
-# App bundles — built by nema-build, not source
-*.kapp
+# App bundles — built by palanu-build into dist/, not source
+**/dist/*.papp
 
 # SvelteKit / Forge generated outputs (also covered by packages/forge/.gitignore)
 packages/forge/.svelte-kit/

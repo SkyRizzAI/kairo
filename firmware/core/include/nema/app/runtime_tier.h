@@ -6,7 +6,7 @@
 //   CBuiltin — Native C++ compiled into the firmware (IApp subclass).
 //              Zero overhead; direct API access; no memory sandbox.
 //   Js       — QuickJS interpreter sandbox (JsRuntime, Plan 58).
-//              .kapp bundles; GC-managed; 4 MB heap cap; portable.
+//              .papp bundles; GC-managed; 4 MB heap cap; portable.
 //   Wasm     — wasm3 interpreter sandbox (WasmRuntime, Plan 57).
 //              .papp bundles; linear-memory isolation; WASI stdio mapping.
 //

@@ -2,7 +2,7 @@
 
 ## Reporting a vulnerability
 
-If you discover a security vulnerability in Kairo, please report it
+If you discover a security vulnerability in Palanu, please report it
 **privately** — do not open a public issue, pull request, or discussion.
 
 Preferred channels:
@@ -29,7 +29,7 @@ Please give us a reasonable window to ship a fix before any public disclosure.
 
 ## Scope
 
-Kairo is firmware for embedded multi-tool devices. Reports about the runtime
+Palanu is firmware for embedded multi-tool devices. Reports about the runtime
 core, drivers, the link/transport layer, the JS app sandbox, and the simulator
 are all in scope. Issues in third-party vendored dependencies should be reported
 upstream, but feel free to flag them here so we can pull in the fix.

@@ -9,22 +9,15 @@
 
 import { resolve, join, basename } from "path";
 import { mkdir, writeFile, rm } from "node:fs/promises";
-import type { KappManifest } from "../src/manifest";
+import type { PappManifest } from "../src/manifest";
 
 // ── Parse args ─────────────────────────────────────────────────────────────
 
 const dirFlag = Bun.argv.indexOf("--dir");
 const appDir = resolve(dirFlag >= 0 ? Bun.argv[dirFlag + 1] : ".");
 
-// Accept both manifest.json (new) and kapp.json (legacy)
-let manifestPath = join(appDir, "manifest.json");
-let manifest: KappManifest;
-try {
-  manifest = JSON.parse(await Bun.file(manifestPath).text());
-} catch {
-  manifestPath = join(appDir, "kapp.json");
-  manifest = JSON.parse(await Bun.file(manifestPath).text());
-}
+const manifestPath = join(appDir, "manifest.json");
+const manifest: PappManifest = JSON.parse(await Bun.file(manifestPath).text());
 
 // Inject defaults
 if (!manifest.api_version) manifest.api_version = "1.0";

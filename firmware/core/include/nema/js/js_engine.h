@@ -6,7 +6,7 @@
 #include <vector>
 
 // Embedded JS engine (QuickJS-ng) — Plan 37. One JSRuntime+JSContext per engine
-// (one per app, on the app thread). Loads a .kapp bundle as an ES module, wires
+// (one per app, on the app thread). Loads a .papp bundle as an ES module, wires
 // the embedded `nema` runtime (jsx/components/hooks/renderToTree) via a module
 // loader, renders the app's default-export component to a native UiNode tree, and
 // dispatches onPress/onChange handlers back into JS. quickjs.h leaks only to the

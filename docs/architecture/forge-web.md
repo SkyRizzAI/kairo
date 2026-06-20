@@ -56,7 +56,7 @@ Handshake: on transport connect it sends Control **HELLO** (`payload[0]=0x01`) a
 300 ms** until ready; on **ACK** (`0x02`) it stops the timer and immediately sends **System
 GetInfo** (`0x01`) for the board profile. Decodes Screen / Log / Event / Cli / File / Ota. APIs:
 `sendKey`, `sendCli(sid,line)`, FILE ops (FIFO-correlated, 5 s timeout), `power(op)`,
-`injectEvent`, `wifiSetNetworks`, `installApp(kapp)`, and `otaUpdate()` (Begin→Data×N→End, 1792 B
+`injectEvent`, `wifiSetNetworks`, `installApp(papp)`, and `otaUpdate()` (Begin→Data×N→End, 1792 B
 chunks, offset-idempotent retries, `OTA_PROTO=2`).
 
 ## UI / routes
@@ -70,8 +70,6 @@ Layout (`src/routes/+layout.svelte`) is a sidebar shell; `/` redirects to `/simu
   Logs / Events / Services).
 - **`/remote`** — discovery picker for Simulator / BLE / USB; builds a `RemoteSession` and renders
   the shared `SessionView`. Uses `remoteLink` for persistence.
-- **`/install`** — upload/paste a `.kapp` (must start with `KAPP1`); pushes it to the running sim
-  via the PLP Ext path (`installApp()`). Volatile, appears live.
 - **`/flash`** — Web Serial firmware flasher via **esptool-js** (921600), fully client-side; loads
   the build list from tRPC `firmware.list`; writes bootloader `0x0` / partition `0x8000` / app
   `0x10000`. Also a standalone serial console (115200).
@@ -98,7 +96,7 @@ to 300).
 See the [architecture README](README.md#cross-repo-contracts-must-stay-byte-for-byte-in-sync) for
 the full table. The host↔firmware contracts that live in this package: the PLP codec
 (`plp/codec.ts`), BLE UUIDs (`plp/uuids.ts`), the board-profile JSON shape (`RemoteSession.ts` /
-`BoardVisual.svelte`), and the `.kapp` install format. The Nema System API types (`nema.d.ts`) and
+`BoardVisual.svelte`), and the `.papp` install format. The Nema System API types (`nema.d.ts`) and
 the firmware host bindings are both generated from the IDL — see
 [`scripting-and-apps.md`](scripting-and-apps.md).
 
@@ -106,9 +104,9 @@ the firmware host bindings are both generated from the IDL — see
 
 - **Forge is client-only** (`ssr=false`); transports need `available()` guards (Chromium-family
   only) and SSR-safe `typeof navigator` checks.
-- **Naming transition**: UUIDs/codec comments and `wasmSim` still say "Kairo/KLP/nema"; the WASM
-  blob was renamed `nema.js → palanu.js`; `installApp` checks `KAPP1` while the SDK build also emits
-  `.papp`. Package scopes are `@palanu/*`. Don't assume one canonical name.
+- **Naming transition**: some UUIDs/codec comments and `wasmSim` still say "Kairo/KLP/nema"; the
+  WASM blob was renamed `nema.js → palanu.js`. App packaging is now `.papp`/`PAPP1` only (the old
+  `.kapp`/`KAPP1` format was removed). Package scopes are `@palanu/*`. Don't assume one canonical name.
 - **WASM single-load** — the firmware loads once per page lifetime; Restart = full reload with an
   autoboot flag; real teardown needs a reload.
 - **Cross-origin isolation is load-bearing** — serve WASM via `/fw/[file]` and proxy GitHub OTA via
