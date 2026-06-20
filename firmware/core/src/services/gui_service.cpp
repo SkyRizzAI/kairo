@@ -64,9 +64,9 @@ void GuiService::start() {
         // text console — it always renders at scale 1 with the default theme.
         {
             std::string t = cfg->getString("display", "theme", "default");
-            if (t == "compact")     aether_->setServerTheme(compactTheme());
-            else if (t == "large")  aether_->setServerTheme(largeTheme());
-            else                    aether_->setServerTheme(defaultTheme());
+            if (t == "compact")     aether_->setTheme(compactTheme());
+            else if (t == "large")  aether_->setTheme(largeTheme());
+            else                    aether_->setTheme(defaultTheme());
         }
         // Snapshot the canvas scale that runtime.cpp resolved from config/DPI
         // so Aether can restore it when switching back from another server.
@@ -223,12 +223,8 @@ void GuiService::loop() {
                 rt_.canvas().flush();
             } else if (!dpm_.isSleeping() && vd.takeRedraw()) {
                 nema::ui::setRenderTick((uint32_t)now);
-                // Restore the active server's presentational state before
-                // rendering — theme and scale are server-owned, not global.
-                if (const StyleTokens* st = server_->serverTheme())
-                    setTheme(*st);
-                else
-                    setTheme(defaultTheme());
+                // Theme is applied by the server itself in renderFrame (ADR 0002).
+                // GuiService only drives the shared canvas scale (neutral).
                 rt_.canvas().setScale(server_->serverScale());
                 // Plan 70: partial redraw — clip to dirty region if available.
                 uint16_t dx, dy, dw, dh;

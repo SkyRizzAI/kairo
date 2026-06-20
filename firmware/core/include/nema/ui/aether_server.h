@@ -6,6 +6,7 @@
 namespace nema {
 
 struct IClock;
+struct StyleTokens;
 
 // AetherServer — the built-in 1-bit canvas renderer (the default display
 // server). Composites the status bar + active screen/modal onto the Canvas and
@@ -36,8 +37,14 @@ public:
     bool     showFps()    const { return showFps_; }
     void     setShowFps(bool b) { showFps_ = b; }
 
+    // Theme is Aether-owned (ADR 0002 — not on the IDisplayServer contract).
+    // renderFrame() installs it as the active theme before drawing.
+    void setTheme(const StyleTokens& t) { theme_ = &t; }
+    const StyleTokens* theme() const { return theme_; }
+
 private:
     IClock&  clock_;
+    const StyleTokens* theme_ = nullptr;   // nullptr → defaultTheme() at render
     bool     showFps_     = false;
     uint32_t fpsFrames_   = 0;
     uint64_t fpsLastMs_   = 0;

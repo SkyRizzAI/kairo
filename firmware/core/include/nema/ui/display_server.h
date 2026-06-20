@@ -1,6 +1,5 @@
 #pragma once
 #include "nema/input/input_action.h"
-#include "nema/ui/style_tokens.h"
 #include "nema/ui/ui_sdk.h"
 
 // IDisplayServer (Plan 43) — a swappable rendering backend.
@@ -42,17 +41,12 @@ struct IDisplayServer {
     // the action (GuiService will not forward it to the view dispatcher).
     virtual bool onAction(input::Action) { return false; }
 
-    // ── Presentational state (owned by each server) ───────────────────
-    // GuiService installs these into the canvas/theme system before each
-    // renderFrame() call. Changing settings in one server never bleeds
-    // into another — every server owns its own visual identity.
-
-    // Theme (Plan 53): default → nema::defaultTheme() at render time.
-    const StyleTokens* serverTheme() const { return serverTheme_; }
-    void setServerTheme(const StyleTokens& t) { serverTheme_ = &t; }
-
-    // Canvas logical scale: how many physical pixels per logical pixel.
-    // 0.0 = not set by this server; GuiService keeps the canvas as-is.
+    // ── Presentational state ──────────────────────────────────────────
+    // Theme is NOT on this contract (ADR 0002): it is a presentation concern
+    // owned internally by each server (e.g. AetherServer applies its own theme
+    // in renderFrame). Only the canvas logical scale — a neutral integer-ish
+    // mapping of physical→logical pixels — stays here, since GuiService drives
+    // the shared Canvas.
     float serverScale() const { return serverScale_; }
     void  setServerScale(float s) { serverScale_ = (s >= 1.0f) ? s : 1.0f; }
 
@@ -68,8 +62,7 @@ struct IDisplayServer {
     virtual void registerBindings(IUiBindingHost&) {}
 
 private:
-    const StyleTokens* serverTheme_ = nullptr;
-    float              serverScale_  = 1.0f;   // default: no scaling
+    float serverScale_ = 1.0f;   // default: no scaling
 };
 
 } // namespace nema

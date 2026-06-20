@@ -1,5 +1,6 @@
 #include "nema/ui/fbcon_server.h"
 #include "nema/ui/canvas.h"
+#include "nema/ui/style_tokens.h"
 #include "nema/ui/ui_constants.h"
 #include "nema/ui/view_dispatcher.h"
 #include "nema/runtime.h"
@@ -64,6 +65,9 @@ FbconServer::FbconServer(Runtime& rt) : rt_(rt) {
 // ── renderFrame ───────────────────────────────────────────────────────────────
 
 void FbconServer::renderFrame(Canvas& c, ViewDispatcher&, const StatusBarData&) {
+    // Text console renders with the default theme (ADR 0002: each server applies
+    // its own; this keeps Aether's theme from bleeding in after a server switch).
+    nema::setTheme(defaultTheme());
     c.clear();
 
     const uint16_t lh = ui::CHAR_H + 1;

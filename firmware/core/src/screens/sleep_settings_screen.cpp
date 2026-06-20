@@ -5,6 +5,7 @@
 #include "nema/ui/view_dispatcher.h"
 #include "nema/ui/style_tokens.h"
 #include "nema/ui/display_server.h"
+#include "nema/ui/aether_server.h"
 #include "nema/services/display_power_manager.h"
 #include "nema/config/config_store.h"
 #include <cstdio>
@@ -63,9 +64,10 @@ void SleepSettingsScreen::applyTheme(int idx) {
     if      (std::strcmp(name, "compact") == 0) t = &compactTheme();
     else if (std::strcmp(name, "large")   == 0) t = &largeTheme();
     else                                        t = &defaultTheme();
-    // Set theme on the active display server only — not globally — so other
-    // servers (FbCon, future backends) keep their own independent themes.
-    if (auto* srv = rt_.displayServer()) srv->setServerTheme(*t);
+    // Theme is Aether-owned (ADR 0002): set it on the concrete AetherServer when
+    // that's the active server. Persisted to config either way (applied at boot).
+    if (auto* srv = rt_.displayServer(); srv && std::strcmp(srv->name(), "aether") == 0)
+        static_cast<AetherServer*>(srv)->setTheme(*t);
     rt_.config().setString("display", "theme", name);
     rt_.view().requestRedraw();
 }
