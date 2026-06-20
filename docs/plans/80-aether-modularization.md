@@ -11,6 +11,25 @@
 
 ---
 
+## Status (2026-06-21)
+
+**Namespace + shared-layer migration COMPLETE & validated on host+wasm+esp32** (9 commits
+on `feat/ui-aether-foundations`):
+- All presentation → `aether::` (widgets, layout, renderer, draw, components, screens,
+  themes/StyleTokens, text_style role→font).
+- **Shared `nema::display` primitive layer** (BitmapFont, glyph helpers, FONT_* tables,
+  FontRegistry) used by Aether AND FbCon — so Canvas keeps its text API with no server
+  dependency (no Canvas-text extraction needed; the font circular-dep is gone).
+- `IDisplayServer` decoupled from `StyleTokens` (themes are server-internal).
+
+**Remaining = physical lib split only** (the swappability payoff). Core→aether refs to
+cut are concentrated in 6 files: `component_app.{h,cpp}` (uses widgets → move to aether),
+`app_host.cpp`, `js_engine.cpp` (JS apps render UiNode → aether seam), `cli_service.cpp`
+(theme cmd), `gui_service.cpp` (owns/constructs the servers → construction moves to each
+target `main.cpp`). Then move the ~30 `aether::` files to `firmware/aether/` + CMake, and
+`fbcon` to `firmware/servers/fbcon/`. `IScreen`+`ViewDispatcher` stay in `nema::` core as
+the shared view base (Runtime owns ViewDispatcher → must not be aether).
+
 ## 1. Goal & invariants
 
 - One-way dependency: **`aether → nema`**, never the reverse.
