@@ -10,6 +10,53 @@ per-board taste. When adding code, follow them; when you see a violation, fix it
 
 ---
 
+## Documentation — automated upkeep
+
+Docs are written and maintained **by the AI as part of doing the work**, not as a
+separate chore. There is no command to run — these rules govern it. **Write all docs
+in English.**
+
+### Doc map (one source of truth per fact — never duplicate facts across files)
+
+| File / folder | Purpose | Mutability |
+|---|---|---|
+| [`docs/STATE.md`](docs/STATE.md) | Living snapshot of project status. A **rollup**, not detail. Read it first. | mutable |
+| [`docs/overview.md`](docs/overview.md) | Single-file narrative snapshot of the whole project. | mutable |
+| [`docs/architecture/`](docs/architecture/README.md) | Detailed per-subsystem reference (the "how it works"). Update when a subsystem's design changes. | mutable |
+| [`docs/plans/NN-*.md`](docs/plans/00-overview.md) | Planning per stage. **Task checklists live here** (`- [ ]`), not in a separate file. | mutable until shipped |
+| [`docs/decisions/`](docs/decisions/) | ADRs — one decision per file, numbered, **append-only & immutable**. | immutable |
+| [`docs/feats/`](docs/feats/) | Feature reference — how a feature works *now* (not its history). | mutable |
+| [`CHANGELOG.md`](CHANGELOG.md) | **Auto-generated from conventional commits. NEVER hand-edit.** | generated |
+
+### Two roles
+
+- **Planner** (cofounder): writes/revises `docs/plans/`.
+- **Builder**: executes a plan, then updates docs per the Definition of Done below.
+
+### Definition of Done (builder — before declaring a task finished)
+
+1. **STATE.md** — if an area's status changed (e.g. `build` → `HW-verified`), update
+   its row and the `Last updated` date.
+2. **docs/feats/** — if a feature is new or its behavior changed, create/update its file.
+3. **docs/decisions/** — if an architectural/non-obvious decision was made, write a new
+   ADR (criteria below).
+4. **Plan checklist** — tick the `- [x]` tasks completed.
+5. **Commit** — use a conventional commit (`feat:`/`fix:`/`docs:`…) so the changelog
+   regenerates automatically. Do not edit `CHANGELOG.md` by hand.
+
+### When to write an ADR
+
+Only for decisions a future maintainer would ask "why?" about: an architectural choice,
+picking one option among several with a trade-off, or capturing the reasoning behind a
+subtle bug fix. **Not** every change. Format: `Context` → `Decision` → `Consequences`.
+Number sequentially (`NNNN-kebab-title.md`); never rewrite a shipped ADR — supersede it
+with a new one that references the old. See [`docs/decisions/0000-template.md`](docs/decisions/0000-template.md).
+
+> Future tooling (not yet built): `/palanu-plan <topic>` to scaffold a plan, and
+> `/palanu-docs` to diff against the last commit and report which docs need updating.
+
+---
+
 ## Logging
 
 **All system/application logging MUST go through the Palanu Logger (`rt.log()`).**
@@ -88,36 +135,76 @@ Anywhere else, raw stdio for logging is a bug.
 
 ---
 
-## SkyRizz E32 — USB mode toggle
+## SkyRizz E32 — USB mode toggle (HID/CDC ↔ JTAG/Serial)
 
-The E32 has two USB modes. Toggle between them by commenting/uncommenting **2 lines**
-in `firmware/targets/skyrizz-e32/CMakeLists.txt` (lines 36-37):
+The E32 has two mutually-exclusive USB modes. You switch between them by
+commenting/uncommenting **exactly 2 lines** in
+`firmware/targets/skyrizz-e32/CMakeLists.txt` (lines 36-37). **Both lines must
+match** — never enable one without the other.
 
-**USB HID/CDC mode (default when uncommented):**
+| | USB HID/CDC mode | JTAG/Serial mode |
+|---|---|---|
+| CMake flags | both **uncommented** | both **commented** |
+| `ARDUINO_USB_CDC_ON_BOOT` | `1` | `0` (see note ‡) |
+| Arduino `Serial` | native USB CDC (TinyUSB) | UART0 (GPIO43/44 — **not wired to host on this board**) |
+| BadUSB / HID keyboard | ✅ works (Plan 66) | ❌ TinyUSB not initialized |
+| Forge remote desktop | ✅ over USB CDC | ✅ over USB Serial/JTAG (HWCDC) |
+| Flashing | needs **manual download mode** † | direct, no button dance (fast dev) |
+| Host port | `/dev/cu.usbmodem*` (TinyUSB CDC) | `/dev/cu.usbmodem*` (built-in USB Serial/JTAG) |
+
+† Download mode = power off, hold BOOT, power on, release BOOT, then flash.
+‡ See the preprocessor note below — this is why the remote broke once.
+
+### To ENABLE USB HID/CDC mode (BadUSB) — uncomment lines 36-37:
 ```cmake
 idf_build_set_property(COMPILE_OPTIONS "-DARDUINO_USB_CDC_ON_BOOT=1" APPEND)
 idf_build_set_property(COMPILE_OPTIONS "-DARDUINO_USB_ON_BOOT=1"     APPEND)
 ```
-- USB CDC serial + HID keyboard active
-- Flash via USB OTG port
-- Used for production / BadUSB functionality
 
-**Serial/JTAG mode (default when commented — faster flashing/debugging):**
+### To DISABLE it / back to JTAG-Serial (fast flashing) — comment lines 36-37:
 ```cmake
 # idf_build_set_property(COMPILE_OPTIONS "-DARDUINO_USB_CDC_ON_BOOT=1" APPEND)
 # idf_build_set_property(COMPILE_OPTIONS "-DARDUINO_USB_ON_BOOT=1"     APPEND)
 ```
-- USB HID/CDC disabled, TinyUSB not initialized
-- Flash via built-in USB Serial/JTAG (separate hardware block on ESP32-S3)
-- Faster flashing, JTAG debugging available
-- **Current state: Serial/JTAG mode (USB HID commented out)**
 
-After toggling, clean build is required:
+**Current state: JTAG/Serial mode (both lines commented).**
+
+### After EITHER toggle — a clean build is mandatory:
 ```bash
 rm -rf firmware/targets/skyrizz-e32/build && bun run build:skyrizz-e32
 ```
 
-Flash in Serial/JTAG mode:
+### Flashing
 ```bash
+# JTAG/Serial mode — direct, no button dance:
 idf.py -p /dev/cu.usbmodem* -B firmware/targets/skyrizz-e32/build flash monitor
+
+# USB HID/CDC mode — enter download mode first (power off, hold BOOT, power on,
+# release BOOT), then the same flash command.
 ```
+
+### ‡ Preprocessor gotcha (root cause of the JTAG-mode remote regression)
+
+`Serial` is **not** the right transport for the Forge remote in JTAG mode. The
+correct port the host sees is the **built-in USB Serial/JTAG (HWCDC)**, not UART0.
+So `firmware/platforms/esp32/src/esp32_usb_cdc.cpp` drives **`HWCDC` directly** when
+in JTAG mode and `Serial` (USB CDC) when in HID/CDC mode.
+
+That file MUST select the branch with `#if`, **never `#ifdef`/`#ifndef`**:
+
+```cpp
+#include <Arduino.h>          // HardwareSerial.h does: #ifndef … #define ARDUINO_USB_CDC_ON_BOOT 0
+#if ARDUINO_USB_CDC_ON_BOOT   // == 1 → USB CDC mode  → use Serial
+#else                         // == 0 → JTAG mode     → use HWCDC
+#endif
+```
+
+arduino-esp32 **always defines** `ARDUINO_USB_CDC_ON_BOOT` (to `0` if no `-D` flag),
+so `#ifdef` is always true and `#ifndef` always false — which silently routes the
+remote to UART0 (dead on this board) → Forge stuck on "Waiting for device…".
+Test the macro's **value** with `#if`, not its existence.
+
+> Note: the secondary console (`CONFIG_ESP_CONSOLE_SECONDARY_USB_SERIAL_JTAG=y` in
+> `sdkconfig`) must stay enabled so `rt.log()` output is visible in `idf.py monitor`
+> over the same HWCDC port. PLP frames and log text share the wire; the FrameParser
+> (both firmware and browser) is noise-tolerant and resyncs on the `0xAB` magic byte.

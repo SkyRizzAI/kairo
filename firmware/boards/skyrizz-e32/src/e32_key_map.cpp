@@ -43,13 +43,13 @@ const char* E32KeyMap::buttonLabel(uint8_t id) const {
 
 const char* E32KeyMap::hintFor(Action a) const {
     switch (a) {
-        case Action::Prev:       return "Left";     // below left (SW1)
-        case Action::Next:       return "Right";    // below right (SW3)
+        case Action::Prev:       return "Up";       // side top    (navigate prev)
+        case Action::Next:       return "Dn";       // side bottom (navigate next)
         case Action::Activate:   return "OK";       // center (SW2), single tap
         case Action::Back:       return "2x OK";    // center (SW2), double tap
         case Action::Pause:      return "Hold OK";  // center (SW2), long-hold
-        case Action::AdjustUp:   return "Up";       // side top (PB1)
-        case Action::AdjustDown: return "Dn";       // side bottom (PB2)
+        case Action::AdjustUp:   return "Right";    // below right (value up)
+        case Action::AdjustDown: return "Left";     // below left  (value down)
         default:                 return "";
     }
 }
@@ -98,12 +98,14 @@ Code E32KeyMap::idToCode(uint8_t id, Gesture g) {
 // static
 Action E32KeyMap::idToAction(uint8_t id, Gesture g) {
     switch (id) {
-        // Below-left / below-right = primary nav (horizontal carousel).
-        case BTN_LEFT:   return Action::Prev;        // Left
-        case BTN_RIGHT:  return Action::Next;        // Right
-        // Side buttons = secondary adjust (up/down).
-        case BTN_UP:     return Action::AdjustUp;    // Up
-        case BTN_DOWN:   return Action::AdjustDown;  // Down
+        // Side Up/Down = PRIMARY navigation. Below-screen Left/Right = SECONDARY
+        // adjust (change a focused value/stepper/dropdown; falls back to nav in
+        // the component runtime when nothing is adjustable). This mirrors the
+        // simulator's defaultAction() so input behaves identically on both boards.
+        case BTN_UP:     return Action::Prev;        // navigate up / previous
+        case BTN_DOWN:   return Action::Next;        // navigate down / next
+        case BTN_LEFT:   return Action::AdjustDown;  // value down / left
+        case BTN_RIGHT:  return Action::AdjustUp;    // value up / right
         case BTN_MIDDLE:
             // Board gesture profile: tap = OK, double = Back, long-hold = Pause.
             if (g == Gesture::Hold)   return Action::Pause;

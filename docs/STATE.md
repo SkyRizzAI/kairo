@@ -2,8 +2,9 @@
 
 > Living snapshot keadaan proyek. Baca ini dulu sebelum lanjut kerja.
 > Detail per-stage ada di [`plans/`](plans/00-overview.md). Master plan: [`concept_plan.md`](concept_plan.md).
+> Reference arsitektur per-subsistem: [`architecture/`](architecture/README.md).
 >
-> **Last updated:** 2026-06-01
+> **Last updated:** 2026-06-20
 
 ---
 
@@ -121,6 +122,14 @@ packages/forge/          SvelteKit web client: /simulator (WASM), /remote, /flas
 - **App = thread sendiri**, gambar ke buffer, `present()` handoff ke GUI thread. Status bar di-composite GUI thread (mode Normal) atau app penuh (Fullscreen).
 - **HTTP gated ke status WiFi** (di sim juga, lewat `isOnline()`) supaya jujur seperti hardware.
 - **Lifecycle driver** via `IDriver::onRegister(rt)` — self-register deps/service/caps/hw.
+
+### Recent decisions (ADR)
+
+> Full records in [`decisions/`](decisions/). One file per decision, append-only.
+
+- [0001](decisions/0001-usb-jtag-remote-uses-hwcdc.md) — Forge remote over USB
+  Serial/JTAG drives HWCDC directly (not Arduino `Serial`); branch on the **value** of
+  `ARDUINO_USB_CDC_ON_BOOT` with `#if`, never `#ifdef`.
 
 ---
 

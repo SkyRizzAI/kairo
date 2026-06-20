@@ -18,6 +18,7 @@ public:
     const char* name() const override { return "skyrizz-e32"; }
     void describeHardware(Runtime& rt) override;
     const BoardProfile& profile() const override { return kE32Profile; }
+    bool sdSpi(SdSpiConfig& out) const override;   // TF1 microSD on SPI3
 
 private:
     Xl9535      expander_;

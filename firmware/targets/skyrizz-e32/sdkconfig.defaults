@@ -40,3 +40,11 @@ CONFIG_SPIRAM_TRY_ALLOCATE_WIFI_LWIP=y
 # Default 3584 bytes is too small for the HID preloader which calls
 # esp_hid_parse_report_map() before app_main(). 8 KB gives comfortable headroom.
 CONFIG_ESP_MAIN_TASK_STACK_SIZE=8192
+
+# ── FATFS for microSD (TF1 on SPI3) ───────────────────────────────────────────
+# Long filenames (cards rarely use 8.3) + 512-byte sectors (standard for SD;
+# the default 4096 was for flash wear-levelling, which we don't use — internal
+# FS is LittleFS). Without LFN, ExFAT also can't mount and long names truncate.
+CONFIG_FATFS_LFN_HEAP=y
+CONFIG_FATFS_MAX_LFN=255
+CONFIG_FATFS_SECTOR_512=y

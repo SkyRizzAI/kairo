@@ -83,10 +83,35 @@ void AppHost::onResume() {
 }
 
 void AppHost::update(Key key) {
+    // Legacy/direct path (e.g. DPM handleKey). Populate code+action from the key
+    // so the forwarded event is self-consistent.
     InputEvent ie;
-    ie.kind = InputEvent::Kind::Key;
-    ie.key  = key;
-    ie.type = InputEvent::Type::Press;
+    ie.kind   = InputEvent::Kind::Key;
+    ie.key    = key;
+    ie.code   = input::codeFromKey(key);
+    ie.action = input::defaultAction(ie.code);
+    ie.type   = InputEvent::Type::Press;
+    mailbox_.send(ie);
+}
+
+// Primary input path. GuiService calls onAction() immediately followed by
+// onCode() for every press (gui_service.cpp). We buffer the board-resolved
+// action here and emit the complete event in onCode() — carrying the true
+// PHYSICAL key via keyFromCode() instead of the lossy keyFromAction() round-trip
+// the base IScreen::onAction() used to apply.
+void AppHost::onAction(input::Action a) {
+    pendingAction_ = a;
+}
+
+void AppHost::onCode(input::Code c) {
+    if (c == input::Code::None) { pendingAction_ = input::Action::None; return; }
+    InputEvent ie;
+    ie.kind   = InputEvent::Kind::Key;
+    ie.type   = InputEvent::Type::Press;
+    ie.code   = c;
+    ie.key    = input::keyFromCode(c);   // lossless: physical direction preserved
+    ie.action = pendingAction_;          // board-resolved intent (None if unpaired)
+    pendingAction_ = input::Action::None;
     mailbox_.send(ie);
 }
 

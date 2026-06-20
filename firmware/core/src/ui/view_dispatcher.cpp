@@ -14,6 +14,7 @@ void ViewDispatcher::navigate(IScreen& screen) {
     requestRedraw();
 }
 
+
 void ViewDispatcher::navigate(IScreen& screen, Bundle args) {
     args_ = std::move(args);
     navigate(screen);

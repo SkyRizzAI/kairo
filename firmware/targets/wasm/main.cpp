@@ -6,6 +6,7 @@
 #include "nema/services/clock_service.h"
 #include "nema/app/app_registry.h"
 #include "nema/apps/js_app_store.h"
+#include "nema/apps/dolphin_app.h"
 #include "nema/screens/home_screen.h"
 #include "nema/ui/view_dispatcher.h"
 
@@ -27,6 +28,9 @@ int main() {
     rt.apps().installService(clockSvc, "com.palanu.svc.clock");
 
     rt.start();
+
+    static nema::DolphinApp dolphinApp;
+    rt.apps().install(dolphinApp);
 
     nema::loadEmbeddedJsApps(rt);
 

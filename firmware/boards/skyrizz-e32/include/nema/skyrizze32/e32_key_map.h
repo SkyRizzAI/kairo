@@ -4,16 +4,18 @@
 
 namespace nema::skyrizze32 {
 
-// E32KeyMap — 3-button IKeyMap for SkyRizz E32.
+// E32KeyMap — 5-button IKeyMap for SkyRizz E32.
 //
-// Button layout (physical Left / Middle / Right):
-//   BTN_LEFT   (SW1)  short → Prev       long → AdjustDown
-//   BTN_MIDDLE (PB1)  short → Activate   long → Back
-//   BTN_RIGHT  (SW2)  short → Next       long → AdjustUp
+// Physical layout: 3 buttons BELOW the LCD (Left / Middle / Right) + 2 on the
+// RIGHT SIDE (Up top / Down bottom). Action mapping mirrors the simulator's
+// defaultAction() so input behaves identically on both boards:
+//   BTN_UP     → Prev        (navigate up / previous)
+//   BTN_DOWN   → Next        (navigate down / next)
+//   BTN_LEFT   → AdjustDown  (value down / left)
+//   BTN_RIGHT  → AdjustUp    (value up / right)
+//   BTN_MIDDLE → Activate (tap) / Back (double-tap) / Pause (long-hold)
 //
-// Side buttons (PB1 Up / PB2 Down) → AdjustUp / AdjustDown.
 // Floor guarantee: Prev, Next, Activate, Back — all reachable.
-// No native Up/Down/Left/Right codes → "input.2d" capability NOT declared.
 class E32KeyMap : public input::IKeyMap {
 public:
     E32KeyMap();   // sets up GestureEngine callback

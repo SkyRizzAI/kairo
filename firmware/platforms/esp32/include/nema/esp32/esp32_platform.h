@@ -19,6 +19,7 @@
 #include "nema/fs/mem_filesystem.h"
 #include "nema/fs/vfs.h"
 #include "nema/esp32/littlefs_filesystem.h"
+#include "nema/esp32/sd_fat_filesystem.h"
 
 namespace nema {
 
@@ -66,6 +67,7 @@ private:
     Vfs                vfs_;       // mount table
     LittleFsFileSystem rootFs_;    // "/"   — persistent (internal flash)
     MemFileSystem      tmpFs_;     // "/tmp" — volatile scratch (RAM)
+    SdFatFileSystem    sdFs_;      // "/sd" — microSD (FAT), if the board wires one
     bool               remoteWired_ = false;
 };
 

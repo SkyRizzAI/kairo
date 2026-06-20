@@ -11,6 +11,7 @@
 #include "nema/apps/js_app_store.h"
 #include "nema/apps/hello_app.h"
 #include "nema/apps/bad_usb_app.h"
+#include "nema/apps/dolphin_app.h"
 #include "nema/screens/home_screen.h"
 #include "nema/ui/view_dispatcher.h"
 
@@ -36,6 +37,9 @@ void setup() {
 
     static nema::BadUsbApp badUsbApp;
     rt.apps().install(badUsbApp);
+
+    static nema::DolphinApp dolphinApp;
+    rt.apps().install(dolphinApp);
 
     nema::loadEmbeddedJsApps(rt);
 

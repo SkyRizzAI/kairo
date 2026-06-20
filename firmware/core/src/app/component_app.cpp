@@ -107,7 +107,11 @@ void ComponentApp::run(AppContext& ctx) {
                 return;
             ast.modality = input::InputModality::Button;   // ring returns
             if (capturesInput()) {
+                // Raw apps receive every key. Honor the onKey() contract: a false
+                // return on Cancel exits the app — without this, a capturesInput
+                // app that defers Cancel can never be exited (it gets stuck).
                 if (onKey(ev.key, ctx)) dirty = true;
+                else if (ev.key == Key::Cancel && !modal) ctx.requestExit();
             } else if (ev.key == Key::Cancel) {
                 if (onKey(Key::Cancel, ctx)) dirty = true;
                 else if (!modal)             ctx.requestExit();   // modal up: don't exit app

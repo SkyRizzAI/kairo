@@ -1,5 +1,6 @@
 // Plan 60 — HomeScreen: DSi-style carousel launcher.
 // Plan 70 — animated spinner in banner corner.
+// Plan 71 — Dolphin item in carousel.
 #include "nema/screens/home_screen.h"
 #include "nema/ui/view_dispatcher.h"
 #include "nema/ui/draw.h"
@@ -17,18 +18,18 @@ namespace nema {
 using namespace ui;
 
 HomeScreen::HomeScreen(Runtime& rt)
-    : ComponentScreen(rt), appList_(rt), logs_(rt), settings_(rt) {}
+    : ComponentScreen(rt),
+      appList_(rt), files_(rt), dolphin_(rt), logs_(rt), settings_(rt) {}
 
 void HomeScreen::onResume() {
     ComponentScreen::onResume();
-    nItems_ = hasContinue() ? 4 : 3;
+    nItems_ = hasContinue() ? 6 : 5;
     if (cursor_ >= nItems_) cursor_ = nItems_ - 1;
     if (hasContinue()) {
         const char* name = rt_.appHost().pausedName();
         std::snprintf(continueLabel_, sizeof(continueLabel_),
                       "Continue: %s", name ? name : "app");
     }
-    // Plan 70: start the banner spinner and register for global tick
     spinner_.start();
     anim::AnimationManager::instance().registerPlayer(spinner_);
 }
@@ -44,8 +45,10 @@ const char* HomeScreen::itemLabel(int i) const {
     }
     switch (i) {
         case 0: return "Apps";
-        case 1: return "Logs";
-        case 2: return "Settings";
+        case 1: return "Files";
+        case 2: return "Dolphin";
+        case 3: return "Logs";
+        case 4: return "Settings";
         default: return "?";
     }
 }
@@ -57,18 +60,27 @@ void HomeScreen::activate(int i) {
     }
     switch (i) {
         case 0: rt_.view().navigate(appList_);  break;
-        case 1: rt_.view().navigate(logs_);     break;
-        case 2: rt_.view().navigate(settings_); break;
+        case 1: rt_.view().navigate(files_);    break;
+        case 2: rt_.view().navigate(dolphin_);  break;
+        case 3: rt_.view().navigate(logs_);     break;
+        case 4: rt_.view().navigate(settings_); break;
     }
 }
 
 void HomeScreen::onAction(input::Action a) {
     using input::Action;
+    // The carousel is HORIZONTAL, so accept BOTH navigation axes — boards bind
+    // them differently (simulator: Up/Down→Prev/Next, Left/Right→Adjust*;
+    // skyrizz-e32: Left/Right→Prev/Next, Up/Down→Adjust*). Handling Adjust* here
+    // too means all four directional buttons move the carousel on every board,
+    // without touching the system Action mapping that Settings depends on.
     switch (a) {
-    case Action::Prev:
+    case Action::Prev:        // Up (sim) / Left (skyrizz)
+    case Action::AdjustDown:  // Left (sim) / Down (skyrizz)
         if (cursor_ > 0) { cursor_--; requestRedraw(); }
         break;
-    case Action::Next:
+    case Action::Next:        // Down (sim) / Right (skyrizz)
+    case Action::AdjustUp:    // Right (sim) / Up (skyrizz)
         if (cursor_ < nItems_ - 1) { cursor_++; requestRedraw(); }
         break;
     case Action::Activate:
@@ -79,8 +91,6 @@ void HomeScreen::onAction(input::Action a) {
     }
 }
 
-// ── DSi carousel draw ─────────────────────────────────────────────────────────
-
 void HomeScreen::draw(Canvas& c) {
     using namespace aether::ui::draw;
     const nema::StyleTokens& t = nema::theme();
@@ -88,24 +98,20 @@ void HomeScreen::draw(Canvas& c) {
     uint16_t W = c.width();
     uint16_t H = c.height();
 
-    // ── Banner ────────────────────────────────────────────────────────────────
     uint16_t bannerH = (uint16_t)(measureTextH(TextRole::Title) + 2 * t.space.sm);
     uint16_t bannerY = CONTENT_Y;
     banner(c, 0, bannerY, W, bannerH, "PALANU", /*notch=*/true);
 
-    // Plan 70: spinner animation in banner right corner
     uint16_t sx = (uint16_t)(W - 12);
     uint16_t sy = (uint16_t)(bannerY + (bannerH > 8 ? (bannerH - 8) / 2 : 0));
     c.drawBitmap(sx, sy, 8, 8, spinner_.currentFrameData());
 
-    // ── Carousel tiles ────────────────────────────────────────────────────────
     uint16_t tileW  = (uint16_t)(W / 2);
     uint16_t tileH  = (uint16_t)(H / 4);
     uint16_t tilesY = (uint16_t)(bannerY + bannerH + t.space.md);
     uint16_t tilesH = (uint16_t)(H - tilesY - t.space.xl);
     uint16_t tileCY = (uint16_t)(tilesY + (tilesH > tileH ? (tilesH - tileH) / 2 : 0));
 
-    // Center tile (focused item) — filled, white label
     uint16_t cx = (uint16_t)((W - tileW) / 2);
     box_rounded(c, cx, tileCY, tileW, tileH, true);
     if (nItems_ > 0) {
@@ -120,7 +126,6 @@ void HomeScreen::draw(Canvas& c) {
         else               c.drawTextScaled(tx, ty, lbl, fs.scale, false);
     }
 
-    // Side tiles — outline only, smaller
     uint16_t sideW  = (uint16_t)(tileW * 2 / 3);
     uint16_t sideH  = (uint16_t)(tileH * 3 / 4);
     uint16_t sideCY = (uint16_t)(tileCY + (tileH > sideH ? (tileH - sideH) / 2 : 0));
@@ -146,11 +151,9 @@ void HomeScreen::draw(Canvas& c) {
         }
     }
 
-    // ── Position bar ─────────────────────────────────────────────────────────
     uint16_t posbarY = (uint16_t)(H > t.space.lg ? H - t.space.lg : 0);
     posbar(c, 0, posbarY, W, (uint16_t)cursor_, (uint16_t)nItems_);
 
-    // ── Navigation hints ─────────────────────────────────────────────────────
     FontSpec cap = fontForRole(TextRole::Caption);
     c.setFont(cap.handle);
     uint16_t hintH = measureTextH(TextRole::Caption);
@@ -161,7 +164,7 @@ void HomeScreen::draw(Canvas& c) {
 }
 
 ui::UiNode* HomeScreen::build(ui::NodeArena&, Runtime&) {
-    return nullptr;  // carousel draws via draw() override; build() unused
+    return nullptr;
 }
 
 } // namespace nema

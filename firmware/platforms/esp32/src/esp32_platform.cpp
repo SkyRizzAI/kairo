@@ -143,6 +143,23 @@ void Esp32Platform::postRegister(Runtime& rt) {
         }
     }
     rt.log().info("Esp32Platform", "filesystem", {{"root", fsOk ? "littlefs" : "FAILED"}});
+
+    // microSD (FAT) — only on boards that wire an SD socket (Plan 38). Non-fatal:
+    // a missing card or failed mount just means "/sd" is absent; boot continues.
+    // Once mounted, the VFS auto-surfaces "sd" when listing "/", so the File
+    // Browser shows it with no extra wiring.
+    SdSpiConfig sdCfg;
+    if (rt.board().sdSpi(sdCfg)) {
+        if (sdFs_.begin(sdCfg)) {
+            vfs_.mount("/sd", &sdFs_);
+            rt.capabilities().add(caps::Storage);
+            rt.log().info("Esp32Platform", "microSD mounted", {{"path", "/sd"}});
+        } else {
+            rt.log().warn("Esp32Platform", "microSD not mounted (no card / mount failed)",
+                          {{"cs", std::to_string(sdCfg.cs)}, {"sclk", std::to_string(sdCfg.sclk)}});
+        }
+    }
+
     remote_.attachFs(vfs_);
 
     // --- DISPLAY-ONLY: mirror the screen to the host (RemoteScreenTap). Only

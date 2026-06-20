@@ -46,7 +46,15 @@ public:
     void        setPaused(bool v) { paused_.store(v, std::memory_order_release); }
     bool        isPaused() const  { return paused_.load(std::memory_order_acquire); }
     const char* appName() const;
-    void update(Key key) override;   // forward key → mailbox
+    void update(Key key) override;   // forward key → mailbox (legacy/direct)
+    // Lossless input bridge: GuiService dispatches onAction(action) then
+    // onCode(code) for each press. We buffer the board-resolved action and emit
+    // ONE event carrying the true PHYSICAL key (keyFromCode), so apps no longer
+    // get the scrambled Action→keyFromAction round-trip (Up↦Left, Left↦Down, …
+    // on the simulator). On boards with a keymap (skyrizz) code/action are
+    // already aligned, so this is a no-op there.
+    void onAction(input::Action a) override;  // buffer board-resolved intent
+    void onCode(input::Code c)     override;  // emit full event → mailbox
     void onPointer(const input::PointerEvent& e) override;  // forward touch → mailbox
     void draw(Canvas& c) override;   // blit latest app frame
     bool suppressCanvasFlush() const override;  // fullscreen → we flush directly
@@ -96,6 +104,8 @@ private:
     bool                     started_  = false;
     bool                     finished_ = false;
     std::atomic<bool>        paused_{false};   // Plan 22: app thread parked
+    // GUI-thread only: action from onAction(), consumed by the next onCode().
+    input::Action            pendingAction_ = input::Action::None;
     uint32_t                 dbgPresent_ = 0;  // diagnostic: count first presents
     uint32_t                 dbgDraw_    = 0;  // diagnostic: count first draws
 

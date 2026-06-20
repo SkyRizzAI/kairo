@@ -12,6 +12,16 @@ constexpr int PIN_SCL     = 48;
 constexpr int PIN_SDA     = 47;
 constexpr int PIN_BUS_INT = 43;   // XL9535 INT# (active-LOW), also UART0 TXD
 
+// ── microSD (TF1) — SPI3, bus shared with the GT30L24A3W font ROM (U2, whose
+// CS# is inverted so SD and font-ROM are mutually exclusive). SCLK reuses the
+// UART0 console RX pin — safe because the live console runs over USB-CDC.
+// (pin_map: SCLK3=GPIO44, MISO=41, MOSI=42, CS=40.)
+constexpr int PIN_SD_SCLK = 44;
+constexpr int PIN_SD_MISO = 41;
+constexpr int PIN_SD_MOSI = 42;
+constexpr int PIN_SD_CS   = 40;
+constexpr int SD_SPI_HOST = 2;    // SPI3_HOST
+
 // ── LCD SPI (TFT, direct ESP32) ───────────────────────────────────────────
 constexpr int PIN_LCD_SCLK = 12;
 constexpr int PIN_LCD_DC   = 13;

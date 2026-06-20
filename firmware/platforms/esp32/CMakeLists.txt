@@ -10,11 +10,16 @@ idf_component_register(
         "src/esp32_ota.cpp"
         "src/nvs_config_store.cpp"
         "src/littlefs_filesystem.cpp"
+        "src/sd_fat_filesystem.cpp"
     INCLUDE_DIRS "include"
     REQUIRES
         core
         espressif__arduino-esp32
         joltwallet__littlefs
+        fatfs
+        sdmmc
+        esp_driver_sdspi
+        esp_driver_spi
         esp_wifi
         esp_event
         nvs_flash

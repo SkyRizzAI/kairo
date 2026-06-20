@@ -4,6 +4,9 @@
 > is, how it is built, what works today, how the code is organized, and where it is going — without
 > opening any other file.
 >
+> For the detailed, per-subsystem "how it works" reference, see
+> [`architecture/`](architecture/README.md). For current status, see [`STATE.md`](STATE.md).
+>
 > **Last updated:** 2026-06-13 · **Status:** Full runtime — app model, retained-mode component UI,
 > QuickJS custom apps, WiFi/HTTP/BLE/USB, KLP remote link, WASM simulator, and two real ESP32-S3
 > boards (e-ink dev board + SkyRizz E32 multimedia badge).

@@ -96,4 +96,14 @@ void SkyRizzE32::describeHardware(Runtime& rt) {
         {{"mcu", "ESP32-S3-WROOM-1-N16R8"}, {"flash", "16MB"}, {"psram", "8MB"}});
 }
 
+// TF1 microSD on the shared SPI3 bus. The ESP32 platform mounts this at "/sd".
+bool SkyRizzE32::sdSpi(SdSpiConfig& out) const {
+    out.sclk   = PIN_SD_SCLK;
+    out.miso   = PIN_SD_MISO;
+    out.mosi   = PIN_SD_MOSI;
+    out.cs     = PIN_SD_CS;
+    out.hostId = SD_SPI_HOST;
+    return true;
+}
+
 } // namespace nema::skyrizze32

@@ -40,3 +40,7 @@ add_test(NAME capability_test COMMAND capability_test)
 add_executable(cli_test cli_test.cpp)
 target_link_libraries(cli_test PRIVATE nema_core)
 add_test(NAME cli_test COMMAND cli_test)
+
+add_executable(asset_test asset_test.cpp)
+target_link_libraries(asset_test PRIVATE nema_core)
+add_test(NAME asset_test COMMAND asset_test)

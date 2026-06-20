@@ -15,7 +15,7 @@ FontSpec fontForRole(TextRole role) {
     switch (role) {
         case TextRole::Title:   return { Fonts::Primary,   f.title };
         case TextRole::Mono:    return { Fonts::Mono,      1 };
-        case TextRole::Caption: return { Fonts::Tiny,      f.caption };
+        case TextRole::Caption: return { Fonts::Secondary, f.caption };
         case TextRole::Smart:   [[fallthrough]];
         case TextRole::Body:
         default:                return { Fonts::Secondary, f.body };

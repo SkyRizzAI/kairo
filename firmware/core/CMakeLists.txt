@@ -50,6 +50,7 @@ src/input/gesture.cpp
     src/apps/js_app_store.cpp
     src/apps/bad_usb_app.cpp
     src/apps/badusb_parser.cpp
+    src/apps/dolphin_app.cpp
     src/ui/text_input.cpp
     src/ui/virtual_keyboard.cpp
     src/ui/canvas.cpp
@@ -71,6 +72,9 @@ src/input/gesture.cpp
     src/ui/animation_player.cpp
     src/ui/animation_manager.cpp
     src/ui/builtin_animations.cpp
+    src/ui/dolphin_showcase.cpp
+    src/ui/asset_loader.cpp
+    src/ui/asset_arena.cpp
     src/ui/font_registry.cpp
     src/ui/font_5x8.cpp
     src/ui/font_6x8.cpp
@@ -80,6 +84,7 @@ src/input/gesture.cpp
     src/ui/ascii_board_renderer.cpp
     src/screens/home_screen.cpp
     src/screens/app_list_screen.cpp
+    src/screens/file_browser_screen.cpp
     src/screens/logs_screen.cpp
     src/screens/settings_screen.cpp
     src/screens/about_screen.cpp
@@ -92,6 +97,7 @@ src/input/gesture.cpp
     src/screens/camera_settings_screen.cpp
     src/screens/developer_screen.cpp
     src/screens/profile_settings_screen.cpp
+    src/screens/dolphin_demo.cpp
     src/services/display_power_manager.cpp
     src/services/audio_service.cpp
     src/services/camera_service.cpp
