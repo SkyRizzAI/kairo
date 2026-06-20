@@ -1,6 +1,6 @@
 // Plan 60 Fase 3 — widgets rewrite using theme spacing.
 // Node structure is unchanged (tier-0 preserved). Padding/gap now read from
-// nema::theme() so compact/large theme tokens propagate to all components.
+// aether::theme() so compact/large theme tokens propagate to all components.
 #include "nema/ui/widgets.h"
 #include "nema/ui/style_tokens.h"
 #include "nema/ui/text_style.h"
@@ -96,14 +96,14 @@ UiNode* Container(NodeArena& a, uint8_t padding, std::initializer_list<UiNode*> 
 }
 
 UiNode* Button(NodeArena& a, const char* label, void (*onPress)(void*), void* userdata) {
-    uint8_t pad = nema::theme().space.sm;  // themed padding (4px default, 2px compact)
+    uint8_t pad = aether::theme().space.sm;  // themed padding (4px default, 2px compact)
     Style s; s.dir = FlexDir::Row; s.border = true; s.padding = pad;
     s.align = Align::Center; s.justify = Justify::Center;
     return Pressable(a, onPress, userdata, s, { Text(a, label, TextRole::Body) });
 }
 
 UiNode* Header(NodeArena& a, const char* title) {
-    uint8_t gap = nema::theme().space.xs;
+    uint8_t gap = aether::theme().space.xs;
     Style col; col.dir = FlexDir::Col; col.align = Align::Stretch; col.gap = gap;
     Style line; line.height = 1; line.background = true;
     return View(a, col, { Text(a, title, TextRole::Title), View(a, line, {}) });
@@ -136,21 +136,21 @@ UiNode* TitleBar(NodeArena& a, const char* title) {
     UiNode* n = Text(a, title, TextRole::Title);
     if (n) {
         n->style.background = true;
-        n->style.padding    = nema::theme().space.sm;
+        n->style.padding    = aether::theme().space.sm;
     }
     return n;
 }
 
 UiNode* ListRow(NodeArena& a, const char* label, void (*onPress)(void*), void* userdata) {
-    uint8_t pad = nema::theme().space.sm;
+    uint8_t pad = aether::theme().space.sm;
     Style s; s.dir = FlexDir::Row; s.padding = pad; s.align = Align::Center;
     return Pressable(a, onPress, userdata, s, { Text(a, label, TextRole::Body) });
 }
 
 UiNode* ListItem(NodeArena& a, const char* label, const char* accessory,
                  void (*onPress)(void*), void* userdata) {
-    uint8_t pad = nema::theme().space.sm;
-    uint8_t gap = nema::theme().space.xs;
+    uint8_t pad = aether::theme().space.sm;
+    uint8_t gap = aether::theme().space.xs;
     Style s; s.dir = FlexDir::Row; s.padding = pad; s.align = Align::Center; s.gap = gap;
     s.justify = Justify::SpaceBetween;
     UiNode* lbl = Text(a, label, TextRole::Body);
@@ -201,7 +201,7 @@ UiNode* ListItemRow(NodeArena& a, const ListEntry& e) {
     Style s; s.dir = FlexDir::Row; s.align = Align::Center;
     s.height = listRowH();
     s.selectBox = true;                 // rounded inverted box when focused
-    s.gap = nema::theme().space.xs;     // 2px between label/value/chevron
+    s.gap = aether::theme().space.xs;     // 2px between label/value/chevron
 
     // label marquees on focus (TextRole::Smart) and grows to push the value right
     UiNode* label = SmartLabel(a, e.label ? e.label : "");
@@ -270,7 +270,7 @@ static UiNode* labelGrow(NodeArena& a, const char* label) {
 
 UiNode* Toggle(NodeArena& a, const char* label, bool on,
                void (*onToggle)(void*), void* userdata) {
-    uint8_t pad = nema::theme().space.sm;
+    uint8_t pad = aether::theme().space.sm;
     Style s; s.dir = FlexDir::Row; s.padding = pad; s.align = Align::Center;
     s.justify = Justify::SpaceBetween;
     return Pressable(a, onToggle, userdata, s,
@@ -281,8 +281,8 @@ UiNode* Toggle(NodeArena& a, const char* label, bool on,
 static UiNode* adjustRow(NodeArena& a, const char* label, const char* lo,
                          const char* value, const char* hi,
                          void (*onAdjust)(void*, int), void* userdata) {
-    uint8_t pad = nema::theme().space.sm;
-    uint8_t gap = nema::theme().space.xs;
+    uint8_t pad = aether::theme().space.sm;
+    uint8_t gap = aether::theme().space.xs;
     Style row; row.dir = FlexDir::Row; row.padding = pad; row.align = Align::Center;
     row.gap = gap;
     UiNode* n = View(a, row, {
@@ -322,15 +322,15 @@ UiNode* Slider(NodeArena& a, int* value, int min, int max, int step,
 
 UiNode* TextField(NodeArena& a, const char* label, const char* text,
                   void (*onPress)(void*), void* userdata) {
-    uint8_t pad = nema::theme().space.sm;
-    uint8_t gap = nema::theme().space.xs;
+    uint8_t pad = aether::theme().space.sm;
+    uint8_t gap = aether::theme().space.xs;
     Style s; s.dir = FlexDir::Row; s.padding = pad; s.align = Align::Center; s.gap = gap;
     return Pressable(a, onPress, userdata, s,
                      { labelGrow(a, label), Text(a, text, TextRole::Body) });
 }
 
 UiNode* Menu(NodeArena& a, const MenuItem* items, int count) {
-    uint8_t gap = nema::theme().space.xs;
+    uint8_t gap = aether::theme().space.xs;
     Style col; col.dir = FlexDir::Col; col.align = Align::Stretch; col.gap = gap;
     UiNode* menu = View(a, col, {});
     UiNode* prev = nullptr;
@@ -345,8 +345,8 @@ UiNode* Menu(NodeArena& a, const MenuItem* items, int count) {
 }
 
 UiNode* Modal(NodeArena& a, std::initializer_list<UiNode*> children) {
-    uint8_t pad = nema::theme().space.md;
-    uint8_t gap = nema::theme().space.sm;
+    uint8_t pad = aether::theme().space.md;
+    uint8_t gap = aether::theme().space.sm;
     Style s; s.dir = FlexDir::Col; s.padding = pad; s.gap = gap;
     s.align = Align::Stretch; s.justify = Justify::Center;
     return View(a, s, children);
@@ -357,8 +357,8 @@ UiNode* Modal(NodeArena& a, std::initializer_list<UiNode*> children) {
 UiNode* Dialog(NodeArena& a, const char* title, const char* body,
                const uint8_t* icon, uint8_t iconW, uint8_t iconH,
                const DialogButton* buttons, uint8_t buttonCount) {
-    uint8_t pad = nema::theme().space.md;
-    uint8_t gap = nema::theme().space.sm;
+    uint8_t pad = aether::theme().space.md;
+    uint8_t gap = aether::theme().space.sm;
 
     // Collect children: icon, title, body, button row
     std::vector<UiNode*> kids;
@@ -401,8 +401,8 @@ UiNode* Dialog(NodeArena& a, const char* title, const char* body,
 
 UiNode* Popup(NodeArena& a, const char* text,
               const uint8_t* icon, uint8_t iconW, uint8_t iconH) {
-    uint8_t pad = nema::theme().space.md;
-    uint8_t gap = nema::theme().space.sm;
+    uint8_t pad = aether::theme().space.md;
+    uint8_t gap = aether::theme().space.sm;
 
     Style col; col.dir = FlexDir::Col; col.padding = pad; col.gap = gap;
     col.align = Align::Center;
@@ -423,7 +423,7 @@ UiNode* Popup(NodeArena& a, const char* text,
 }
 
 UiNode* Toast(NodeArena& a, const char* message) {
-    uint8_t pad = nema::theme().space.sm;
+    uint8_t pad = aether::theme().space.sm;
     Style s; s.dir = FlexDir::Row; s.padding = pad; s.align = Align::Center;
     s.background = true;   // dark background, white text
     return View(a, s, {Text(a, message, TextRole::Caption)});

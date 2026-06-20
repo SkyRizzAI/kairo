@@ -93,8 +93,8 @@ bool FileBrowserScreen::onBackPressed() {
 // ── view ─────────────────────────────────────────────────────────────────────
 
 aether::ui::UiNode* FileBrowserScreen::build(NodeArena& a, Runtime&) {
-    uint8_t pad = nema::theme().space.sm;
-    uint8_t gap = nema::theme().space.xs;
+    uint8_t pad = aether::theme().space.sm;
+    uint8_t gap = aether::theme().space.xs;
 
     Style root; root.dir = FlexDir::Col; root.flexGrow = 1; root.padding = pad; root.gap = gap;
     root.align = Align::Stretch;

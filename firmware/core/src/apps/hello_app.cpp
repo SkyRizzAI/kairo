@@ -13,7 +13,7 @@ static void onToggle(void* u) { static_cast<HelloApp*>(u)->flipToggle(); }
 
 aether::ui::UiNode* HelloApp::build(NodeArena& arena, AppContext&) {
     Style root; root.dir = FlexDir::Col; root.flexGrow = 1;
-    root.padding = theme().space.sm; root.gap = theme().space.sm;
+    root.padding = aether::theme().space.sm; root.gap = aether::theme().space.sm;
     root.align = Align::Stretch;
 
     Style menu; menu.dir = FlexDir::Col; menu.align = Align::Stretch; menu.gap = 1;

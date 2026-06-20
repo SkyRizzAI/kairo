@@ -1,6 +1,6 @@
 #include "nema/ui/style_tokens.h"
 
-namespace nema {
+namespace aether {
 
 static const StyleTokens* s_theme = nullptr;
 
@@ -52,4 +52,4 @@ void setTheme(const StyleTokens& t) {
     s_theme = &t;
 }
 
-} // namespace nema
+} // namespace aether

@@ -60,10 +60,10 @@ int SleepSettingsScreen::findScaleIdx() const {
 }
 void SleepSettingsScreen::applyTheme(int idx) {
     const char* name = kThemeNames[idx];
-    const StyleTokens* t;
-    if      (std::strcmp(name, "compact") == 0) t = &compactTheme();
-    else if (std::strcmp(name, "large")   == 0) t = &largeTheme();
-    else                                        t = &defaultTheme();
+    const aether::StyleTokens* t;
+    if      (std::strcmp(name, "compact") == 0) t = &aether::compactTheme();
+    else if (std::strcmp(name, "large")   == 0) t = &aether::largeTheme();
+    else                                        t = &aether::defaultTheme();
     // Theme is Aether-owned (ADR 0002): set it on the concrete AetherServer when
     // that's the active server. Persisted to config either way (applied at boot).
     if (auto* srv = rt_.displayServer(); srv && std::strcmp(srv->name(), "aether") == 0)

@@ -17,8 +17,8 @@ namespace nema {
 void AetherServer::renderFrame(Canvas& c, ViewDispatcher& vd, const StatusBarData& status) {
     // Aether owns its theme (ADR 0002): install it as the active theme each frame
     // so it never bleeds in from another server. Default if none set.
-    // (nema::setTheme = the global active-theme setter, not our member setTheme.)
-    nema::setTheme(theme_ ? *theme_ : defaultTheme());
+    // (aether::setTheme = the global active-theme setter, not our member setTheme.)
+    aether::setTheme(theme_ ? *theme_ : aether::defaultTheme());
     uint64_t now = clock_.millis();
     if (now - fpsLastMs_ >= 1000) {
         fps_       = (uint16_t)fpsFrames_;

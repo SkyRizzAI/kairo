@@ -12,7 +12,7 @@ void     setTextSize(TextSize sz) { g_size = sz; }
 TextSize textSize()               { return g_size; }
 
 FontSpec fontForRole(TextRole role) {
-    const nema::FontTokens& f = nema::theme().font;
+    const aether::FontTokens& f = aether::theme().font;
     switch (role) {
         case TextRole::Title:   return { Fonts::Primary,   f.title };
         case TextRole::Subhead: return { Fonts::Bold8,     f.subhead };   // bold section header

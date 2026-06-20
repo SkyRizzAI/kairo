@@ -67,7 +67,7 @@ FbconServer::FbconServer(Runtime& rt) : rt_(rt) {
 void FbconServer::renderFrame(Canvas& c, ViewDispatcher&, const StatusBarData&) {
     // Text console renders with the default theme (ADR 0002: each server applies
     // its own; this keeps Aether's theme from bleeding in after a server switch).
-    nema::setTheme(defaultTheme());
+    aether::setTheme(aether::defaultTheme());
     c.clear();
 
     const uint16_t lh = aether::ui::CHAR_H + 1;

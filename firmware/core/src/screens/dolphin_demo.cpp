@@ -92,7 +92,7 @@ void DolphinDemoScreen::onAction(input::Action a) {
 
 void DolphinDemoScreen::draw(Canvas& c) {
     using namespace aether::ui::draw;
-    const StyleTokens& t = nema::theme();
+    const aether::StyleTokens& t = aether::theme();
 
     uint16_t W = c.width();
     uint16_t H = c.height();

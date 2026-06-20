@@ -567,9 +567,9 @@ void registerCoreCliCommands(CliService& cli, Runtime& rt) {
                 // Apply display/theme immediately so no reboot needed.
                 if (ns == "display" && key == "theme") {
                     const std::string& t = args[3];
-                    if (t == "compact")    setTheme(compactTheme());
-                    else if (t == "large") setTheme(largeTheme());
-                    else                   setTheme(defaultTheme());
+                    if (t == "compact")    setTheme(aether::compactTheme());
+                    else if (t == "large") setTheme(aether::largeTheme());
+                    else                   setTheme(aether::defaultTheme());
                     r->view().requestRedraw();
                     out("theme applied");
                 }

@@ -28,7 +28,7 @@ static void drawBatteryDynamic(Canvas& c, uint16_t x, uint16_t y, int pct) {
 
 void StatusBar::draw(Canvas& c, const StatusBarData& d) {
     using namespace aether::ui;
-    const nema::StyleTokens& t = nema::theme();
+    const aether::StyleTokens& t = aether::theme();
 
     bool inv = t.invertedStatusBar;
     uint16_t barH = (uint16_t)(STATUS_H + 2);

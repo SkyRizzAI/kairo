@@ -93,7 +93,7 @@ void HomeScreen::onAction(input::Action a) {
 
 void HomeScreen::draw(Canvas& c) {
     using namespace aether::ui::draw;
-    const nema::StyleTokens& t = nema::theme();
+    const aether::StyleTokens& t = aether::theme();
 
     uint16_t W = c.width();
     uint16_t H = c.height();

@@ -1,7 +1,7 @@
 #pragma once
 // Plan 60 Fase 1 — Tier-1 draw toolkit.
 // All visual rendering goes through this namespace.
-// Read nema::theme() for spacing/style; no hard-coded pixel constants.
+// Read aether::theme() for spacing/style; no hard-coded pixel constants.
 #include "nema/ui/canvas.h"
 #include "nema/ui/node.h"
 #include <cstdint>

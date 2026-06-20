@@ -64,9 +64,9 @@ void GuiService::start() {
         // text console — it always renders at scale 1 with the default theme.
         {
             std::string t = cfg->getString("display", "theme", "default");
-            if (t == "compact")     aether_->setTheme(compactTheme());
-            else if (t == "large")  aether_->setTheme(largeTheme());
-            else                    aether_->setTheme(defaultTheme());
+            if (t == "compact")     aether_->setTheme(aether::compactTheme());
+            else if (t == "large")  aether_->setTheme(aether::largeTheme());
+            else                    aether_->setTheme(aether::defaultTheme());
         }
         // Snapshot the canvas scale that runtime.cpp resolved from config/DPI
         // so Aether can restore it when switching back from another server.
