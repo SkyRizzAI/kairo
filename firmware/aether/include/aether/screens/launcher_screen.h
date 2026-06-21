@@ -13,7 +13,6 @@
 #include "nema/screens/dolphin_demo.h"
 #include "nema/screens/logs_screen.h"
 #include "nema/screens/settings_screen.h"
-#include "nema/apps/bad_usb_app.h"
 #include <memory>
 #include <vector>
 
@@ -33,12 +32,12 @@ public:
 
 private:
     // Sub-screens reachable from the launcher (owned here, like the old HomeScreen).
+    // BadUsbApp is a proper ComponentApp now (Plan 84); launched via AppRegistry.
     AppListScreen     appList_;
     FileBrowserScreen files_;
     DolphinDemoScreen dolphin_;
     LogsScreen        logs_;
     SettingsScreen    settings_;
-    BadUsbApp         badUsb_;
 
     std::unique_ptr<shell::ILauncherTheme>      theme_;
     std::vector<shell::LauncherEntry>           entries_;

@@ -7,6 +7,7 @@
 #include "nema/ui/icon_pack.h"
 #include "nema/ui/view_dispatcher.h"
 #include "nema/input/input_action.h"
+#include "nema/app/app_registry.h"
 #include "nema/runtime.h"
 #include "nema/config/config_store.h"
 #include <cstdio>
@@ -16,7 +17,7 @@ namespace nema {
 
 LauncherScreen::LauncherScreen(Runtime& rt)
     : ComponentScreen(rt),
-      appList_(rt), files_(rt), dolphin_(rt), logs_(rt), settings_(rt), badUsb_(rt) {}
+      appList_(rt), files_(rt), dolphin_(rt), logs_(rt), settings_(rt) {}
 
 // One entry record keyed by label, animation, and fallback icon handle.
 struct EntryDef {
@@ -76,7 +77,7 @@ void LauncherScreen::activate(int i) {
         case 2: rt_.view().navigate(dolphin_);  break;
         case 3: rt_.view().navigate(logs_);     break;
         case 4: rt_.view().navigate(settings_); break;
-        case 5: rt_.view().navigate(badUsb_); break;
+        case 5: rt_.apps().launch("com.palanu.badusb"); break;
         default: break;
     }
 }

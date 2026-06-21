@@ -3,11 +3,10 @@
 #include "nema/hal/usb_hid.h"
 #include "nema/ui/widgets.h"
 #include "nema/ui/style_tokens.h"
-#include "nema/ui/view_dispatcher.h"
+#include "nema/app/app_context.h"
 #include "nema/runtime.h"
 #include "nema/log/logger.h"
 #include "nema/service/service_container.h"
-#include "nema/input/input_action.h"
 #include <cstdio>
 #include <cstring>
 
@@ -15,21 +14,18 @@ namespace nema {
 
 using namespace aether::ui;
 
-void BadUsbApp::onResume() {
-    fs_  = rt_.fs();
-    hid_ = rt_.container().resolve<IUsbHid>();
+void BadUsbApp::onStart(AppContext& ctx) {
+    hid_     = ctx.runtime().container().resolve<IUsbHid>();
     running_  = false;
     selected_ = 0;
-    scanScripts();
-    dirty_ = true;
-    ComponentScreen::onResume();
+    scanScripts(ctx.runtime().fs());
 }
 
-void BadUsbApp::scanScripts() {
+void BadUsbApp::scanScripts(IFileSystem* fs) {
     scripts_.clear();
-    if (!fs_) return;
+    if (!fs) return;
     std::vector<FsEntry> entries;
-    if (!fs_->list("/system/data/com.palanu.badusb", entries)) return;
+    if (!fs->list("/system/data/com.palanu.badusb", entries)) return;
     for (auto& e : entries) {
         if (e.isDir) continue;
         std::string nm = e.name;
@@ -38,48 +34,47 @@ void BadUsbApp::scanScripts() {
     }
 }
 
-void BadUsbApp::tick(uint64_t nowMs) {
-    ComponentScreen::tick(nowMs);
+bool BadUsbApp::onTick(AppContext& ctx) {
+    (void)ctx;
     if (running_ && hid_) {
         execNextCommand();
-        dirty_ = true;
-        requestRedraw();
+        return true;
     }
+    return false;
 }
 
-void BadUsbApp::onAction(input::Action a) {
-    using input::Action;
+bool BadUsbApp::onKey(Key k, AppContext& ctx) {
     if (running_) {
-        if (a == Action::Back) {
+        if (k == Key::Cancel) {
             running_ = false;
             if (hid_) hid_->releaseAll();
-            dirty_ = true;
-            requestRedraw();
+            return true;
         }
-        return;
+        return false;
     }
-    switch (a) {
-        case Action::Prev:
-        case Action::AdjustDown:
-            if (selected_ > 0) { selected_--; dirty_ = true; requestRedraw(); }
-            break;
-        case Action::Next:
-        case Action::AdjustUp:
-            if (selected_ < (int)scripts_.size() - 1) {
-                selected_++; dirty_ = true; requestRedraw();
+    switch (k) {
+        case Key::Up:
+        case Key::Left:
+            if (selected_ > 0) { selected_--; return true; }
+            return false;
+        case Key::Down:
+        case Key::Right:
+            if (selected_ < (int)scripts_.size() - 1) { selected_++; return true; }
+            return false;
+        case Key::Select:
+            if (!scripts_.empty() && hid_) {
+                startExecution(ctx.runtime().fs(), ctx.runtime());
+                return true;
             }
-            break;
-        case Action::Activate:
-            if (!scripts_.empty() && hid_) startExecution();
-            break;
-        case Action::Back:
-            rt_.view().goBack();
-            break;
-        default: break;
+            return false;
+        case Key::Cancel:
+            return false;  // base handles: requestExit()
+        default:
+            return false;
     }
 }
 
-aether::ui::UiNode* BadUsbApp::build(aether::ui::NodeArena& arena, Runtime&) {
+aether::ui::UiNode* BadUsbApp::build(aether::ui::NodeArena& arena, AppContext&) {
     Style root; root.dir = FlexDir::Col; root.flexGrow = 1;
     root.padding = aether::theme().space.sm; root.gap = aether::theme().space.sm;
     root.align = Align::Stretch;
@@ -131,19 +126,17 @@ aether::ui::UiNode* BadUsbApp::build(aether::ui::NodeArena& arena, Runtime&) {
     });
 }
 
-void BadUsbApp::startExecution() {
-    if (scripts_.empty() || !fs_) return;
+void BadUsbApp::startExecution(IFileSystem* fs, Runtime& rt) {
+    if (scripts_.empty() || !fs) return;
     std::vector<uint8_t> data;
-    if (!fs_->read(scripts_[selected_].path, data)) return;
+    if (!fs->read(scripts_[selected_].path, data)) return;
     parsedScript_ = badusb::parse((const char*)data.data(), data.size());
     cmdIndex_ = 0;
     cmdTotal_ = parsedScript_.size();
     running_ = (cmdTotal_ > 0);
-    rt_.log().info("BadUsbApp", "executing",
+    rt.log().info("BadUsbApp", "executing",
         {{"script", scripts_[selected_].name},
          {"cmds", std::to_string(cmdTotal_)}});
-    dirty_ = true;
-    requestRedraw();
 }
 
 void BadUsbApp::execNextCommand() {

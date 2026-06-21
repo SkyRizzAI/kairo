@@ -239,7 +239,8 @@ Fix final (Fase 5): route ke WASM runtime.
 
 **Checklist Fase 3:**
 - [x] `JsAppStore::apps_` ganti ke `std::list<unique_ptr<JsApp>>`
-- [ ] `BadUsbApp` migrate dari `ComponentScreen` ke `ComponentApp`
+- [x] `BadUsbApp` migrate dari `ComponentScreen` ke `ComponentApp`; register via static di semua main.cpp
+- [x] Launcher `activate(5)` ganti ke `rt_.apps().launch("com.palanu.badusb")`
 - [x] `installFromDir()` cek `runtime` field, tolak WASM dengan error jelas (bukan crash)
 - [ ] Test: install 10+ JS apps tidak crash
 - [ ] Test: BadUSB muncul di launcher, jalan di thread sendiri
@@ -317,5 +318,5 @@ call `nema_log()`, `nema_storage_write()`, dll via imported functions.
 |------|--------|
 | Fase 1 — CLI + UI dispatch | `[x]` done (kecuali test di device) |
 | Fase 2 — Launcher icon | `[x]` done (kecuali test di device) |
-| Fase 3 — Bug fixes aktif | `[~]` partial (BadUsbApp pending) |
+| Fase 3 — Bug fixes aktif | `[x]` done (kecuali test di device) |
 | Fase 4 — WASM parity | `[ ]` not started |

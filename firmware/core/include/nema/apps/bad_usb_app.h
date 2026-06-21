@@ -1,28 +1,36 @@
 #pragma once
-#include "nema/ui/component_screen.h"
+#include "nema/app/component_app.h"
 #include "nema/apps/badusb_parser.h"
 #include <string>
 #include <vector>
 
 namespace nema {
 
+class  Runtime;
 struct IFileSystem;
 struct IUsbHid;
 
-class BadUsbApp : public ComponentScreen {
+// BadUSB BadUSB script executor — runs as a proper app on its own thread
+// (Plan 84 Fase 3). Each launch gets a fresh onStart(); execution state is
+// confined to the app thread so there are no GUI-thread data races.
+class BadUsbApp : public ComponentApp {
 public:
-    explicit BadUsbApp(Runtime& rt) : ComponentScreen(rt) {}
+    const char* id()       const override { return "com.palanu.badusb"; }
+    const char* name()     const override { return "BadUSB"; }
+    const char* category() const override { return "System"; }
+    bool fullscreen()      const override { return true; }
 
-    bool fullscreen() const override { return true; }
-
-    void onResume() override;
-    void tick(uint64_t nowMs) override;
-    void onAction(input::Action a) override;
-    aether::ui::UiNode* build(aether::ui::NodeArena& arena, Runtime& rt) override;
+protected:
+    void onStart(AppContext& ctx) override;
+    aether::ui::UiNode* build(aether::ui::NodeArena& arena, AppContext& ctx) override;
+    bool onKey(Key k, AppContext& ctx) override;
+    bool onTick(AppContext& ctx) override;
+    uint32_t tickIntervalMs() const override { return running_ ? 20u : 0u; }
+    bool capturesInput() const override { return true; }
 
 private:
-    void scanScripts();
-    void startExecution();
+    void scanScripts(IFileSystem* fs);
+    void startExecution(IFileSystem* fs, Runtime& rt);
     void execNextCommand();
 
     struct ScriptEntry { std::string path; std::string name; };
@@ -34,8 +42,7 @@ private:
     size_t cmdIndex_ = 0;
     size_t cmdTotal_ = 0;
 
-    IFileSystem* fs_  = nullptr;
-    IUsbHid*    hid_  = nullptr;
+    IUsbHid* hid_ = nullptr;
 };
 
 } // namespace nema
