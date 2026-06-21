@@ -63,18 +63,39 @@ static UiNode* findScrollAncestor(UiNode* n, const UiNode* target) {
     return nullptr;
 }
 
+// Find the immediate parent of `target` in the tree (singly-linked siblings).
+static UiNode* parentOf(UiNode* n, const UiNode* target) {
+    if (!n) return nullptr;
+    for (UiNode* k = n->firstChild; k; k = k->nextSibling) {
+        if (k == target) return n;
+        if (UiNode* p = parentOf(k, target)) return p;
+    }
+    return nullptr;
+}
+
 static bool ensureVisible(UiNode* root, const UiNode* foc) {
     UiNode* sn = findScrollAncestor(root, foc);
     if (!sn || !sn->scroll || sn->style.dir != FlexDir::Col) return false;
     const int pad = sn->style.padding;
     int top    = sn->y + pad;
     int before = sn->scroll->scrollMain;
-    // Smart-scroll (Plan 79): web-style top-align — bring the focused stop's top to
-    // the viewport top on every focus change, clamped to [0, maxScroll]. Combined
-    // with focusInert landmarks this lets button nav reach a trailing info block
-    // (the clamp shows the very bottom of content when the last stop can't reach the
-    // top). Entering a new section snaps its first stop to the top.
-    int sc = before + (foc->y - top);
+    // Smart-scroll (Plan 79): web-style, section-aware top-align. Align the focused
+    // stop's top to the viewport top, but EXTEND the target upward over the run of
+    // non-focusable siblings immediately before it — its section header. So the
+    // first item of a section snaps the *header* to the top (not the item), which
+    // keeps section titles visible and lets Prev walk all the way back to scroll 0
+    // instead of getting stuck with the leading header pushed off-screen. Clamped
+    // to [0, maxScroll] (the last stop still reveals the very bottom of content).
+    int alignY = foc->y;
+    if (UiNode* par = parentOf(root, foc)) {
+        UiNode* runStart = nullptr;   // start of the non-focusable run before foc
+        for (UiNode* k = par->firstChild; k && k != foc; k = k->nextSibling) {
+            if (k->focusable) runStart = nullptr;   // a focusable sibling resets it
+            else if (!runStart) runStart = k;       // header/label run begins
+        }
+        if (runStart) alignY = runStart->y;
+    }
+    int sc = before + (alignY - top);
     if (sc < 0) sc = 0;
     int maxS = sn->scroll->maxScroll();
     if (sc > maxS) sc = maxS;

@@ -240,7 +240,14 @@ UiNode* ListItemRow(NodeArena& a, const ListEntry& e) {
     if (e.value && *e.value) add(Text(a, e.value, TextRole::Body));
     if (e.chevron)           add(Text(a, ">", TextRole::Body));
     add(hspace(a, 4));                                  // clear the right rounding
-    if (row) row->focusable = (e.onPress != nullptr);   // display-only rows aren't selectable
+    // Smart-scroll (Plan 79): every row is a focus STOP so button nav can scroll
+    // through all of them. Interactive rows (onPress) highlight + activate normally;
+    // display-only rows become focusInert landmarks — reachable so the viewport can
+    // scroll to a trailing info block, but no select box and no Activate action.
+    if (row) {
+        row->focusable  = true;
+        row->focusInert = (e.onPress == nullptr);
+    }
     return row;
 }
 
