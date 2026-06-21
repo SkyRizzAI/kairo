@@ -139,11 +139,28 @@ void Esp32Platform::postRegister(Runtime& rt) {
     rt.capabilities().setState(caps::Storage,
                                fsOk ? ResourceState::Available : ResourceState::Fault);
     if (fsOk) {
-        // Seed once on a fresh filesystem; never clobber the user's files on later
-        // boots (this is the whole point of persistence).
+        // Plan 83: one-time migration /badusb/ → /data/com.palanu.badusb/
+        // (old path from pre-83 firmware; rename preserves user scripts)
+        {
+            std::vector<FsEntry> probe;
+            bool oldExists = rootFs_.list("/badusb", probe);
+            std::vector<FsEntry> newProbe;
+            bool newExists = rootFs_.list("/data/com.palanu.badusb", newProbe);
+            if (oldExists && !newExists) {
+                rt.log().info("Esp32Platform", "migrating /badusb → /data/com.palanu.badusb");
+                rootFs_.mkdir("/data");
+                rootFs_.rename("/badusb", "/data/com.palanu.badusb");
+            }
+        }
+
+        // Seed directory structure. mkdir() is idempotent — safe on every boot.
+        rootFs_.mkdir("/system");
+        rootFs_.mkdir("/system/assets");
+        rootFs_.mkdir("/system/assets/anims");
         rootFs_.mkdir("/apps");
         rootFs_.mkdir("/data");
-        rootFs_.mkdir("/badusb");
+        rootFs_.mkdir("/data/com.palanu.badusb");
+
         std::string demo = "REM Hello World — BadUSB demo\n"
                            "DELAY 500\n"
                            "GUI r\n"
@@ -153,7 +170,7 @@ void Esp32Platform::postRegister(Runtime& rt) {
                            "DELAY 500\n"
                            "STRINGLN Hello from Palanu BadUSB!\n";
         // Factory scripts — always written so they update after firmware upgrades.
-        rootFs_.write("/badusb/demo.dd",
+        rootFs_.write("/data/com.palanu.badusb/demo.dd",
                       (const uint8_t*)demo.data(), demo.size());
         std::string rickroll =
             "REM Rickroll Mac — CMD+Space, Terminal, open Brave, fullscreen\n"
@@ -167,7 +184,7 @@ void Esp32Platform::postRegister(Runtime& rt) {
             "ENTER\n"
             "DELAY 2000\n"
             "STRING f\n";
-        rootFs_.write("/badusb/rickroll_mac.dd",
+        rootFs_.write("/data/com.palanu.badusb/rickroll_mac.dd",
                       (const uint8_t*)rickroll.data(), rickroll.size());
         std::vector<uint8_t> probe;
         if (!rootFs_.read("/readme.txt", probe)) {

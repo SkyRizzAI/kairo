@@ -8,7 +8,7 @@
 
 namespace nema::shell {
 
-static const char kDefaultAnimPath[] = "anims/laptop.panim";
+static const char kDefaultAnimPath[] = "system/assets/anims/laptop.panim";
 
 LiveWallpaperDesktop::LiveWallpaperDesktop(nema::Runtime& rt) : rt_(rt) {}
 

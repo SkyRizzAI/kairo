@@ -1,6 +1,6 @@
 // Auto-generated from firmware/assets/anims/laptop.panim — do not edit by hand.
-// Seeded into the WASM/host MemFileSystem as "anims/laptop.panim" so the
-// desktop live-wallpaper has a default animation even without a real filesystem.
+// Seeded into the WASM/host MemFileSystem as "system/assets/anims/laptop.panim"
+// so the desktop live-wallpaper has a default animation even without a real filesystem.
 // Regenerate: cd firmware/assets/anims && xxd -i laptop.panim
 #pragma once
 #include <cstdint>

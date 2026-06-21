@@ -76,12 +76,16 @@ void WasmPlatform::registerDrivers(Runtime& rt) {
                                 "See examples/ folder for sample apps.\n"
                                 "Copy .papp folders to /apps/ or /sd/apps/.\n");
     // Seed desktop animation — laptop.panim (128×51, 8 frames, 6.4KB).
-    rootFs_.mkdir("/anims");
-    rootFs_.write("/anims/laptop.panim", kDolphinSleepPanim, kDolphinSleepPanimLen);
-    // Create empty scan roots (user uploads apps here)
+    rootFs_.mkdir("/system");
+    rootFs_.mkdir("/system/assets");
+    rootFs_.mkdir("/system/assets/anims");
+    rootFs_.write("/system/assets/anims/laptop.panim", kDolphinSleepPanim, kDolphinSleepPanimLen);
+    // Create empty scan + data roots
     rootFs_.mkdir("/apps");
     rootFs_.mkdir("/data");
-    sdFs_.mkdir("/apps");   // appears as /sd/apps in VFS
+    sdFs_.mkdir("/apps");       // appears as /sd/apps in VFS
+    sdFs_.mkdir("/assets");     // appears as /sd/assets in VFS
+    sdFs_.mkdir("/assets/anims");
     sdFs_.seed("/card.txt", "Drop .papp folders here. Scanned recursively.\n");
     remote_.attachFs(vfs_);
 

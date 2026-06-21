@@ -15,13 +15,25 @@
 #include "nema/ui/aether_abi.h"
 #include <string>
 #include <utility>
+#include <cstdint>
 
 namespace {
+
+// djb2 hash → 8-char hex string, always fits in NVS 15-char namespace limit.
+// Bundle IDs like "com.palanu.badusb" (18 chars) would silently truncate in NVS
+// without this — using the value directly was a silent hardware bug.
+static std::string nvsNs(const std::string& bundleId) {
+    uint32_t h = 5381;
+    for (char c : bundleId) h = ((h << 5) + h) + (uint8_t)c;
+    char buf[9];
+    snprintf(buf, sizeof(buf), "%08x", h);
+    return buf;
+}
 
 class NemaHostImpl : public HostApi {
 public:
     NemaHostImpl(nema::Runtime& rt, std::string appId)
-        : rt_(rt), appId_(std::move(appId)) {}
+        : rt_(rt), appId_(std::move(appId)), ns_(nvsNs(appId_)) {}
 
     // ── nema:sys/log ──────────────────────────────────────────────────
 
@@ -72,28 +84,28 @@ public:
 
     std::optional<std::string> kv_get(std::string_view key) override {
         std::string v;
-        if (rt_.config().getString(appId_.c_str(), std::string(key).c_str(), v))
+        if (rt_.config().getString(ns_.c_str(), std::string(key).c_str(), v))
             return v;
         return std::nullopt;
     }
 
     void kv_set(std::string_view key, std::string_view value) override {
-        rt_.config().setString(appId_.c_str(), std::string(key).c_str(), std::string(value));
+        rt_.config().setString(ns_.c_str(), std::string(key).c_str(), std::string(value));
     }
 
     std::optional<int64_t> kv_get_int(std::string_view key) override {
         int64_t v = 0;
-        if (rt_.config().getInt(appId_.c_str(), std::string(key).c_str(), v))
+        if (rt_.config().getInt(ns_.c_str(), std::string(key).c_str(), v))
             return v;
         return std::nullopt;
     }
 
     void kv_set_int(std::string_view key, int64_t value) override {
-        rt_.config().setInt(appId_.c_str(), std::string(key).c_str(), value);
+        rt_.config().setInt(ns_.c_str(), std::string(key).c_str(), value);
     }
 
     bool kv_remove(std::string_view key) override {
-        return rt_.config().remove(appId_.c_str(), std::string(key).c_str());
+        return rt_.config().remove(ns_.c_str(), std::string(key).c_str());
     }
 
     // ── nema:net/http ─────────────────────────────────────────────────
@@ -196,6 +208,7 @@ public:
 private:
     nema::Runtime& rt_;
     std::string    appId_;
+    std::string    ns_;    // 8-char djb2 hash of appId_ — fits NVS 15-char namespace limit
 };
 
 } // anon namespace

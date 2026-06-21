@@ -7,7 +7,7 @@
 namespace nema::anim {
 
 const DolphinEntry DOLPHIN_ENTRIES[] = {
-    { "Laptop", "anims/laptop.panim", 128, 51, 2 },
+    { "Laptop", "system/assets/anims/laptop.panim", 128, 51, 2 },
 };
 
 const size_t DOLPHIN_ENTRIES_COUNT = sizeof(DOLPHIN_ENTRIES) / sizeof(DOLPHIN_ENTRIES[0]);

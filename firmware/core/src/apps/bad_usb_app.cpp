@@ -29,12 +29,12 @@ void BadUsbApp::scanScripts() {
     scripts_.clear();
     if (!fs_) return;
     std::vector<FsEntry> entries;
-    if (!fs_->list("/badusb", entries)) return;
+    if (!fs_->list("/data/com.palanu.badusb", entries)) return;
     for (auto& e : entries) {
         if (e.isDir) continue;
         std::string nm = e.name;
         if (nm.size() > 3 && nm.substr(nm.size() - 3) == ".dd")
-            scripts_.push_back({"/badusb/" + e.name, nm});
+            scripts_.push_back({"/data/com.palanu.badusb/" + e.name, nm});
     }
 }
 
