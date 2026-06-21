@@ -1,9 +1,9 @@
 // Plan 81 — Shell factory: config name → concrete skin. The ONLY place that
 // knows the concrete classes; adding a skin is one new include + one line here.
-#include "nema/shell/shell_factory.h"
-#include "nema/shell/desktop_livewall.h"
-#include "nema/shell/launcher_playstation.h"
-#include "nema/shell/launcher_wii.h"
+#include "aether/shell/shell_factory.h"
+#include "aether/shell/desktop_livewall.h"
+#include "aether/shell/launcher_playstation.h"
+#include "aether/shell/launcher_wii.h"
 #include <cstring>
 
 namespace nema::shell {

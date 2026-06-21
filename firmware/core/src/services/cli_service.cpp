@@ -563,10 +563,10 @@ void registerCoreCliCommands(CliService& cli, Runtime& rt) {
                 if (args.size() < 4) { out("usage: config set <ns> <key> <value>"); return; }
                 cfg->setString(ns.c_str(), key.c_str(), args[3]);
                 out("set " + ns + "/" + key + " = " + args[3]);
-                // Note: presentation settings (e.g. display/theme) are owned by the
+                // Note: presentation settings (e.g. aether/theme) are owned by the
                 // display server (ADR 0002). They apply on next boot, or live via
                 // Settings → Display. The kernel CLI just persists the value here.
-                if (ns == "display" && key == "theme") {
+                if (ns == "aether" && key == "theme") {
                     r->view().requestRedraw();
                     out("(theme saved — applies on reboot or via Settings)");
                 }

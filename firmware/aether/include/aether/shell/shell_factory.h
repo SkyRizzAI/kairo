@@ -1,8 +1,8 @@
 #pragma once
-// Plan 81 — Shell factory: the one place that maps a config name → a concrete
-// desktop/launcher skin. Adding a skin = one new class + one line here.
-#include "nema/shell/desktop_theme.h"
-#include "nema/shell/launcher_theme.h"
+// Plan 81 — Shell factory: maps a config name → a concrete desktop/launcher skin.
+// Adding a skin = one new class + one line here.
+#include "aether/shell/desktop_theme.h"
+#include "aether/shell/launcher_theme.h"
 #include <memory>
 
 namespace nema { class Runtime; }

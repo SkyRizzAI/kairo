@@ -91,7 +91,7 @@ void GuiService::threadEntry(void* self) {
 void GuiService::refreshStatus(uint64_t now) {
     // Status Bar ON/OFF (Plan 81) — read every frame so the toggle is immediate;
     // the rest of the status refresh is throttled to 10s below.
-    status_.visible = rt_.config().getIntOr("display", "statusbar", 1) != 0;
+    status_.visible = rt_.config().getIntOr("aether", "statusbar", 1) != 0;
     nema::display::statusBarVisible = status_.visible;  // sync layout global
     if (lastStatusMs_ != 0 && now - lastStatusMs_ < 10000) return;
     lastStatusMs_ = now;

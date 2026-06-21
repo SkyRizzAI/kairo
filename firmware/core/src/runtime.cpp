@@ -102,7 +102,7 @@ void Runtime::registerServices() {
         if (auto* disp = container_->resolve<IDisplayDriver>()) {
             float scale = 0.0f;
             if (auto* cfg = container_->resolve<IConfigStore>()) {
-                int64_t stored = cfg->getIntOr("display", "scale", 0);
+                int64_t stored = cfg->getIntOr("aether", "scale", 0);
                 if (stored > 10) {
                     scale = stored / 100.0f;  // new format: value*100 (e.g. 125 → 1.25)
                 } else if (stored >= 1) {

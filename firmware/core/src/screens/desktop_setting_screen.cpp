@@ -1,6 +1,6 @@
 // Plan 81 — DesktopSettingScreen implementation.
 #include "nema/screens/desktop_setting_screen.h"
-#include "nema/shell/desktop_theme.h"
+#include "aether/shell/desktop_theme.h"
 #include "nema/runtime.h"
 #include "nema/ui/view_dispatcher.h"
 #include "nema/config/config_store.h"

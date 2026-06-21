@@ -1,6 +1,6 @@
 // Plan 81 — FitMode/Anchor ↔ config-string tables, shared by the wallpaper skin
 // and DesktopSettingScreen so the persisted value and the cycle list never drift.
-#include "nema/shell/desktop_theme.h"
+#include "aether/shell/desktop_theme.h"
 #include <cstring>
 
 namespace nema::shell {

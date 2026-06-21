@@ -50,7 +50,7 @@ int SleepSettingsScreen::findLockIdx() const {
 }
 
 int SleepSettingsScreen::findThemeIdx() const {
-    std::string cur = rt_.config().getString("display", "theme", kThemeNames[0]);
+    std::string cur = rt_.config().getString("aether", "theme", kThemeNames[0]);
     for (int i = 0; i < kThemeCount; i++)
         if (cur == kThemeNames[i]) return i;
     return 0;   // unknown / legacy "default" → flipper (index 0)
@@ -82,7 +82,7 @@ void SleepSettingsScreen::applyTheme(int idx) {
     // that's the active server. Persisted to config either way (applied at boot).
     if (auto* srv = rt_.displayServer(); srv && std::strcmp(srv->name(), "aether") == 0)
         static_cast<AetherServer*>(srv)->setTheme(*t);
-    rt_.config().setString("display", "theme", name);
+    rt_.config().setString("aether", "theme", name);
     rt_.view().requestRedraw();
 }
 
@@ -107,31 +107,31 @@ void SleepSettingsScreen::cycleScale(int dir) {
     // each frame), so set both for an immediate effect, then persist for boot.
     if (auto* srv = rt_.displayServer()) srv->setServerScale(s);
     rt_.canvas().setScale(s);
-    rt_.config().setInt("display", "scale", (int64_t)(s * 100.0f + 0.5f));
+    rt_.config().setInt("aether", "scale", (int64_t)(s * 100.0f + 0.5f));
     rt_.view().requestRedraw();
 }
 void SleepSettingsScreen::toggleFps() {
     bool on = !rt_.showFps();
     rt_.setShowFps(on);
-    rt_.config().setInt("debug", "fps", on ? 1 : 0);
+    rt_.config().setInt("aether", "fps", on ? 1 : 0);
 }
 // Shell appearance rows (Plan 81). Each persists the selected name; the Desktop /
 // Launcher screens re-read it on resume, so the new skin shows next time they open.
 void SleepSettingsScreen::cycleDesktop(int dir) {
     desktopIdx_ = (desktopIdx_ + dir + kDesktopCount) % kDesktopCount;
-    rt_.config().setString("display", "desktop", kDesktopNames[desktopIdx_]);
+    rt_.config().setString("aether", "desktop", kDesktopNames[desktopIdx_]);
 }
 void SleepSettingsScreen::cycleLauncher(int dir) {
     launcherIdx_ = (launcherIdx_ + dir + kLauncherCount) % kLauncherCount;
-    rt_.config().setString("display", "launcher", kLauncherNames[launcherIdx_]);
+    rt_.config().setString("aether", "launcher", kLauncherNames[launcherIdx_]);
 }
 void SleepSettingsScreen::cycleAsset(int dir) {
     assetIdx_ = (assetIdx_ + dir + kAssetCount) % kAssetCount;
-    rt_.config().setString("display", "assets", kAssetNames[assetIdx_]);
+    rt_.config().setString("aether", "assets", kAssetNames[assetIdx_]);
 }
 void SleepSettingsScreen::toggleStatusBar() {
-    bool on = rt_.config().getIntOr("display", "statusbar", 1) == 0;  // flip
-    rt_.config().setInt("display", "statusbar", on ? 1 : 0);
+    bool on = rt_.config().getIntOr("aether", "statusbar", 1) == 0;  // flip
+    rt_.config().setInt("aether", "statusbar", on ? 1 : 0);
     rt_.view().requestRedraw();
 }
 void SleepSettingsScreen::openDesktopSetting() {
@@ -155,9 +155,9 @@ void SleepSettingsScreen::onResume() {
     lockIdx_  = findLockIdx();
     themeIdx_ = findThemeIdx();
     scaleIdx_ = findScaleIdx();
-    desktopIdx_  = findNameIdx("display", "desktop",  kDesktopNames,  kDesktopCount,  kDesktopNames[0]);
-    launcherIdx_ = findNameIdx("display", "launcher", kLauncherNames, kLauncherCount, kLauncherNames[0]);
-    assetIdx_    = findNameIdx("display", "assets",   kAssetNames,    kAssetCount,    kAssetNames[0]);
+    desktopIdx_  = findNameIdx("aether", "desktop",  kDesktopNames,  kDesktopCount,  kDesktopNames[0]);
+    launcherIdx_ = findNameIdx("aether", "launcher", kLauncherNames, kLauncherCount, kLauncherNames[0]);
+    assetIdx_    = findNameIdx("aether", "assets",   kAssetNames,    kAssetCount,    kAssetNames[0]);
 
     // Format display info once on enter — these don't change while the screen is open.
     auto& c = rt_.canvas();
@@ -204,7 +204,7 @@ UiNode* SleepSettingsScreen::build(NodeArena& a, Runtime&) {
             nav  ("Desktop Setting",                             onDesktopSetting),
             input("Launcher",       kLauncherLabels[launcherIdx_], launcherAdj),
             input("Assets Pack",    kAssetNames[assetIdx_],     assetAdj),
-            input("Status Bar",     rt_.config().getIntOr("display", "statusbar", 1) ? "ON" : "OFF",
+            input("Status Bar",     rt_.config().getIntOr("aether", "statusbar", 1) ? "ON" : "OFF",
                                                                 statusAdj),
             input("UI Scale",       kScaleLabels[scaleIdx_],    scaleAdj),
             ListSection(a, "Info"),

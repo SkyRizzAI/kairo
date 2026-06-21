@@ -1,6 +1,6 @@
 // Plan 81 — Live wallpaper desktop skin implementation.
-#include "nema/shell/desktop_livewall.h"
-#include "nema/shell/blit.h"
+#include "aether/shell/desktop_livewall.h"
+#include "aether/shell/blit.h"
 #include "nema/ui/canvas.h"
 #include "nema/runtime.h"
 #include "nema/config/config_store.h"

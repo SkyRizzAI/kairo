@@ -7,8 +7,8 @@
 // GUI draws the bar; the wallpaper fills the content area); when disabled it goes
 // fullscreen edge-to-edge.
 #include "nema/ui/component_screen.h"
-#include "nema/screens/launcher_screen.h"
-#include "nema/shell/desktop_theme.h"
+#include "aether/screens/launcher_screen.h"
+#include "aether/shell/desktop_theme.h"
 #include <memory>
 
 namespace nema {

@@ -1,6 +1,6 @@
 // Plan 81 — LauncherScreen implementation.
-#include "nema/screens/launcher_screen.h"
-#include "nema/shell/shell_factory.h"
+#include "aether/screens/launcher_screen.h"
+#include "aether/shell/shell_factory.h"
 #include "nema/ui/canvas.h"
 #include "nema/ui/icon_pack.h"
 #include "nema/ui/view_dispatcher.h"
@@ -49,7 +49,7 @@ void LauncherScreen::onResume() {
     ComponentScreen::onResume();
     buildEntries();
 
-    std::string name = rt_.config().getString("display", "launcher", shell::kDefaultLauncher);
+    std::string name = rt_.config().getString("aether", "launcher", shell::kDefaultLauncher);
     if (!theme_ || name != theme_->name())
         theme_ = shell::makeLauncher(name.c_str());
 

@@ -1,10 +1,6 @@
 #pragma once
 // Plan 81 — Live wallpaper desktop skin ("livewal").
-//
-// Paints a full-screen animated 1-bit wallpaper. For now the source is an
-// existing dolphin showcase animation (no new art to convert). Placement honours
-// the configured FitMode + Anchor (read from the "desktop" config namespace).
-#include "nema/shell/desktop_theme.h"
+#include "aether/shell/desktop_theme.h"
 #include "nema/ui/animation_player.h"
 #include "nema/ui/dolphin_anim.h"
 
@@ -25,7 +21,6 @@ private:
     nema::Runtime& rt_;
     FitMode fit_    = FitMode::Fit;
     Anchor  anchor_ = Anchor::Center;
-    // Wallpaper source — reuse the first dolphin showcase animation (Plan 81).
     nema::anim::AnimationPlayer player_{ *nema::anim::DOLPHIN_SHOWCASE[0] };
 };
 

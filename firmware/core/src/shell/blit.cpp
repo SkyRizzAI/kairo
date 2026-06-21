@@ -1,5 +1,5 @@
 // Plan 81 — shared 1-bit blit helpers.
-#include "nema/shell/blit.h"
+#include "aether/shell/blit.h"
 #include "nema/ui/canvas.h"
 
 namespace nema::shell {

@@ -3,8 +3,8 @@
 // 2-column grid of "channel" tiles, each a rounded box with a 1px drop shadow
 // (offset +1,+1) and a centered, scaled-up icon over a label. The focused channel
 // is inverted (filled). A vertical scrollbar appears when the grid overflows.
-#include "nema/shell/launcher_wii.h"
-#include "nema/shell/blit.h"
+#include "aether/shell/launcher_wii.h"
+#include "aether/shell/blit.h"
 #include "nema/ui/canvas.h"
 #include "nema/ui/draw.h"
 #include "nema/ui/text_style.h"

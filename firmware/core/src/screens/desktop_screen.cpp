@@ -1,6 +1,6 @@
 // Plan 81 — DesktopScreen implementation.
-#include "nema/screens/desktop_screen.h"
-#include "nema/shell/shell_factory.h"
+#include "aether/screens/desktop_screen.h"
+#include "aether/shell/shell_factory.h"
 #include "nema/ui/canvas.h"
 #include "nema/ui/ui_constants.h"
 #include "nema/ui/animation_manager.h"
@@ -17,9 +17,9 @@ DesktopScreen::DesktopScreen(Runtime& rt)
 
 void DesktopScreen::onResume() {
     ComponentScreen::onResume();
-    statusBar_ = rt_.config().getIntOr("display", "statusbar", 1) != 0;
+    statusBar_ = rt_.config().getIntOr("aether", "statusbar", 1) != 0;
 
-    std::string name = rt_.config().getString("display", "desktop", shell::kDefaultDesktop);
+    std::string name = rt_.config().getString("aether", "desktop", shell::kDefaultDesktop);
     if (!theme_ || name != theme_->name()) {
         if (theme_)
             if (auto* p = theme_->player())

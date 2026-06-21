@@ -18,6 +18,9 @@ namespace nema {
 
 class Canvas;
 class ViewDispatcher;
+struct IScreen;
+class CliService;
+class Runtime;
 struct StatusBarData;
 struct UiSdkDescriptor;
 struct IUiBindingHost;
@@ -56,6 +59,23 @@ struct IDisplayServer {
     // the shared Canvas.
     float serverScale() const { return serverScale_; }
     void  setServerScale(float s) { serverScale_ = (s >= 1.0f) ? s : 1.0f; }
+
+    // ── Android-model server ownership (Plan 82) ──────────────────────
+    // Each server owns its config namespace, CLI commands, and Settings screen.
+    // Core only touches generic keys (display/boot, dpm/*). Everything else lives
+    // under the server's own namespace returned by configNs() ("aether", "fbcon").
+
+    // Config namespace this server reads/writes. Defaults to name() so subclasses
+    // that don't override still get an isolated namespace.
+    virtual const char* configNs() const { return name(); }
+
+    // Called once after the server is registered with the Runtime. Register any
+    // server-specific CLI commands here (e.g. "aether theme", "aether launcher").
+    virtual void onRegisterCli(CliService&, Runtime&) {}
+
+    // Create and return a server-specific Settings screen, or nullptr if none.
+    // The generic Settings screen calls this and shows the result as a sub-entry.
+    virtual IScreen* makeSettings(Runtime&) { return nullptr; }
 
     // ── Plan 50: UI SDK ───────────────────────────────────────────────
 

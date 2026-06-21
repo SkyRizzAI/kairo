@@ -6,7 +6,7 @@
 // (PlayStation carousel ↔ Wii grid) via ILauncherTheme, selected from config.
 // Apps are NOT listed here — "Apps" is one entry that opens AppListScreen.
 #include "nema/ui/component_screen.h"
-#include "nema/shell/launcher_theme.h"
+#include "aether/shell/launcher_theme.h"
 #include "nema/screens/app_list_screen.h"
 #include "nema/screens/file_browser_screen.h"
 #include "nema/screens/dolphin_demo.h"

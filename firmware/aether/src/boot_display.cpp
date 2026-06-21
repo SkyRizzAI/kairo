@@ -27,8 +27,8 @@ void bootDisplay(nema::Runtime& rt) {
     // "aether" to boot straight into the UI.
     bool bootAether = false;
     if (auto* cfg = rt.container().resolve<nema::IConfigStore>()) {
-        aetherSrv.setShowFps(cfg->getIntOr("debug", "fps", 0) != 0);
-        std::string t = cfg->getString("display", "theme", "default");
+        aetherSrv.setShowFps(cfg->getIntOr("aether", "fps", 0) != 0);
+        std::string t = cfg->getString("aether", "theme", "default");
         if (t == "compact")     aetherSrv.setTheme(aether::compactTheme());
         else if (t == "large")  aetherSrv.setTheme(aether::largeTheme());
         else                    aetherSrv.setTheme(aether::defaultTheme());

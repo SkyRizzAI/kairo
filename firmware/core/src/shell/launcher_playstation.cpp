@@ -4,8 +4,8 @@
 // strip of icon tiles. The focused tile is enlarged + filled, with a "Launch"
 // action label beneath it and the focused item's NAME to its right; neighbours are
 // small icon tiles. Position dots at the bottom. No big banner header.
-#include "nema/shell/launcher_playstation.h"
-#include "nema/shell/blit.h"
+#include "aether/shell/launcher_playstation.h"
+#include "aether/shell/blit.h"
 #include "nema/ui/canvas.h"
 #include "nema/ui/draw.h"
 #include "nema/ui/text_style.h"

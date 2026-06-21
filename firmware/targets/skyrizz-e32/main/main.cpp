@@ -12,7 +12,7 @@
 #include "nema/apps/hello_app.h"
 #include "nema/apps/bad_usb_app.h"
 #include "nema/apps/dolphin_app.h"
-#include "nema/screens/desktop_screen.h"
+#include "aether/screens/desktop_screen.h"
 #include "nema/ui/view_dispatcher.h"
 #include "aether/boot.h"
 

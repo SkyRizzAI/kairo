@@ -1,6 +1,6 @@
 #pragma once
 // Plan 81 — shared 1-bit blit helpers for the shell skins.
-#include "nema/shell/desktop_theme.h"   // FitMode / Anchor
+#include "aether/shell/desktop_theme.h"   // FitMode / Anchor
 #include <cstdint>
 
 namespace nema { class Canvas; }
