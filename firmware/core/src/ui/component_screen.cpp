@@ -36,8 +36,8 @@ void ComponentScreen::draw(Canvas& c) {
     uint16_t h = c.height();
     // Normal mode leaves the top strip for the status bar (drawn by GuiService);
     // fullscreen screens own the whole canvas.
-    int16_t  oy = fullscreen() ? 0 : (int16_t)nema::display::CONTENT_Y;
-    uint16_t ah = fullscreen() ? h : (uint16_t)(h - nema::display::CONTENT_Y);
+    int16_t  oy = fullscreen() ? 0 : (int16_t)nema::display::contentY();
+    uint16_t ah = fullscreen() ? h : (uint16_t)(h - nema::display::contentY());
     aether::ui::renderComponentFrame(root_, c, state_, aether::ui::roleMetrics(), 0, oy, w, ah);
 }
 

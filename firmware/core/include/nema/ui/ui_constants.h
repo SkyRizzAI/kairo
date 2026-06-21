@@ -14,13 +14,20 @@ constexpr uint16_t CHAR_H = 9;   // 8px glyph + 1px spacing
 constexpr uint16_t STATUS_Y  = 3;   // status bar top — 2px inner padding from border
 constexpr uint16_t STATUS_H  = 9;   // 1 char row
 constexpr uint16_t SEP1_Y    = STATUS_Y + STATUS_H;  // separator after status
-constexpr uint16_t CONTENT_Y = SEP1_Y + 2;
+constexpr uint16_t CONTENT_Y = SEP1_Y + 2;           // full value when status bar ON
+
+// Set to false by GuiService when display/statusbar=0; read by all layout code.
+// C++17 inline variable — one definition shared across all TUs.
+inline bool statusBarVisible = true;
+
+// Dynamic content origin — 0 when status bar is hidden (reclaims the top strip).
+inline uint16_t contentY() { return statusBarVisible ? CONTENT_Y : 0; }
 
 // Bottom-anchored layout is RESOLUTION-DEPENDENT — compute from canvas height.
 // Pass c.height() (logical). Never hardcode a screen size.
 inline uint16_t footerY    (uint16_t h) { return (uint16_t)(h - CHAR_H - 1); }
 inline uint16_t sep2Y      (uint16_t h) { return (uint16_t)(h - CHAR_H - 3); }
-inline uint16_t contentH   (uint16_t h) { return (uint16_t)(sep2Y(h) - CONTENT_Y); }
+inline uint16_t contentH   (uint16_t h) { return (uint16_t)(sep2Y(h) - contentY()); }
 inline uint16_t contentRows(uint16_t h) { return contentH(h) / CHAR_H; }
 
 // Character columns that fit a given canvas width.

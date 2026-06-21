@@ -38,7 +38,7 @@ void PlayStationLauncher::draw(nema::Canvas& c, const LauncherModel& m, int curs
     if (n <= 0) return;
     if (cursor < 0) cursor = 0; else if (cursor >= n) cursor = n - 1;
 
-    uint16_t top = nema::display::CONTENT_Y;
+    uint16_t top = nema::display::contentY();
 
     // Device title (small, Body) top-left.
     {

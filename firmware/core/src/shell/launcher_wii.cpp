@@ -61,7 +61,7 @@ void WiiLauncher::draw(nema::Canvas& c, const LauncherModel& m, int cursor) {
     const int cols = 2;
     uint8_t  gap = t.space.sm;
     uint8_t  sbW = 4;                                   // scrollbar gutter
-    uint16_t top = nema::display::CONTENT_Y;
+    uint16_t top = nema::display::contentY();
     uint16_t botPad = t.space.lg;
     uint16_t areaH = (H > top + botPad) ? (uint16_t)(H - top - botPad) : 0;
 

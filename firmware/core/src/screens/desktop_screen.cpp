@@ -46,14 +46,8 @@ void DesktopScreen::onPause() {
 void DesktopScreen::draw(Canvas& c) {
     if (!theme_) return;
     uint16_t W = c.width(), H = c.height();
-    if (statusBar_) {
-        // Normal mode: GuiService already drew the status bar; fill below it.
-        uint16_t cy = nema::display::CONTENT_Y;
-        theme_->draw(c, 0, cy, W, (uint16_t)(H > cy ? H - cy : 0));
-    } else {
-        c.clear(false);
-        theme_->draw(c, 0, 0, W, H);
-    }
+    uint16_t cy = nema::display::contentY();
+    theme_->draw(c, 0, cy, W, (uint16_t)(H > cy ? H - cy : 0));
 }
 
 void DesktopScreen::onAction(input::Action a) {

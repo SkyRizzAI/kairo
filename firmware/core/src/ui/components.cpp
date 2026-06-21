@@ -15,7 +15,7 @@ using namespace nema;  // Plan 80: nema core symbols (Canvas/Key/input/anim/font
 uint16_t drawTitle(Canvas& c, const char* title) {
     const aether::StyleTokens& t = aether::theme();
     uint16_t bannerH = (uint16_t)(measureTextH(TextRole::Title) + 2 * t.space.xs);
-    uint16_t bannerY = nema::display::CONTENT_Y;
+    uint16_t bannerY = nema::display::contentY();
     aether::ui::draw::banner(c, 0, bannerY, c.width(), bannerH, title, false);
     return (uint16_t)(bannerY + bannerH + t.space.xs);
 }
