@@ -121,8 +121,10 @@ UiNode* RemoteSettingsScreen::build(NodeArena& a, Runtime& rt) {
     append(Toggle(a, "Remote Enabled", en, cbToggleEnabled, this));
 
     append(ListSection(a, "Security"));
-    append(ListSection(a, pw ? "Password set — privileged channels locked"
-                             : "No password — privileged channels open"));
+    {
+        ListEntry e; e.label = "Password"; e.value = pw ? "Set" : "None";
+        append(ListItemRow(a, e));
+    }
     {
         ListEntry e;
         e.label   = pw ? "Change Password" : "Set Password";
@@ -136,10 +138,11 @@ UiNode* RemoteSettingsScreen::build(NodeArena& a, Runtime& rt) {
         append(ListItemRow(a, e));
     }
 
-    std::snprintf(statusBuf_, sizeof(statusBuf_), "Authorized devices: %d", (int)st->tokenCount());
     append(ListSection(a, "Sessions"));
     {
-        ListEntry e; e.label = statusBuf_;
+        int n = (int)st->tokenCount();
+        std::snprintf(statusBuf_, sizeof(statusBuf_), "%d", n);
+        ListEntry e; e.label = "Authorized Devices"; e.value = statusBuf_;
         append(ListItemRow(a, e));
     }
     if (st->tokenCount() > 0) {
