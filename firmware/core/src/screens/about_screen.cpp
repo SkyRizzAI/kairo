@@ -38,7 +38,7 @@ public:
     }
 };
 
-AboutScreen::AboutScreen(Runtime& rt) : ComponentScreen(rt, 96) {
+AboutScreen::AboutScreen(Runtime& rt) : ComponentScreen(rt, 320) {
     aboutModal_ = std::unique_ptr<ComponentScreen>(new AboutModal(rt));
 }
 
