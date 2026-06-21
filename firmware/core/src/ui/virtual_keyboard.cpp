@@ -4,45 +4,60 @@
 #include "nema/input/input_action.h"
 #include <cstring>
 #include <cstdio>
+#include <algorithm>
 
 namespace nema {
 } // namespace nema
 
 namespace aether::ui {
-using namespace nema;  // Plan 80: nema core symbols (Canvas/Key/input/anim/fonts) in scope
+using namespace nema;
 
-// ── Char grid (rows 0-2) ──────────────────────────────────────────────────
-// Row 0: 10 keys.  Row 1: 9 keys (cols 0-8) + DEL (col 9).
-// Row 2 ALPHA: CAPS (col 0) + 9 chars (cols 1-9).  Row 2 NUM: 10 chars.
-static const char CHARS[3][3][11] = {
-    { "QWERTYUIOP", "ASDFGHJKL", "ZXCVBNM,." },   // Upper
-    { "qwertyuiop", "asdfghjkl", "zxcvbnm,." },   // lower
-    { "1234567890", "@#$%!&*()", "-_+=;:'/?." },   // Num+symbols
+// ── Char grid ─────────────────────────────────────────────────────────────
+// Row 0: 10 keys.  Row 1: 9 keys (cols 0-8) + DEL (col 9, always).
+// Row 2 alpha: CAPS (col 0) + 9 chars (cols 1-9).
+// Row 2 Num/Sym: 10 chars (col 0-9, no CAPS).
+static const char CHARS[4][3][11] = {
+    { "QWERTYUIOP", "ASDFGHJKL",    "ZXCVBNM,." },        // Upper
+    { "qwertyuiop", "asdfghjkl",    "zxcvbnm,." },        // Lower
+    { "1234567890", "!@#$%^&*(",    ")-_=+[]{};"},         // Num
+    { "~`|\\/<>?'\"", ":;,.!@#$%",  "&*()+=^-_~" },       // Sym
 };
 
-static constexpr int KCOLS  = 10;
-static constexpr int NROWS = 4;   // 3 char rows + bottom action row
+static constexpr int KCOLS = 10;
+static constexpr int NROWS = 4;  // 3 char rows + 1 action row
 
-// Bottom row (row 3) logical keys: [mode](span4) [SPACE](span4) [OK] [ESC]
+// Bottom row (row 3): [MODE 0-2] [SPACE 3-6] [OK 7-8] [X 9]
 static int snapR3(int col) {
-    if (col <= 3) return 0;
-    if (col <= 7) return 4;
-    if (col == 8) return 8;
+    if (col <= 2) return 0;
+    if (col <= 6) return 3;
+    if (col <= 8) return 7;
     return 9;
 }
 static int moveR3(int col, int dir) {
-    static const int SLOTS[] = {0, 4, 8, 9};
+    static const int SLOTS[] = {0, 3, 7, 9};
     int s = snapR3(col);
     for (int i = 0; i < 4; i++)
         if (SLOTS[i] == s) return SLOTS[(i + dir + 4) % 4];
     return 0;
 }
 
+static void cycleMode(VirtualKeyboard::Mode& m) {
+    using M = VirtualKeyboard::Mode;
+    switch (m) {
+        case M::Upper:
+        case M::Lower: m = M::Num;   break;
+        case M::Num:   m = M::Sym;   break;
+        default:       m = M::Lower; break;  // Sym → abc
+    }
+}
+
 void VirtualKeyboard::clear() { buf[0] = '\0'; len = 0; row = 0; col = 0; }
 
 void VirtualKeyboard::handle(Key k, bool& done, bool& cancel) {
     done = cancel = false;
-    if (mask) field = Field::Password;          // honour back-compat flag
+    if (mask) field = Field::Password;
+
+    bool isCapsMode = (mode == Mode::Upper || mode == Mode::Lower);
 
     auto backspace = [&]{ if (len > 0) buf[--len] = '\0'; };
     auto type = [&](char ch){ if (len < (int)sizeof(buf) - 1) { buf[len++] = ch; buf[len] = '\0'; } };
@@ -58,48 +73,47 @@ void VirtualKeyboard::handle(Key k, bool& done, bool& cancel) {
             if (row == 3) col = moveR3(col, +1);
             else          col = (col + 1) % KCOLS;
             break;
-        case Key::Cancel:                            // hardware back = backspace / exit
+        case Key::Cancel:
             if (len > 0) backspace(); else cancel = true;
             return;
         case Key::Select: {
             int m = (int)mode;
-            if (row == 0) { type(CHARS[m][0][col]); }
-            else if (row == 1) {
-                if (col == 9) backspace();           // DEL
+            if (row == 0) {
+                type(CHARS[m][0][col]);
+            } else if (row == 1) {
+                if (col == 9) backspace();
                 else          type(CHARS[m][1][col]);
             } else if (row == 2) {
-                if (mode != Mode::Num && col == 0) { // CAPS toggle
+                if (isCapsMode && col == 0) {
                     mode = (mode == Mode::Upper) ? Mode::Lower : Mode::Upper;
                 } else {
-                    int ci = (mode != Mode::Num) ? col - 1 : col;
+                    int ci = isCapsMode ? col - 1 : col;
                     const char* r = CHARS[m][2];
                     if (ci >= 0 && ci < (int)std::strlen(r)) type(r[ci]);
                 }
-            } else { // row 3
+            } else {  // row 3
                 int s = snapR3(col);
-                if (s == 0)      mode = (mode == Mode::Num) ? Mode::Upper : Mode::Num; // mode toggle
-                else if (s == 4) type(' ');                                            // space
-                else if (s == 8) { done = true; return; }                             // OK
-                else             { cancel = true; return; }                           // ESC
+                if (s == 0)      cycleMode(mode);
+                else if (s == 3) type(' ');
+                else if (s == 7) { done = true; return; }
+                else             { cancel = true; return; }
             }
             break;
         }
         default: break;
     }
-    // clamp col to row length for char rows
-    if (row < 3) { if (col >= KCOLS) col = KCOLS - 1; }
+    if (row < 3 && col >= KCOLS) col = KCOLS - 1;
 }
 
-// ── 1D linear navigation (3-button boards) ───────────────────────────────
-// Total key count for linear cursor: 10 + 10 + 10 + 4 action slots = 34
-static constexpr int TOTAL_KEYS_LINEAR = 34;
+// ── 1D linear navigation ─────────────────────────────────────────────────
+static constexpr int TOTAL_KEYS_LINEAR = 34;  // 10+10+10+4
 
 void VirtualKeyboard::handleAction(input::Action a, bool& done, bool& cancel) {
     done = cancel = false;
     if (mask) field = Field::Password;
 
-    // linearCursor_ is stored in `col` when linear=true (row is unused)
-    int& cur = col;
+    int& cur = col;  // linear cursor stored in col
+    bool isCapsMode = (mode == Mode::Upper || mode == Mode::Lower);
 
     auto backspace = [&]{ if (len > 0) { buf[--len] = '\0'; } };
     auto typeChar = [&](char ch) {
@@ -118,27 +132,27 @@ void VirtualKeyboard::handleAction(input::Action a, bool& done, bool& cancel) {
             return;
         case input::Action::Activate: {
             int m = (int)mode;
-            if (cur < 10) {                          // row 0
+            if (cur < 10) {
                 typeChar(CHARS[m][0][cur]);
-            } else if (cur < 20) {                   // row 1
+            } else if (cur < 20) {
                 int c2 = cur - 10;
                 if (c2 == 9) backspace();
                 else typeChar(CHARS[m][1][c2]);
-            } else if (cur < 30) {                   // row 2
+            } else if (cur < 30) {
                 int c2 = cur - 20;
-                if (mode != Mode::Num && c2 == 0)
+                if (isCapsMode && c2 == 0) {
                     mode = (mode == Mode::Upper) ? Mode::Lower : Mode::Upper;
-                else {
-                    int ci = (mode != Mode::Num) ? c2 - 1 : c2;
+                } else {
+                    int ci = isCapsMode ? c2 - 1 : c2;
                     const char* r = CHARS[m][2];
                     if (ci >= 0 && ci < (int)std::strlen(r)) typeChar(r[ci]);
                 }
-            } else {                                 // row 3 action keys
+            } else {
                 int slot = cur - 30;
-                if (slot == 0) mode = (mode == Mode::Num) ? Mode::Upper : Mode::Num;
+                if (slot == 0)      cycleMode(mode);
                 else if (slot == 1) typeChar(' ');
                 else if (slot == 2) { done = true; return; }
-                else { cancel = true; return; }
+                else                { cancel = true; return; }
             }
             break;
         }
@@ -149,104 +163,108 @@ void VirtualKeyboard::handleAction(input::Action a, bool& done, bool& cancel) {
 // ── Drawing ───────────────────────────────────────────────────────────────
 static void drawKey(Canvas& c, int kx, int ky, int kw, int kh,
                     const char* label, bool sel) {
-    if (sel) { c.fillRect(kx, ky, kw, kh, true); }
-    else     { c.drawRect(kx, ky, kw, kh); }
+    if (sel) c.fillRoundRect(kx, ky, kw, kh, 2);
     int lw = (int)std::strlen(label) * nema::display::CHAR_W;
     c.drawText(kx + (kw - lw) / 2, ky + (kh - 8) / 2, label, !sel);
 }
 
-// CapsLock key: cursor selection handled separately from caps-active indicator.
-// When caps is active a small filled dot appears to the left of the label —
-// this avoids the "key looks selected" confusion when caps is on but cursor
-// is elsewhere.
 static void drawCapsKey(Canvas& c, int kx, int ky, int kw, int kh,
                         bool sel, bool capsOn) {
-    if (sel) { c.fillRect(kx, ky, kw, kh, true); }
-    else     { c.drawRect(kx, ky, kw, kh); }
-
-    // "Ca" label — centered, same as normal keys
-    const int lw = 2 * nema::display::CHAR_W;
-    c.drawText(kx + (kw - lw) / 2, ky + (kh - 8) / 2, "Ca", !sel);
-
-    // Indicator dot: 3×3 filled circle to the left of the label
-    if (capsOn) {
-        int dotX = kx + 2;
-        int dotY = ky + (kh - 3) / 2;
-        c.fillRect(dotX, dotY, 3, 3, !sel);  // black on white, or white on black
-    }
+    if (sel) c.fillRoundRect(kx, ky, kw, kh, 2);
+    // ^ = caps on (uppercase active), v = caps off
+    const char* lbl = capsOn ? "^" : "v";
+    c.drawText(kx + (kw - nema::display::CHAR_W) / 2, ky + (kh - 8) / 2, lbl, !sel);
 }
 
 void VirtualKeyboard::draw(Canvas& c, const char* prompt) const {
     c.clear();
     bool pw = (field == Field::Password) || mask;
-    int m = (int)mode;
+    int m  = (int)mode;
 
-    // The host blits Normal-mode app frames below the status-bar strip, so keep
-    // all keyboard content below SEP1_Y (~y15) — otherwise the top is clipped.
-    const int TOP = nema::display::SEP1_Y + 3;
+    const int TOP = (int)nema::display::SEP1_Y + 2;
 
-    // Header: prompt
+    // ── Keyboard geometry ────────────────────────────────────────────────
+    // Cap width so the keyboard stays compact on wide/portrait screens.
+    // Anchor to bottom so the prompt+field area fills whatever space remains above.
+    const int KBD_MAX_W = 210;
+    const int KH_MAX    = 13;
+    int kbdW  = std::min((int)c.width(), KBD_MAX_W);
+    int kbdX  = ((int)c.width() - kbdW) / 2;
+    int STEP  = kbdW / KCOLS;
+    int LEFT  = kbdX + (kbdW - STEP * KCOLS) / 2;
+    // Key height: fill from top area to bottom, capped so keys don't get huge.
+    int availH = (int)c.height() - TOP - 26;
+    int STEPY  = std::min(availH / NROWS, KH_MAX);
+    if (STEPY < 8) STEPY = 8;
+    int KY  = (int)c.height() - NROWS * STEPY;  // keyboard anchored to bottom
+    int KH  = STEPY;
+    int KW  = STEP;
+
+    // ── Prompt & input field ─────────────────────────────────────────────
     c.drawText(2, TOP, prompt);
     c.fillRect(0, TOP + 10, c.width(), 1);
 
-    // Input field
     char shown[66];
     if (pw) { for (uint8_t i = 0; i < len; i++) shown[i] = '*'; shown[len] = '\0'; }
     else    { std::strncpy(shown, buf, sizeof(shown) - 1); shown[sizeof(shown)-1] = '\0'; }
     char field_s[72];
     std::snprintf(field_s, sizeof(field_s), "%s_", shown);
-    int maxc = (c.width() - 6) / nema::display::CHAR_W;
+    int maxc = ((int)c.width() - 4) / (int)nema::display::CHAR_W;
     const char* fp = field_s;
     int fl = (int)std::strlen(field_s);
     if (fl > maxc) fp = field_s + (fl - maxc);
-    c.drawText(3, TOP + 13, fp);
-    c.fillRect(0, TOP + 24, c.width(), 1);
+    c.drawText(2, TOP + 13, fp);
 
-    // Keyboard grid — sizes derived from canvas so it fills any resolution.
-    // 10 columns across the width; 4 rows fill the height below the field.
-    const int KY    = TOP + 27;
-    const int STEP  = c.width() / KCOLS;                 // horizontal step per key
-    const int LEFT  = (c.width() - STEP * KCOLS) / 2;    // center the grid
-    const int availH = (int)c.height() - KY;             // vertical room for 4 rows
-    const int STEPY = availH / NROWS;                    // vertical step per row
-    const int KW    = STEP;                              // key cell width
-    const int KH    = STEPY;                             // key cell height
+    // Thin separator line above keyboard
+    c.fillRect(0, KY - 1, c.width(), 1);
 
-    // Row 0
+    // ── Row 0 ────────────────────────────────────────────────────────────
     for (int cc = 0; cc < KCOLS; cc++) {
         char lbl[2] = { CHARS[m][0][cc], 0 };
-        drawKey(c, LEFT + cc * STEP, KY, KW - 1, KH - 1, lbl, row == 0 && col == cc);
+        drawKey(c, LEFT + cc * STEP, KY, KW, KH, lbl, row == 0 && col == cc);
     }
-    // Row 1: 9 chars + DEL
+
+    // ── Row 1: 9 chars + backspace ───────────────────────────────────────
     for (int cc = 0; cc < KCOLS; cc++) {
         int x = LEFT + cc * STEP, y = KY + STEPY;
         bool sel = (row == 1 && col == cc);
-        if (cc == 9) drawKey(c, x, y, KW - 1, KH - 1, "<x", sel);
-        else { char lbl[2] = { CHARS[m][1][cc], 0 }; drawKey(c, x, y, KW - 1, KH - 1, lbl, sel); }
+        if (cc == 9) drawKey(c, x, y, KW, KH, "<-", sel);
+        else { char lbl[2] = { CHARS[m][1][cc], 0 }; drawKey(c, x, y, KW, KH, lbl, sel); }
     }
-    // Row 2: CAPS (alpha) or full 10 (num)
-    if (mode != Mode::Num) {
+
+    // ── Row 2: CAPS + chars (alpha) or all chars (Num/Sym) ───────────────
+    bool isCapsMode = (mode == Mode::Upper || mode == Mode::Lower);
+    if (isCapsMode) {
         bool capsOn = (mode == Mode::Upper);
-        drawCapsKey(c, LEFT, KY + 2 * STEPY, KW - 1, KH - 1,
-                    row == 2 && col == 0, capsOn);
+        drawCapsKey(c, LEFT, KY + 2 * STEPY, KW, KH, row == 2 && col == 0, capsOn);
         for (int cc = 1; cc <= 9; cc++) {
             char lbl[2] = { CHARS[m][2][cc - 1], 0 };
-            drawKey(c, LEFT + cc * STEP, KY + 2 * STEPY, KW - 1, KH - 1, lbl, row == 2 && col == cc);
+            drawKey(c, LEFT + cc * STEP, KY + 2 * STEPY, KW, KH,
+                    lbl, row == 2 && col == cc);
         }
     } else {
         for (int cc = 0; cc < KCOLS; cc++) {
             char lbl[2] = { CHARS[m][2][cc], 0 };
-            drawKey(c, LEFT + cc * STEP, KY + 2 * STEPY, KW - 1, KH - 1, lbl, row == 2 && col == cc);
+            drawKey(c, LEFT + cc * STEP, KY + 2 * STEPY, KW, KH,
+                    lbl, row == 2 && col == cc);
         }
     }
-    // Row 3: [mode][SPACE][OK][ESC]
-    int y3 = KY + 3 * STEPY, r3 = (row == 3) ? snapR3(col) : -1;
-    const char* modeLbl = (mode == Mode::Num) ? "ABC" : "123";
-    drawKey(c, LEFT,            y3, 4 * STEP - 1, KH - 1, modeLbl, r3 == 0);
-    drawKey(c, LEFT + 4 * STEP, y3, 4 * STEP - 1, KH - 1, "SPACE", r3 == 4);
-    drawKey(c, LEFT + 8 * STEP, y3, KW - 1,       KH - 1, "OK",    r3 == 8);
-    drawKey(c, LEFT + 9 * STEP, y3, KW - 1,       KH - 1, "Es",    r3 == 9);
+
+    // ── Row 3: action row ────────────────────────────────────────────────
+    // [MODE 3-wide] [SPACE 4-wide] [OK 2-wide] [X 1-wide]
+    int y3  = KY + 3 * STEPY;
+    int r3  = (row == 3) ? snapR3(col) : -1;
+    const char* modeBtn;
+    switch (mode) {
+        case Mode::Upper:
+        case Mode::Lower: modeBtn = "123"; break;
+        case Mode::Num:   modeBtn = "!@#"; break;
+        default:          modeBtn = "abc"; break;
+    }
+    drawKey(c, LEFT,            y3, 3 * STEP, KH, modeBtn, r3 == 0);
+    drawKey(c, LEFT + 3 * STEP, y3, 4 * STEP, KH, "SPACE", r3 == 3);
+    drawKey(c, LEFT + 7 * STEP, y3, 2 * STEP, KH, "OK",    r3 == 7);
+    drawKey(c, LEFT + 9 * STEP, y3, KW,        KH, "X",     r3 == 9);
 }
 
-} // namespace ui
-
+} // namespace aether::ui

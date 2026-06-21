@@ -58,7 +58,8 @@ void ProfileSettingsScreen::startEdit(Field f) {
     default:
         return;
     }
-    editing_ = true;
+    editing_     = true;
+    swallowCode_ = true;
     rt_.view().requestRedraw();
 }
 
@@ -69,18 +70,26 @@ void ProfileSettingsScreen::onSelect(void* u) {
 
 void ProfileSettingsScreen::onAction(input::Action a) {
     if (!editing_) { ComponentScreen::onAction(a); return; }
+    // 2D mode: raw Code arrives via onCode with correct geometric mapping.
+    // Consuming the action here (without forwarding to ComponentScreen) prevents
+    // the list from scrolling while the keyboard is open.
+    if (!kbd_.linear) return;
 
     bool done = false, cancel = false;
-    if (rt_.capabilities().has(caps::Input2D))
-        kbd_.handle(input::keyFromAction(a), done, cancel);
-    else
-        kbd_.handleAction(a, done, cancel);
+    kbd_.handleAction(a, done, cancel);
+    applyKbdResult(done, cancel);
+}
 
-    if (cancel) {
-        editing_ = false;
-        rt_.view().requestRedraw();
-        return;
-    }
+void ProfileSettingsScreen::onCode(input::Code c) {
+    if (!editing_ || kbd_.linear) return;
+    if (swallowCode_) { swallowCode_ = false; return; }
+    bool done = false, cancel = false;
+    kbd_.handle(input::keyFromCode(c), done, cancel);
+    applyKbdResult(done, cancel);
+}
+
+void ProfileSettingsScreen::applyKbdResult(bool done, bool cancel) {
+    if (cancel) { editing_ = false; rt_.view().requestRedraw(); return; }
     if (done) {
         auto* p = rt_.container().resolve<ProfileService>();
         if (p) {
@@ -93,8 +102,6 @@ void ProfileSettingsScreen::onAction(input::Action a) {
             }
         }
         editing_ = false;
-        rt_.view().requestRedraw();
-        return;
     }
     rt_.view().requestRedraw();
 }

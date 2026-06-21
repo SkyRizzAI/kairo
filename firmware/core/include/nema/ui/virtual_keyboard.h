@@ -23,7 +23,7 @@ using namespace nema;  // Plan 80: nema core symbols (Canvas/Key/input/anim/font
 //
 // Input modes: Text (plain) or Password (renders '*').
 struct VirtualKeyboard {
-    enum class Mode  : uint8_t { Upper = 0, Lower = 1, Num = 2 };
+    enum class Mode  : uint8_t { Upper = 0, Lower = 1, Num = 2, Sym = 3 };
     enum class Field : uint8_t { Text, Password };
 
     char    buf[64] = {};

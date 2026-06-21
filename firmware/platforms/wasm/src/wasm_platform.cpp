@@ -96,6 +96,7 @@ void WasmPlatform::registerDrivers(Runtime& rt) {
     rt.hardware().add({"display", DriverKind::Display, "wasm 1-bit (remote)"});
     rt.capabilities().add(caps::Display);
     rt.capabilities().add(caps::Input);
+    rt.capabilities().add(caps::Input2D);  // Forge sends arrow-key codes (Up/Down/Left/Right)
 }
 
 void WasmPlatform::controlThunk(void* user, uint8_t op, const uint8_t* data, size_t len) {

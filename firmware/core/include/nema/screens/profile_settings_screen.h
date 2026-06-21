@@ -15,6 +15,7 @@ public:
     void        onResume() override;
     aether::ui::UiNode* build(aether::ui::NodeArena& a, Runtime& rt) override;
     void        onAction(input::Action a) override;
+    void        onCode(input::Code c) override;
     void        draw(Canvas& c) override;
 
 private:
@@ -27,14 +28,16 @@ private:
     };
 
     void        startEdit(Field f);
+    void        applyKbdResult(bool done, bool cancel);
     static void onSelect(void* u);
 
     aether::ui::VirtualKeyboard kbd_;
     aether::ui::ScrollState     scroll_;
     std::vector<Item> items_;
     Field             editField_ = Field::UserName;
-    bool              editing_   = false;
-    char              prompt_[48] = {};
+    bool              editing_     = false;
+    bool              swallowCode_ = false;
+    char              prompt_[48]  = {};
 };
 
 } // namespace nema
