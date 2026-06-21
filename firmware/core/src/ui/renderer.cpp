@@ -55,14 +55,19 @@ static void paint(const UiNode* n, Canvas& c, const UiNode* focused, bool inFocu
         bool on = !s.background;
 
         if (n->role == TextRole::Smart) {
-            // Smart text: marquee when focused, ellipsis when unfocused, center when short.
+            // Smart text: static when fits, marquee when focused+overflow, ellipsis otherwise.
             uint16_t availW = (n->w > 2u * s.padding)
                 ? (uint16_t)(n->w - 2u * s.padding) : n->w;
             uint16_t textW  = aether::ui::measureTextW(n->text, TextRole::Body);
-            if (textW <= availW && s.justify == Justify::Center) {
-                // Short value — center within the column (e.g. "ON" between chevrons).
-                uint16_t cx = (uint16_t)(tx + (availW - textW) / 2);
-                c.drawText(cx, ty, n->text, on);
+            if (textW <= availW) {
+                // Text fits — draw once, statically. Never marquee a fitting label
+                // (copy 2 would land inside the clip and show a double image).
+                if (s.justify == Justify::Center) {
+                    uint16_t cx = (uint16_t)(tx + (availW - textW) / 2);
+                    c.drawText(cx, ty, n->text, on);
+                } else {
+                    c.drawText(tx, ty, n->text, on);
+                }
             } else if (inFocused) {
                 aether::ui::draw::marquee(c, tx, ty, availW, n->text, s_renderTick);
             } else {

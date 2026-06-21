@@ -208,9 +208,11 @@ UiNode* ListItemRow(NodeArena& a, const ListEntry& e) {
     s.selectBox = true;                 // rounded inverted box when focused
     s.gap = aether::theme().space.xs;     // 2px between label/value/chevron
 
-    // label marquees on focus (TextRole::Smart) and grows to push the value right
+    // label marquees on focus (TextRole::Smart) and grows to push the value right.
+    // flexZero: start at 0 basis so n->w reflects actual available pixels, not the
+    // natural text width — otherwise marquee() sees textW == availW and bails early.
     UiNode* label = SmartLabel(a, e.label ? e.label : "");
-    if (label) label->style.flexGrow = 1;
+    if (label) { label->style.flexGrow = 1; label->style.flexZero = true; }
 
     // Children: [5px inset] [icon?] label [value?] [chevron?] [right inset]
     UiNode* row = Pressable(a, e.onPress, e.user, s, {});
