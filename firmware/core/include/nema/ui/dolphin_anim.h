@@ -1,23 +1,20 @@
 #pragma once
-#include "nema/ui/animation.h"
+// Plan 71 — Flipper Zero dolphin animation showcase.
+// Plan 82 Phase 5 — migrated from C array (dolphin_showcase.cpp) to .panim
+// files loaded at runtime from the filesystem, removing ~900 KB from the binary.
 #include <cstddef>
+#include <cstdint>
 
 namespace nema::anim {
 
-// Plan 71 — Flipper Zero dolphin animation showcase.
-// 10 animations, compiled-in. Navigate with Prev/Next.
-
-constexpr size_t DOLPHIN_SHOWCASE_COUNT = 10;
-
-extern Animation* const DOLPHIN_SHOWCASE[];
-
-struct DolphinMeta {
-    const char* name;
-    uint16_t    w;
-    uint16_t    h;
+struct DolphinEntry {
+    const char* name;        // display name
+    const char* path;        // path relative to VFS root (e.g. "anims/doom.panim")
+    uint16_t    w, h;        // frame size (from meta, for display info)
     uint8_t     fps;
-    uint8_t     frames;
 };
-extern const DolphinMeta DOLPHIN_META[];
+
+extern const DolphinEntry DOLPHIN_ENTRIES[];
+extern const size_t       DOLPHIN_ENTRIES_COUNT;
 
 } // namespace nema::anim

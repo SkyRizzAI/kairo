@@ -7,6 +7,7 @@
 // Apps are NOT listed here — "Apps" is one entry that opens AppListScreen.
 #include "nema/ui/component_screen.h"
 #include "aether/shell/launcher_theme.h"
+#include "nema/ui/animation_player.h"
 #include "nema/screens/app_list_screen.h"
 #include "nema/screens/file_browser_screen.h"
 #include "nema/screens/dolphin_demo.h"
@@ -25,6 +26,7 @@ public:
 
     void        onResume() override;
     void        draw(Canvas& c) override;
+    void        tick(uint64_t nowMs) override;
     void        onAction(input::Action a) override;
     aether::ui::UiNode* build(aether::ui::NodeArena& a, Runtime& rt) override;
 
@@ -36,8 +38,9 @@ private:
     LogsScreen        logs_;
     SettingsScreen    settings_;
 
-    std::unique_ptr<shell::ILauncherTheme> theme_;
-    std::vector<shell::LauncherEntry>      entries_;
+    std::unique_ptr<shell::ILauncherTheme>      theme_;
+    std::vector<shell::LauncherEntry>           entries_;
+    std::vector<std::unique_ptr<nema::anim::AnimationPlayer>> players_;  // T2 icon players
     char title_[24] = "PALANU";
     int  cursor_    = 0;
 

@@ -20,8 +20,9 @@ static bool idEq(const char* a, const char* b) {
 }
 
 void AppRegistry::install(IApp& app, const char* version) {
-    add({app.id(), app.name(), version, AppKind::BuiltIn, AppType::App},
-        {&app, nullptr, nullptr});
+    AppManifest m{app.id(), app.name(), version, AppKind::BuiltIn, AppType::App};
+    m.category = app.category();
+    add(m, {&app, nullptr, nullptr});
 }
 
 void AppRegistry::installCustom(IApp& app, const char* version) {

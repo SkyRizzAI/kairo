@@ -11,8 +11,9 @@ struct IUsbHid;
 
 class BadUsbApp : public ComponentApp {
 public:
-    const char* id()   const override { return "com.palanu.badusb"; }
-    const char* name() const override { return "BadUSB"; }
+    const char* id()       const override { return "com.palanu.badusb"; }
+    const char* name()     const override { return "BadUSB"; }
+    const char* category() const override { return "System"; }
 
     bool fullscreen()      const override { return true; }
     bool capturesInput()   const override { return true; }

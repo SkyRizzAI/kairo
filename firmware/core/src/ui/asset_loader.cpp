@@ -346,4 +346,71 @@ void seedDemoAssets(IFileSystem& fs) {
              (const uint8_t*)mt1, std::strlen(mt1));
 }
 
+// ── PanimAsset ───────────────────────────────────────────────────────────────
+
+static inline uint16_t read16le(const uint8_t* p) {
+    return (uint16_t)(p[0] | ((uint16_t)p[1] << 8));
+}
+
+bool PanimAsset::load(IFileSystem& fs, const char* path) {
+    release();
+
+    std::string spath(path);
+    if (!fs.read(spath, rawData) || rawData.size() < 14) return false;
+
+    const uint8_t* d = rawData.data();
+    // Magic "PANM"
+    if (d[0]!='P' || d[1]!='A' || d[2]!='N' || d[3]!='M') return false;
+    // Version
+    if (d[4] != 1) return false;
+
+    w            = read16le(d + 5);
+    h            = read16le(d + 7);
+    fps          = d[9];
+    passiveCount = d[10];
+    activeCount  = d[11];
+    uint8_t uniqueCount    = d[12];
+    uint8_t framesOrderLen = d[13];
+
+    if (w == 0 || h == 0 || uniqueCount == 0) return false;
+
+    size_t off = 14;
+    // Frames order table
+    if (off + framesOrderLen > rawData.size()) return false;
+    if (framesOrderLen > 0) {
+        framesOrder.assign(d + off, d + off + framesOrderLen);
+        off += framesOrderLen;
+    }
+
+    // Unique frame bitmaps — each is ceil(w/8)*h bytes
+    size_t bytesPerFrame = ((size_t)((w + 7) / 8)) * h;
+    size_t totalBitmap   = (size_t)uniqueCount * bytesPerFrame;
+    if (off + totalBitmap > rawData.size()) return false;
+
+    frames.resize(uniqueCount);
+    for (uint8_t i = 0; i < uniqueCount; i++) {
+        frames[i].bitmap = rawData.data() + off + i * bytesPerFrame;
+        frames[i].width  = w;
+        frames[i].height = h;
+    }
+
+    def.frames         = frames.data();
+    def.frameCount     = uniqueCount;
+    def.frameRate      = fps;
+    def.loop           = true;
+    def.framesOrder    = framesOrder.empty() ? nullptr : framesOrder.data();
+    def.framesOrderLen = framesOrderLen;
+    def.passiveCount   = passiveCount;
+    def.activeCount    = activeCount;
+    return true;
+}
+
+void PanimAsset::release() {
+    rawData.clear();
+    framesOrder.clear();
+    frames.clear();
+    def = {};
+    w = h = 0; fps = passiveCount = activeCount = 0;
+}
+
 } // namespace nema::asset

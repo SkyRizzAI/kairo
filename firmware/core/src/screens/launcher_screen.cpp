@@ -1,11 +1,14 @@
 // Plan 81 — LauncherScreen implementation.
+// Plan 82 Phase 4+6 — T2 animated icons + BadUSB as System entry.
 #include "aether/screens/launcher_screen.h"
 #include "aether/shell/shell_factory.h"
+#include "nema/assets/system_anims.h"
 #include "nema/ui/canvas.h"
 #include "nema/ui/icon_pack.h"
 #include "nema/ui/view_dispatcher.h"
 #include "nema/input/input_action.h"
 #include "nema/runtime.h"
+#include "nema/app/app_registry.h"
 #include "nema/config/config_store.h"
 #include <cstdio>
 #include <cstring>
@@ -16,22 +19,57 @@ LauncherScreen::LauncherScreen(Runtime& rt)
     : ComponentScreen(rt),
       appList_(rt), files_(rt), dolphin_(rt), logs_(rt), settings_(rt) {}
 
-// Fixed system entries — same set every skin draws; index drives activate().
+// One entry record keyed by label, animation, fallback icon handle, and section.
+struct EntryDef {
+    const char*                    label;
+    const nema::anim::Animation*   anim;        // T2 icon animation (may be null)
+    const char*                    iconHandle;  // icon_pack fallback
+    const char*                    section = "Apps";
+};
+
+static const EntryDef kEntries[] = {
+    { "Apps",     &nema::assets::animIconApps,     "feature.apps",    "Apps"   },
+    { "Files",    nullptr,                          "file.folder",     "Apps"   },
+    { "Dolphin",  nullptr,                          "action.info",     "Apps"   },
+    { "Logs",     nullptr,                          "file.file",       "Apps"   },
+    { "Settings", &nema::assets::animIconSettings,  "feature.settings","Apps"   },
+    { "BadUSB",   &nema::assets::animIconBadusb,    nullptr,           "System" },
+};
+static constexpr int kEntryCount = (int)(sizeof(kEntries) / sizeof(kEntries[0]));
+
 void LauncherScreen::buildEntries() {
     entries_.clear();
-    auto add = [&](const char* label, const char* iconHandle) {
+    players_.clear();
+
+    for (int i = 0; i < kEntryCount; i++) {
+        const EntryDef& def = kEntries[i];
         shell::LauncherEntry e;
-        e.label = label;
-        if (auto* d = aether::ui::findIcon(iconHandle)) {
-            e.icon = d->bitmap; e.iconW = d->w; e.iconH = d->h;
+        e.label   = def.label;
+        e.section = def.section;
+
+        if (def.anim) {
+            // T2 animated icon: create a player, wire its first frame as static fallback.
+            auto p = std::make_unique<nema::anim::AnimationPlayer>(*def.anim);
+            p->start();
+            e.player = p.get();
+            // Static fallback = first unique frame
+            if (def.anim->frameCount > 0) {
+                e.icon  = def.anim->frames[0].bitmap;
+                e.iconW = (uint8_t)def.anim->frames[0].width;
+                e.iconH = (uint8_t)def.anim->frames[0].height;
+            }
+            players_.push_back(std::move(p));
+        } else if (def.iconHandle) {
+            if (auto* d = aether::ui::findIcon(def.iconHandle)) {
+                e.icon = d->bitmap; e.iconW = d->w; e.iconH = d->h;
+            }
+            players_.push_back(nullptr);
+        } else {
+            players_.push_back(nullptr);
         }
+
         entries_.push_back(e);
-    };
-    add("Apps",     "feature.apps");
-    add("Files",    "file.folder");
-    add("Dolphin",  "action.info");
-    add("Logs",     "file.file");
-    add("Settings", "feature.settings");
+    }
 }
 
 void LauncherScreen::activate(int i) {
@@ -41,6 +79,7 @@ void LauncherScreen::activate(int i) {
         case 2: rt_.view().navigate(dolphin_);  break;
         case 3: rt_.view().navigate(logs_);     break;
         case 4: rt_.view().navigate(settings_); break;
+        case 5: rt_.apps().launch("com.palanu.badusb"); break;
         default: break;
     }
 }
@@ -63,12 +102,19 @@ void LauncherScreen::onResume() {
     requestRedraw();
 }
 
+void LauncherScreen::tick(uint64_t nowMs) {
+    ComponentScreen::tick(nowMs);
+    // Tick all T2 icon players; request a redraw if any frame advanced.
+    bool dirty = false;
+    for (auto& p : players_) {
+        if (p && p->tick((uint32_t)nowMs)) dirty = true;
+    }
+    if (dirty) requestRedraw();
+}
+
 void LauncherScreen::onAction(input::Action a) {
     using input::Action;
     int n = (int)entries_.size();
-    // Linear nav: every directional intent moves ±1 in reading order, so the menu
-    // works identically on every board (carousel and grid alike) — the skin's
-    // columns() only affects layout, not traversal.
     switch (a) {
         case Action::Prev:
         case Action::AdjustDown:
@@ -90,6 +136,16 @@ void LauncherScreen::onAction(input::Action a) {
 }
 
 void LauncherScreen::draw(Canvas& c) {
+    // Sync e.icon to the player's current frame before handing off to the skin.
+    for (int i = 0; i < (int)entries_.size(); i++) {
+        auto& p = players_[i];
+        if (p && p->currentFrameData()) {
+            entries_[i].icon  = p->currentFrameData();
+            entries_[i].iconW = (uint8_t)p->width();
+            entries_[i].iconH = (uint8_t)p->height();
+        }
+    }
+
     shell::LauncherModel m;
     m.title = title_;
     m.items = entries_.data();

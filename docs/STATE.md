@@ -4,7 +4,7 @@
 > Detail per-stage ada di [`plans/`](plans/00-overview.md). Master plan: [`concept_plan.md`](concept_plan.md).
 > Reference arsitektur per-subsistem: [`architecture/`](architecture/README.md).
 >
-> **Last updated:** 2026-06-21 (Secure element HAL scaffold — ADR 0005)
+> **Last updated:** 2026-06-21 (Plan 82 — 3-tier asset architecture, system icons, `.panim`, system apps)
 
 ---
 
@@ -20,6 +20,7 @@ Palanu = platform handheld bergaya Flipper Zero, **1-bit retro/pixel UI**, denga
 
 | Area | Status | Bukti |
 |---|---|---|
+| **Asset architecture (Plan 82)** | ✅ build (host) | T1 system icons (status bar), T2 launcher icon anims, T3 `.panim` (VFS); toolchain `tools/asset_gen/`; `dolphin_showcase.cpp` 895 KB removed; BadUSB → category="System" |
 | **Aether display server = lib terpisah (Plan 80)** | ✅ build (host+wasm+esp32) | `nema_core` 0 ref ke `aether` (IDF strict-link); semua UI/screens/GuiService → `libaether`; ganti server = ganti lib + `aether::bootDisplay(rt)` |
 | Core Runtime (boot, logger, event bus, services, introspection) | ✅ HW | jalan di sim + esp32 |
 | App Registry (AppManifest, AppRegistry — built-in/custom apps + services; menggantikan Plugin Runtime) | ✅ HW | install/list/launch |
@@ -71,8 +72,9 @@ Desktop (live wallpaper, idle) — Plan 81
        ├── Apps → AppRegistry.list() → launch app (thread sendiri via AppHost)
        │     Clock · Counter (+modal) · Stopwatch (fullscreen) · Task Demo · Ticker
        ├── Files · Dolphin · Logs
-       └── Settings → Display & Appearances (Theme/Desktop/Launcher/AssetsPack/StatusBar)
-             · WiFi · About (board/fw/caps)
+       ├── Settings → Display & Appearances (Theme/Desktop/Launcher/AssetsPack/StatusBar)
+       │     · WiFi · About (board/fw/caps)
+       └── System: BadUSB (category="System", launched via launcher System section)
 ```
 
 > Shell skins are swappable via `nema::shell` (Plan 81 / ADR 0004): Desktop and

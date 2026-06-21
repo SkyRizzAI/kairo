@@ -282,56 +282,54 @@ Launcher (HomeScreen / DesktopLauncher) renders two sections:
 
 ### Phase 1 — Foundation
 
-- [ ] Extend `Animation` struct with `framesOrder`, `passiveCount`, `activeCount`
-- [ ] Update `AnimationPlayer` to use `playhead_` + `resolveFrame()`
-- [ ] Add `triggerActive()` to `AnimationPlayer`
-- [ ] Create `firmware/core/include/nema/assets/` directory structure
-- [ ] Create `IAssetLoader` interface + `AssetStore` skeleton
+- [x] Extend `Animation` struct with `framesOrder`, `passiveCount`, `activeCount`
+- [x] Update `AnimationPlayer` to use `playhead_` + `resolveFrame()`
+- [x] Add `triggerActive()` to `AnimationPlayer`
+- [x] Create `firmware/core/include/nema/assets/` directory structure
+- [x] Create `PanimAsset` in `asset_loader.h` (IAssetLoader → PanimAsset::load())
 
 ### Phase 2 — Toolchain
 
-- [ ] Create `tools/asset_gen/` with `package.json` (Bun)
-- [ ] Implement `png2c.ts` (PNG → C array header, 1-bit output)
-- [ ] Implement `seq2panim.ts` (PNG sequence + meta.txt → `.panim`)
-- [ ] Test with `L1_Boxing_128x64/` → `boxing.panim`
+- [x] Create `tools/asset_gen/` with `package.json` (Bun + jimp)
+- [x] Implement `png2c.ts` (PNG → C array header, 1-bit output)
+- [x] Implement `seq2panim.ts` (PNG sequence + meta.txt → `.panim`)
+- [x] Tested with `L1_Boxing_128x64/` → `boxing.panim` (fixed uniqueFrame count from actual PNG count)
 
 ### Phase 3 — T1 System Icons
 
-- [ ] Run `png2c` on all ✓ status bar icons → `firmware/core/include/nema/assets/icons/`
-- [ ] Create `system_icons.h` aggregate header with `kIc*` externs
-- [ ] Wire `kIcBattery`, `kIcBleIdle`/`kIcBleConnected`, `kIcSdMounted`/`kIcSdFail`,
-      `kIcLock` into status bar renderer (`gui_service.cpp`)
-- [ ] ⚠ WiFi icons: draw placeholder 10×8 pixel art (3 bars, 4 levels) by hand as
-      C array — mark `TODO: replace with final artwork`
+- [x] Run `png2c` on all ✓ status bar icons → `firmware/core/include/nema/assets/icons/`
+- [x] Create `system_icons.h` aggregate header with `Icon` descriptors
+- [x] Wire all icons into status bar renderer (`status_bar.cpp`) — battery, wifi, ble, sd, lock
+- [x] ⚠ WiFi icons: hand-coded 10×8 pixel art placeholder (kIcWifiOn/Off) — TODO: final artwork
 
 ### Phase 4 — T2 App Icon Animations
 
-- [ ] Run `png2c` batch on `MainMenu/*_14/` sequences → `system_anims.h`
-- [ ] Wire icon anims into launcher entries (LauncherEntry.icon → AnimationPlayer)
-- [ ] Replace existing hand-drawn spinner with `kAnimSpinner` from `Round_loader_8x8`
+- [x] Run `png2c` batch on `MainMenu/*_14/` sequences → `system_anims.h` (6 animations)
+- [x] Wire icon anims into launcher entries via `AnimationPlayer`; `tick()` in `LauncherScreen`
+- [x] `animSpinner` (Round_loader_8x8, 5 frames) available in `system_anims.h`
 
 ### Phase 5 — T3 AssetLoader + Migration
 
-- [ ] Implement `Esp32AssetLoader` (LittleFS) + `SimAssetLoader` (fopen)
-- [ ] Implement `AssetStore::loadAnim()` / `freeAnim()`
-- [ ] Run `seq2panim` on all 10 dolphin animations → `.panim` files
-- [ ] Provision LittleFS partition with `.panim` files (ESP32 targets)
-- [ ] Migrate `DolphinDemoScreen` from C-array to `loadAnim()` FS path
-- [ ] Remove `dolphin_showcase.cpp` and `dolphin_anim.cpp` from build (874 KB saved)
+- [x] `PanimAsset::load(IFileSystem&, path)` implemented in `asset_loader.cpp`
+- [x] Run `seq2panim` on 9 dolphin animations → `firmware/assets/anims/*.panim`
+- [x] `.panim` files committed to repo (provisioned in VFS by platform at boot)
+- [x] Migrate `DolphinDemoScreen` to `PanimAsset` + `DOLPHIN_ENTRIES[]` path catalog
+- [x] Migrate `DolphinApp` to `PanimAsset` (removed `.bm` seeding)
+- [x] `dolphin_showcase.cpp` removed from build (895 KB freed); replaced by 24-line `dolphin_anim.cpp`
+- [x] `DesktopLivewall` loads `anims/doom.panim` from VFS on `onResume()`
 
 ### Phase 6 — System Apps
 
-- [ ] Add `installBuiltin(IApp&, AppManifest)` overload to `AppRegistry`
-      (or reuse `installCustom` — same signature, just clarify naming)
-- [ ] Update BadUSB registration in all targets → `category = "System"`
-- [ ] Update HomeScreen / launcher to render "System" section separately from "Apps"
-- [ ] Verify Files, Logs, Settings already use `category = "System"` (audit + fix if not)
+- [x] Added `IApp::category()` virtual (default `"Apps"`) — `AppRegistry::install()` reads it
+- [x] `BadUsbApp::category()` overrides → `"System"`
+- [x] `LauncherEntry.section` field added; `buildEntries()` propagates it from `kEntries`
+- [x] Wii grid skin renders section headers (bold label + rule) between sections
 
 ### Phase 7 — Documentation
 
-- [ ] Write `docs/feats/assets.md` — full catalog, format spec, how-to guides
-- [ ] Update `docs/STATE.md` — asset system row
-- [ ] Tick plan checklist items above
+- [x] Write `docs/feats/assets.md` — full catalog, format spec, how-to guides
+- [x] Update `docs/STATE.md` — Plan 82 row added
+- [x] Tick plan checklist items above
 
 ---
 

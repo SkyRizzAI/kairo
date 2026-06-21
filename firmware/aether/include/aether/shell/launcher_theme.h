@@ -5,6 +5,7 @@
 // Activate routing). A launcher *theme* owns only the LOOK: given the model and
 // the current cursor it paints the menu. Swapping the skin (PlayStation carousel
 // ↔ Wii grid) therefore never changes what the launcher does — only how it draws.
+#include "nema/ui/animation_player.h"
 #include <cstdint>
 
 namespace nema { class Canvas; }
@@ -14,10 +15,14 @@ namespace nema::shell {
 // One launcher tile/slot. Behaviour (what Activate does) lives in LauncherScreen,
 // keyed by index — the theme only needs what it takes to draw a slot.
 struct LauncherEntry {
-    const char*    label = nullptr;
-    const uint8_t* icon  = nullptr;   // optional 1-bit XBM (row-major, MSB first)
-    uint8_t        iconW = 0;
-    uint8_t        iconH = 0;
+    const char*    label   = nullptr;
+    const char*    section = "Apps";  // group header ("Apps", "System", …)
+    const uint8_t* icon    = nullptr; // static 1-bit bitmap (row-major, MSB first)
+    uint8_t        iconW   = 0;
+    uint8_t        iconH   = 0;
+    // T2 animation: when set, skins show the current frame instead of `icon`.
+    // The AnimationPlayer* is owned by LauncherScreen (one per entry, ticked in draw).
+    nema::anim::AnimationPlayer* player = nullptr;
 };
 
 // The full set of slots + chrome the skin draws. Caller-owned, rebuilt per frame.

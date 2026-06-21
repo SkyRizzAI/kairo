@@ -1,0 +1,138 @@
+{
+  "png2c": [
+    {
+      "input": "../../refs/flipper-zero-momentum-firmware/assets/icons/StatusBar/Battery_25x8.png",
+      "output": "../../firmware/core/include/nema/assets/icons/ic_battery.h",
+      "sym": "kIcBattery"
+    },
+    {
+      "input": "../../refs/flipper-zero-momentum-firmware/assets/icons/StatusBar/Charging_lightning_9x10.png",
+      "output": "../../firmware/core/include/nema/assets/icons/ic_charging.h",
+      "sym": "kIcCharging"
+    },
+    {
+      "input": "../../refs/flipper-zero-momentum-firmware/assets/icons/StatusBar/Bluetooth_Idle_5x8.png",
+      "output": "../../firmware/core/include/nema/assets/icons/ic_ble_idle.h",
+      "sym": "kIcBleIdle"
+    },
+    {
+      "input": "../../refs/flipper-zero-momentum-firmware/assets/icons/StatusBar/Bluetooth_Connected_16x8.png",
+      "output": "../../firmware/core/include/nema/assets/icons/ic_ble_connected.h",
+      "sym": "kIcBleConnected"
+    },
+    {
+      "input": "../../refs/flipper-zero-momentum-firmware/assets/icons/StatusBar/BLE_beacon_7x8.png",
+      "output": "../../firmware/core/include/nema/assets/icons/ic_ble_beacon.h",
+      "sym": "kIcBleBeacon"
+    },
+    {
+      "input": "../../refs/flipper-zero-momentum-firmware/assets/icons/StatusBar/SDcardMounted_11x8.png",
+      "output": "../../firmware/core/include/nema/assets/icons/ic_sd_mounted.h",
+      "sym": "kIcSdMounted"
+    },
+    {
+      "input": "../../refs/flipper-zero-momentum-firmware/assets/icons/StatusBar/SDcardFail_11x8.png",
+      "output": "../../firmware/core/include/nema/assets/icons/ic_sd_fail.h",
+      "sym": "kIcSdFail"
+    },
+    {
+      "input": "../../refs/flipper-zero-momentum-firmware/assets/icons/StatusBar/Hidden_window_9x8.png",
+      "output": "../../firmware/core/include/nema/assets/icons/ic_lock.h",
+      "sym": "kIcLock"
+    },
+    {
+      "input": "../../refs/flipper-zero-momentum-firmware/assets/icons/Interface/SmallArrowUp_3x5.png",
+      "output": "../../firmware/core/include/nema/assets/icons/ic_arrow_up.h",
+      "sym": "kIcArrowUp"
+    },
+    {
+      "input": "../../refs/flipper-zero-momentum-firmware/assets/icons/Interface/SmallArrowDown_3x5.png",
+      "output": "../../firmware/core/include/nema/assets/icons/ic_arrow_down.h",
+      "sym": "kIcArrowDown"
+    },
+    {
+      "input": "../../refs/flipper-zero-momentum-firmware/assets/icons/Common/ButtonLeftSmall_3x5.png",
+      "output": "../../firmware/core/include/nema/assets/icons/ic_arrow_left.h",
+      "sym": "kIcArrowLeft"
+    },
+    {
+      "input": "../../refs/flipper-zero-momentum-firmware/assets/icons/Common/ButtonRightSmall_3x5.png",
+      "output": "../../firmware/core/include/nema/assets/icons/ic_arrow_right.h",
+      "sym": "kIcArrowRight"
+    }
+  ],
+  "seqC": [
+    {
+      "input": "../../refs/flipper-zero-momentum-firmware/assets/icons/MainMenu/Settings_14",
+      "output": "../../firmware/core/include/nema/assets/anims/anim_icon_settings_raw.h",
+      "baseSym": "kAnimIconSettingsF"
+    },
+    {
+      "input": "../../refs/flipper-zero-momentum-firmware/assets/icons/MainMenu/BadUsb_14",
+      "output": "../../firmware/core/include/nema/assets/anims/anim_icon_badusb_raw.h",
+      "baseSym": "kAnimIconBadusbF"
+    },
+    {
+      "input": "../../refs/flipper-zero-momentum-firmware/assets/icons/MainMenu/NFC_14",
+      "output": "../../firmware/core/include/nema/assets/anims/anim_icon_nfc_raw.h",
+      "baseSym": "kAnimIconNfcF"
+    },
+    {
+      "input": "../../refs/flipper-zero-momentum-firmware/assets/icons/MainMenu/Infrared_14",
+      "output": "../../firmware/core/include/nema/assets/anims/anim_icon_infrared_raw.h",
+      "baseSym": "kAnimIconInfraredF"
+    },
+    {
+      "input": "../../refs/flipper-zero-momentum-firmware/assets/icons/MainMenu/Plugins_14",
+      "output": "../../firmware/core/include/nema/assets/anims/anim_icon_apps_raw.h",
+      "baseSym": "kAnimIconAppsF"
+    },
+    {
+      "input": "../../refs/flipper-zero-momentum-firmware/assets/icons/Common/Round_loader_8x8",
+      "output": "../../firmware/core/include/nema/assets/anims/anim_spinner_raw.h",
+      "baseSym": "kAnimSpinnerF"
+    }
+  ],
+  "seq2panim": [
+    {
+      "input": "../../refs/flipper-zero-momentum-firmware/assets/dolphin/external/L1_Doom_128x64",
+      "output": "../../firmware/assets/anims/doom.panim"
+    },
+    {
+      "input": "../../refs/flipper-zero-momentum-firmware/assets/dolphin/external/L1_Boxing_128x64",
+      "output": "../../firmware/assets/anims/boxing.panim"
+    },
+    {
+      "input": "../../refs/flipper-zero-momentum-firmware/assets/dolphin/external/L1_Sleep_128x64",
+      "output": "../../firmware/assets/anims/sleep.panim"
+    },
+    {
+      "input": "../../refs/flipper-zero-momentum-firmware/assets/dolphin/external/L1_Tv_128x47",
+      "output": "../../firmware/assets/anims/tv.panim"
+    },
+    {
+      "input": "../../refs/flipper-zero-momentum-firmware/assets/dolphin/external/L1_Akira_128x64",
+      "output": "../../firmware/assets/anims/akira.panim"
+    },
+    {
+      "input": "../../refs/flipper-zero-momentum-firmware/assets/dolphin/external/L1_Cry_128x64",
+      "output": "../../firmware/assets/anims/cry.panim"
+    },
+    {
+      "input": "../../refs/flipper-zero-momentum-firmware/assets/dolphin/external/L1_Read_books_128x64",
+      "output": "../../firmware/assets/anims/read.panim"
+    },
+    {
+      "input": "../../refs/flipper-zero-momentum-firmware/assets/dolphin/external/L1_Sleep_128x64",
+      "output": "../../firmware/assets/anims/sleep.panim"
+    },
+    {
+      "input": "../../refs/flipper-zero-momentum-firmware/assets/dolphin/external/L2_Hacking_pc_128x64",
+      "output": "../../firmware/assets/anims/hacking.panim"
+    },
+    {
+      "input": "../../refs/flipper-zero-momentum-firmware/assets/dolphin/external/L2_Dj_128x64",
+      "output": "../../firmware/assets/anims/dj.panim"
+    }
+  ]
+}

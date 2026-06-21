@@ -1,11 +1,9 @@
 #include "nema/ui/animation_manager.h"
-#include "nema/ui/dolphin_anim.h"
 
 namespace nema::anim {
 
 AnimationManager& AnimationManager::instance() {
     static AnimationManager mgr;
-    (void)DOLPHIN_SHOWCASE;   // Plan 71: anchor to prevent WASM dead-code elimination
     return mgr;
 }
 

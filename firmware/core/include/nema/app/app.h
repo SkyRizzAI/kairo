@@ -37,6 +37,9 @@ struct IApp {
     // need deep call stacks (e.g. JS apps running QuickJS, which recurses
     // deeply during evaluation). Default 8 KB fits all native C++ apps.
     virtual uint32_t stackBytes() const { return 8192; }
+
+    // Launcher group label. Default "Apps". System tools return "System".
+    virtual const char* category() const { return "Apps"; }
 };
 
 } // namespace nema

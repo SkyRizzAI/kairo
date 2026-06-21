@@ -35,7 +35,7 @@ set(AETHER_SRCS
     ${CMAKE_CURRENT_SOURCE_DIR}/../core/src/ui/animation_player.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../core/src/ui/animation_manager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../core/src/ui/builtin_animations.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/../core/src/ui/dolphin_showcase.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../core/src/ui/dolphin_anim.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../core/src/ui/asset_loader.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../core/src/ui/asset_arena.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../core/src/ui/status_bar.cpp

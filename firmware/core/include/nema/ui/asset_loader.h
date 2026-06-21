@@ -129,6 +129,29 @@ private:
     std::vector<Entry> entries_;
 };
 
+// ── PanimAsset — single-file .panim binary loader ────────────────────────────
+// Reads a .panim file written by tools/asset_gen/seq2panim into a fully
+// self-contained animation. The internal bitmap data stays alive as long as the
+// PanimAsset instance is alive.
+struct PanimAsset {
+    std::vector<uint8_t>               rawData;      // entire file — bitmaps point in
+    std::vector<uint8_t>               framesOrder;  // copy of framesOrder[] section
+    std::vector<anim::AnimationFrame>  frames;       // one per unique bitmap
+    anim::Animation                    def = {};
+
+    // Metadata mirrored from header for easy access.
+    uint16_t w = 0, h = 0;
+    uint8_t  fps          = 0;
+    uint8_t  passiveCount = 0;
+    uint8_t  activeCount  = 0;
+
+    bool load(IFileSystem& fs, const char* path);
+
+    const anim::Animation& animation() const { return def; }
+    bool valid() const { return !frames.empty() && def.frameCount > 0; }
+    void release();
+};
+
 } // namespace nema::asset
 
 // ── Convenience: seed a demo asset pack into a filesystem ──────────────────────

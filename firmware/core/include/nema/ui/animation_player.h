@@ -23,31 +23,38 @@ public:
     void stop();                                   // stop and reset to frame 0
     void pause();                                  // stop but keep current frame
 
-    bool isPlaying() const { return playing_; }
-    bool isLastFrame() const { return frame_ >= def_.frameCount - 1; }
+    bool isPlaying()   const { return playing_; }
+    bool isLastFrame() const { return playhead_ + 1 >= playheadLen(); }
 
-    uint8_t      currentFrameIndex() const { return frame_; }
-    const uint8_t* currentFrameData() const;       // XBM data for current frame
-    uint16_t     width()  const { return currentDef().width; }
-    uint16_t     height() const { return currentDef().height; }
+    uint8_t        currentFrameIndex() const { return resolveFrame(); }
+    const uint8_t* currentFrameData()  const;
+    uint16_t       width()  const { return currentDef().width; }
+    uint16_t       height() const { return currentDef().height; }
 
-    // Callback — called whenever the frame advances (set from GUI thread).
+    // Trigger the active segment (if activeCount > 0). No-op if already active
+    // or if the animation has no active frames.
+    void triggerActive();
+
+    // Callback fired on every frame advance.
     void setFrameCallback(AnimationFrameCallback cb, void* ctx) {
         frameCb_ = cb; frameCbCtx_ = ctx;
     }
 
-    // Tick — called by AnimationManager each frame with the current timestamp (ms).
-    // Advances the frame if enough time has passed since the last advance.
-    // Returns true if the frame changed (caller should redraw).
+    // Tick — called by AnimationManager. Returns true if frame changed.
     bool tick(uint32_t nowMs);
 
 private:
-    const AnimationFrame& currentDef() const { return def_.frames[frame_]; }
+    uint8_t resolveFrame()  const;  // playhead → bitmap index
+    uint8_t playheadLen()   const;  // total playback positions (order or frameCount)
+    void    advancePlayhead();
+
+    const AnimationFrame& currentDef() const { return def_.frames[resolveFrame()]; }
 
     const Animation& def_;
-    uint8_t          frame_     = 0;
-    bool             playing_   = false;
-    bool             finished_  = false;   // one-shot: stopped after last frame
+    uint8_t          playhead_   = 0;
+    bool             playing_    = false;
+    bool             finished_   = false;
+    bool             inActive_   = false;
     uint32_t         lastTickMs_ = 0;
 
     AnimationFrameCallback frameCb_    = nullptr;

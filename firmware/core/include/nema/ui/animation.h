@@ -22,21 +22,29 @@ struct AnimationFrame {
 
 // Animation definition — sequence of frames + playback settings.
 struct Animation {
-    const AnimationFrame* frames;    // array of frames
-    uint8_t               frameCount;
-    uint8_t               frameRate;   // frames per second (0 = static)
-    bool                  loop;        // restart from frame 0 after last frame
+    const AnimationFrame* frames;       // array of UNIQUE bitmaps
+    uint8_t               frameCount;   // number of unique bitmaps
+    uint8_t               frameRate;    // frames per second (0 = static)
+    bool                  loop;         // restart after last playhead position
+
+    // Optional non-linear playback (Flipper "Frames order").
+    // null → sequential 0…frameCount-1 (backward-compatible default).
+    const uint8_t*        framesOrder;    // playback index sequence
+    uint8_t               framesOrderLen; // length of framesOrder[]
+    uint8_t               passiveCount;   // leading passive (idle loop) frames
+    uint8_t               activeCount;    // trailing active (triggered) frames
 };
 
-// Convenience macro for static animation definitions.
-#define ANIM_DEF(name, rate, loop_flag, ...)                        \
-    static const nema::anim::AnimationFrame name##_frames[] = {     \
-        __VA_ARGS__                                                 \
-    };                                                              \
-    static const nema::anim::Animation name = {                     \
-        name##_frames,                                              \
+// Convenience macro for simple sequential animations (backward-compatible).
+#define ANIM_DEF(name, rate, loop_flag, ...)                         \
+    static const nema::anim::AnimationFrame name##_frames[] = {      \
+        __VA_ARGS__                                                  \
+    };                                                               \
+    static const nema::anim::Animation name = {                      \
+        name##_frames,                                               \
         (uint8_t)(sizeof(name##_frames) / sizeof(name##_frames[0])), \
-        (rate), (loop_flag)                                         \
+        (rate), (loop_flag),                                         \
+        nullptr, 0, 0, 0                                             \
     }
 
 } // namespace nema::anim
