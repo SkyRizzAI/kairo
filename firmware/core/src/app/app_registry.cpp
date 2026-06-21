@@ -1,6 +1,8 @@
 #include "nema/app/app_registry.h"
 #include "nema/app/app.h"
 #include "nema/app/app_host_manager.h"
+#include "nema/proc/process_host.h"
+#include "nema/proc/stream.h"
 #include "nema/service.h"
 #include "nema/ui/view_dispatcher.h"
 #include "nema/ui/display_server.h"
@@ -10,6 +12,47 @@
 #include "nema/event/event_bus.h"
 #include "nema/event/event.h"
 #include <cstring>
+#include <list>
+#include <memory>
+
+namespace {
+
+// Fire-and-forget CLI process: owns stdout/stderr sinks + ProcessHost.
+// Stored in a static list; finished entries are pruned on next launchProcess().
+struct ProcessEntry {
+    nema::LineOutputStream out_;
+    nema::LineOutputStream err_;
+    nema::ProcessHost      host_;
+
+    ProcessEntry(nema::Runtime& rt, const char* appId,
+                 nema::IApp& app, std::vector<std::string> argv)
+        : out_([&rt, id = std::string(appId)](const std::string& line) {
+              rt.log().info(id.c_str(), line.c_str());
+          })
+        , err_([&rt, id = std::string(appId)](const std::string& line) {
+              rt.log().warn(id.c_str(), line.c_str());
+          })
+        , host_(rt, app, makeSpec(argv))
+    {}
+
+    bool finished() const { return host_.finished(); }
+    void start()          { host_.start(); }
+
+private:
+    // Called during member initialization — out_ and err_ are already
+    // initialized (declared before host_), so &out_/&err_ are valid.
+    nema::ProcessSpec makeSpec(std::vector<std::string>& argv) {
+        nema::ProcessSpec spec;
+        spec.argv    = std::move(argv);
+        spec.stdout_ = &out_;
+        spec.stderr_ = &err_;
+        return spec;
+    }
+};
+
+static std::list<std::unique_ptr<ProcessEntry>> s_processes;
+
+}  // anonymous namespace
 
 namespace nema {
 
@@ -122,13 +165,44 @@ bool AppRegistry::launch(const char* id) {
             }
         }
 
-        if (t.app)         { rt_.appHost().launch(*t.app); return true; }  // own thread
-        if (t.screen)      { rt_.view().push(*t.screen);   return true; }  // UI-thread view
+        // CLI-only apps don't need a surface: spawn headless with ProcessContext.
+        if (m.mode == AppMode::Cli && t.app) {
+            return launchProcess(id);
+        }
+
+        if (t.app)    { rt_.appHost().launch(*t.app); return true; }  // own thread (UI)
+        if (t.screen) { rt_.view().push(*t.screen);   return true; }  // UI-thread view
         // Services aren't launchable — they're already running in background.
         rt_.log().warn("AppRegistry", std::string("launch: ") + id + " is a service");
         return false;
     }
     rt_.log().warn("AppRegistry", std::string("launch: unknown app ") + (id ? id : "(null)"));
+    return false;
+}
+
+bool AppRegistry::launchProcess(const char* id, std::vector<std::string> argv) {
+    // Prune finished process entries before adding new ones.
+    s_processes.remove_if([](const auto& e) { return e->finished(); });
+
+    for (size_t i = 0; i < manifests_.size(); i++) {
+        if (!idEq(manifests_[i].id, id)) continue;
+        IApp* app = targets_[i].app;
+        if (!app) {
+            rt_.log().warn("AppRegistry",
+                std::string("launchProcess: ") + id + " has no IApp");
+            return false;
+        }
+        if (argv.empty()) argv.push_back(id);
+
+        auto entry = std::make_unique<ProcessEntry>(rt_, id, *app, std::move(argv));
+        entry->start();
+        s_processes.push_back(std::move(entry));
+
+        rt_.log().info("AppRegistry", std::string("launched process: ") + id);
+        return true;
+    }
+    rt_.log().warn("AppRegistry",
+        std::string("launchProcess: unknown app ") + (id ? id : "(null)"));
     return false;
 }
 

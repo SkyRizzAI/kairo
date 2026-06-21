@@ -63,7 +63,13 @@ public:
     const std::vector<AppManifest>& list() const { return manifests_; }
 
     // Launch an installed app on its own thread. Returns false if id is unknown.
+    // For AppMode::Cli apps, this routes to launchProcess() automatically.
     bool launch(const char* id);
+
+    // Spawn an app in CLI (headless) mode: gives it a ProcessContext with
+    // stdout routed to rt.log(). For AppMode::Hybrid apps explicitly launched
+    // from the shell (as opposed to the launcher).
+    bool launchProcess(const char* id, std::vector<std::string> argv = {});
 
     // Look up an app by id. Returns nullptr if not found (Plan 54).
     IApp* getApp(const char* id) const;

@@ -7,6 +7,7 @@
 
 #include "nema/app/papp_installer.h"
 #include "nema/app/papp_package.h"
+#include "nema/app/app_manifest.h"
 #include "nema/apps/js_app_store.h"
 #include "nema/app/app_registry.h"
 #include "nema/runtime.h"
@@ -102,12 +103,25 @@ static bool installFromDir(Runtime& rt, IFileSystem* fs,
     std::string version = mj.value("version", "1.0.0");
     std::string dsrv    = mj.value("display_server", "");
     std::string rtStr   = mj.value("runtime", "js");
+    std::string modeStr = mj.value("mode", "ui");
 
     if (id.empty()) return false;
     if (name.empty()) name = id;
 
+    // WASM runtime not yet supported for UI — toolchain + host API bridge
+    // pending Plan 84 Fase 4. Reject with a clear error instead of crashing.
+    if (rtStr == "wasm") {
+        rt.log().error("PappInstaller", "WASM runtime not yet supported — rejected",
+                       {{"id", id}});
+        return false;
+    }
+
+    AppMode mode = AppMode::Ui;
+    if (modeStr == "cli")    mode = AppMode::Cli;
+    else if (modeStr == "hybrid") mode = AppMode::Hybrid;
+
     std::string entryPath;
-    for (const char* c : {"app.js", "app.wasm", "main.js"}) {
+    for (const char* c : {"app.js", "main.js"}) {
         std::vector<uint8_t> d;
         if (fs->read(dir + "/" + c, d)) { entryPath = c; break; }
     }
@@ -117,8 +131,9 @@ static bool installFromDir(Runtime& rt, IFileSystem* fs,
     if (!fs->read(dir + "/" + entryPath, code)) return false;
     std::string js(code.begin(), code.end());
 
-    rt.log().info("PappInstaller", "install", {{"id", id}, {"name", name}});
-    return JsAppStore::instance().installApp(rt, id, name, version, js, dsrv);
+    rt.log().info("PappInstaller", "install",
+                  {{"id", id}, {"name", name}, {"mode", modeStr}});
+    return JsAppStore::instance().installApp(rt, id, name, version, js, dsrv, mode);
 }
 
 // Install from a single-file .papp FILE.

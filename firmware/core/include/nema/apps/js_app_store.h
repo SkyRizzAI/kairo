@@ -1,5 +1,7 @@
 #pragma once
 #include "nema/apps/js_app.h"
+#include "nema/app/app_manifest.h"
+#include <list>
 #include <memory>
 #include <string>
 #include <vector>
@@ -29,7 +31,8 @@ public:
     // displayServer: preferred server from the manifest (Plan 51); empty = any.
     bool installApp(Runtime& rt, std::string id, std::string name,
                     std::string version, std::string js,
-                    std::string displayServer = "");
+                    std::string displayServer = "",
+                    AppMode mode = AppMode::Ui);
 
     // Install from a single-file PAPP1 container (Plan 59):
     //   PAPP1\n<manifest-json>\n<entry-filename>\n<js>
@@ -40,7 +43,7 @@ public:
     int count() const { return (int)apps_.size(); }
 
 private:
-    std::vector<std::unique_ptr<JsApp>> apps_;   // owns every installed JS app
+    std::list<std::unique_ptr<JsApp>> apps_;   // list: stable pointers (vector realloc would invalidate)
 };
 
 // Convenience: install all built-in JS apps (the embedded store, Plan 37 Fase 5).
