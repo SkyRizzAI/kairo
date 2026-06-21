@@ -8,13 +8,7 @@
 
 namespace nema::shell {
 
-// Wallpaper animation candidates, tried in order. doom.panim lives on the
-// hardware LittleFS; sleep.panim is the WASM simulator fallback (seeded from
-// the embedded C array in dolphin_sleep_panim.h).
-static const char* const kAnimCandidates[] = {
-    "anims/doom.panim",
-    "anims/sleep.panim",
-};
+static const char kDefaultAnimPath[] = "anims/boxing.panim";
 
 LiveWallpaperDesktop::LiveWallpaperDesktop(nema::Runtime& rt) : rt_(rt) {}
 
@@ -26,11 +20,9 @@ void LiveWallpaperDesktop::onResume() {
                              Anchor::Center);
 
     if (!asset_ && rt_.fs()) {
-        for (const char* path : kAnimCandidates) {
-            asset_ = std::make_unique<nema::asset::PanimAsset>();
-            if (asset_->load(*rt_.fs(), path)) break;
+        asset_ = std::make_unique<nema::asset::PanimAsset>();
+        if (!asset_->load(*rt_.fs(), kDefaultAnimPath))
             asset_.reset();
-        }
     }
 
     if (asset_ && !player_) {

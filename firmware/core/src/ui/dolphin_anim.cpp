@@ -7,15 +7,7 @@
 namespace nema::anim {
 
 const DolphinEntry DOLPHIN_ENTRIES[] = {
-    { "Doom",    "anims/doom.panim",    128, 64, 2 },
-    { "Boxing",  "anims/boxing.panim",  128, 64, 2 },
-    { "Sleep",   "anims/sleep.panim",   128, 64, 2 },
-    { "TV",      "anims/tv.panim",      128, 47, 2 },
-    { "Akira",   "anims/akira.panim",   128, 64, 2 },
-    { "Cry",     "anims/cry.panim",     128, 64, 2 },
-    { "Read",    "anims/read.panim",    128, 64, 2 },
-    { "Hacking", "anims/hacking.panim", 128, 64, 2 },
-    { "DJ",      "anims/dj.panim",      128, 64, 2 },
+    { "Boxing", "anims/boxing.panim", 128, 64, 2 },
 };
 
 const size_t DOLPHIN_ENTRIES_COUNT = sizeof(DOLPHIN_ENTRIES) / sizeof(DOLPHIN_ENTRIES[0]);
