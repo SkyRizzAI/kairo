@@ -6,6 +6,7 @@
 #include "nema/ui/text_style.h"
 #include "nema/ui/animation_player.h"
 #include "nema/ui/canvas.h"
+#include "nema/ui/node.h"
 #include <cstring>
 
 namespace aether::ui {
@@ -54,13 +55,19 @@ static void paint(const UiNode* n, Canvas& c, const UiNode* focused, bool inFocu
         bool on = !s.background;
 
         if (n->role == TextRole::Smart) {
-            // Smart text: marquee when parent Pressable is focused, ellipsis otherwise.
+            // Smart text: marquee when focused, ellipsis when unfocused, center when short.
             uint16_t availW = (n->w > 2u * s.padding)
                 ? (uint16_t)(n->w - 2u * s.padding) : n->w;
-            if (inFocused)
+            uint16_t textW  = aether::ui::measureTextW(n->text, TextRole::Body);
+            if (textW <= availW && s.justify == Justify::Center) {
+                // Short value — center within the column (e.g. "ON" between chevrons).
+                uint16_t cx = (uint16_t)(tx + (availW - textW) / 2);
+                c.drawText(cx, ty, n->text, on);
+            } else if (inFocused) {
                 aether::ui::draw::marquee(c, tx, ty, availW, n->text, s_renderTick);
-            else
+            } else {
                 aether::ui::draw::ellipsis(c, tx, ty, availW, n->text);
+            }
         } else {
             // Text on a filled background renders inverted (white) so banner/title
             // bars are legible. Otherwise normal (black-on-white).

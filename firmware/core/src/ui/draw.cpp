@@ -211,6 +211,7 @@ void ellipsis(Canvas& c, uint16_t x, uint16_t y, uint16_t w,
               const char* text, TextRole role) {
     if (!text || !*text) return;
     FontSpec fs = fontForRole(role);
+    const nema::display::BitmapFont& f = resolve(fs.handle);
     uint16_t textW = measureTextW(text, role);
 
     if (textW <= w) {
@@ -225,18 +226,21 @@ void ellipsis(Canvas& c, uint16_t x, uint16_t y, uint16_t w,
     }
 
     uint16_t available = w - dotsW;
-    uint16_t charW_px  = (uint16_t)((resolve(fs.handle).charW + resolve(fs.handle).spacing) * fs.scale);
-    size_t   n         = available / charW_px;
-    size_t   len       = strlen(text);
-    if (n > len) n = len;
-    if (n == 0) {
-        drawText(c, x, y, "...", fs);
-        return;
+    // Walk actual per-character widths so "..." is placed right after the last
+    // visible glyph — fixes the large gap on proportional fonts (same as marquee).
+    size_t   slen = strlen(text);
+    size_t   n    = 0;
+    uint32_t usedW = 0;
+    for (; n < slen; ++n) {
+        uint8_t  ci = (text[n] >= ' ') ? (uint8_t)(text[n] - ' ') : 0;
+        uint16_t cw = (uint16_t)(((f.widths ? f.widths[ci] : f.charW) + f.spacing) * fs.scale);
+        if (usedW + cw > available) break;
+        usedW += cw;
     }
+    if (n == 0) { drawText(c, x, y, "...", fs); return; }
 
     drawSpan(c, x, y, text, n, fs);
-    uint16_t partW = (uint16_t)(n * charW_px);
-    drawText(c, (uint16_t)(x + partW), y, "...", fs);
+    drawText(c, (uint16_t)(x + usedW), y, "...", fs);
 }
 
 // ── Icon ──────────────────────────────────────────────────────────────────────

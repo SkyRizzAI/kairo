@@ -261,7 +261,11 @@ UiNode* ListInputRow(NodeArena& a, const ListInput& e) {
     Style vc; vc.dir = FlexDir::Row; vc.align = Align::Center; vc.justify = Justify::Center;
     vc.flexGrow = RIGHT_W; vc.flexZero = true;
     UiNode* valLabel = SmartLabel(a, e.value ? e.value : "");
-    if (valLabel) { valLabel->style.flexGrow = 1; valLabel->style.flexZero = true; }
+    if (valLabel) {
+        valLabel->style.flexGrow = 1;
+        valLabel->style.flexZero = true;
+        valLabel->style.justify  = Justify::Center;  // hint: center short values
+    }
     UiNode* vbox = View(a, vc, { valLabel });
 
     // Flat row: [5px] label | < | value | > | [4px]
