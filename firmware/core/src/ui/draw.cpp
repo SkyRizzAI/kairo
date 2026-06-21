@@ -184,8 +184,7 @@ void marquee(Canvas& c, uint16_t x, uint16_t y, uint16_t w,
     // ~40px/sec: divide ms tick by 25.  scrollPx always increases → no stutter.
     uint32_t scrollPx = (tick / 25) % cycle;
 
-    // Walk actual per-character widths (handles proportional fonts correctly).
-    // Accumulate until we reach the character that straddles the left clip edge.
+    // Walk actual per-character widths to find the first visible character.
     uint32_t cum = 0;
     size_t   slen = strlen(text);
     size_t   firstChar = 0;
@@ -195,15 +194,16 @@ void marquee(Canvas& c, uint16_t x, uint16_t y, uint16_t w,
         if (cum + cw > scrollPx) break;
         cum += cw;
     }
-    // intoChar = pixels of firstChar that have scrolled off to the left.
-    // drawX = screen col of firstChar's left edge.  Always x - intoChar ≤ x,
-    // so drawX always decreases as scrollPx increases → perfectly smooth.
     uint32_t intoChar = scrollPx - cum;
     uint16_t drawX    = (intoChar <= (uint32_t)x) ? (uint16_t)(x - intoChar) : 0;
 
+    // Draw two copies of the text separated by `cycle` pixels so the loop is
+    // seamless — like an LED ticker/train: as copy 1 exits the left edge, copy 2
+    // enters from the right with no gap or jump.
     c.setClip(x, y, w, lineH);
     if (firstChar < slen)
-        drawText(c, drawX, y, text + firstChar, fs);
+        drawText(c, drawX, y, text + firstChar, fs);   // copy 1 (partial, already scrolled)
+    drawText(c, (uint16_t)(drawX + cycle), y, text, fs); // copy 2 (full, one cycle ahead)
     c.clearClip();
 }
 

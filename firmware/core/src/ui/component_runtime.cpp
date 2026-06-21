@@ -73,31 +73,48 @@ static UiNode* parentOf(UiNode* n, const UiNode* target) {
     return nullptr;
 }
 
+// Pixels of context kept above/below the focused item when scrolling it into view.
+// Going UP: section header lands kScrollCtx px from viewport top.
+// Going DOWN: item bottom lands kScrollCtx px from viewport bottom (shows context above).
+static constexpr int kScrollCtx = 24;
+
 static bool ensureVisible(UiNode* root, const UiNode* foc) {
     UiNode* sn = findScrollAncestor(root, foc);
     if (!sn || !sn->scroll || sn->style.dir != FlexDir::Col) return false;
-    const int pad = sn->style.padding;
-    int top    = sn->y + pad;
     int before = sn->scroll->scrollMain;
-    // Smart-scroll (Plan 79): web-style, section-aware top-align. Align the focused
-    // stop's top to the viewport top, but EXTEND the target upward over the run of
-    // non-focusable siblings immediately before it — its section header. So the
-    // first item of a section snaps the *header* to the top (not the item), which
-    // keeps section titles visible and lets Prev walk all the way back to scroll 0
-    // instead of getting stuck with the leading header pushed off-screen. Clamped
-    // to [0, maxScroll] (the last stop still reveals the very bottom of content).
-    int alignY = foc->y;
+    int viewH  = (int)sn->scroll->viewportMain;
+    int maxS   = sn->scroll->maxScroll();
+
+    // Section-aware top: extend upward over the run of non-focusable siblings
+    // (section header) immediately before foc, so the header scrolls into view
+    // together with the first item of each section.
+    int alignTop = foc->y;
     if (UiNode* par = parentOf(root, foc)) {
-        UiNode* runStart = nullptr;   // start of the non-focusable run before foc
+        UiNode* runStart = nullptr;
         for (UiNode* k = par->firstChild; k && k != foc; k = k->nextSibling) {
-            if (k->focusable) runStart = nullptr;   // a focusable sibling resets it
-            else if (!runStart) runStart = k;       // header/label run begins
+            if (k->focusable) runStart = nullptr;
+            else if (!runStart) runStart = k;
         }
-        if (runStart) alignY = runStart->y;
+        if (runStart) alignTop = runStart->y;
     }
-    int sc = before + (alignY - top);
+    int focBottom = foc->y + (int)foc->h;
+
+    // Only scroll if the item (or its section header) is actually outside the viewport.
+    // This prevents fighting with the wrap-prevention nudge in dispatchNav.
+    bool abovePort = alignTop < before;
+    bool belowPort = focBottom > before + viewH;
+    if (!abovePort && !belowPort) return false;
+
+    int sc;
+    if (abovePort) {
+        // Scrolling up: place section header kScrollCtx px below viewport top.
+        sc = alignTop - kScrollCtx;
+    } else {
+        // Scrolling down: place item bottom kScrollCtx px above viewport bottom,
+        // so previous items remain visible above the newly focused one.
+        sc = focBottom + kScrollCtx - viewH;
+    }
     if (sc < 0) sc = 0;
-    int maxS = sn->scroll->maxScroll();
     if (sc > maxS) sc = maxS;
     sn->scroll->scrollMain = (int16_t)sc;
     return sc != before;
@@ -206,28 +223,55 @@ static constexpr int SCROLL_STEP = 24;   // px per Prev/Next on a text screen
 
 bool dispatchNav(UiNode* root, ComponentState& st, Nav nav) {
     if (!root) return false;
-    st.modality = input::InputModality::Button;   // ring returns
-    // Activate: fire the focused control's onPress; if it's an adjustable
-    // (Select/Stepper/Slider with no onPress), Activate advances it (+1) — the
-    // fallback for boards without Left/Right keys.
+    st.modality = input::InputModality::Button;
     if (nav == Nav::Activate) {
         if (handleFocusKey(*root, st.focus, Key::Select)) return true;
         return dispatchAdjust(root, st, +1);
     }
     Key k = nav == Nav::Prev ? Key::Left : Key::Right;
-    if (handleFocusKey(*root, st.focus, k)) return true;
-    // No focusable target moved (e.g. a read-only scrolling text screen) — fall
-    // back to nudging the scroll view so Prev/Next still pans the content.
-    if (nav != Nav::Activate) {
+    // Get current focused node and index BEFORE moving, so we can detect wrap.
+    UiNode* oldFoc = focusedNode(*root, st.focus);   // also refreshes count/clamp
+    int prevIdx = st.focus.focused;
+    if (!handleFocusKey(*root, st.focus, k)) {
+        // No focusable in tree — nudge scroll as fallback (e.g. About screen).
         if (UiNode* sn = firstScroll(root)) {
             if (sn->scroll) {
-                sn->scroll->scrollMain =
-                    (int16_t)(sn->scroll->scrollMain + (nav == Nav::Next ? SCROLL_STEP : -SCROLL_STEP));
+                sn->scroll->scrollMain = (int16_t)(sn->scroll->scrollMain +
+                    (nav == Nav::Next ? SCROLL_STEP : -SCROLL_STEP));
+                return true;
+            }
+        }
+        return false;
+    }
+    // Detect a list-boundary wrap: focus index went backward for Next (was at
+    // last item, jumped to 0), or forward for Prev (was at 0, jumped to last).
+    // When wrapping AND the scroll container still has non-focusable content
+    // beyond the boundary (e.g. Info rows below UI Scale in settings), reveal
+    // that content with a nudge instead of immediately wrapping. The wrap fires
+    // on the next press once the scroll has actually reached its limit.
+    bool wrappedDown = (nav == Nav::Next) && (st.focus.focused < prevIdx);
+    bool wrappedUp   = (nav == Nav::Prev) && (st.focus.focused > prevIdx);
+    if ((wrappedDown || wrappedUp) && oldFoc) {
+        UiNode* sn = findScrollAncestor(root, oldFoc);
+        if (!sn) sn = firstScroll(root);
+        if (sn && sn->scroll) {
+            int16_t cur  = sn->scroll->scrollMain;
+            int16_t maxS = sn->scroll->maxScroll();
+            if (wrappedDown && cur < maxS) {
+                st.focus.focused = prevIdx;   // undo wrap
+                int next = (int)cur + SCROLL_STEP;
+                sn->scroll->scrollMain = (int16_t)(next < (int)maxS ? next : (int)maxS);
+                return true;
+            }
+            if (wrappedUp && cur > 0) {
+                st.focus.focused = prevIdx;   // undo wrap
+                int next = (int)cur - SCROLL_STEP;
+                sn->scroll->scrollMain = (int16_t)(next > 0 ? next : 0);
                 return true;
             }
         }
     }
-    return false;
+    return true;
 }
 
 bool dispatchAdjust(UiNode* root, ComponentState& st, int dir) {
