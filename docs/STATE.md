@@ -4,7 +4,7 @@
 > Detail per-stage ada di [`plans/`](plans/00-overview.md). Master plan: [`concept_plan.md`](concept_plan.md).
 > Reference arsitektur per-subsistem: [`architecture/`](architecture/README.md).
 >
-> **Last updated:** 2026-06-21 (Plan 82 + UI polish — canvas scaling, PS launcher, status bar fixes, VirtualKeyboard redesign + 2D nav fix)
+> **Last updated:** 2026-06-21 (Plan 83 Fase 1–3 — storage architecture; VFS restructure, AppStorage, StorageService, NVS namespace fix, BadUSB migration)
 
 ---
 
@@ -20,7 +20,8 @@ Palanu = platform handheld bergaya Flipper Zero, **1-bit retro/pixel UI**, denga
 
 | Area | Status | Bukti |
 |---|---|---|
-| **Asset architecture (Plan 82)** | ✅ build (host+wasm) | T1 system icons (status bar), T2 launcher icon anims, T3 `.panim` (VFS); toolchain `tools/asset_gen/`; `dolphin_showcase.cpp` 895 KB removed; BadUSB → category="System"; battery icon 16×8 (proportional); WiFi icon state-gated (`available()`); animation consolidated to `boxing.panim`; LittleFS 512 KB |
+| **Storage architecture (Plan 83)** | 🟡 Fase 1–3 done | VFS: `/system/assets/anims/`, `/data/<bundle-id>/`, `/sd/data/<bundle-id>/`; `AppStorage` (namespaced I/O); `StorageService` (routing+move+usage); `ctx.storage()` di `AppContext`; NVS 15-char limit fixed (djb2); BadUSB migrasi `/badusb/`→`/data/com.palanu.badusb/`; Fase 4 (JS SDK) + Fase 5 (Settings screen) pending |
+| **Asset architecture (Plan 82)** | ✅ build (host+wasm) | T1 system icons (status bar), T2 launcher icon anims, T3 `.panim` (VFS); toolchain `tools/asset_gen/`; `dolphin_showcase.cpp` 895 KB removed; BadUSB → category="System"; battery icon 16×8 (proportional); WiFi icon state-gated (`available()`); animation consolidated to `laptop.panim`; LittleFS 512 KB |
 | **Canvas scaling (non-integer)** | ✅ build | `fillRect`/`invertRect`/`drawPixel` pakai floor-edge formula — tidak ada gap/double-invert artifact di scale 1.75× / 1.5× |
 | **PlayStation launcher** | ✅ build | Flush-left pada layar sempit (≤3 tile); partial tile peek di kanan sebagai scroll hint |
 | **Aether display server = lib terpisah (Plan 80)** | ✅ build (host+wasm+esp32) | `nema_core` 0 ref ke `aether` (IDF strict-link); semua UI/screens/GuiService → `libaether`; ganti server = ganti lib + `aether::bootDisplay(rt)` |

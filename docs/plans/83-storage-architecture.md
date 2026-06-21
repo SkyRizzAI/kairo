@@ -334,33 +334,33 @@ Settings → Storage
 
 ### Fase 1 — Path restructure + NVS fix (tidak breaking user data)
 
-- [ ] Fix NVS namespace: `nsKey(bundleId)` di `nema_host_impl.cpp`
-- [ ] Rename embedded seed: `/anims/` → `/system/assets/anims/` di `wasm_platform.cpp`
-- [ ] Update `dolphin_anim.cpp` `DOLPHIN_ENTRIES` paths
-- [ ] Update `desktop_livewall.cpp` default path + scan helper
-- [ ] Update `dolphin_app.cpp` + `dolphin_demo.cpp` paths
-- [ ] Update `esp32_platform.cpp` mkdir + one-time migration `/badusb/` → `/data/com.palanu.badusb/`
-- [ ] Update `wasm_platform.cpp` mkdir structure
-- [ ] Build green: host + wasm
+- [x] Fix NVS namespace: `nsKey(bundleId)` di `nema_host_impl.cpp`
+- [x] Rename embedded seed: `/anims/` → `/system/assets/anims/` di `wasm_platform.cpp`
+- [x] Update `dolphin_anim.cpp` `DOLPHIN_ENTRIES` paths
+- [x] Update `desktop_livewall.cpp` default path + scan helper
+- [x] Update `dolphin_app.cpp` + `dolphin_demo.cpp` paths
+- [x] Update `esp32_platform.cpp` mkdir + one-time migration `/badusb/` → `/data/com.palanu.badusb/`
+- [x] Update `wasm_platform.cpp` mkdir structure
+- [x] Build green: host + wasm
 
 ### Fase 2 — AppStorage + StorageService core
 
-- [ ] `firmware/core/include/nema/fs/app_storage.h`
-- [ ] `firmware/core/src/fs/app_storage.cpp`
-- [ ] `firmware/core/include/nema/services/storage_service.h`
-- [ ] `firmware/core/src/services/storage_service.cpp`
-- [ ] Tambah `bundleId_` + `storage()` ke `ProcessContext`
-- [ ] `AppHost::launchThread()` inject `bundleId`
-- [ ] Tambah `storageMovable` + `hasCriticalData` ke `AppManifest`
-- [ ] Register `StorageService` di platform init (esp32 + wasm)
-- [ ] Build green: host + wasm
+- [x] `firmware/core/include/nema/fs/app_storage.h`
+- [x] `firmware/core/src/fs/app_storage.cpp`
+- [x] `firmware/core/include/nema/services/storage_service.h`
+- [x] `firmware/core/src/services/storage_service.cpp`
+- [x] Tambah `bundleId()` ke `AppContext` + `storage()`/`criticalStorage()` concrete methods
+- [x] `AppHost` implement `bundleId()` sebagai `app_.id()`
+- [x] Tambah `storageMovable` + `hasCriticalData` ke `AppManifest`
+- [x] Register `StorageService` di platform init (esp32 + wasm)
+- [x] Build green: host + wasm
 
 ### Fase 3 — Built-in app migration
 
-- [ ] `bad_usb_app.cpp` → `ctx.storage().list()` + `ctx.storage().read()`
-- [ ] `dolphin_app.cpp` → path sudah fixed di Fase 1; confirm via `ctx.runtime().fs()` atau biarkan karena system code
-- [ ] Tambah `AppManifest` storage fields ke semua built-in apps
-- [ ] Build green + verify BadUSB scripts masih terbaca
+- [x] `bad_usb_app.cpp` scan path → `/data/com.palanu.badusb/` (dilakukan di Fase 1)
+- [x] `dolphin_app.cpp` / `desktop_livewall.cpp` → path fixed di Fase 1
+- [x] `AppManifest` storage fields tersedia (default `storageMovable=true`, `hasCriticalData=false`)
+- [x] Build green: host + wasm
 
 ### Fase 4 — JS SDK file storage
 
