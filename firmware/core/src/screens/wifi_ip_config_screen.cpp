@@ -73,7 +73,7 @@ void WifiIpConfigScreen::editField(Field f) {
 void WifiIpConfigScreen::cbToggleMode(void* u) {
     auto* s = static_cast<WifiIpConfigScreen*>(u);
     s->manual_ = !s->manual_;
-    if (s->manual_) {   // prefill manual fields from the current lease
+    if (s->manual_) {
         WifiIpConfig live = s->drv() ? s->drv()->ipConfig() : WifiIpConfig{};
         if (!s->cfg_.ip[0])   std::strncpy(s->cfg_.ip,   live.ip,   sizeof(s->cfg_.ip) - 1);
         if (!s->cfg_.mask[0]) std::strncpy(s->cfg_.mask, live.mask, sizeof(s->cfg_.mask) - 1);
@@ -120,11 +120,9 @@ void WifiIpConfigScreen::draw(Canvas& c) {
 
 UiNode* WifiIpConfigScreen::build(NodeArena& a, Runtime& rt) {
     (void)rt;
-    Style root; root.dir = FlexDir::Col; root.flexGrow = 1; root.padding = 3; root.gap = 1;
-    root.align = Align::Stretch;
-    Style sv;   sv.dir = FlexDir::Col; sv.align = Align::Stretch; sv.gap = 1;
+    Style root; root.dir = FlexDir::Col; root.flexGrow = 1; root.align = Align::Stretch;
 
-    UiNode* list = ScrollView(a, scroll_, sv, {});
+    UiNode* list = ListContainer(a, scroll_, {});
     UiNode* prev = nullptr;
     auto append = [&](UiNode* n) {
         if (!n) return;
@@ -132,23 +130,41 @@ UiNode* WifiIpConfigScreen::build(NodeArena& a, Runtime& rt) {
         prev = n;
     };
 
-    append(ListItem(a, "Configure IP", manual_ ? "Manual" : "Automatic", cbToggleMode, this));
+    {
+        ListEntry e;
+        e.label   = "Configure IP";
+        e.value   = manual_ ? "Manual" : "Automatic";
+        e.onPress = cbToggleMode; e.user = this;
+        append(ListItemRow(a, e));
+    }
 
     if (manual_) {
+        append(ListSection(a, "Manual Configuration"));
         for (int i = 0; i < F_COUNT; i++) {
             Field f = (Field)i;
             fieldRows_[i].self = this;
             fieldRows_[i].f    = f;
             const char* v = fieldPtr(cfg_, f);
             fieldRows_[i].text = v[0] ? v : "(tap to set)";
-            append(ListItem(a, fieldLabel(f), fieldRows_[i].text.c_str(), cbEdit, &fieldRows_[i]));
+            ListEntry e;
+            e.label   = fieldLabel(f);
+            e.value   = fieldRows_[i].text.c_str();
+            e.chevron = true;
+            e.onPress = cbEdit; e.user = &fieldRows_[i];
+            append(ListItemRow(a, e));
         }
     } else {
-        append(Text(a, "Uses DHCP from the router.", TextRole::Caption));
+        ListEntry e; e.label = "Uses DHCP from the router";
+        append(ListItemRow(a, e));
     }
-    append(ListItem(a, "Apply", ">", cbApply, this));
 
-    return View(a, root, { TitleBar(a, "CONFIGURE IP"), list });
+    {
+        ListEntry e; e.label = "Apply"; e.chevron = true;
+        e.onPress = cbApply; e.user = this;
+        append(ListItemRow(a, e));
+    }
+
+    return View(a, root, { TitleBar(a, "Configure IP"), list });
 }
 
 } // namespace nema

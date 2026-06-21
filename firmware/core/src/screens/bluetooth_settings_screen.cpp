@@ -14,8 +14,6 @@ namespace nema {
 using namespace aether::ui;
 
 BluetoothSettingsScreen::BluetoothSettingsScreen(Runtime& rt) : ComponentScreen(rt, 256) {
-    // Pairing request → show the numeric-comparison passkey. redraw() sets dirty_
-    // so the tree REBUILDS (requestRedraw() alone re-renders the stale tree).
     rt_.events().subscribe(events::BtPairRequest, [this](const Event& e) {
         passkey_.clear();
         for (auto& f : e.payload) if (std::strcmp(f.key, "passkey") == 0) passkey_ = f.value;
@@ -52,7 +50,6 @@ void BluetoothSettingsScreen::setEnabled(bool on) {
     if (!c || busy_) return;
     busy_ = true;
     if (on) {
-        // enable() inits a heavy stack — run on a worker, then advertise.
         IBleAdapter* b = ble();
         rt_.tasks().submit([c, b] { if (c->enable(BtMode::Ble) && b) b->startAdvertising(); },
                            [this] { busy_ = false; redraw(); });
@@ -95,29 +92,9 @@ UiNode* BluetoothSettingsScreen::build(NodeArena& a, Runtime& rt) {
     IBluetoothController* c = ctrl();
     IBleAdapter*          b = ble();
 
-    Style root; root.dir = FlexDir::Col; root.flexGrow = 1; root.padding = 3; root.gap = 1;
-    root.align = Align::Stretch;
-    Style sv;   sv.dir = FlexDir::Col; sv.align = Align::Stretch; sv.gap = 1;
+    Style root; root.dir = FlexDir::Col; root.flexGrow = 1; root.align = Align::Stretch;
 
-    if (!c) {
-        return View(a, root, { TitleBar(a, "BLUETOOTH"),
-                               Text(a, "No Bluetooth driver", TextRole::Body) });
-    }
-    if (!rt.capabilities().available(caps::BtBle) && !c->isEnabled()) {
-        // Available() is Absent while off; only flag a true hardware fault.
-        if (rt.capabilities().stateOf(caps::BtBle) == ResourceState::Fault)
-            return View(a, root, { TitleBar(a, "BLUETOOTH"),
-                                   Text(a, "Bluetooth unavailable", TextRole::Body) });
-    }
-
-    bool en = c->isEnabled();
-    if (busy_)        std::snprintf(statusBuf_, sizeof(statusBuf_), "Working...");
-    else if (!en)     std::snprintf(statusBuf_, sizeof(statusBuf_), "Off");
-    else if (b && b->isAdvertising())
-                      std::snprintf(statusBuf_, sizeof(statusBuf_), "On - Advertising as %s", c->deviceName());
-    else              std::snprintf(statusBuf_, sizeof(statusBuf_), "On");
-
-    UiNode* list = ScrollView(a, scroll_, sv, {});
+    UiNode* list = ListContainer(a, scroll_, {});
     UiNode* prev = nullptr;
     auto append = [&](UiNode* n) {
         if (!n) return;
@@ -125,35 +102,67 @@ UiNode* BluetoothSettingsScreen::build(NodeArena& a, Runtime& rt) {
         prev = n;
     };
 
-    append(Text(a, statusBuf_, TextRole::Body));
-    append(Toggle(a, "Bluetooth Enabled", en, cbToggleEnable, this));
+    if (!c) {
+        ListEntry e; e.label = "No Bluetooth driver";
+        append(ListItemRow(a, e));
+        return View(a, root, { TitleBar(a, "Bluetooth"), list });
+    }
+    if (!rt.capabilities().available(caps::BtBle) && !c->isEnabled()) {
+        if (rt.capabilities().stateOf(caps::BtBle) == ResourceState::Fault) {
+            ListEntry e; e.label = "Bluetooth unavailable";
+            append(ListItemRow(a, e));
+            return View(a, root, { TitleBar(a, "Bluetooth"), list });
+        }
+    }
 
-    // Pairing prompt (numeric comparison). pairPrompt_ is a member so the Text
-    // node's char* stays valid through render.
+    bool en = c->isEnabled();
+    if (busy_)
+        std::snprintf(statusBuf_, sizeof(statusBuf_), "Working...");
+    else if (!en)
+        std::snprintf(statusBuf_, sizeof(statusBuf_), "Off");
+    else if (b && b->isAdvertising())
+        std::snprintf(statusBuf_, sizeof(statusBuf_), "Advertising as %s", c->deviceName());
+    else
+        std::snprintf(statusBuf_, sizeof(statusBuf_), "On");
+
+    append(ListSection(a, statusBuf_));
+    append(Toggle(a, "Bluetooth", en, cbToggleEnable, this));
+
     if (pendingPair_ && b) {
         pairPrompt_ = "Pair? code " + passkey_;
-        append(Text(a, pairPrompt_.c_str(), TextRole::Body));
-        append(ListItem(a, "Confirm", ">", cbConfirmPair, this));
-        append(ListItem(a, "Reject",  ">", cbRejectPair,  this));
+        append(ListSection(a, pairPrompt_.c_str()));
+        ListEntry confirm; confirm.label = "Confirm"; confirm.chevron = true;
+        confirm.onPress = cbConfirmPair; confirm.user = this;
+        append(ListItemRow(a, confirm));
+        ListEntry reject; reject.label = "Reject"; reject.chevron = true;
+        reject.onPress = cbRejectPair; reject.user = this;
+        append(ListItemRow(a, reject));
     }
 
     if (en && b) {
         append(Toggle(a, "Discoverable", b->isAdvertising(), cbToggleAdv, this));
-        // Bonded devices — store name in the BondRow (ListItem keeps the char*).
+
         size_t n = b->bondedCount();
-        if (n > 0) append(Text(a, "Paired devices", TextRole::Caption));
-        for (size_t i = 0; i < n; i++) {
-            BtPeer p;
-            if (!b->bondedAt(i, p)) continue;
-            BondRow row{this, {}, (p.name[0] ? p.name : "device")};
-            std::memcpy(row.addr, p.addr, 6);
-            bonds_.push_back(std::move(row));
+        if (n > 0) {
+            append(ListSection(a, "Paired Devices"));
+            for (size_t i = 0; i < n; i++) {
+                BtPeer p;
+                if (!b->bondedAt(i, p)) continue;
+                BondRow row{this, {}, (p.name[0] ? p.name : "device")};
+                std::memcpy(row.addr, p.addr, 6);
+                bonds_.push_back(std::move(row));
+            }
+            for (auto& r : bonds_) {
+                ListEntry e;
+                e.label   = r.name.c_str();
+                e.value   = "forget";
+                e.onPress = cbForget; e.user = &r;
+                append(ListItemRow(a, e));
+            }
         }
-        for (auto& r : bonds_)
-            append(ListItem(a, r.name.c_str(), "forget", cbForget, &r));
     }
 
-    return View(a, root, { TitleBar(a, "BLUETOOTH"), list });
+    return View(a, root, { TitleBar(a, "Bluetooth"), list });
 }
 
 } // namespace nema

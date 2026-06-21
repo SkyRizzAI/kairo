@@ -109,15 +109,20 @@ aether::ui::UiNode* ProfileSettingsScreen::build(NodeArena& a, Runtime& rt) {
 
     auto* p = rt.container().resolve<ProfileService>();
 
-    Style root; root.dir = FlexDir::Col; root.flexGrow = 1; root.padding = 3; root.gap = 1;
-    root.align = Align::Stretch;
-    Style sv;   sv.dir = FlexDir::Col; sv.gap = 1;
+    Style root; root.dir = FlexDir::Col; root.flexGrow = 1; root.align = Align::Stretch;
+
+    UiNode* list = ListContainer(a, scroll_, {});
+    UiNode* prev = nullptr;
+    auto append = [&](UiNode* n) {
+        if (!n) return;
+        if (!prev) list->firstChild = n; else prev->nextSibling = n;
+        prev = n;
+    };
 
     if (!p) {
-        return View(a, root, {
-            TitleBar(a, "PROFILE"),
-            Text(a, "not available", TextRole::Body),
-        });
+        ListEntry e; e.label = "Not available";
+        append(ListItemRow(a, e));
+        return View(a, root, { TitleBar(a, "Profile"), list });
     }
 
     auto add = [&](Field f, const char* label, const char* detail) {
@@ -125,28 +130,23 @@ aether::ui::UiNode* ProfileSettingsScreen::build(NodeArena& a, Runtime& rt) {
         std::snprintf(it.detail, sizeof(it.detail), "%s", detail ? detail : "");
         items_.push_back(it);
     };
-    add(Field::UserName,    "User name",   p->userName().c_str());
-    add(Field::DeviceName,  "Device name", p->deviceName().c_str());
+    add(Field::UserName,    "User Name",   p->userName().c_str());
+    add(Field::DeviceName,  "Device Name", p->deviceName().c_str());
     add(Field::SetPassword, "Password",    p->hasPassword() ? "* * * *" : "(not set)");
     if (p->hasPassword())
-        add(Field::ClearPassword, "Clear password", nullptr);
+        add(Field::ClearPassword, "Clear Password", nullptr);
 
-    UiNode* list = ScrollView(a, scroll_, sv, {});
-    UiNode* prev = nullptr;
+    append(ListSection(a, "Identity"));
     for (auto& it : items_) {
-        bool isClear = (it.field == Field::ClearPassword);
-        UiNode* row = isClear
-            ? ListRow(a, it.label, onSelect, &it)
-            : TextField(a, it.label, it.detail, onSelect, &it);
-        if (!row) break;
-        if (!prev) list->firstChild = row; else prev->nextSibling = row;
-        prev = row;
+        ListEntry e;
+        e.label   = it.label;
+        e.value   = it.detail[0] ? it.detail : nullptr;
+        e.chevron = true;
+        e.onPress = onSelect; e.user = &it;
+        append(ListItemRow(a, e));
     }
 
-    return View(a, root, {
-        TitleBar(a, "PROFILE"),
-        list,
-    });
+    return View(a, root, { TitleBar(a, "Profile"), list });
 }
 
 } // namespace nema

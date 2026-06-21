@@ -79,7 +79,7 @@ void WifiSettingsScreen::handleKbdResult(bool done, bool cancel) {
         if (pendingSsid_.empty()) { st_ = St::List; redraw(); return; }
         char p[48];
         std::snprintf(p, sizeof(p), "Password: %s", pendingSsid_.c_str());
-        startKeyboard(true, p, false);   // chained entry — no list-select code to swallow
+        startKeyboard(true, p, false);
         st_ = St::EnterPass;
     } else {
         startConnect(pendingSsid_, std::string(kbd_.buf, kbd_.len));
@@ -106,8 +106,6 @@ void WifiSettingsScreen::cbToggleWifi(void* u) {
     IWifiDriver* d = s->drv();
     if (!d) return;
     bool on = !d->isEnabled();
-    // setEnabled() may block (radio init + autoConnect's scan) — run on a worker
-    // so the UI thread never freezes; scan too so the list populates.
     if (on) s->scanning_ = true;
     s->rt_.tasks().submit([d, on] { d->setEnabled(on); if (on) d->scan(); },
                           [s] { s->scanning_ = false; s->redraw(); });
@@ -154,10 +152,10 @@ void WifiSettingsScreen::draw(Canvas& c) {
 
 static const char* bars(int8_t rssi) {
     if (rssi == 0)   return "";
-    if (rssi >= -55) return "....||||";
-    if (rssi >= -65) return "...|||";
-    if (rssi >= -75) return "..||";
-    return ".|";
+    if (rssi >= -55) return "||||";
+    if (rssi >= -65) return "|||";
+    if (rssi >= -75) return "||";
+    return "|";
 }
 
 UiNode* WifiSettingsScreen::build(NodeArena& a, Runtime& rt) {
@@ -165,11 +163,9 @@ UiNode* WifiSettingsScreen::build(NodeArena& a, Runtime& rt) {
     rows_.clear();
     IWifiDriver* d = drv();
 
-    Style root; root.dir = FlexDir::Col; root.flexGrow = 1; root.padding = 3; root.gap = 1;
-    root.align = Align::Stretch;
-    Style sv;   sv.dir = FlexDir::Col; sv.align = Align::Stretch; sv.gap = 1;
+    Style root; root.dir = FlexDir::Col; root.flexGrow = 1; root.align = Align::Stretch;
 
-    UiNode* list = ScrollView(a, scroll_, sv, {});
+    UiNode* list = ListContainer(a, scroll_, {});
     UiNode* prev = nullptr;
     auto append = [&](UiNode* n) {
         if (!n) return;
@@ -177,27 +173,29 @@ UiNode* WifiSettingsScreen::build(NodeArena& a, Runtime& rt) {
         prev = n;
     };
 
-    if (!d)
-        return View(a, root, { TitleBar(a, "WI-FI"), Text(a, "No WiFi driver", TextRole::Body) });
+    if (!d) {
+        ListEntry e; e.label = "No Wi-Fi driver";
+        append(ListItemRow(a, e));
+        return View(a, root, { TitleBar(a, "Wi-Fi"), list });
+    }
 
     bool on = d->isEnabled();
     append(Toggle(a, "Wi-Fi", on, cbToggleWifi, this));
 
     if (!on)
-        return View(a, root, { TitleBar(a, "WI-FI"), list });
+        return View(a, root, { TitleBar(a, "Wi-Fi"), list });
 
     const char* curSsid = d->isConnected() ? d->ssid() : "";
 
     auto addRow = [&](const char* ssid, bool secured, Act act, bool saved, bool current, const char* acc) {
         Row r;
-        r.self = this; r.ssid = ssid; r.secured = secured;
-        r.act = act; r.saved = saved; r.current = current;
-        r.label = std::string(ssid) + (secured ? " *" : "");
-        r.acc = acc;
+        r.self    = this; r.ssid = ssid; r.secured = secured;
+        r.act     = act;  r.saved = saved; r.current = current;
+        r.label   = std::string(ssid) + (secured ? " *" : "");
+        r.acc     = acc;
         rows_.push_back(std::move(r));
     };
 
-    // ── helper: is this ssid saved? ──
     auto isSaved = [&](const char* ssid) {
         for (size_t i = 0; i < d->savedCount(); i++) {
             WifiProfile p;
@@ -206,10 +204,7 @@ UiNode* WifiSettingsScreen::build(NodeArena& a, Runtime& rt) {
         return false;
     };
 
-    // ── connected network ──
     if (curSsid[0]) addRow(curSsid, false, Act::Detail, true, true, ">");
-
-    // ── saved networks (not the current one) ──
     for (size_t i = 0; i < d->savedCount(); i++) {
         WifiProfile p;
         if (!d->savedAt(i, p)) continue;
@@ -217,35 +212,51 @@ UiNode* WifiSettingsScreen::build(NodeArena& a, Runtime& rt) {
         addRow(p.ssid, p.secured, Act::Detail, true, false, ">");
     }
     size_t savedEnd = rows_.size();
-
-    // ── other (scanned) networks: not current, not saved ──
     for (auto& n : d->scanResults()) {
         if (curSsid[0] && std::strcmp(n.ssid, curSsid) == 0) continue;
         if (isSaved(n.ssid)) continue;
         addRow(n.ssid, n.secured, Act::Join, false, false, bars(n.rssi));
     }
 
-    // ── render with section headers ──
     size_t idx = 0;
     if (curSsid[0]) {
-        append(Text(a, "CONNECTED", TextRole::Caption));
-        append(ListItem(a, rows_[0].label.c_str(), rows_[0].acc.c_str(), cbPick, &rows_[0]));
+        append(ListSection(a, "Connected"));
+        ListEntry e;
+        e.label   = rows_[0].label.c_str();
+        e.chevron = true;
+        e.onPress = cbPick; e.user = &rows_[0];
+        append(ListItemRow(a, e));
         idx = 1;
     }
     if (idx < savedEnd) {
-        append(Text(a, "MY NETWORKS", TextRole::Caption));
-        for (; idx < savedEnd; idx++)
-            append(ListItem(a, rows_[idx].label.c_str(), rows_[idx].acc.c_str(), cbPick, &rows_[idx]));
+        append(ListSection(a, "My Networks"));
+        for (; idx < savedEnd; idx++) {
+            ListEntry e;
+            e.label   = rows_[idx].label.c_str();
+            e.chevron = true;
+            e.onPress = cbPick; e.user = &rows_[idx];
+            append(ListItemRow(a, e));
+        }
     }
-    append(Text(a, scanning_ ? "OTHER NETWORKS  (scanning...)" : "OTHER NETWORKS", TextRole::Caption));
-    if (idx >= rows_.size() && !scanning_)
-        append(Text(a, "  No networks found", TextRole::Body));
-    for (; idx < rows_.size(); idx++)
-        append(ListItem(a, rows_[idx].label.c_str(), rows_[idx].acc.c_str(), cbPick, &rows_[idx]));
+    append(ListSection(a, scanning_ ? "Other Networks  (scanning...)" : "Other Networks"));
+    if (idx >= rows_.size() && !scanning_) {
+        ListEntry e; e.label = "No networks found";
+        append(ListItemRow(a, e));
+    }
+    for (; idx < rows_.size(); idx++) {
+        ListEntry e;
+        e.label   = rows_[idx].label.c_str();
+        e.value   = rows_[idx].acc.c_str();
+        e.onPress = cbPick; e.user = &rows_[idx];
+        append(ListItemRow(a, e));
+    }
+    {
+        ListEntry e; e.label = "Add Other Network..."; e.chevron = true;
+        e.onPress = cbAddOther; e.user = this;
+        append(ListItemRow(a, e));
+    }
 
-    append(ListItem(a, "Add Other Network...", ">", cbAddOther, this));
-
-    return View(a, root, { TitleBar(a, "WI-FI"), list });
+    return View(a, root, { TitleBar(a, "Wi-Fi"), list });
 }
 
 } // namespace nema

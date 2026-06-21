@@ -18,35 +18,40 @@ void CameraSettingsScreen::onResume() {
 
 UiNode* CameraSettingsScreen::build(NodeArena& a, Runtime& rt) {
     rows_.clear();
-    char buf[48];
+
+    Style root; root.dir = FlexDir::Col; root.flexGrow = 1; root.align = Align::Stretch;
+
+    UiNode* list = ListContainer(a, scroll_, {});
+    UiNode* prev = nullptr;
+    auto append = [&](UiNode* n) {
+        if (!n) return;
+        if (!prev) list->firstChild = n; else prev->nextSibling = n;
+        prev = n;
+    };
+
+    append(ListSection(a, "Cameras"));
+
     if (rt.camera().count() == 0) {
-        rows_.push_back("No camera hardware");
+        ListEntry e; e.label = "No camera hardware";
+        append(ListItemRow(a, e));
     } else {
+        rows_.reserve((size_t)rt.camera().count());
         for (int i = 0; i < rt.camera().count(); i++) {
             auto* cam = rt.camera().get(i);
-            std::snprintf(buf, sizeof(buf), "%s  %dx%d", rt.camera().desc(i),
+            char buf[24];
+            std::snprintf(buf, sizeof(buf), "%dx%d",
                           (int)cam->frameWidth(), (int)cam->frameHeight());
             rows_.push_back(buf);
         }
+        for (int i = 0; i < rt.camera().count(); i++) {
+            ListEntry e;
+            e.label = rt.camera().desc(i);
+            e.value = rows_[(size_t)i].c_str();
+            append(ListItemRow(a, e));
+        }
     }
 
-    Style root; root.dir = FlexDir::Col; root.flexGrow = 1; root.padding = 3; root.gap = 1;
-    root.align = Align::Stretch;
-    Style sv;   sv.dir = FlexDir::Col; sv.gap = 2;
-
-    UiNode* list = ScrollView(a, scroll_, sv, {});
-    UiNode* prev = nullptr;
-    for (auto& r : rows_) {
-        UiNode* t = Text(a, r.c_str(), TextRole::Body);
-        if (!t) break;
-        if (!prev) list->firstChild = t; else prev->nextSibling = t;
-        prev = t;
-    }
-
-    return View(a, root, {
-        TitleBar(a, "CAMERA"),
-        list,
-    });
+    return View(a, root, { TitleBar(a, "Camera"), list });
 }
 
 } // namespace nema

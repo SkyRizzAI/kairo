@@ -1,7 +1,6 @@
 #include "nema/screens/developer_screen.h"
 #include "nema/runtime.h"
 #include "nema/ui/view_dispatcher.h"
-#include "nema/ui/style_tokens.h"
 
 namespace nema {
 
@@ -32,17 +31,19 @@ void DeveloperScreen::onRebootBootloader(void* u) {
 }
 
 UiNode* DeveloperScreen::build(NodeArena& a, Runtime&) {
-    uint8_t pad = aether::theme().space.sm;
-    uint8_t gap = aether::theme().space.xs;
-    Style root; root.dir = FlexDir::Col; root.flexGrow = 1; root.padding = pad; root.gap = gap;
-    root.align = Align::Stretch;
-    Style sv;   sv.dir = FlexDir::Col; sv.align = Align::Stretch; sv.gap = gap;
+    Style root; root.dir = FlexDir::Col; root.flexGrow = 1; root.align = Align::Stretch;
+
+    ListEntry reboot; reboot.label = "Reboot to Bootloader"; reboot.chevron = true;
+    reboot.onPress = onRebootBootloader; reboot.user = this;
+
+    ListEntry stopAether; stopAether.label = "Stop Aether Server"; stopAether.chevron = true;
+    stopAether.onPress = onStopAether; stopAether.user = this;
 
     return View(a, root, {
-        TitleBar(a, "DEVELOPER"),
-        ScrollView(a, scroll_, sv, {
-            ListItem(a, "Reboot to Bootloader", ">", onRebootBootloader, this),
-            ListItem(a, "Stop Aether Server", ">", onStopAether, this),
+        TitleBar(a, "Developer"),
+        ListContainer(a, scroll_, {
+            ListItemRow(a, reboot),
+            ListItemRow(a, stopAether),
         }),
     });
 }

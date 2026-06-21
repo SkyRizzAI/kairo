@@ -70,11 +70,9 @@ UiNode* WifiNetworkDetailScreen::build(NodeArena& a, Runtime& rt) {
     (void)rt;
     IWifiDriver* d = drv();
 
-    Style root; root.dir = FlexDir::Col; root.flexGrow = 1; root.padding = 3; root.gap = 1;
-    root.align = Align::Stretch;
-    Style sv;   sv.dir = FlexDir::Col; sv.align = Align::Stretch; sv.gap = 1;
+    Style root; root.dir = FlexDir::Col; root.flexGrow = 1; root.align = Align::Stretch;
 
-    UiNode* list = ScrollView(a, scroll_, sv, {});
+    UiNode* list = ListContainer(a, scroll_, {});
     UiNode* prev = nullptr;
     auto append = [&](UiNode* n) {
         if (!n) return;
@@ -82,28 +80,43 @@ UiNode* WifiNetworkDetailScreen::build(NodeArena& a, Runtime& rt) {
         prev = n;
     };
 
-    if (current_)
-        append(Text(a, (d && d->isOnline()) ? "Connected"
-                                             : "Connected (no internet)", TextRole::Caption));
-    if (saved_ && !current_)
-        append(ListItem(a, "Join This Network", ">", cbJoin, this));
+    if (current_) {
+        ListEntry e; e.label = (d && d->isOnline()) ? "Connected" : "Connected (no internet)";
+        append(ListSection(a, e.label));
+    }
+    if (saved_ && !current_) {
+        ListEntry e; e.label = "Join This Network"; e.chevron = true;
+        e.onPress = cbJoin; e.user = this;
+        append(ListItemRow(a, e));
+    }
     if (current_ || saved_) {
         append(Toggle(a, "Auto-Join", autoJoinOf(ssid_.c_str()), cbToggleAutoJoin, this));
-        append(ListItem(a, "Forget This Network", ">", cbForget, this));
+        ListEntry e; e.label = "Forget This Network"; e.chevron = true;
+        e.onPress = cbForget; e.user = this;
+        append(ListItemRow(a, e));
     }
 
     if (current_ && d) {
         WifiIpConfig c = d->ipConfig();
-        append(Text(a, "IP ADDRESS", TextRole::Caption));
-        append(ListItem(a, "Configure IP", c.dhcp ? "Automatic" : "Manual", cbConfigureIp, this));
         std::snprintf(rowbuf_[0], sizeof(rowbuf_[0]), "%s", c.ip[0]   ? c.ip   : "-");
         std::snprintf(rowbuf_[1], sizeof(rowbuf_[1]), "%s", c.mask[0] ? c.mask : "-");
         std::snprintf(rowbuf_[2], sizeof(rowbuf_[2]), "%s", c.gw[0]   ? c.gw   : "-");
         std::snprintf(rowbuf_[3], sizeof(rowbuf_[3]), "%s", c.dns[0]  ? c.dns  : "-");
-        append(ListItem(a, "IP Address",  rowbuf_[0], nullptr, nullptr));
-        append(ListItem(a, "Subnet Mask", rowbuf_[1], nullptr, nullptr));
-        append(ListItem(a, "Router",      rowbuf_[2], nullptr, nullptr));
-        append(ListItem(a, "DNS",         rowbuf_[3], nullptr, nullptr));
+
+        append(ListSection(a, "IP Address"));
+        {
+            ListEntry e; e.label = "Configure IP"; e.value = c.dhcp ? "Automatic" : "Manual";
+            e.chevron = true; e.onPress = cbConfigureIp; e.user = this;
+            append(ListItemRow(a, e));
+        }
+        auto ipRow = [&](const char* label, const char* buf) {
+            ListEntry e; e.label = label; e.value = buf;
+            append(ListItemRow(a, e));
+        };
+        ipRow("IP Address",  rowbuf_[0]);
+        ipRow("Subnet Mask", rowbuf_[1]);
+        ipRow("Router",      rowbuf_[2]);
+        ipRow("DNS",         rowbuf_[3]);
     }
 
     return View(a, root, { TitleBar(a, ssid_.c_str()), list });

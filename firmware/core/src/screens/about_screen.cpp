@@ -2,7 +2,6 @@
 #include "nema/runtime.h"
 #include "nema/board.h"
 #include "nema/ui/view_dispatcher.h"
-#include "nema/ui/ascii_board_renderer.h"
 #include "nema/ui/widgets.h"
 #include "nema/input/input_action.h"
 #include "nema/system/system_info.h"
@@ -13,8 +12,6 @@
 namespace nema {
 
 using namespace aether::ui;
-
-// ── Plan 70: AboutModal — Dialog demo shown when Activate is pressed on About ─
 
 class AboutModal : public ComponentScreen {
 public:
@@ -62,69 +59,53 @@ void AboutScreen::onAction(input::Action a) {
 UiNode* AboutScreen::build(NodeArena& a, Runtime& rt) {
     rows_.clear();
     const auto& info = rt.info();
-    char buf[64];
-    if (!info.boardName.empty()) {
-        std::snprintf(buf, sizeof(buf), "Board: %s", info.boardName.c_str());
-        rows_.push_back(buf);
-    }
-    if (!info.platformName.empty()) {
-        std::snprintf(buf, sizeof(buf), "Plat:  %s", info.platformName.c_str());
-        rows_.push_back(buf);
-    }
-    std::snprintf(buf, sizeof(buf), "FW:    %s", info.firmwareVersion.c_str());
-    rows_.push_back(buf);
 
     uint64_t ms = rt.clock().millis();
-    uint32_t s = (uint32_t)(ms / 1000) % 60, m = (uint32_t)(ms / 60000) % 60,
-             h = (uint32_t)(ms / 3600000);
-    if (h > 0) std::snprintf(buf, sizeof(buf), "Up:    %uh %um %us",
-                             (unsigned)h, (unsigned)m, (unsigned)s);
-    else       std::snprintf(buf, sizeof(buf), "Up:    %um %us",
-                             (unsigned)m, (unsigned)s);
-    rows_.push_back(buf);
+    uint32_t s  = (uint32_t)(ms / 1000) % 60;
+    uint32_t m  = (uint32_t)(ms / 60000) % 60;
+    uint32_t h  = (uint32_t)(ms / 3600000);
+    char uptimeBuf[24];
+    if (h > 0)
+        std::snprintf(uptimeBuf, sizeof(uptimeBuf), "%uh %um %us", (unsigned)h, (unsigned)m, (unsigned)s);
+    else
+        std::snprintf(uptimeBuf, sizeof(uptimeBuf), "%um %us", (unsigned)m, (unsigned)s);
+    rows_.push_back(uptimeBuf);
 
-    rows_.push_back("");
+    const auto& capList = rt.capabilities().list();
+    rows_.reserve(1 + capList.size());
+    for (const auto& cap : capList)
+        rows_.push_back(cap);
 
-    auto ascii = AsciiBoardRenderer::render(rt.board().profile(), 28, 10);
-    for (auto& line : ascii) {
-        rows_.push_back(line);
-    }
+    Style root; root.dir = FlexDir::Col; root.flexGrow = 1; root.align = Align::Stretch;
 
-    rows_.push_back("");
+    auto infoRow = [&](const char* label, const char* value) {
+        ListEntry e; e.label = label; e.value = value;
+        return ListItemRow(a, e);
+    };
 
-    auto legend = AsciiBoardRenderer::renderLegend(rt.board().profile());
-    for (auto& line : legend) {
-        rows_.push_back(line);
-    }
-
-    rows_.push_back("");
-    rows_.push_back("Capabilities:");
-    for (const auto& cap : rt.capabilities().list()) {
-        std::snprintf(buf, sizeof(buf), "  %s", cap.c_str());
-        rows_.push_back(buf);
-    }
-
-    Style root; root.dir = FlexDir::Col; root.flexGrow = 1; root.padding = 3; root.gap = 1;
-    root.align = Align::Stretch;
-    Style sv;   sv.dir = FlexDir::Col; sv.gap = 1;
-
-    // About is read-only — plain Text rows, none focusable. With no focus target,
-    // Prev/Next fall through to the scroll-view nudge (dispatchNav), so the screen
-    // pans like a document. No focus rings here (Plan 79 smart-scroll only applies
-    // where there are selectable items).
-    UiNode* list = ScrollView(a, scroll_, sv, {});
+    UiNode* list = ListContainer(a, scroll_, {});
     UiNode* prev = nullptr;
-    for (auto& r : rows_) {
-        UiNode* t = Text(a, r.c_str(), TextRole::Body);
-        if (!t) break;
-        if (!prev) list->firstChild = t; else prev->nextSibling = t;
-        prev = t;
+    auto append = [&](UiNode* n) {
+        if (!n) return;
+        if (!prev) list->firstChild = n; else prev->nextSibling = n;
+        prev = n;
+    };
+
+    append(ListSection(a, "Firmware"));
+    append(infoRow("Board",    info.boardName.empty()    ? "-" : info.boardName.c_str()));
+    append(infoRow("Platform", info.platformName.empty() ? "-" : info.platformName.c_str()));
+    append(infoRow("Version",  info.firmwareVersion.empty() ? "-" : info.firmwareVersion.c_str()));
+    append(infoRow("Uptime",   rows_[0].c_str()));
+
+    if (!capList.empty()) {
+        append(ListSection(a, "Capabilities"));
+        for (size_t i = 0; i < capList.size(); i++) {
+            ListEntry e; e.label = rows_[1 + i].c_str();
+            append(ListItemRow(a, e));
+        }
     }
 
-    return View(a, root, {
-        TitleBar(a, "ABOUT"),
-        list,
-    });
+    return View(a, root, { TitleBar(a, "About"), list });
 }
 
 } // namespace nema

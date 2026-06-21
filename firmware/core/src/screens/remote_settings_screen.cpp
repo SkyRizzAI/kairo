@@ -35,7 +35,7 @@ void RemoteSettingsScreen::onResume() {
 void RemoteSettingsScreen::cbToggleEnabled(void* u) {
     auto* s = static_cast<RemoteSettingsScreen*>(u);
     if (RemoteAuthStore* a = s->store()) a->setEnabled(!a->enabled());
-    s->rt_.events().publish({events::RemoteToggled, {}});   // drop live session if now off
+    s->rt_.events().publish({events::RemoteToggled, {}});
     s->redraw();
 }
 void RemoteSettingsScreen::cbSetPassword(void* u) {
@@ -98,15 +98,9 @@ UiNode* RemoteSettingsScreen::build(NodeArena& a, Runtime& rt) {
     (void)rt;
     RemoteAuthStore* st = store();
 
-    Style root; root.dir = FlexDir::Col; root.flexGrow = 1; root.padding = 3; root.gap = 1;
-    root.align = Align::Stretch;
-    Style sv;   sv.dir = FlexDir::Col; sv.align = Align::Stretch; sv.gap = 1;
+    Style root; root.dir = FlexDir::Col; root.flexGrow = 1; root.align = Align::Stretch;
 
-    if (!st)
-        return View(a, root, { TitleBar(a, "REMOTE"),
-                               Text(a, "Remote unavailable", TextRole::Body) });
-
-    UiNode* list = ScrollView(a, scroll_, sv, {});
+    UiNode* list = ListContainer(a, scroll_, {});
     UiNode* prev = nullptr;
     auto append = [&](UiNode* n) {
         if (!n) return;
@@ -114,22 +108,47 @@ UiNode* RemoteSettingsScreen::build(NodeArena& a, Runtime& rt) {
         prev = n;
     };
 
+    if (!st) {
+        ListEntry e; e.label = "Remote unavailable";
+        append(ListItemRow(a, e));
+        return View(a, root, { TitleBar(a, "Remote"), list });
+    }
+
     bool en = st->enabled();
     bool pw = st->hasPassword();
 
+    append(ListSection(a, "Connection"));
     append(Toggle(a, "Remote Enabled", en, cbToggleEnabled, this));
-    append(Text(a, pw ? "Privileged channels: locked (password set)"
-                      : "Privileged channels: open (no password)", TextRole::Caption));
-    append(ListItem(a, pw ? "Change Password" : "Set Password", ">", cbSetPassword, this));
-    if (pw)
-        append(ListItem(a, "Clear Password", ">", cbClearPassword, this));
+
+    append(ListSection(a, "Security"));
+    append(ListSection(a, pw ? "Password set — privileged channels locked"
+                             : "No password — privileged channels open"));
+    {
+        ListEntry e;
+        e.label   = pw ? "Change Password" : "Set Password";
+        e.chevron = true;
+        e.onPress = cbSetPassword; e.user = this;
+        append(ListItemRow(a, e));
+    }
+    if (pw) {
+        ListEntry e; e.label = "Clear Password"; e.chevron = true;
+        e.onPress = cbClearPassword; e.user = this;
+        append(ListItemRow(a, e));
+    }
 
     std::snprintf(statusBuf_, sizeof(statusBuf_), "Authorized devices: %d", (int)st->tokenCount());
-    append(Text(a, statusBuf_, TextRole::Caption));
-    if (st->tokenCount() > 0)
-        append(ListItem(a, "Log Out All Devices", ">", cbLogoutAll, this));
+    append(ListSection(a, "Sessions"));
+    {
+        ListEntry e; e.label = statusBuf_;
+        append(ListItemRow(a, e));
+    }
+    if (st->tokenCount() > 0) {
+        ListEntry e; e.label = "Log Out All Devices"; e.chevron = true;
+        e.onPress = cbLogoutAll; e.user = this;
+        append(ListItemRow(a, e));
+    }
 
-    return View(a, root, { TitleBar(a, "REMOTE"), list });
+    return View(a, root, { TitleBar(a, "Remote"), list });
 }
 
 } // namespace nema
