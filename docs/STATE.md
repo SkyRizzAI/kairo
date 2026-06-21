@@ -4,7 +4,7 @@
 > Detail per-stage ada di [`plans/`](plans/00-overview.md). Master plan: [`concept_plan.md`](concept_plan.md).
 > Reference arsitektur per-subsistem: [`architecture/`](architecture/README.md).
 >
-> **Last updated:** 2026-06-21 (Plan 82 + UI polish — canvas scaling, PS launcher, status bar fixes)
+> **Last updated:** 2026-06-21 (Plan 82 + UI polish — canvas scaling, PS launcher, status bar fixes, VirtualKeyboard redesign + 2D nav fix)
 
 ---
 
@@ -35,7 +35,7 @@ Palanu = platform handheld bergaya Flipper Zero, **1-bit retro/pixel UI**, denga
 | **App-model** (`IApp`/`AppHost`/`AppContext`, app = thread sendiri) | ✅ HW | Counter app-thread di board |
 | Semua app → app-model (Clock/Counter/Stopwatch/TaskDemo) | ✅ build | sim ✓, status bar in-app |
 | **WiFi UI** (WifiApp: scan/pick/password/connect, non-blocking) | ✅ build | sim ✓ (HW pending) |
-| **Virtual Keyboard** (QWERTY + CAPS + 123/sym + DEL/SPACE/OK/ESC + password mode) | ✅ build | sim render ✓ |
+| **Virtual Keyboard** (Flipper-style compact, capped width, rounded fill selection, no borders; 4 modes: ABC/abc/123/!@#; 2D nav fixed on WASM + hardware) | ✅ build | sim render ✓ |
 | **HTTP client HAL** (sim=curl, esp32=esp_http_client+TLS) | ✅ build | sim live Binance 200 |
 | **Ticker app** (BTC/USD via Binance, fetch di worker, UI tak freeze) | ✅ build | sim ✓ (HW pending) |
 | **Sim WiFi "router"** interaktif (network list, password, RSSI, online toggle) | ✅ | web panel + 4-skenario ✓ |
