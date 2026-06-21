@@ -170,6 +170,7 @@ void marquee(Canvas& c, uint16_t x, uint16_t y, uint16_t w,
              const char* text, uint32_t tick, TextRole role) {
     if (!text || !*text) return;
     FontSpec fs = fontForRole(role);
+    const nema::display::BitmapFont& f = resolve(fs.handle);
     uint16_t textW = measureTextW(text, role);
     uint16_t lineH = measureTextH(role);
 
@@ -178,32 +179,31 @@ void marquee(Canvas& c, uint16_t x, uint16_t y, uint16_t w,
         return;
     }
 
-    const uint16_t GAP = 16;  // blank pixels between repeats
-    uint32_t cycle  = (uint32_t)textW + GAP;
-    // Scroll at ~40px/sec: divide ms tick by 25 before modulo so the marquee
-    // moves slowly enough to read on any display refresh rate.
-    uint32_t offset = (tick / 25) % cycle;
+    const uint16_t GAP = 20;
+    uint32_t cycle    = (uint32_t)textW + GAP;
+    // ~40px/sec: divide ms tick by 25.  scrollPx always increases → no stutter.
+    uint32_t scrollPx = (tick / 25) % cycle;
 
-    uint16_t charW_px = (uint16_t)((resolve(fs.handle).charW + resolve(fs.handle).spacing) * fs.scale);
-
-    // Find first visible char and sub-char pixel offset
-    uint16_t skipChars = (uint16_t)(offset / charW_px);
-    uint16_t pixOff    = (uint16_t)(offset % charW_px);
-
-    // drawX = x - pixOff; if that would underflow, skip one more char
-    uint16_t drawX;
-    if (pixOff <= x) {
-        drawX = (uint16_t)(x - pixOff);
-    } else {
-        ++skipChars;
-        pixOff = 0;
-        drawX = x;
+    // Walk actual per-character widths (handles proportional fonts correctly).
+    // Accumulate until we reach the character that straddles the left clip edge.
+    uint32_t cum = 0;
+    size_t   slen = strlen(text);
+    size_t   firstChar = 0;
+    for (; firstChar < slen; ++firstChar) {
+        uint8_t  ci = (text[firstChar] >= ' ') ? (uint8_t)(text[firstChar] - ' ') : 0;
+        uint16_t cw = (uint16_t)(((f.widths ? f.widths[ci] : f.charW) + f.spacing) * fs.scale);
+        if (cum + cw > scrollPx) break;
+        cum += cw;
     }
+    // intoChar = pixels of firstChar that have scrolled off to the left.
+    // drawX = screen col of firstChar's left edge.  Always x - intoChar ≤ x,
+    // so drawX always decreases as scrollPx increases → perfectly smooth.
+    uint32_t intoChar = scrollPx - cum;
+    uint16_t drawX    = (intoChar <= (uint32_t)x) ? (uint16_t)(x - intoChar) : 0;
 
-    size_t slen = strlen(text);
     c.setClip(x, y, w, lineH);
-    if (skipChars < slen)
-        drawText(c, drawX, y, text + skipChars, fs);
+    if (firstChar < slen)
+        drawText(c, drawX, y, text + firstChar, fs);
     c.clearClip();
 }
 
