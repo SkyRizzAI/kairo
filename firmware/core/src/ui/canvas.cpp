@@ -36,11 +36,13 @@ void Canvas::drawPixel(uint16_t x, uint16_t y, bool on) {
     if (x >= width() || y >= height()) return;
     if (!inClip(x, y)) return;
     if (scale_ == 1.0f) { driver_.drawPixel(x, y, on); return; }
-    auto px = (uint16_t)roundf(x * scale_);
-    auto py = (uint16_t)roundf(y * scale_);
-    auto ps = (uint16_t)roundf(scale_);
-    if (ps < 1) ps = 1;
-    driver_.fillRect(px, py, ps, ps, on);
+    auto px0 = (uint16_t)(x * scale_);
+    auto py0 = (uint16_t)(y * scale_);
+    auto px1 = (uint16_t)((x + 1) * scale_);
+    auto py1 = (uint16_t)((y + 1) * scale_);
+    auto pw = px1 - px0; if (pw < 1) pw = 1;
+    auto ph = py1 - py0; if (ph < 1) ph = 1;
+    driver_.fillRect(px0, py0, pw, ph, on);
 }
 
 // Clamp a logical rect to the current clip; returns false if fully clipped.
@@ -60,10 +62,10 @@ void Canvas::fillRect(uint16_t x, uint16_t y, uint16_t w, uint16_t h, bool on) {
     if (!clampToClip(ix, iy, iw, ih, clipX0_, clipY0_, clipX1_, clipY1_)) return;
     x = (uint16_t)ix; y = (uint16_t)iy; w = (uint16_t)iw; h = (uint16_t)ih;
     if (scale_ == 1.0f) { driver_.fillRect(x, y, w, h, on); return; }
-    auto px = (uint16_t)roundf(x * scale_);
-    auto py = (uint16_t)roundf(y * scale_);
-    auto pw = (uint16_t)roundf(w * scale_); if (pw < 1) pw = 1;
-    auto ph = (uint16_t)roundf(h * scale_); if (ph < 1) ph = 1;
+    auto px = (uint16_t)(x * scale_);
+    auto py = (uint16_t)(y * scale_);
+    auto pw = (uint16_t)((x + w) * scale_) - px; if (pw < 1) pw = 1;
+    auto ph = (uint16_t)((y + h) * scale_) - py; if (ph < 1) ph = 1;
     driver_.fillRect(px, py, pw, ph, on);
 }
 
@@ -124,10 +126,10 @@ void Canvas::invertRect(uint16_t x, uint16_t y, uint16_t w, uint16_t h) {
     if (!clampToClip(ix, iy, iw, ih, clipX0_, clipY0_, clipX1_, clipY1_)) return;
     x = (uint16_t)ix; y = (uint16_t)iy; w = (uint16_t)iw; h = (uint16_t)ih;
     if (scale_ == 1.0f) { driver_.invertRect(x, y, w, h); return; }
-    auto px = (uint16_t)roundf(x * scale_);
-    auto py = (uint16_t)roundf(y * scale_);
-    auto pw = (uint16_t)roundf(w * scale_); if (pw < 1) pw = 1;
-    auto ph = (uint16_t)roundf(h * scale_); if (ph < 1) ph = 1;
+    auto px = (uint16_t)(x * scale_);
+    auto py = (uint16_t)(y * scale_);
+    auto pw = (uint16_t)((x + w) * scale_) - px; if (pw < 1) pw = 1;
+    auto ph = (uint16_t)((y + h) * scale_) - py; if (ph < 1) ph = 1;
     driver_.invertRect(px, py, pw, ph);
 }
 
