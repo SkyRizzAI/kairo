@@ -3,7 +3,7 @@
 
 namespace nema {
 
-using namespace ui;
+using namespace aether::ui;
 
 TouchSettingsScreen::TouchSettingsScreen(Runtime& rt) : ComponentScreen(rt) {}
 

@@ -5,7 +5,7 @@ namespace nema {
 
 // How an app got onto the device. BuiltIn apps are compiled into the firmware
 // and installed at boot (the ".fam" equivalent — see AppRegistry). Custom apps
-// are installed at runtime — a .kapp package pushed over the wire (OTA via PLP)
+// are installed at runtime — a .papp package pushed over the wire (OTA via PLP)
 // or loaded from storage (flash/SD, Plan 38). Same launcher, same registry;
 // only the origin differs.
 enum class AppKind { BuiltIn, Custom };
@@ -26,7 +26,7 @@ enum class AppMode { Cli, Ui, Hybrid };
 // AppManifest — an installed entry's header: the metadata the launcher and
 // system need without touching the entry's code. For built-ins it's derived
 // from the app (id/name); for custom apps it's parsed from the package's
-// papp.json (Plan 59 §1). This is the on-device twin of kapp.json.
+// papp.json (Plan 59 §1). This is the on-device twin of manifest.json.
 //
 // Strings are non-owning (the same lifetime contract as IApp::id()/name()): a
 // built-in points at string literals, a custom app at the JsApp's std::strings,

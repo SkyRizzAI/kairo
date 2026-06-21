@@ -2,7 +2,8 @@
 #include "nema/ui/node.h"
 #include <cstdint>
 
-namespace nema::ui {
+namespace aether::ui {
+using namespace nema;  // Plan 80: nema core symbols (Canvas/Key/input/anim/fonts) in scope
 
 // Text measurement is injected so the layout engine stays pure logic (no Canvas
 // / display dependency) and is host-unit-testable. The renderer provides a
@@ -23,4 +24,4 @@ struct TextMetrics {
 void layout(UiNode& root, uint16_t rootW, uint16_t rootH, const TextMetrics& tm,
             int16_t originX = 0, int16_t originY = 0);
 
-} // namespace nema::ui
+} // namespace aether::ui

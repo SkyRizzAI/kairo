@@ -5,7 +5,7 @@
 // and draw with aether::ui::draw::icon().
 #include <cstdint>
 
-namespace nema::ui {
+namespace aether::ui {
 
 struct IconDef {
     const char*    handle;   // e.g. "status.wifi"
@@ -20,4 +20,4 @@ const IconDef* findIcon(const char* handle);
 // Null-terminated list of all built-in icons (for enumeration).
 const IconDef* const* allIcons();
 
-} // namespace nema::ui
+} // namespace aether::ui

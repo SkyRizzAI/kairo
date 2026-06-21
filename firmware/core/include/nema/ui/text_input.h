@@ -6,7 +6,10 @@ namespace nema {
 
 class Canvas;
 
-namespace ui {
+} // namespace nema
+
+namespace aether::ui {
+using namespace nema;  // Plan 80: nema core symbols (Canvas/Key/input/anim/fonts) in scope
 
 // TextInput — a reusable 6-button character picker, drawn as an overlay inside
 // an app's own buffer (no ViewDispatcher, app-model friendly). DRY: WiFi SSID &
@@ -28,4 +31,4 @@ struct TextInput {
 };
 
 } // namespace ui
-} // namespace nema
+

@@ -8,7 +8,7 @@
 
 namespace nema {
 
-using namespace ui;
+using namespace aether::ui;
 
 LogsScreen::LogsScreen(Runtime& rt) : ComponentScreen(rt, 256) {}
 
@@ -57,8 +57,8 @@ UiNode* LogsScreen::build(NodeArena& a, Runtime& rt) {
     rt.logForEach(&LogsScreen::collect, this);
     if (rows_.empty()) rows_.emplace_back("(no log entries)");
 
-    uint8_t pad = nema::theme().space.sm;
-    uint8_t gap = nema::theme().space.xs;
+    uint8_t pad = aether::theme().space.sm;
+    uint8_t gap = aether::theme().space.xs;
 
     Style root; root.dir = FlexDir::Col; root.flexGrow = 1; root.padding = pad; root.gap = gap;
     root.align = Align::Stretch;

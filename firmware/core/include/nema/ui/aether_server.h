@@ -3,6 +3,8 @@
 #include "nema/ui/ui_sdk.h"
 #include <cstdint>
 
+namespace aether { struct StyleTokens; }
+
 namespace nema {
 
 struct IClock;
@@ -32,12 +34,18 @@ public:
     void registerBindings(IUiBindingHost& host) override;
 
     // FPS overlay — actual display flushes/sec over a rolling 1s window.
-    uint16_t fps()        const { return fps_; }
-    bool     showFps()    const { return showFps_; }
-    void     setShowFps(bool b) { showFps_ = b; }
+    uint16_t fps()        const override { return fps_; }
+    bool     showFps()    const override { return showFps_; }
+    void     setShowFps(bool b) override { showFps_ = b; }
+
+    // Theme is Aether-owned (ADR 0002 — not on the IDisplayServer contract).
+    // renderFrame() installs it as the active theme before drawing.
+    void setTheme(const aether::StyleTokens& t) { theme_ = &t; }
+    const aether::StyleTokens* theme() const { return theme_; }
 
 private:
     IClock&  clock_;
+    const aether::StyleTokens* theme_ = nullptr;   // nullptr → defaultTheme() at render
     bool     showFps_     = false;
     uint32_t fpsFrames_   = 0;
     uint64_t fpsLastMs_   = 0;

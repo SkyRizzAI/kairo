@@ -5,7 +5,8 @@ namespace nema {
 class Canvas;
 }
 
-namespace nema::ui {
+namespace aether::ui {
+using namespace nema;  // Plan 80: nema core symbols (Canvas/Key/input/anim/fonts) in scope
 
 // Paint a laid-out tree to the Canvas. Call layout() first (with roleMetrics()).
 // `focused` (optional) highlights that Pressable node with an inverted box.
@@ -17,4 +18,4 @@ void render(const UiNode& root, Canvas& c, const UiNode* focused = nullptr);
 void setRenderTick(uint32_t ms);
 uint32_t renderTick();
 
-} // namespace nema::ui
+} // namespace aether::ui

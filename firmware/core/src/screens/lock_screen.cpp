@@ -10,7 +10,7 @@
 
 namespace nema {
 
-using namespace ui;
+using namespace aether::ui;
 
 LockScreen::LockScreen(Runtime& rt) : ComponentScreen(rt, 16) {}
 
@@ -47,8 +47,8 @@ UiNode* LockScreen::build(NodeArena& a, Runtime& rt) {
     std::snprintf(hint_, sizeof(hint_), "Double-tap %s to unlock",
                   (okBtn && *okBtn) ? okBtn : "OK");
 
-    uint8_t gap = nema::theme().space.lg;
-    Style root; root.dir = FlexDir::Col; root.flexGrow = 1; root.padding = nema::theme().space.md;
+    uint8_t gap = aether::theme().space.lg;
+    Style root; root.dir = FlexDir::Col; root.flexGrow = 1; root.padding = aether::theme().space.md;
     root.align = Align::Center; root.justify = Justify::Center; root.gap = gap;
     return View(a, root, {
         Text(a, clock_, TextRole::Title),

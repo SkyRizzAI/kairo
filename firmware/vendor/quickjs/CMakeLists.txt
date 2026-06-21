@@ -1,4 +1,4 @@
-# Vendored QuickJS-ng (MIT) — embedded JS engine for Kairo custom apps (Plan 37).
+# Vendored QuickJS-ng (MIT) — embedded JS engine for Palanu custom apps (Plan 37).
 # Core only: no quickjs-libc (no FS/stdio). Dual-build: host/WASM (plain CMake)
 # and ESP-IDF (component). Warnings disabled (3rd-party C vs our -Wall/-Werror).
 set(QUICKJS_SRCS quickjs.c dtoa.c libregexp.c libunicode.c)

@@ -12,7 +12,7 @@
 
 namespace nema {
 
-using namespace ui;
+using namespace aether::ui;
 
 // ── Plan 70: AboutModal — Dialog demo shown when Activate is pressed on About ─
 

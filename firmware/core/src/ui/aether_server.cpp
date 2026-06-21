@@ -8,12 +8,17 @@
 #include "nema/ui/status_bar.h"
 #include "nema/ui/ui_constants.h"
 #include "nema/ui/view_dispatcher.h"
+#include "nema/ui/style_tokens.h"
 #include "nema/clock.h"
 #include <cstdio>
 
 namespace nema {
 
 void AetherServer::renderFrame(Canvas& c, ViewDispatcher& vd, const StatusBarData& status) {
+    // Aether owns its theme (ADR 0002): install it as the active theme each frame
+    // so it never bleeds in from another server. Default if none set.
+    // (aether::setTheme = the global active-theme setter, not our member setTheme.)
+    aether::setTheme(theme_ ? *theme_ : aether::defaultTheme());
     uint64_t now = clock_.millis();
     if (now - fpsLastMs_ >= 1000) {
         fps_       = (uint16_t)fpsFrames_;
@@ -67,7 +72,7 @@ void AetherServer::renderFrame(Canvas& c, ViewDispatcher& vd, const StatusBarDat
         uint16_t bx = (uint16_t)(c.width() > tw + 4 ? c.width() - tw - 4 : 0);
         // Small rounded pill background for FPS counter
         aether::ui::draw::box_rounded(c, bx, 0, (uint16_t)(tw + 4),
-                                      ui::CHAR_H + 1, true);
+                                      nema::display::CHAR_H + 1, true);
         c.drawText((uint16_t)(bx + 2), 1, fb, false);  // white text on dark pill
     }
 

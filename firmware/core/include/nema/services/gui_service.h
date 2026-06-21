@@ -1,95 +1,49 @@
 #pragma once
 #include "nema/thread.h"
 #include "nema/ui/status_bar.h"
-#include "nema/ui/aether_server.h"
-#include "nema/ui/fbcon_server.h"
 #include "nema/screens/lock_screen.h"
-#include "nema/services/display_power_manager.h"
-#include <atomic>
 #include <cstdint>
-#include <memory>
-#include <vector>
 
 namespace nema {
 
 class Runtime;
-class Canvas;
 struct IDisplayDriver;
-struct IDisplayServer;
 
 // GuiService — owns the UI loop on its OWN thread (Nema kernel, core 1).
 //
-// Furi-style: the GUI is a service running in its own thread that is the SINGLE
-// owner of the Canvas + ViewDispatcher. The main loop no longer renders; it only
-// ticks background services. Because all UI work (input dispatch, screen
-// tick/draw, task completions, status bar) happens here, there is one UI thread
-// and no shared-mutable-UI race — provided apps never touch UI state from
-// their main-loop onTick (they use TaskRunner + completions, which run here).
+// Furi-style: the GUI is a service running in its own thread that drives all UI
+// work (input dispatch, screen tick/draw, task completions, status bar). There is
+// one UI thread and no shared-mutable-UI race — provided apps never touch UI state
+// from their main-loop onTick (they use TaskRunner + completions, which run here).
 //
-// Loop each ~15ms:
-//   drain InputService → DPM intercepts → ViewDispatcher::handleKey
-//   DPM::tick (sleep/lock state machine)
-//   refresh status bar (clock/wifi)
-//   ViewDispatcher::tick
-//   TaskRunner::drainCompletions   (done-callbacks run on the UI thread → safe)
-//   render if redraw pending → Canvas (status bar / modal / screen) → flush
-//   (render skipped while sleeping; one blank frame flushed on sleep entry)
+// Plan 80: GuiService + the concrete display servers live in the display-server
+// lib (aether) and are constructed by the target's main, NOT by Runtime. The loop
+// renders whatever server Runtime reports active (rt.displayServer()), applies
+// runtime server swaps (rt.applyPendingServer()), and drives the shared sleep/lock
+// state machine (rt.dpm()). Core owns neither the loop nor the servers.
+//
+// Loop each ~33ms:
+//   apply pending server swap → drain InputService → DPM intercepts → ViewDispatcher
+//   DPM::tick → refresh status bar → ViewDispatcher::tick → TaskRunner completions
+//   tick animations → render active server if redraw pending → flush
 class GuiService {
 public:
     explicit GuiService(Runtime& rt) : rt_(rt), lockScreen_(rt) {}
 
-    void start();   // spawn UI thread
+    void start();   // register fonts, init DPM, spawn UI thread
     void stop();    // stop & join
-
-    DisplayPowerManager& dpm() { return dpm_; }
-
-    // Display server control (Plan 43). Thread-safe: requestServer() may be
-    // called from any thread (e.g. the CLI/PLP task); the swap is applied on the
-    // GUI thread at the top of the next loop iteration.
-    bool                       requestServer(const char* name);  // false = unknown name
-    const char*                activeServerName() const;
-    std::vector<const char*>   serverNames() const;
-    IDisplayServer*            activeServer() const { return server_; }  // Plan 50/51
-
-    // Plan 51 — Look up a registered server by name without switching.
-    // Used by AppRegistry to pre-check requiredCaps() before calling requestServer().
-    IDisplayServer*            findServer(const char* name) const;
-
-    // Plan 51 DisplayServerRegistry — register an externally-owned server so it
-    // participates in findServer()/requestServer()/serverNames(). The caller owns
-    // the lifetime; call before GuiService::start(). Not thread-safe.
-    void                       registerServer(IDisplayServer* s);
-
-    // FPS API — forwarded to the active display server (AetherServer owns the
-    // rolling 1s flush-count window + the overlay toggle).
-    uint16_t fps()         const { return aether_ ? aether_->fps() : 0; }
-    bool     showFps()     const { return aether_ && aether_->showFps(); }
-    void     setShowFps(bool b)  { if (aether_) aether_->setShowFps(b); }
 
 private:
     static void threadEntry(void* self);
     void        loop();
     void        refreshStatus(uint64_t now);
 
-    Runtime&              rt_;
-    nema::Thread          thread_;
-    StatusBarData         status_;
-    uint64_t              lastStatusMs_ = 0;
-
-    // Pluggable renderers (Plan 43). Backends are owned here; server_ points at
-    // the active one (touched only on the GUI thread). pendingServer_ is the
-    // thread-safe hand-off slot for a runtime swap requested from another thread.
-    std::unique_ptr<AetherServer> aether_;
-    std::unique_ptr<FbconServer>    fbcon_;
-    IDisplayServer*                 server_  = nullptr;
-    std::atomic<IDisplayServer*>    pendingServer_{nullptr};
-
-    LockScreen            lockScreen_;
-    DisplayPowerManager   dpm_;
-    IDisplayDriver*       display_ = nullptr;
-
-    // Plan 51 — additional servers registered via registerServer().
-    std::vector<IDisplayServer*> extraServers_;
+    Runtime&        rt_;
+    nema::Thread    thread_;
+    StatusBarData   status_;
+    uint64_t        lastStatusMs_ = 0;
+    LockScreen      lockScreen_;     // the lock screen pushed by the DPM (an IScreen)
+    IDisplayDriver* display_ = nullptr;
 };
 
 } // namespace nema

@@ -7,12 +7,12 @@ namespace nema {
 class ViewDispatcher;
 struct IDisplayDriver;
 struct IClock;
-class LockScreen;
+struct IScreen;
 
 class DisplayPowerManager {
 public:
     void init(ViewDispatcher& vd, IDisplayDriver* display, IClock& clock,
-              LockScreen& lockScreen,
+              IScreen& lockScreen,
               uint64_t sleepMs = 15000, uint64_t lockMs = 15000);
 
     // Use as sleepMs / lockMs value to disable that timeout entirely.
@@ -53,7 +53,7 @@ private:
     ViewDispatcher*  vd_         = nullptr;
     IDisplayDriver*  display_    = nullptr;
     IClock*          clock_      = nullptr;
-    LockScreen*      lockScreen_ = nullptr;
+    IScreen*         lockScreen_ = nullptr;
 };
 
 } // namespace nema

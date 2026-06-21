@@ -9,7 +9,7 @@
 `firmware/core/src/js/`, headers `nema/js/`.
 
 - **`JsEngine`** (`js_engine.*`): one `JSRuntime`+`JSContext` per app, on the app thread (so JS
-  GC never touches the UI thread). `loadApp()` evaluates a `.kapp` bundle as an **ES module**,
+  GC never touches the UI thread). `loadApp()` evaluates a `.papp` bundle as an **ES module**,
   resolving `import … from "nema"` to an **embedded runtime** (`nema_runtime_js.h` — a generated
   minified `NEMA_RUNTIME_JS` string providing jsx/View/Text/Pressable/ScrollView/Slider/
   useState/useRef/useEffect/renderToTree). `render(arena)` reifies the JS component's default
@@ -28,9 +28,9 @@
   `stdout.write`).
 - **`JsApp`** (`apps/js_app.h`) is a `ComponentApp` (gets flex layout/focus/scroll/gestures for
   free). **`JsAppStore`** (`apps/js_app_store.h`) is the process-wide owner: `installApp`/
-  `installKapp` register apps live into the `AppRegistry` as `AppKind::Custom` — **RAM-only and
-  volatile** (Palanu's portable-JS analog of Flipper's FAP loader). `installKapp` parses two
-  container formats: `KAPP1\n<manifest>\n<js>` and `PAPP1\n<manifest>\n<entry>\n<js>`.
+  `installPappBytes` register apps live into the `AppRegistry` as `AppKind::Custom` — **RAM-only
+  and volatile** (Palanu's portable-JS analog of Flipper's FAP loader). `installPappBytes` parses
+  the single-file container `PAPP1\n<manifest>\n<entry>\n<js>`.
   **`JsRuntime`** (`js/js_runtime.h`) is the `IAppRuntime` adapter (tier "js").
 
 ## wasm3 — headless processes
@@ -48,24 +48,26 @@
 - **`WasmRuntime`** (`wasm/wasm_runtime.h`) is the `IAppRuntime` adapter (tier "wasm"):
   `runProcess` loads `.wasm` → engine → WASI → `_start`. `runUi` is a no-op (deferred).
 
-## App packaging — `.kapp` and `.papp`
+## App packaging — `.papp`
 
 Authored with the **app-sdk** (`packages/app-sdk/`) in TSX (React/Ink-style) running on the
 device's QuickJS, rendering through the **same native components** as built-in apps.
 
 - **Author**: `App.tsx` using `import { View, Text, Pressable, useState } from "nema"` + a
-  manifest (`KappManifest`, `src/manifest.ts`): `id, name, version, entry, needs[]` (capabilities),
+  manifest (`PappManifest`, `src/manifest.ts`): `id, name, version, entry, needs[]` (capabilities),
   `api_version` ("major.minor" — checked at load: major exact, app.minor ≤ host.minor), plus Plan 59
   fields `runtime` (`js`|`wasm`|`native`), `display_server`, `icon`, `category`.
 - **Build** (`bin/build.ts`, `palanu-build`): bundles the entry via `Bun.build` (ESM, minified,
-  `external: ["nema", …]` so app + host share one runtime). Two packaging shapes:
-  - **`.papp` folder** — `dist/<id>.papp/` with `manifest.json` + `app.js`; install by copying to
-    `/apps/` on the device (filesystem install).
-  - **`.kapp` single file** — `KAPP1\n<manifest>\n<js>`; consumed by OTA install (`/install`,
-    `RemoteSession.installApp()`) and by embedding.
-- **Embedding into firmware**: `scripts/gen-embedded-apps.ts` reads `templates/*/*.kapp` and emits
-  `firmware/core/include/nema/apps/embedded_apps.h` (the built-in "Embedded" app store, currently
-  Sys Info + Counter). `scripts/gen-runtime-header.ts` bundles the SDK runtime into
+  `external: ["nema", …]` so app + host share one runtime). Output is a **`.papp` folder**
+  (`dist/<id>.papp/` with `manifest.json` + `app.js`); install by copying it to `/apps/` on the
+  device (filesystem install, hot-scanned by `papp_installer`).
+- **Wire / single-file container**: the OTA path (`RemoteSession.installApp()` → `AppInstall`
+  channel → `JsAppStore::installPappBytes`) and the `parsePapp` loader accept the **`PAPP1`**
+  container (single-file `PAPP1\n<manifest>\n<entry>\n<js>` or a TOC-concatenated bundle with
+  assets — see `papp_package.h`).
+- **Embedding into firmware**: `firmware/core/include/nema/apps/embedded_apps.h` holds the built-in
+  "Embedded" app store (currently Sys Info + Counter) as extracted JS strings, installed at boot via
+  `loadEmbeddedJsApps` → `installApp`. `scripts/gen-runtime-header.ts` bundles the SDK runtime into
   `firmware/core/include/nema/js/nema_runtime_js.h` so the device resolves `nema` against the same
   runtime as built-in apps.
 - **Templates**: `counter`, `sysinfo`, `hello-papp`.
@@ -96,9 +98,10 @@ So the IDL feeds **both** the firmware's JS API bindings and the SDK's TypeScrip
   gates. Files marked `// @generated … DO NOT EDIT` (`embedded_apps.h`, `nema_runtime_js.h`,
   everything under `generated/`) are machine-written.
 - **Regenerate on change**: `gen-runtime-header.ts` when SDK components/hooks change;
-  `gen-embedded-apps.ts` when a built-in `.kapp` changes; `idl gen.ts` when `.pidl` changes.
-- **Two packaging shapes coexist** — `.kapp` (single text file, KAPP1 header) for OTA/embedding;
-  `.papp` (folder) for filesystem install. `api_version` is the runtime compatibility contract.
+  `idl gen.ts` when `.pidl` changes.
+- **One packaging format** — `.papp`: a folder (`manifest.json` + `app.js`) for filesystem install,
+  or the `PAPP1` container (single-file / TOC bundle) for the OTA wire. `api_version` is the runtime
+  compatibility contract.
 
 ## Key files
 
@@ -108,5 +111,5 @@ So the IDL feeds **both** the firmware's JS API bindings and the SDK's TypeScrip
 | JS app / store / adapter | `firmware/core/include/nema/apps/{js_app,js_app_store}.h`, `include/nema/js/js_runtime.h` |
 | Embedded apps (generated) | `firmware/core/include/nema/apps/embedded_apps.h` |
 | wasm3 engine / WASI / adapter | `firmware/core/include/nema/wasm/{wasm_engine,wasm_runtime}.h` + `src/wasm/{wasm_engine,wasm_wasi}.cpp` |
-| app-sdk | `packages/app-sdk/bin/build.ts`, `src/{manifest,system,index}.ts`, `scripts/{gen-embedded-apps,gen-runtime-header}.ts`, `templates/*` |
+| app-sdk | `packages/app-sdk/bin/build.ts`, `src/{manifest,system,index}.ts`, `scripts/gen-runtime-header.ts`, `templates/*` |
 | IDL | `packages/idl/src/{parser,gen,ast}.ts`, `src/emit/*.ts`, `api/*.pidl` |

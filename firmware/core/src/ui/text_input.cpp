@@ -6,7 +6,10 @@
 #include <cstdio>
 
 namespace nema {
-namespace ui {
+} // namespace nema
+
+namespace aether::ui {
+using namespace nema;  // Plan 80: nema core symbols (Canvas/Key/input/anim/fonts) in scope
 
 // charset: lowercase, uppercase, digits, common symbols. Last slot = DONE.
 static const char* CHARSET =
@@ -38,9 +41,9 @@ void TextInput::handle(Key k, bool& done, bool& cancel) {
 
 void TextInput::draw(Canvas& c, const char* prompt) const {
     const uint16_t w = 230, h = 80;
-    ui::drawModalBox(c, w, h);
-    uint16_t mx = ui::modalOriginX(c, w);
-    uint16_t my = ui::modalOriginY(c, h);
+    aether::ui::drawModalBox(c, w, h);
+    uint16_t mx = aether::ui::modalOriginX(c, w);
+    uint16_t my = aether::ui::modalOriginY(c, h);
 
     c.drawText(mx + 8, my + 8, prompt);
 
@@ -57,12 +60,12 @@ void TextInput::draw(Canvas& c, const char* prompt) const {
     const char* label = (CHARSET[idx] == ' ') ? "space" : pick;
     uint16_t px = mx + w / 2 - c.textWidth(label) / 2;
     uint16_t py = my + 44;
-    c.invertRect(px - 4, py - 2, c.textWidth(label) + 8, ui::CHAR_H + 4);
+    c.invertRect(px - 4, py - 2, c.textWidth(label) + 8, nema::display::CHAR_H + 4);
     c.drawText(px, py, label, false);
 
-    c.drawText(mx + 8, my + h - ui::CHAR_H - 6,
+    c.drawText(mx + 8, my + h - nema::display::CHAR_H - 6,
                "UP/DN pick  >add <del  OK done");
 }
 
 } // namespace ui
-} // namespace nema
+

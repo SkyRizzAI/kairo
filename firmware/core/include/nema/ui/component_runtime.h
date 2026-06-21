@@ -8,7 +8,8 @@ namespace nema {
 class Canvas;
 }
 
-namespace nema::ui {
+namespace aether::ui {
+using namespace nema;  // Plan 80: nema core symbols (Canvas/Key/input/anim/fonts) in scope
 
 // ComponentRuntime — the shared build→layout→focus→render + input loop body,
 // extracted from ComponentApp so both apps (ComponentApp) and system screens
@@ -65,4 +66,4 @@ bool dispatchAdjust(UiNode* root, ComponentState& st, int dir);
 // while the view is still gliding (caller should keep redrawing).
 bool tickMomentum(ComponentState& st);
 
-} // namespace nema::ui
+} // namespace aether::ui

@@ -25,6 +25,7 @@ void Esp32Ble::onRegister(Runtime& rt) {
     rt.hardware().add({"bluetooth", DriverKind::Bluetooth, "ESP32-S3 BLE (NimBLE)"});
     rt.capabilities().add(caps::BtBle);
     rt.capabilities().add(caps::BtBleCentral);
+    caps_ = &rt.capabilities();
 }
 
 } // namespace nema
@@ -114,6 +115,7 @@ bool Esp32Ble::enable(BtMode mode) {
     esp_err_t err = nimble_port_init();
     if (err != ESP_OK) {
         if (log_) log_->error("Esp32Ble", "nimble_port_init failed");
+        if (caps_) caps_->setState(caps::BtBle, ResourceState::Fault);
         return false;
     }
 
@@ -144,6 +146,7 @@ bool Esp32Ble::enable(BtMode mode) {
 
     enabled_ = true;
     mode_    = BtMode::Ble;
+    if (caps_) caps_->setState(caps::BtBle, ResourceState::Available);
     if (events_ && poster_) poster_->post({events::BtEnabled, {}});
     if (log_) log_->info("Esp32Ble", "enabled (NimBLE)");
     return true;
@@ -156,6 +159,7 @@ void Esp32Ble::disable() {
     enabled_ = false;
     mode_ = BtMode::Off;
     advertising_ = false;
+    if (caps_) caps_->setState(caps::BtBle, ResourceState::Absent);
     if (poster_) poster_->post({events::BtDisabled, {}});
 }
 

@@ -7,7 +7,7 @@ namespace nema::js { class JsEngine; }
 
 namespace nema {
 
-// JsApp — a custom app whose UI/logic is JavaScript (a built .kapp bundle),
+// JsApp — a custom app whose UI/logic is JavaScript (a built .papp bundle),
 // running on the embedded QuickJS engine (Plan 37). Being a ComponentApp it gets
 // flex layout, focus, scroll, gesture and pause/resume for free; build() renders
 // the JS component to the same native UiNode tree as C apps. Runs on the app
@@ -46,7 +46,7 @@ public:
 
 protected:
     void        onStart(AppContext& ctx) override;
-    ui::UiNode* build(ui::NodeArena& arena, AppContext& ctx) override;
+    aether::ui::UiNode* build(aether::ui::NodeArena& arena, AppContext& ctx) override;
     size_t      arenaCapacity() const override { return 1024; }
 
 private:

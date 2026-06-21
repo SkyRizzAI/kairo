@@ -2,7 +2,7 @@
 // Source: 4x6.bdf
 #include "nema/ui/canvas.h"
 
-namespace nema {
+namespace nema::display {
 
 static const uint8_t FONT_TINY_DATA[] = {
     0x00,0x00,0x00,0x00, // 0x20 ' '
@@ -111,4 +111,4 @@ const BitmapFont FONT_TINY = {
     1,     // spacing
 };
 
-} // namespace nema
+} // namespace nema::display

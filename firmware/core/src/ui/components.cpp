@@ -7,12 +7,15 @@
 #include "nema/ui/text_style.h"
 
 namespace nema {
-namespace ui {
+} // namespace nema
+
+namespace aether::ui {
+using namespace nema;  // Plan 80: nema core symbols (Canvas/Key/input/anim/fonts) in scope
 
 uint16_t drawTitle(Canvas& c, const char* title) {
-    const nema::StyleTokens& t = nema::theme();
+    const aether::StyleTokens& t = aether::theme();
     uint16_t bannerH = (uint16_t)(measureTextH(TextRole::Title) + 2 * t.space.xs);
-    uint16_t bannerY = CONTENT_Y;
+    uint16_t bannerY = nema::display::CONTENT_Y;
     aether::ui::draw::banner(c, 0, bannerY, c.width(), bannerH, title, false);
     return (uint16_t)(bannerY + bannerH + t.space.xs);
 }
@@ -38,7 +41,7 @@ void drawConfirm(Canvas& c, const char* prompt, int cursor, uint16_t w, uint16_t
     c.fillRect(mx, my, w, h, false);
     aether::ui::draw::box_rounded(c, mx, my, w, h, false);
 
-    const nema::StyleTokens& t = nema::theme();
+    const aether::StyleTokens& t = aether::theme();
     uint16_t pad = t.space.sm;
     uint16_t bh  = (uint16_t)(measureTextH(TextRole::Body) + 2 * pad);
 
@@ -77,4 +80,4 @@ void drawConfirm(Canvas& c, const char* prompt, int cursor, uint16_t w, uint16_t
 }
 
 } // namespace ui
-} // namespace nema
+

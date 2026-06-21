@@ -2,7 +2,8 @@
 #include "nema/ui/node.h"
 #include <cstdint>
 
-namespace nema::ui {
+namespace aether::ui {
+using namespace nema;  // Plan 80: nema core symbols (Canvas/Key/input/anim/fonts) in scope
 
 // True if (x,y) falls within the laid-out rect of n.
 inline bool nodeContains(const UiNode* n, int16_t x, int16_t y) {
@@ -16,4 +17,4 @@ inline bool nodeContains(const UiNode* n, int16_t x, int16_t y) {
 // same logical space the layout used (full-screen logical here).
 UiNode* hitTest(UiNode& root, int16_t x, int16_t y);
 
-} // namespace nema::ui
+} // namespace aether::ui

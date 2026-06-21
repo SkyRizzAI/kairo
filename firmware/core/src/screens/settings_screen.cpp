@@ -3,17 +3,16 @@
 #include "nema/screens/settings_screen.h"
 #include "nema/runtime.h"
 #include "nema/ui/view_dispatcher.h"
-#include "nema/ui/style_tokens.h"
 #include "nema/system/capability_registry.h"
 
 namespace nema {
 
-using namespace ui;
+using namespace aether::ui;
 
 SettingsScreen::SettingsScreen(Runtime& rt)
-    : ComponentScreen(rt, 160), about_(rt), sleepSettings_(rt), controls_(rt),
-      touchSettings_(rt), sounds_(rt), cameraSettings_(rt), developer_(rt),
-      profileSettings_(rt) {}
+    : ComponentScreen(rt, 160), about_(rt), sleepSettings_(rt), wifiSettings_(rt),
+      btSettings_(rt), remoteSettings_(rt), controls_(rt), touchSettings_(rt), sounds_(rt),
+      cameraSettings_(rt), developer_(rt), profileSettings_(rt) {}
 
 void SettingsScreen::onResume() {
     scroll_.scrollMain = 0;
@@ -30,6 +29,9 @@ void SettingsScreen::launch(Kind k) {
     switch (k) {
         case About:      rt_.view().navigate(about_);          break;
         case Display:    rt_.view().navigate(sleepSettings_);  break;
+        case Wifi:       rt_.view().navigate(wifiSettings_);   break;
+        case Bluetooth:  rt_.view().navigate(btSettings_);     break;
+        case Remote:     rt_.view().navigate(remoteSettings_); break;
         case Controls:   rt_.view().navigate(controls_);       break;
         case Touch:      rt_.view().navigate(touchSettings_);  break;
         case Sounds:     rt_.view().navigate(sounds_);         break;
@@ -44,6 +46,11 @@ UiNode* SettingsScreen::build(NodeArena& a, Runtime& rt) {
     auto& caps = rt.capabilities();
     items_.push_back({this, Display,  "Display"});
     items_.push_back({this, Controls, "Controls"});
+    if (caps.has(caps::NetWifi))
+        items_.push_back({this, Wifi,      "Wi-Fi"});
+    if (caps.has(caps::BtBle))
+        items_.push_back({this, Bluetooth, "Bluetooth"});
+    items_.push_back({this, Remote,    "Remote"});
     if (caps.has(caps::InputTouch))
         items_.push_back({this, Touch,    "Touch"});
     if (caps.has(caps::AudioInput) || caps.has(caps::AudioOutput))
@@ -55,25 +62,23 @@ UiNode* SettingsScreen::build(NodeArena& a, Runtime& rt) {
     items_.push_back({this, Developer, "Developer"});
     items_.push_back({this, About,    "About"});
 
-    uint8_t pad = nema::theme().space.sm;
-    uint8_t gap = nema::theme().space.xs;
-    Style root; root.dir = FlexDir::Col; root.flexGrow = 1; root.padding = pad; root.gap = gap;
-    root.align = Align::Stretch;
-    Style sv;   sv.dir = FlexDir::Col; sv.align = Align::Stretch; sv.gap = 1;
+    Style root; root.dir = FlexDir::Col; root.flexGrow = 1; root.align = Align::Stretch;
 
-    UiNode* list = ScrollView(a, scroll_, sv, {});
+    UiNode* list = ListContainer(a, scroll_, {});
     UiNode* prev = nullptr;
     for (auto& it : items_) {
-        UiNode* row = ListItem(a, it.label, ">", onSelect, &it);
+        ListEntry e;
+        e.label   = it.label;
+        e.chevron = true;
+        e.onPress = onSelect;
+        e.user    = &it;
+        UiNode* row = ListItemRow(a, e);
         if (!row) break;
         if (!prev) list->firstChild = row; else prev->nextSibling = row;
         prev = row;
     }
 
-    return View(a, root, {
-        TitleBar(a, "SETTINGS"),
-        list,
-    });
+    return View(a, root, { list });
 }
 
 } // namespace nema

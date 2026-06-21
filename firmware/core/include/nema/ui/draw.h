@@ -1,7 +1,7 @@
 #pragma once
 // Plan 60 Fase 1 — Tier-1 draw toolkit.
 // All visual rendering goes through this namespace.
-// Read nema::theme() for spacing/style; no hard-coded pixel constants.
+// Read aether::theme() for spacing/style; no hard-coded pixel constants.
 #include "nema/ui/canvas.h"
 #include "nema/ui/node.h"
 #include <cstdint>
@@ -28,28 +28,34 @@ void separator(nema::Canvas& c, uint16_t x, uint16_t y, uint16_t len,
 
 // ── Scrollbar ─────────────────────────────────────────────────────────────────
 
-// Dashed track + solid thumb. size = track length in px; pos/total = current position.
-// horizontal=false → vertical bar (3px wide) at (x,y).
-// horizontal=true  → horizontal bar (3px tall) at (x,y).
+// Dashed track + solid thumb (Flipper-style). All lengths in pixels:
+//   size         = track length (the on-screen viewport length along the axis)
+//   scrollOffset = current scroll position, 0..(content-viewport)
+//   viewport     = visible content length (usually == size)
+//   content      = total content length
+// Thumb shrinks proportionally as content grows (clamped to a minimum), and its
+// far edge never passes the track end (no overshoot).
+// horizontal=false → vertical bar (3px wide) at (x,y); true → horizontal (3px tall).
 void scrollbar(nema::Canvas& c, uint16_t x, uint16_t y, uint16_t size,
-               uint16_t pos, uint16_t total, bool horizontal = false);
+               uint16_t scrollOffset, uint16_t viewport, uint16_t content,
+               bool horizontal = false);
 
 // ── Text helpers ──────────────────────────────────────────────────────────────
 
 // Word-wrapped text within w pixels. Newlines advance by font height + 1.
 void multiline(nema::Canvas& c, uint16_t x, uint16_t y, uint16_t w,
-               const char* text, nema::ui::TextRole role = nema::ui::TextRole::Body);
+               const char* text, aether::ui::TextRole role = aether::ui::TextRole::Body);
 
 // Tick-driven marquee scroll. Clips text to w pixels, scrolling left each tick.
 // When text fits, draws statically. tick must be incremented by caller each frame.
 void marquee(nema::Canvas& c, uint16_t x, uint16_t y, uint16_t w,
              const char* text, uint32_t tick,
-             nema::ui::TextRole role = nema::ui::TextRole::Body);
+             aether::ui::TextRole role = aether::ui::TextRole::Body);
 
 // Truncate with "…" if text overflows w pixels.
 void ellipsis(nema::Canvas& c, uint16_t x, uint16_t y, uint16_t w,
               const char* text,
-              nema::ui::TextRole role = nema::ui::TextRole::Body);
+              aether::ui::TextRole role = aether::ui::TextRole::Body);
 
 // ── Icon ──────────────────────────────────────────────────────────────────────
 

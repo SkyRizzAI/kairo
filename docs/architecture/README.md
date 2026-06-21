@@ -38,7 +38,7 @@ The boot sequence is identical for every target:
 | [`runtime-kernel.md`](runtime-kernel.md) | Boot flow, `Runtime`, service container/manager, Nema kernel (Thread / MessageQueue / TaskRunner), capability & resource model, event bus, logger, config store, process model, threading. |
 | [`ui-app-input.md`](ui-app-input.md) | Canvas (1-bit), ViewDispatcher, component/flex UI, app model (`IApp`/`AppHost`), input abstraction (Action/Code/Key + gestures), assets/fonts/animation, screens & built-in apps. |
 | [`link-remote-storage.md`](link-remote-storage.md) | PLP wire protocol, transports (USB-CDC / BLE / WASM cable / mux), `LinkService`, `RemoteService` channels, CLI, OTA, VFS & filesystem backends, HAL interface map. |
-| [`scripting-and-apps.md`](scripting-and-apps.md) | QuickJS (UI apps) + wasm3 (headless) runtimes, sandboxing, the app store, `.kapp`/`.papp` packaging, embedded apps. |
+| [`scripting-and-apps.md`](scripting-and-apps.md) | QuickJS (UI apps) + wasm3 (headless) runtimes, sandboxing, the app store, `.papp` packaging, embedded apps. |
 | [`platforms-boards-targets.md`](platforms-boards-targets.md) | `IPlatform`/`IBoard` contracts, ESP32 & WASM platforms, the boards (skyrizz-e32, dev-board, simulator), all targets, build/flash, USB mode toggle. |
 | [`forge-web.md`](forge-web.md) | Palanu Forge (SvelteKit host app): browser transports, PLP-in-TS, routes, flasher, the app-sdk, the IDL, and the firmware↔host cross-repo contracts. |
 
@@ -53,7 +53,7 @@ other breaks the device↔host link silently:
 | BLE GATT UUIDs | `firmware/core/.../link/plp_ble.h` | `packages/forge/src/lib/plp/uuids.ts` |
 | Board profile JSON | `RemoteService` / `BoardProfile` | `RemoteSession.ts` / `BoardVisual.svelte` |
 | Nema System API | `generated/host/*` (from IDL) | `packages/app-sdk` `nema.d.ts` (from IDL) |
-| App package formats | embedded-app / OTA loader | `.kapp` / `.papp` from `app-sdk` |
+| App package formats | embedded-app / OTA loader | `.papp` from `app-sdk` |
 
 Single source of truth for the System API is the IDL (`api/*.pidl` → `packages/idl`).
 

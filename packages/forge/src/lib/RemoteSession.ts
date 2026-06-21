@@ -54,7 +54,21 @@ export interface BoardProfile {
 
 const HELLO = 0x01;
 const ACK = 0x02;
+const REJECT = 0x03; // device refused the handshake (Remote disabled)
+// Session auth (Plan 74) — Control channel opcodes.
+const AUTH_CHALLENGE = 0x20;
+const AUTH_RESPONSE = 0x21;
+const AUTH_OK = 0x22;
+const AUTH_FAIL = 0x23;
+const AUTH_REQUIRED = 0x24;
+const TOKEN_KEY = 'palanu.remote.token';
 const GET_INFO = 0x01; // SYSTEM channel opcode
+
+// SHA-256 hex via Web Crypto (browser + Node). Mirrors the device's hexSha256.
+async function sha256hex(s: string): Promise<string> {
+	const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s));
+	return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, '0')).join('');
+}
 
 export const Power = { Restart: 0x10, Sleep: 0x11, Shutdown: 0x12 } as const;
 export const Key = { Up: 1, Down: 2, Left: 3, Right: 4, Select: 5, Cancel: 6 } as const;
@@ -88,6 +102,11 @@ type Listeners = {
 	ready: Set<() => void>;
 	profile: Set<(p: BoardProfile) => void>;
 	cli: Set<(c: CliChunk) => void>;
+	// Plan 74: device wants a password ('auth'), or session was authorized.
+	auth: Set<() => void>;
+	authorized: Set<() => void>;
+	authfail: Set<() => void>;
+	rejected: Set<() => void>; // Remote disabled on the device
 };
 
 // RemoteSession — transport-agnostic client of a Palanu device (WASM sim or real
@@ -110,8 +129,14 @@ export class RemoteSession {
 		event: new Set(),
 		ready: new Set(),
 		profile: new Set(),
-		cli: new Set()
+		cli: new Set(),
+		auth: new Set(),
+		authorized: new Set(),
+		authfail: new Set(),
+		rejected: new Set()
 	};
+	#pendingChallenge: { salt: string; nonce: string } | null = null;
+	#authorized = false;
 
 	constructor(t: ILinkTransport) {
 		this.#t = t;
@@ -175,6 +200,50 @@ export class RemoteSession {
 		}, 300);
 	}
 
+	get authorized() {
+		return this.#authorized;
+	}
+
+	// Called by the UI in response to the 'auth' event (device wants a password).
+	async submitPassword(pw: string) {
+		if (!this.#pendingChallenge) return;
+		const { salt, nonce } = this.#pendingChallenge;
+		const pwhash = await sha256hex(salt + pw);
+		const response = await sha256hex(pwhash + nonce);
+		this.#sendAuthResponse('H', response);
+	}
+
+	#sendAuthResponse(kind: 'H' | 'T', value: string) {
+		const enc = new TextEncoder().encode(value);
+		const p = new Uint8Array(2 + enc.length);
+		p[0] = AUTH_RESPONSE;
+		p[1] = kind.charCodeAt(0);
+		p.set(enc, 2);
+		this.#t.send(encodeFrame(Channel.Control, p));
+	}
+
+	#savedToken(): string | null {
+		try {
+			return typeof localStorage !== 'undefined' ? localStorage.getItem(TOKEN_KEY) : null;
+		} catch {
+			return null;
+		}
+	}
+	#saveToken(t: string) {
+		try {
+			localStorage?.setItem(TOKEN_KEY, t);
+		} catch {
+			/* ignore */
+		}
+	}
+	#clearToken() {
+		try {
+			localStorage?.removeItem(TOKEN_KEY);
+		} catch {
+			/* ignore */
+		}
+	}
+
 	#onBytes(d: Uint8Array) {
 		for (const f of this.#parser.push(d)) this.#handle(f);
 	}
@@ -186,6 +255,31 @@ export class RemoteSession {
 				this.#emit('ready');
 				// Handshake done → ask for the board profile (SYSTEM GetInfo).
 				this.#t.send(encodeFrame(Channel.System, new Uint8Array([GET_INFO])));
+			} else if (f.payload[0] === REJECT) {
+				// Remote is disabled on the device — stop retrying the handshake.
+				if (this.#helloTimer) {
+					clearInterval(this.#helloTimer);
+					this.#helloTimer = null;
+				}
+				this.#emit('rejected');
+			} else if (f.payload[0] === AUTH_CHALLENGE) {
+				// "salt:nonce" — try a saved token first, else ask the UI for a password.
+				const [salt, nonce] = new TextDecoder().decode(f.payload.subarray(1)).split(':');
+				this.#pendingChallenge = { salt, nonce };
+				const token = this.#savedToken();
+				if (token) this.#sendAuthResponse('T', token);
+				else this.#emit('auth');
+			} else if (f.payload[0] === AUTH_OK) {
+				this.#authorized = true;
+				const tok = new TextDecoder().decode(f.payload.subarray(1));
+				if (tok) this.#saveToken(tok);
+				this.#emit('authorized');
+			} else if (f.payload[0] === AUTH_FAIL) {
+				this.#clearToken(); // a stale token / wrong password — prompt fresh
+				this.#emit('authfail');
+				this.#emit('auth');
+			} else if (f.payload[0] === AUTH_REQUIRED) {
+				if (!this.#authorized) this.#emit('auth');
 			}
 			return;
 		}
@@ -528,10 +622,10 @@ export class RemoteSession {
 		this.#t.send(encodeFrame(Channel.Ext, p));
 	}
 
-	// OTA-install a custom app: send a built `.kapp` (text) → device JsAppStore
+	// OTA-install a custom app: send a built `.papp` (text) → device JsAppStore
 	// installs it live (volatile; appears in Apps immediately). Plan 37 Fase 6.
-	installApp(kapp: string) {
-		const body = new TextEncoder().encode(kapp);
+	installApp(papp: string) {
+		const body = new TextEncoder().encode(papp);
 		const p = new Uint8Array(1 + body.length);
 		p[0] = ExtOp.AppInstall;
 		p.set(body, 1);

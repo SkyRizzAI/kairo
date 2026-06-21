@@ -3,6 +3,7 @@
 #include "nema/log/log_sink.h"
 #include "nema/system/board_profile.h"
 #include "nema/services/cli_service.h"
+#include "nema/services/remote_auth.h"
 #include <cstdint>
 #include <string>
 
@@ -50,7 +51,7 @@ namespace ExtOp {
     enum : uint8_t {
         InjectEvent     = 0x01,
         WifiSetNetworks = 0x02,
-        AppInstall      = 0x03,   // payload = raw .kapp bytes → JsAppStore (Plan 37)
+        AppInstall      = 0x03,   // payload = raw .papp bytes → JsAppStore (Plan 37)
     };
 }
 
@@ -67,6 +68,10 @@ public:
     void attachSessions(CliSessionManager& m) { sessions_ = &m; }  // multi-session (Plan 45)
     void attachFs(IFileSystem& fs) { fs_ = &fs; }      // route FILE channel here
     void attachOta(IOtaUpdater& ota) { ota_ = &ota; }  // route OTA channel here (Plan 39)
+    void attachAuth(RemoteAuthStore& a) { auth_ = &a; }  // session auth policy (Plan 74)
+    // Session-ready passthrough: RemoteService owns LinkService::onReady (to start
+    // auth), so platforms register their screen-push here instead of on LinkService.
+    void onReady(LinkService::ReadyFn fn, void* user) { readyFn_ = fn; readyUser_ = user; }
     void onPower(PowerFn fn, void* user) { powerFn_ = fn; powerUser_ = user; }
     void onControl(ControlFn fn, void* user) { controlFn_ = fn; controlUser_ = user; }
     // Board profile (name, LCD, buttons) serialized to JSON and replied on
@@ -83,6 +88,11 @@ private:
 
     static void onFrameThunk(void* user, const plp::Frame& f);
     static void onDisconnectThunk(void* user);         // drop all shell sessions
+    static void onReadyThunk(void* user);              // handshake done → start auth
+    static bool gateThunk(void* user);                 // accept handshake? (Remote enabled)
+    void startAuth();                                  // challenge or open (no pw)
+    void handleAuthControl(const plp::Frame& f);       // process AUTH_* from host
+    void sendCtrl(uint8_t op, const uint8_t* data, size_t len);
     void dispatch(const plp::Frame& f);
     void handleFile(const std::vector<uint8_t>& in);   // FILE channel request → reply
     void handleOta(const std::vector<uint8_t>& in);    // OTA channel: drive IOtaUpdater
@@ -94,6 +104,11 @@ private:
     CliService*   cli_    = nullptr;
     IFileSystem*  fs_     = nullptr;
     IOtaUpdater*  ota_     = nullptr;
+    RemoteAuthStore* auth_ = nullptr;            // Plan 74 — session auth policy
+    bool          authorized_ = true;            // privileged allowed? (true = no-pw default)
+    std::string   nonce_;                        // current challenge nonce
+    LinkService::ReadyFn readyFn_ = nullptr;     // platform screen-push passthrough
+    void*         readyUser_ = nullptr;
     PowerFn       powerFn_ = nullptr;
     void*         powerUser_ = nullptr;
     ControlFn     controlFn_ = nullptr;

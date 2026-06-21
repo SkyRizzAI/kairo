@@ -18,14 +18,30 @@ public:
     enum class Role : uint8_t { Device, Host };
 
     // Control opcodes (first payload byte on Channel::Control).
-    enum : uint8_t { HELLO = 0x01, ACK = 0x02, REJECT = 0x03, PING = 0x10, PONG = 0x11 };
+    enum : uint8_t {
+        HELLO = 0x01, ACK = 0x02, REJECT = 0x03, PING = 0x10, PONG = 0x11,
+        // Session auth (Plan 74) — handled by RemoteService (it owns the store).
+        AUTH_CHALLENGE = 0x20,   // dev->host  "salt:nonce"
+        AUTH_RESPONSE  = 0x21,   // host->dev  [kind 'H'|'T'][hexvalue]
+        AUTH_OK        = 0x22,   // dev->host  [token]
+        AUTH_FAIL      = 0x23,   // dev->host
+        AUTH_REQUIRED  = 0x24,   // dev->host  (privileged attempted unauthorized)
+    };
 
     using FrameFn      = void (*)(void* user, const plp::Frame& f);
     using ReadyFn      = void (*)(void* user);
     using DisconnectFn = void (*)(void* user);
+    using GateFn       = bool (*)(void* user);   // may this session even start?
 
     void attach(ILinkTransport* t, Role role);
     void onFrame(FrameFn fn, void* user) { fn_ = fn; user_ = user; }
+    // Plan 74: outbound non-Control channels (incl. the screen-tap) are dropped
+    // until authorized; a password-protected device shows nothing pre-auth.
+    void setAuthorized(bool a) { authorized_ = a; }
+    bool authorized() const { return authorized_.load(); }
+    // Plan 74: device refuses the handshake (sends REJECT) when this returns false
+    // — e.g. Remote disabled. Checked on HELLO before going ready.
+    void onHandshakeGate(GateFn fn, void* user) { gate_ = fn; gateUser_ = user; }
     // Fired when the handshake completes (host connected) — e.g. to push the
     // current screen frame so a freshly-attached viewer isn't blank.
     void onReady(ReadyFn fn, void* user) { readyFn_ = fn; readyUser_ = user; }
@@ -55,6 +71,9 @@ private:
     ILinkTransport*   t_     = nullptr;
     Role              role_  = Role::Device;
     std::atomic<bool> ready_{false};
+    std::atomic<bool> authorized_{true};   // Plan 74 — gates outbound app channels
+    GateFn            gate_     = nullptr;
+    void*             gateUser_ = nullptr;
     plp::FrameParser  parser_;
     FrameFn           fn_    = nullptr;
     void*             user_  = nullptr;

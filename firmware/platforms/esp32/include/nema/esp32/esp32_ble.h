@@ -10,6 +10,7 @@ namespace nema {
 class Logger;
 class EventBus;
 class AsyncEventPoster;
+class CapabilityRegistry;
 class Runtime;
 
 // Esp32Ble — NimBLE-backed BLE peripheral for ESP32-S3 (Plan 34). Implements both
@@ -69,9 +70,10 @@ public:
 private:
     void startAdvertisingInternal();
 
-    Logger*           log_     = nullptr;
-    EventBus*         events_  = nullptr;
-    AsyncEventPoster* poster_  = nullptr;
+    Logger*             log_    = nullptr;
+    EventBus*           events_ = nullptr;
+    AsyncEventPoster*   poster_ = nullptr;
+    CapabilityRegistry* caps_   = nullptr;
 
     bool        enabled_     = false;
     bool        advertising_ = false;

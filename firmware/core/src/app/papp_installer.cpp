@@ -54,8 +54,8 @@ static void scanPappDirs(IFileSystem* fs, const std::string& dir,
             } else {
                 scanPappDirs(fs, full, out);  // recurse
             }
-        } else if (endsWith(e.name, ".papp") || endsWith(e.name, ".kapp")) {
-            out.push_back({full, false});  // legacy .papp/.kapp file
+        } else if (endsWith(e.name, ".papp")) {
+            out.push_back({full, false});  // single-file .papp
         }
     }
 }
@@ -121,7 +121,7 @@ static bool installFromDir(Runtime& rt, IFileSystem* fs,
     return JsAppStore::instance().installApp(rt, id, name, version, js, dsrv);
 }
 
-// Install from a legacy .papp/.kapp FILE.
+// Install from a single-file .papp FILE.
 static bool installFromFile(Runtime& rt, IFileSystem* fs,
                             const std::string& path) {
     std::vector<uint8_t> data;
@@ -135,7 +135,7 @@ bool installPapp(Runtime& rt, const uint8_t* data, size_t len) {
     PappPackage pkg = parsePapp(data, len);
     if (!pkg.valid) return false;
     if (pkg.singleFile) {
-        return JsAppStore::instance().installKapp(
+        return JsAppStore::instance().installPappBytes(
             rt, reinterpret_cast<const char*>(data), len);
     }
     return installPappBundle(rt, pkg);

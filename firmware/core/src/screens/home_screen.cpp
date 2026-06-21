@@ -15,7 +15,7 @@
 
 namespace nema {
 
-using namespace ui;
+using namespace aether::ui;
 
 HomeScreen::HomeScreen(Runtime& rt)
     : ComponentScreen(rt),
@@ -93,13 +93,13 @@ void HomeScreen::onAction(input::Action a) {
 
 void HomeScreen::draw(Canvas& c) {
     using namespace aether::ui::draw;
-    const nema::StyleTokens& t = nema::theme();
+    const aether::StyleTokens& t = aether::theme();
 
     uint16_t W = c.width();
     uint16_t H = c.height();
 
     uint16_t bannerH = (uint16_t)(measureTextH(TextRole::Title) + 2 * t.space.sm);
-    uint16_t bannerY = CONTENT_Y;
+    uint16_t bannerY = nema::display::CONTENT_Y;
     banner(c, 0, bannerY, W, bannerH, "PALANU", /*notch=*/true);
 
     uint16_t sx = (uint16_t)(W - 12);
@@ -163,7 +163,7 @@ void HomeScreen::draw(Canvas& c) {
     c.drawText(2, hintY, hint, true);
 }
 
-ui::UiNode* HomeScreen::build(ui::NodeArena&, Runtime&) {
+aether::ui::UiNode* HomeScreen::build(aether::ui::NodeArena&, Runtime&) {
     return nullptr;
 }
 

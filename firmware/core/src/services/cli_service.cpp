@@ -18,7 +18,6 @@
 #include "nema/hal/bluetooth.h"
 #include "nema/hal/filesystem.h"
 #include "nema/hal/ota.h"
-#include "nema/ui/style_tokens.h"
 #include "nema/ui/view_dispatcher.h"
 #include <cctype>
 
@@ -88,7 +87,7 @@ void CliService::execute(const std::string& line, CliSession& session) {
                 if (!endsWith(name, ".papp")) {
                     if (findAppInDir(dir + "/" + name)) return true;
                 }
-            } else if (name == argv[0] + ".papp" || name == argv[0] + ".kapp") {
+            } else if (name == argv[0] + ".papp") {
                 return true;
             }
         }
@@ -102,7 +101,7 @@ void CliService::execute(const std::string& line, CliSession& session) {
         }
     }
 
-    // Scan PATH directories recursively for .papp/.kapp files
+    // Scan PATH directories recursively for .papp files
     for (const auto& dir : session.path) {
         if (findAppInDir(dir)) {
             for (auto& c : cmds_) {
@@ -564,14 +563,12 @@ void registerCoreCliCommands(CliService& cli, Runtime& rt) {
                 if (args.size() < 4) { out("usage: config set <ns> <key> <value>"); return; }
                 cfg->setString(ns.c_str(), key.c_str(), args[3]);
                 out("set " + ns + "/" + key + " = " + args[3]);
-                // Apply display/theme immediately so no reboot needed.
+                // Note: presentation settings (e.g. display/theme) are owned by the
+                // display server (ADR 0002). They apply on next boot, or live via
+                // Settings → Display. The kernel CLI just persists the value here.
                 if (ns == "display" && key == "theme") {
-                    const std::string& t = args[3];
-                    if (t == "compact")    setTheme(compactTheme());
-                    else if (t == "large") setTheme(largeTheme());
-                    else                   setTheme(defaultTheme());
                     r->view().requestRedraw();
-                    out("theme applied");
+                    out("(theme saved — applies on reboot or via Settings)");
                 }
             } else if (sub == "rm") {
                 out(cfg->remove(ns.c_str(), key.c_str())

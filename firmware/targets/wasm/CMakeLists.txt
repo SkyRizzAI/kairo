@@ -1,5 +1,5 @@
 add_executable(palanu main.cpp)
-target_link_libraries(palanu PRIVATE nema_core nema_platform_wasm nema_board_sim)
+target_link_libraries(palanu PRIVATE nema_core aether nema_platform_wasm nema_board_sim)
 
 # Emit a CLASSIC script (palanu.js + palanu.wasm). Loaded via a <script> tag on the
 # page (outside Vite's ESM transform, which would mangle import.meta.url and break

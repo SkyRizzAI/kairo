@@ -3,7 +3,8 @@
 #include <vector>
 #include <string>
 
-namespace nema::ui {
+namespace aether::ui {
+using namespace nema;  // Plan 80: nema core symbols (Canvas/Key/input/anim/fonts) in scope
 
 class AsciiBoardRenderer {
 public:
@@ -18,4 +19,4 @@ public:
     );
 };
 
-} // namespace nema::ui
+} // namespace aether::ui

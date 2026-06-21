@@ -1,9 +1,15 @@
 # 63 — WiFi Hardware Verification (SkyRizz E32)
 
+> ⚠️ **SUPERSEDED oleh [plan 73](73-connectivity-settings-ui.md).** Plan ini merujuk
+> `firmware/core/src/apps/wifi_app.cpp` yang **sudah dihapus** saat rewrite UI/Aether
+> (commit `1230296`) — UI WiFi sekarang dibangun ulang sebagai screen di Settings. Semua
+> test case di bawah dipindah & diperluas (WiFi + BLE + koeksistensi) ke plan 73 §5.
+> Dibiarkan untuk arsip; **jangan dieksekusi langsung**.
+
 > Prosedur test end-to-end WiFi di hardware SkyRizz E32. WiFi driver sudah
 > build ✅ dan sim ✅, tapi belum pernah ditest di hardware nyata.
 
-- Status: 🔴 Not started
+- Status: 🔴 Superseded (→ plan 73)
 - Depends on: 20 (WiFi & Networking), 28 (SkyRizz E32), 23 (Keyboard + HTTP)
 - Blocks: 62 (NTP), semua networked apps
 

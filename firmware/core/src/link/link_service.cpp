@@ -41,6 +41,10 @@ void LinkService::handle(const plp::Frame& f) {
         if (f.payload.empty()) return;
         switch (f.payload[0]) {
             case HELLO:                       // device side: accept + ACK
+                if (gate_ && !gate_(gateUser_)) {   // Remote disabled → refuse
+                    sendControl(REJECT);
+                    return;
+                }
                 ready_ = true;
                 sendControl(ACK);
                 if (readyFn_) readyFn_(readyUser_);
@@ -53,6 +57,9 @@ void LinkService::handle(const plp::Frame& f) {
                 sendControl(PONG);
                 break;
             default:
+                // Auth + other Control opcodes are handled by the upper layer
+                // (RemoteService owns the auth store). Forward once ready.
+                if (ready_ && fn_) fn_(user_, f);
                 break;
         }
         return;
@@ -63,7 +70,9 @@ void LinkService::handle(const plp::Frame& f) {
 
 void LinkService::send(plp::Channel ch, const uint8_t* data, size_t len, uint8_t flags) {
     if (!t_) return;
-    if (ch != plp::Channel::Control && !ready_.load()) return;   // gated until handshake
+    // Gated until handshake AND (Plan 74) until the session is authorized — this is
+    // what blanks the screen-tap on a password-protected device before auth.
+    if (ch != plp::Channel::Control && (!ready_.load() || !authorized_.load())) return;
     std::vector<uint8_t> buf;
     plp::encodeFrame(buf, (uint8_t)ch, data, len, flags);
     // Serialize the actual transmit: the GUI thread (screen-tap), the RX task

@@ -3,14 +3,13 @@
 	import favicon from '$lib/assets/favicon.svg';
 	import { page } from '$app/state';
 	import { Toaster } from '$lib/components/ui/sonner';
-	import { Cpu, Bluetooth, Usb, Package } from '@lucide/svelte';
+	import { Cpu, Bluetooth, Usb } from '@lucide/svelte';
 
 	let { children } = $props();
 
 	const nav = [
 		{ href: '/simulator', label: 'Simulator', icon: Cpu },
 		{ href: '/remote', label: 'Remote', icon: Bluetooth },
-		{ href: '/install', label: 'Install App', icon: Package },
 		{ href: '/flash', label: 'Flash', icon: Usb }
 	];
 </script>

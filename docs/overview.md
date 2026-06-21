@@ -28,7 +28,7 @@
 11. [UI Runtime (retained-mode component tree)](#11-ui-runtime-retained-mode-component-tree)
 12. [Input abstraction](#12-input-abstraction)
 13. [App model](#13-app-model)
-14. [JavaScript apps (QuickJS + .kapp)](#14-javascript-apps-quickjs--kapp)
+14. [JavaScript apps (QuickJS + .papp)](#14-javascript-apps-quickjs--papp)
 15. [KLP link layer & remote control](#15-klp-link-layer--remote-control)
 16. [Platform layer](#16-platform-layer)
 17. [Board layer](#17-board-layer)
@@ -85,9 +85,9 @@ The project has gone through naming churn; here is the canonical map so the code
 | **Nema** (νῆμα, "thread") | The kernel layer — threading primitives + the C++ namespace **`nema::`** that *all* firmware code lives in. ("Palanu runs the Nema kernel.") |
 | **Forge** | The web tool: WASM simulator + remote-control + firmware flasher (`packages/forge/`). |
 | **KLP → NLP** | The binary remote-control wire protocol (BLE / USB-CDC / virtual cable). Code still spells it **KLP** (`nema::klp`, `klp_codec`); plan 41 renames the *name* to **NLP** (Nema Link Protocol) — the wire format is unchanged. |
-| **`nema` (npm)** | The app SDK package authors import from when writing custom `.kapp` apps (`packages/nema-app-sdk/`). |
+| **`nema` (npm)** | The app SDK package authors import from when writing custom `.papp` apps (`packages/nema-app-sdk/`). |
 | **SkyRizz E32** | The flagship multimedia board (ESP32-S3 + TFT + camera + audio). |
-| **Kairo** *(retired)* | The project's older name. It still lingers in a few places not yet migrated — the repo directory (`kairo/`) and the `README.md`. Anywhere you see "Kairo," read "Palanu." |
+| **Kairo** *(retired)* | The project's older name. It still lingers in a few places not yet migrated — the repo directory (`kairo/`) and the GitHub slug (`SkyRizzAI/kairo`). Anywhere you see "Kairo," read "Palanu." |
 
 > Bottom line: **product = Palanu**, **kernel / C++ namespace = Nema (`nema::`)**, **link protocol =
 > KLP (being renamed NLP)**, **web tool = Forge**. The C++ namespace stays `nema::` (the kernel is
@@ -111,7 +111,7 @@ The project has gone through naming churn; here is the canonical map so the code
 | Bluetooth LE (peripheral, advertise, numeric-comparison pairing, bonds) | ✅ build | `IBleAdapter` + Bluetooth app |
 | USB CDC (composite TinyUSB) | ✅ build | raw byte pipe, carries KLP |
 | KLP remote link (screen mirror, input, logs, events, CLI, files, OTA, app-install) | ✅ | BLE + USB + WASM cable |
-| QuickJS JS engine + `.kapp` custom apps + `nema-app-sdk` | ✅ build | embedded + OTA (volatile) install |
+| QuickJS JS engine + `.papp` custom apps + `nema-app-sdk` | ✅ build | embedded + OTA (volatile) install |
 | Camera (`ICamera`, GC2145 DVP) + live viewfinder app | ✅ build | SkyRizz E32 |
 | Audio (`IAudioInput`/`IAudioOutput`, ES7243E mic + NS4168 speaker) | ✅ build | Sounds screen meters + test tone |
 | Config store (NVS on esp32, RAM on host) + VFS filesystem (LittleFS + MemFS) | ✅ | persistent settings/profile |
@@ -174,7 +174,7 @@ A Bun monorepo. `firmware/` is C++; `packages/` is the TypeScript/web tooling.
 ```
 palanu/                         ( repo dir is still "kairo/" — rename pending, plan 41 )
 ├─ package.json              # bun workspaces + scripts (forge, build/flash:*, test); name: "palanu"
-├─ README.md                 # public-facing intro (still says "Kairo" — not yet migrated)
+├─ README.md                 # public-facing intro (migrated to "Palanu")
 ├─ release-please-config.json + .release-please-manifest.json   # automated versioning
 │
 ├─ firmware/                 # ── all C++ ──
@@ -240,9 +240,9 @@ palanu/                         ( repo dir is still "kairo/" — rename pending,
 ├─ packages/
 │  ├─ forge/             # SvelteKit web tool: /simulator (WASM), /remote (BLE/USB), /flash, /install
 │  │  └─ src/lib/        transport/ (Ble/Serial/VirtualCable), klp/ (codec), RemoteSession, wasmSim
-│  └─ nema-app-sdk/      # "nema" npm package: JSX components + hooks + nema-build CLI → .kapp
+│  └─ nema-app-sdk/      # "nema" npm package: JSX components + hooks + nema-build CLI → .papp
 │     ├─ src/            components, jsx-runtime, render, hooks, system (nema.* API types)
-│     ├─ bin/            nema-build.ts (TSX → .kapp)
+│     ├─ bin/            nema-build.ts (TSX → .papp)
 │     └─ templates/      counter/, sysinfo/
 │
 ├─ docs/
@@ -544,7 +544,7 @@ struct IApp {
 
 ---
 
-## 14. JavaScript apps (QuickJS + .kapp)
+## 14. JavaScript apps (QuickJS + .papp)
 
 Palanu runs **sandboxed JavaScript/JSX apps** on an embedded **QuickJS-ng** engine — custom apps that
 ship as portable bundles, no native binary per architecture.
@@ -557,8 +557,8 @@ ship as portable bundles, no native binary per architecture.
 - **`JsApp`** (`apps/js_app.h`) — a `ComponentApp` that hosts a JS bundle; large stack (256 KB on ESP32,
   512 KB host). `build()` calls `engine.render()` each frame.
 - **`JsAppStore`** (`apps/js_app_store.h`) — installs custom apps at runtime: `installApp(id,name,ver,js)`
-  or `installKapp(bytes)`. Registers them as `AppKind::Custom` so they appear in the launcher immediately.
-- **`.kapp` format** — a tiny container: `KAPP1\n<manifest-json>\n<minified-js-bundle>`. Installs are
+  or `installPappBytes(bytes)`. Registers them as `AppKind::Custom` so they appear in the launcher immediately.
+- **`.papp` format** — a tiny container: `PAPP1\n<manifest-json>\n<minified-js-bundle>`. Installs are
   currently **volatile** (lost on reboot until on-flash persistence lands).
 - **Embedded apps** (`apps/embedded_apps.h`) — two reference JS apps compiled into the firmware:
   `com.palanu.example.sysinfo` and `com.palanu.example.counter` (demonstrating `useState`, the `nema.*`
@@ -691,7 +691,7 @@ firmware is WASM, and everything speaks **KLP**.
 - **`RemoteSession`** abstracts a transport; `wasmSim.ts` is a shared singleton WASM instance.
 - **Routes:** `/simulator` (run the WASM firmware — screen, logs, events, controls, a virtual WiFi
   router), `/remote` (discover & drive a Simulator/BLE/USB target), `/flash` (firmware flasher via
-  **esptool-js** over Web Serial), `/install` (upload a `.kapp` over KLP). Because `/remote` can target
+  **esptool-js** over Web Serial), `/install` (upload a `.papp` over KLP). Because `/remote` can target
   the running `/simulator`, you can remote-control the same WASM instance you're simulating.
 
 ---
@@ -699,14 +699,14 @@ firmware is WASM, and everything speaks **KLP**.
 ## 20. nema-app-sdk
 
 `packages/nema-app-sdk/` is the **`nema`** npm package authors use to write custom apps in TSX, plus a
-build CLI that bundles them to `.kapp`.
+build CLI that bundles them to `.papp`.
 
 - **Author API:** components `View`, `Text`, `Pressable`, `ScrollView`, `Slider`, `Row`, `Col`; hooks
   `useState`, `useRef`, `useEffect`; flex styling props. A capability-gated ambient API: `nema.log(...)`,
   `nema.device.{name,caps,has()}`, `nema.storage.{get,set,remove}`, `await nema.http.get(url)` — each
   method is present only if the board declares the matching capability.
 - **Workflow:** write `App.tsx` + a manifest → `nema-build <dir>` (esbuild → minified bundle) → a single
-  `.kapp` file (e.g. ~700 B for the counter). Install it two ways: **embed** (a script turns `.kapp` into
+  `.papp` file (e.g. ~700 B for the counter). Install it two ways: **embed** (a script turns `.papp` into
   a C header compiled into firmware) or **OTA** (push over KLP from Forge `/install` — live, volatile).
 - **Templates:** `counter/` and `sysinfo/` (the same two that ship embedded in firmware).
 
@@ -756,7 +756,7 @@ esp32s3 build`, then `flash monitor`. Versioning is generated at configure time 
 | Display | **1-bit monochrome**, dimensions per board; resolution-independent UI (logical-pixel `Canvas` scale). |
 | UI | Retained-mode `UiNode` tree (flexbox), shared by C++ component apps and JS/JSX apps. |
 | Input | Hardware-agnostic `Action` intents (+ gestures + touch); each board maps physical buttons via one `IKeyMap`. |
-| Extensibility | **App model** (`IApp`, own thread) + sandboxed **QuickJS** `.kapp` apps; the old plugin runtime is retired. |
+| Extensibility | **App model** (`IApp`, own thread) + sandboxed **QuickJS** `.papp` apps; the old plugin runtime is retired. |
 | Capability-driven | Apps check `capabilities().has("x")`, never the board type. |
 | JSON in C++ | Vendored `nlohmann/json.hpp`, used by platform/target only (never core). |
 
@@ -778,7 +778,7 @@ Broadly, everything below is implemented (build + simulator verified; HW where n
 - **M9 — Boards, connectivity stack, ecosystem** (28 SkyRizz E32, 34 BLE/USB, 35 KLP remote, 36 Forge,
   37 JS custom apps, 40 user profile) — ✅ build (SkyRizz E32 HW bring-up in progress).
 
-**Still ahead:** plan 38 (persistent on-flash app storage / app store — currently `.kapp` installs are
+**Still ahead:** plan 38 (persistent on-flash app storage / app store — currently `.papp` installs are
 volatile), plan 39 (firmware OTA + secure boot), plan 41 (the Palanu rebrand — namespace/text migration),
 and full hardware verification of the connectivity + media stack on SkyRizz E32.
 
@@ -789,7 +789,7 @@ and full hardware verification of the connectivity + media stack on SkyRizz E32.
 
 ## 24. Known gaps
 
-- **`.kapp` installs are volatile** — OTA-installed JS apps live in RAM and are lost on reboot until
+- **`.papp` installs are volatile** — OTA-installed JS apps live in RAM and are lost on reboot until
   on-flash persistence (plan 38) lands. Embedded JS apps (compiled in) survive.
 - **SkyRizz E32 is build-verified, HW bring-up ongoing** — the board/target compile and the camtest/
   audiotest programs exist; full runtime validation on the physical badge is in progress.
@@ -800,8 +800,9 @@ and full hardware verification of the connectivity + media stack on SkyRizz E32.
 - **ESP32 TLS** uses the mbedTLS cert bundle; the `insecure` flag only skips the common-name check.
 - **Bluetooth Classic** (`IClassicAdapter`) is interface-only; ESP32-S3 has no classic radio (BLE only).
 - **The rebrand is mid-flight** — the canonical name is **Palanu** and the namespace is **`nema`**, but
-  the repo directory (`kairo/`) and the `README.md` still carry the older "Kairo" name, and the link
-  protocol is still spelled `KLP` in code (target name: NLP). Plan 41 finishes reconciling these.
+  the repo directory (`kairo/`) and the GitHub slug (`SkyRizzAI/kairo`) still carry the older "Kairo"
+  name, and the link protocol is still spelled `KLP` in code (target name: NLP). Plan 41 finishes
+  reconciling these.
 
 ---
 
@@ -818,11 +819,11 @@ and full hardware verification of the connectivity + media stack on SkyRizz E32.
 | **Driver** | A concrete hardware implementation behind a HAL interface (e.g. `EinkDisplay`, `Esp32Ble`). |
 | **Capability** | A named feature flag (`wifi`, `display`, `audio.input`, …) apps query instead of board type. |
 | **Service** | A lifecycle-managed component (`start/stop/tick`) in the container. |
-| **App** | An `IApp` that runs on its own thread; built-in (C++) or custom (JS `.kapp`). |
+| **App** | An `IApp` that runs on its own thread; built-in (C++) or custom (JS `.papp`). |
 | **Screen** | An `IScreen` pushed onto the `ViewDispatcher` stack. |
 | **KLP** | Nema Link Protocol — the binary remote-control wire protocol. |
 | **Forge** | The web tool: WASM simulator + remote control + firmware flasher. |
-| **.kapp** | A bundled custom JavaScript app (`KAPP1` + manifest + minified JS). |
+| **.papp** | A bundled custom JavaScript app (`PAPP1` + manifest + minified JS). |
 | **SkyRizz E32** | The flagship ESP32-S3 multimedia board (TFT + touch + camera + audio). |
 
 ---

@@ -45,6 +45,8 @@ add_library(wasm3 STATIC
 target_include_directories(wasm3 PUBLIC vendor/wasm3/source)
 target_compile_definitions(wasm3 PRIVATE d_m3HasTracer)
 add_subdirectory(core)
+add_subdirectory(servers/fbcon)   # FbCon text-console server (Plan 80)
+add_subdirectory(aether)   # display-server module (Plan 80) — depends on core
 add_subdirectory(boards/simulator)
 
 if(EMSCRIPTEN)

@@ -11,7 +11,7 @@
 // GuiService starts, then read-only for the session. Runtime theme switching
 // (Plan 53 Phase 2) will add a change-notification callback.
 
-namespace nema {
+namespace aether {
 
 // Spacing scale — logical pixels for padding, gaps, and margins.
 struct SpaceTokens {
@@ -44,7 +44,8 @@ struct IconTokens {
 struct FontTokens {
     uint8_t caption;  // 1 — small labels, hints
     uint8_t body;     // 1 — list rows, body text
-    uint8_t title;    // 2 — screen headings
+    uint8_t title;    // 2 — screen headings (page title bars)
+    uint8_t subhead;  // 1 — list section headers (bold, smaller than title)
 };
 
 // The complete token set for one theme.
@@ -67,4 +68,4 @@ const StyleTokens& defaultTheme();   // standard Aether look
 const StyleTokens& compactTheme();   // tighter spacing for small displays
 const StyleTokens& largeTheme();     // larger targets for accessibility
 
-} // namespace nema
+} // namespace aether

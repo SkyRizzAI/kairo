@@ -41,7 +41,10 @@ void WasmPlatform::registerDrivers(Runtime& rt) {
     rt.hardware().add({"wifi", DriverKind::Wifi, "virtual"});
     rt.capabilities().add(caps::NetWifi);
 
+    authStore_.init(config_);                         // session auth (Plan 74)
+    rt.container().registerService(&authStore_);
     remote_.init(link_, rt.input());
+    remote_.attachAuth(authStore_);
     remote_.attachLog(rt.log());
     remote_.attachEvents(rt.events());                // stream events → EVENT channel
     remote_.onPower(&WasmPlatform::powerThunk, this);
@@ -78,7 +81,7 @@ void WasmPlatform::registerDrivers(Runtime& rt) {
     sdFs_.seed("/card.txt", "Drop .papp folders here. Scanned recursively.\n");
     remote_.attachFs(vfs_);
 
-    link_.onReady(&WasmPlatform::readyThunk, this);   // push current screen on connect
+    remote_.onReady(&WasmPlatform::readyThunk, this); // push current screen on connect (after auth)
 
     rt.hardware().add({"display", DriverKind::Display, "wasm 1-bit (remote)"});
     rt.capabilities().add(caps::Display);
@@ -87,8 +90,8 @@ void WasmPlatform::registerDrivers(Runtime& rt) {
 
 void WasmPlatform::controlThunk(void* user, uint8_t op, const uint8_t* data, size_t len) {
     auto* s = static_cast<WasmPlatform*>(user);
-    if (op == ExtOp::AppInstall) {   // OTA: Forge pushed a .kapp → install live (Plan 37)
-        if (s->rt_) JsAppStore::instance().installKapp(*s->rt_, (const char*)data, len);
+    if (op == ExtOp::AppInstall) {   // OTA: Forge pushed a .papp → install live (Plan 37)
+        if (s->rt_) JsAppStore::instance().installPappBytes(*s->rt_, (const char*)data, len);
         return;
     }
     if (op != ExtOp::WifiSetNetworks) return;

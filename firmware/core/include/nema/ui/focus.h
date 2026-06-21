@@ -2,7 +2,8 @@
 #include "nema/ui/node.h"
 #include "nema/ui/key.h"
 
-namespace nema::ui {
+namespace aether::ui {
+using namespace nema;  // Plan 80: nema core symbols (Canvas/Key/input/anim/fonts) in scope
 
 struct FocusState {
     int focused = 0;   // index into focusable nodes (tree order)
@@ -18,4 +19,4 @@ UiNode* focusedNode(UiNode& root, FocusState& fs);
 // redraw is warranted. Cancel is NOT handled here (bubbles to the app).
 bool handleFocusKey(UiNode& root, FocusState& fs, Key k);
 
-} // namespace nema::ui
+} // namespace aether::ui

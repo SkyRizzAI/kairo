@@ -1,6 +1,6 @@
 import { View, Text, Pressable, Row, useState } from "nema";
 
-// Example custom app — written in TSX, built to a single .kapp, loaded on device.
+// Example custom app — written in TSX, built to a .papp bundle, loaded on device.
 export default function App() {
   const [n, setN] = useState(0);
 

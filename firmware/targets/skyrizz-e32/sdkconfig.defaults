@@ -41,6 +41,25 @@ CONFIG_SPIRAM_TRY_ALLOCATE_WIFI_LWIP=y
 # esp_hid_parse_report_map() before app_main(). 8 KB gives comfortable headroom.
 CONFIG_ESP_MAIN_TASK_STACK_SIZE=8192
 
+# ── Bluetooth LE (NimBLE) — Plan 73/75 ───────────────────────────────────────
+# Without CONFIG_BT_ENABLED the esp32_ble driver compiles as no-op stubs, so the
+# Bluetooth settings + BLE remote (Forge web over BLE) do nothing. NimBLE is the
+# lightweight BLE-only host (ESP32-S3 has no Classic radio).
+CONFIG_BT_ENABLED=y
+CONFIG_BT_NIMBLE_ENABLED=y
+CONFIG_BT_CONTROLLER_ENABLED=y
+# ── WiFi + BLE software coexistence ───────────────────────────────────────────
+# ESP32-S3 has ONE 2.4 GHz radio shared by WiFi and BLE. Without SW coexistence,
+# running both (WiFi scan/connect WHILE BLE advertises) starves each other. This
+# is the prerequisite for the "WiFi + BLE at the same time" goal.
+CONFIG_ESP_COEX_SW_COEXIST_ENABLE=y
+
+# ── HTTP server WebSocket (PLP over WiFi — Plan 75) ──────────────────────────
+# Esp32WsTransport runs an esp_http_server WebSocket endpoint at /plp so Forge
+# web (browser) can remote the device over WiFi. Without this the WS handler
+# (is_websocket / httpd_ws_*) is compiled out.
+CONFIG_HTTPD_WS_SUPPORT=y
+
 # ── FATFS for microSD (TF1 on SPI3) ───────────────────────────────────────────
 # Long filenames (cards rarely use 8.3) + 512-byte sectors (standard for SD;
 # the default 4096 was for flash wear-levelling, which we don't use — internal

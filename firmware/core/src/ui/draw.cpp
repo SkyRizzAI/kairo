@@ -8,17 +8,17 @@
 namespace aether::ui::draw {
 
 using nema::Canvas;
-using nema::ui::TextRole;
-using nema::ui::FontSpec;
-using nema::ui::FontHandle;
-using nema::ui::FontRegistry;
-using nema::ui::fontForRole;
-using nema::ui::measureTextW;
-using nema::ui::measureTextH;
+using aether::ui::TextRole;
+using aether::ui::FontSpec;
+using nema::display::FontHandle;
+using nema::display::FontRegistry;
+using aether::ui::fontForRole;
+using aether::ui::measureTextW;
+using aether::ui::measureTextH;
 
 // ── Internal helpers ──────────────────────────────────────────────────────────
 
-static const nema::BitmapFont& resolve(nema::ui::FontHandle h) {
+static const nema::display::BitmapFont& resolve(nema::display::FontHandle h) {
     return *FontRegistry::instance().get(h);
 }
 
@@ -78,43 +78,45 @@ void separator(Canvas& c, uint16_t x, uint16_t y, uint16_t len, bool horizontal)
 // ── Scrollbar ─────────────────────────────────────────────────────────────────
 
 void scrollbar(Canvas& c, uint16_t x, uint16_t y, uint16_t size,
-               uint16_t pos, uint16_t total, bool horizontal) {
-    if (total == 0 || size == 0) return;
-    const uint16_t BAR = 3;  // bar thickness in px
+               uint16_t scrollOffset, uint16_t viewport, uint16_t content,
+               bool horizontal) {
+    if (size == 0) return;
+    const uint16_t BAR = 3;        // bar thickness in px
+    const uint16_t MIN_THUMB = 4;  // smallest the thumb is allowed to get
 
-    // --- Dashed track ---
+    // --- Dashed track (1px dots every 2px along the axis) ---
     if (horizontal) {
-        // Track: 1px tall dots every 2px across width `size`
         for (uint16_t i = 0; i < size; i += 2)
             c.fillRect((uint16_t)(x + i), (uint16_t)(y + 1), 1, 1);
     } else {
-        // Track: 1px wide dots every 2px down height `size`
         for (uint16_t i = 0; i < size; i += 2)
             c.fillRect((uint16_t)(x + 1), (uint16_t)(y + i), 1, 1);
     }
 
     // --- Solid thumb ---
-    if (total <= 1) {
-        // Full track is thumb
+    // Nothing to scroll → the thumb fills the whole track.
+    if (content <= viewport || viewport == 0) {
         if (horizontal) c.fillRect(x, y, size, BAR);
         else            c.fillRect(x, y, BAR, size);
         return;
     }
 
-    uint16_t thumbSize = (uint16_t)((uint32_t)size / total);
-    if (thumbSize < 4) thumbSize = 4;
-    if (thumbSize > size) thumbSize = size;
+    // Thumb length is proportional to the visible fraction, clamped to a floor
+    // so it stays grabbable on very long content.
+    uint16_t thumb = (uint16_t)((uint32_t)size * viewport / content);
+    if (thumb < MIN_THUMB) thumb = MIN_THUMB;
+    if (thumb > size)      thumb = size;
 
-    uint16_t maxOff  = (uint16_t)(size - thumbSize);
-    uint16_t thumbOff = (uint16_t)((uint32_t)pos * maxOff / (total - 1));
+    // Position maps scrollOffset∈[0,maxScroll] onto travel∈[0,size-thumb].
+    // Using maxScroll (not maxScroll-1) as the denominator guarantees the thumb's
+    // far edge lands exactly on the track end at full scroll — never past it.
+    uint16_t maxScroll = (uint16_t)(content - viewport);
+    uint16_t off       = scrollOffset > maxScroll ? maxScroll : scrollOffset;
+    uint16_t travel    = (uint16_t)(size - thumb);
+    uint16_t thumbOff  = maxScroll ? (uint16_t)((uint32_t)off * travel / maxScroll) : 0;
 
-    if (horizontal) {
-        uint16_t tx = (uint16_t)(x + thumbOff);
-        c.fillRect(tx, y, thumbSize, BAR);
-    } else {
-        uint16_t ty = (uint16_t)(y + thumbOff);
-        c.fillRect(x, ty, BAR, thumbSize);
-    }
+    if (horizontal) c.fillRect((uint16_t)(x + thumbOff), y, thumb, BAR);
+    else            c.fillRect(x, (uint16_t)(y + thumbOff), BAR, thumb);
 }
 
 // ── Text helpers ──────────────────────────────────────────────────────────────
@@ -252,9 +254,9 @@ void banner(Canvas& c, uint16_t x, uint16_t y, uint16_t w, uint16_t h,
 
     // Centered title — white text (on=false on filled background)
     if (title && *title) {
-        FontSpec fs = fontForRole(nema::ui::TextRole::Title);
-        uint16_t tw = measureTextW(title, nema::ui::TextRole::Title);
-        uint16_t th = measureTextH(nema::ui::TextRole::Title);
+        FontSpec fs = fontForRole(aether::ui::TextRole::Title);
+        uint16_t tw = measureTextW(title, aether::ui::TextRole::Title);
+        uint16_t th = measureTextH(aether::ui::TextRole::Title);
         uint16_t tx = (tw < w) ? (uint16_t)(x + (w - tw) / 2) : x;
         uint16_t ty = (th < h) ? (uint16_t)(y + (h - th) / 2) : y;
         drawText(c, tx, ty, title, fs, false);

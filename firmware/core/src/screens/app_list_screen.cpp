@@ -11,7 +11,7 @@
 
 namespace nema {
 
-using namespace ui;
+using namespace aether::ui;
 
 AppListScreen::AppListScreen(Runtime& rt) : ComponentScreen(rt, 256) {}
 
@@ -62,8 +62,8 @@ UiNode* AppListScreen::build(NodeArena& a, Runtime& rt) {
     }
     rows_.resize(names_.size());
 
-    uint8_t pad = nema::theme().space.sm;
-    uint8_t gap = nema::theme().space.xs;
+    uint8_t pad = aether::theme().space.sm;
+    uint8_t gap = aether::theme().space.xs;
 
     Style root; root.dir = FlexDir::Col; root.flexGrow = 1; root.padding = pad; root.gap = gap;
     root.align = Align::Stretch;

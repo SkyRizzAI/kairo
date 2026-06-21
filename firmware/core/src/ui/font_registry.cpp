@@ -1,7 +1,7 @@
 #include "nema/ui/font_registry.h"
 #include <string>
 
-namespace nema::ui {
+namespace nema::display {
 
 FontRegistry& FontRegistry::instance() {
     static FontRegistry reg;
@@ -56,4 +56,4 @@ const char* FontRegistry::nameOf(FontHandle handle) const {
     return "unknown";
 }
 
-} // namespace nema::ui
+} // namespace nema::display

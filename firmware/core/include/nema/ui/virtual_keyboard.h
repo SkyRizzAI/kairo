@@ -7,7 +7,10 @@ namespace nema {
 
 class Canvas;
 
-namespace ui {
+} // namespace nema
+
+namespace aether::ui {
+using namespace nema;  // Plan 80: nema core symbols (Canvas/Key/input/anim/fonts) in scope
 
 // VirtualKeyboard — full on-screen QWERTY driven by the 6 hardware buttons,
 // modelled on the reference firmware keyboard (Android/Switch-style).
@@ -53,4 +56,4 @@ struct VirtualKeyboard {
 };
 
 } // namespace ui
-} // namespace nema
+

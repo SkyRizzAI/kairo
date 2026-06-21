@@ -1,6 +1,7 @@
 #include "nema/ui/focus.h"
 
-namespace nema::ui {
+namespace aether::ui {
+using namespace nema;  // Plan 80: nema core symbols (Canvas/Key/input/anim/fonts) in scope
 
 // DFS collect focusable nodes in tree order. Returns count; fills out[] up to max.
 static int collect(UiNode* n, UiNode** out, int max, int idx) {
@@ -53,4 +54,4 @@ bool handleFocusKey(UiNode& root, FocusState& fs, Key k) {
     }
 }
 
-} // namespace nema::ui
+} // namespace aether::ui

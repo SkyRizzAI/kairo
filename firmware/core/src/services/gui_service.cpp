@@ -1,8 +1,8 @@
 #include "nema/system/capabilities.h"
 #include "nema/services/gui_service.h"
-#include "nema/ui/style_tokens.h"
 #include "nema/ui/animation_manager.h"
 #include "nema/ui/font_registry.h"
+#include "nema/ui/display_server.h"
 #include "nema/runtime.h"
 #include "nema/clock.h"
 #include "nema/service/service_container.h"
@@ -25,61 +25,44 @@
 namespace nema {
 
 void GuiService::start() {
-    // Plan 70: register built-in fonts with the FontRegistry.
-    auto& fontReg = ui::FontRegistry::instance();
-    fontReg.registerFont(ui::Fonts::Primary,   &FONT_5X8, "primary");
-    fontReg.registerFont(ui::Fonts::Secondary, &FONT_5X8, "secondary");
-    fontReg.registerFont(ui::Fonts::Mono,      &FONT_6X8, "mono");
-    fontReg.registerFont(ui::Fonts::Tiny,      &FONT_5X8, "tiny");
-    fontReg.registerFont(ui::Fonts::BigNum,    &FONT_5X8, "bignum");
+    // Plan 70: register built-in fonts with the FontRegistry (nema::display).
+    auto& fontReg = nema::display::FontRegistry::instance();
+    // Explicit size/weight handles (proportional Helvetica, Plan 79).
+    fontReg.registerFont(nema::display::Fonts::Reg8,   &nema::display::FONT_REG8,   "reg8");
+    fontReg.registerFont(nema::display::Fonts::Bold8,  &nema::display::FONT_BOLD8,  "bold8");
+    fontReg.registerFont(nema::display::Fonts::Reg10,  &nema::display::FONT_REG10,  "reg10");
+    fontReg.registerFont(nema::display::Fonts::Bold10, &nema::display::FONT_BOLD10, "bold10");
+    fontReg.registerFont(nema::display::Fonts::Reg12,  &nema::display::FONT_REG12,  "reg12");
+    fontReg.registerFont(nema::display::Fonts::Bold12, &nema::display::FONT_BOLD12, "bold12");
+    // Role handles map onto the family: titles/subheaders bold-10, body regular-8,
+    // tiny regular-8, big numbers bold-12, mono stays the 6×8 fixed-width font.
+    fontReg.registerFont(nema::display::Fonts::Primary,   &nema::display::FONT_BOLD10, "primary");
+    fontReg.registerFont(nema::display::Fonts::Secondary, &nema::display::FONT_REG8,   "secondary");
+    fontReg.registerFont(nema::display::Fonts::Mono,      &nema::display::FONT_6X8,    "mono");
+    fontReg.registerFont(nema::display::Fonts::Tiny,      &nema::display::FONT_REG8,   "tiny");
+    fontReg.registerFont(nema::display::Fonts::BigNum,    &nema::display::FONT_BOLD12, "bignum");
 
     display_ = rt_.container().resolve<IDisplayDriver>();
 
-    // Display servers (Plan 43). Default = AetherServer (1-bit canvas UI);
-    // FbconServer is the swappable text-console backend. server_ is the active
-    // one; switch at runtime via requestServer()/the CLI `display` command.
-    aether_ = std::make_unique<AetherServer>(rt_.clock());
-    fbcon_    = std::make_unique<FbconServer>(rt_);
-    // CLI-first by default (Plan 43): boot lands in the fbcon console, like a
-    // Linux TTY — the UI is launched on top via `display start aether`. A board
-    // or user can opt into booting straight to the UI with config display/boot.
-    server_   = fbcon_.get();
-
-    // Load saved timeouts — fall back to 15s defaults if not set yet
+    // Load saved DPM timeouts — fall back to 15s defaults if not set yet.
+    // (The display servers + their presentational state (theme/scale/fps) are
+    // configured by the target main, which owns them — Plan 80.)
     uint64_t sleepMs = 15000, lockMs = 15000;
     if (auto* cfg = rt_.container().resolve<IConfigStore>()) {
         sleepMs = (uint64_t)cfg->getIntOr("dpm", "sleep_ms", (int64_t)sleepMs);
         lockMs  = (uint64_t)cfg->getIntOr("dpm", "lock_ms",  (int64_t)lockMs);
-        aether_->setShowFps(cfg->getIntOr("debug", "fps", 0) != 0);  // Settings → Display
-        // Aether owns its presentational state (theme + scale). FbCon is a
-        // text console — it always renders at scale 1 with the default theme.
-        {
-            std::string t = cfg->getString("display", "theme", "default");
-            if (t == "compact")     aether_->setServerTheme(compactTheme());
-            else if (t == "large")  aether_->setServerTheme(largeTheme());
-            else                    aether_->setServerTheme(defaultTheme());
-        }
-        // Snapshot the canvas scale that runtime.cpp resolved from config/DPI
-        // so Aether can restore it when switching back from another server.
-        if (rt_.canvas().scale() >= 1.0f)
-            aether_->setServerScale(rt_.canvas().scale());
-        // Boot server policy (Plan 43): board/user picks the initial backend via
-        // config "display/boot". Default = fbcon (CLI-first console boot); set
-        // "aether" to boot straight into the UI. No core default autostart.
-        if (cfg->getString("display", "boot", "fbcon") == "aether")
-            server_ = aether_.get();
     }
 
     // Crash/fault fallback (Plan 43 Fase 4): if the display resource faults or
     // detaches, drop to the fbcon console so the device never goes dark. Runs on
-    // the main thread (EventBus dispatch); requestServer() is thread-safe.
+    // the main thread (EventBus dispatch); switchDisplayServer() is thread-safe.
     rt_.events().subscribe(events::ResourceChanged, [this](const Event& e) {
         bool isDisplay = false, notAvailable = false;
         for (const auto& f : e.payload) {
             if (std::string(f.key) == "resource") isDisplay    = (f.value == caps::Display);
             if (std::string(f.key) == "state")    notAvailable = (f.value != "available");
         }
-        if (isDisplay && notAvailable) requestServer("fbcon");
+        if (isDisplay && notAvailable) rt_.switchDisplayServer("fbcon");
     });
     rt_.events().subscribe(events::BatteryChanged, [this](const Event& e) {
         for (const auto& f : e.payload) {
@@ -87,8 +70,8 @@ void GuiService::start() {
         }
     });
 
-    dpm_.init(rt_.view(), display_, rt_.clock(), lockScreen_, sleepMs, lockMs);
-    lockScreen_.setDpm(dpm_);
+    rt_.dpm().init(rt_.view(), display_, rt_.clock(), lockScreen_, sleepMs, lockMs);
+    lockScreen_.setDpm(rt_.dpm());
     rt_.view().requestRedraw();   // paint the boot backend immediately (esp. fbcon)
     // UI thread on core 1 (Arduino loop also core 1 but now near-idle).
     // Priority above the near-idle main loop so input/render stay snappy.
@@ -98,38 +81,6 @@ void GuiService::start() {
 void GuiService::stop() {
     thread_.requestStop();
     thread_.join();
-}
-
-void GuiService::registerServer(IDisplayServer* s) {
-    if (s) extraServers_.push_back(s);
-}
-
-bool GuiService::requestServer(const char* name) {
-    IDisplayServer* target = findServer(name);
-    if (!target) return false;
-    pendingServer_.store(target);   // GUI thread applies it next iteration
-    return true;
-}
-
-const char* GuiService::activeServerName() const {
-    return server_ ? server_->name() : "none";
-}
-
-std::vector<const char*> GuiService::serverNames() const {
-    std::vector<const char*> v;
-    if (aether_) v.push_back(aether_->name());
-    if (fbcon_)    v.push_back(fbcon_->name());
-    for (IDisplayServer* s : extraServers_) v.push_back(s->name());
-    return v;
-}
-
-IDisplayServer* GuiService::findServer(const char* name) const {
-    if (!name) return nullptr;
-    if (aether_ && std::string(aether_->name()) == name) return aether_.get();
-    if (fbcon_  && std::string(fbcon_->name())  == name) return fbcon_.get();
-    for (IDisplayServer* s : extraServers_)
-        if (std::string(s->name()) == name) return s;
-    return nullptr;
 }
 
 void GuiService::threadEntry(void* self) {
@@ -153,6 +104,7 @@ void GuiService::loop() {
     // Plan 70: target ~30 fps (33 ms). On headless servers we spin tighter
     // for lower input latency; the sleep is the budget that remains.
     constexpr uint32_t TARGET_FRAME_MS = 33;
+    auto& dpm = rt_.dpm();
 
     while (!thread_.shouldStop()) {
         uint64_t frameStart = rt_.clock().millis();
@@ -160,12 +112,10 @@ void GuiService::loop() {
         auto& vd = rt_.view();
 
         // 0. Apply a pending display-server swap (requested from another thread,
-        //    e.g. the CLI). Done here so server_ is only ever touched by this
-        //    thread. Force a redraw so the new backend paints immediately.
-        if (auto* next = pendingServer_.exchange(nullptr)) {
-            server_ = next;
-            vd.requestRedraw();
-        }
+        //    e.g. the CLI). Runtime holds the registry; we apply on this thread so
+        //    the active server is only ever changed here. Force a redraw after.
+        if (rt_.applyPendingServer()) vd.requestRedraw();
+        IDisplayServer* server = rt_.displayServer();
 
         // 1. Input — DPM intercepts; only forwarded to the screen if not consumed.
         InputEvent ie;
@@ -183,8 +133,8 @@ void GuiService::loop() {
                     rt_.appHost().pauseForeground();
                     continue;
                 }
-                if (!dpm_.deliverKey(ie.key, now)) {
-                    if (!server_->onAction(ie.action)) {
+                if (!dpm.deliverKey(ie.key, now)) {
+                    if (!server || !server->onAction(ie.action)) {
                         vd.handleAction(ie.action);  // primary: Action-based dispatch
                         vd.handleCode(ie.code);       // secondary: raw code
                     }
@@ -193,7 +143,7 @@ void GuiService::loop() {
         }
 
         // 2. DPM state machine — may trigger sleep/lock transitions.
-        dpm_.tick(now);
+        dpm.tick(now);
 
         // 3. Status bar + screen tick.
         refreshStatus(now);
@@ -208,24 +158,20 @@ void GuiService::loop() {
             vd.requestRedraw();
 
         // 6. Render — skip while sleeping; flush one blank frame on sleep entry.
-        if (hasDisplay) {
-            if (dpm_.isSleeping() && dpm_.takeEnteredSleep()) {
+        if (hasDisplay && server) {
+            if (dpm.isSleeping() && dpm.takeEnteredSleep()) {
                 rt_.canvas().clear(false);
                 rt_.canvas().flush();
-            } else if (!dpm_.isSleeping() && vd.takeRedraw()) {
-                nema::ui::setRenderTick((uint32_t)now);
-                // Restore the active server's presentational state before
-                // rendering — theme and scale are server-owned, not global.
-                if (const StyleTokens* st = server_->serverTheme())
-                    setTheme(*st);
-                else
-                    setTheme(defaultTheme());
-                rt_.canvas().setScale(server_->serverScale());
+            } else if (!dpm.isSleeping() && vd.takeRedraw()) {
+                aether::ui::setRenderTick((uint32_t)now);
+                // Theme is applied by the server itself in renderFrame (ADR 0002).
+                // GuiService only drives the shared canvas scale (neutral).
+                rt_.canvas().setScale(server->serverScale());
                 // Plan 70: partial redraw — clip to dirty region if available.
                 uint16_t dx, dy, dw, dh;
                 if (vd.getDirtyBounds(dx, dy, dw, dh))
                     rt_.canvas().setClip(dx, dy, dw, dh);
-                server_->renderFrame(rt_.canvas(), vd, status_);
+                server->renderFrame(rt_.canvas(), vd, status_);
                 rt_.canvas().clearClip();
             }
         }

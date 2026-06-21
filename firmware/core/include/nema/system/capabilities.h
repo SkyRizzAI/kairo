@@ -49,6 +49,7 @@ inline constexpr const char* NetHttp       = "net.http";
 // System
 inline constexpr const char* Storage       = "storage";
 inline constexpr const char* RemoteUsb     = "remote.usb";
+inline constexpr const char* RemoteNet     = "remote.net";   // Plan 75 — PLP over WebSocket
 inline constexpr const char* Profile       = "profile";
 
 } // namespace nema::caps

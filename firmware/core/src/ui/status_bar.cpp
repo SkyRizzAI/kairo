@@ -27,11 +27,11 @@ static void drawBatteryDynamic(Canvas& c, uint16_t x, uint16_t y, int pct) {
 }
 
 void StatusBar::draw(Canvas& c, const StatusBarData& d) {
-    using namespace nema::ui;
-    const nema::StyleTokens& t = nema::theme();
+    using namespace aether::ui;
+    const aether::StyleTokens& t = aether::theme();
 
     bool inv = t.invertedStatusBar;
-    uint16_t barH = (uint16_t)(STATUS_H + 2);
+    uint16_t barH = (uint16_t)(nema::display::STATUS_H + 2);
 
     if (inv) c.fillRect(0, 0, c.width(), barH);
 
@@ -40,7 +40,7 @@ void StatusBar::draw(Canvas& c, const StatusBarData& d) {
     // Clock — left, vertically centered
     char clk[6];
     std::snprintf(clk, sizeof(clk), "%02d:%02d", d.hour, d.minute);
-    uint16_t ty  = (barH > CHAR_H) ? (uint16_t)((barH - CHAR_H) / 2) : 0;
+    uint16_t ty  = (barH > nema::display::CHAR_H) ? (uint16_t)((barH - nema::display::CHAR_H) / 2) : 0;
     uint16_t icy = (barH > 8)      ? (uint16_t)((barH - 8) / 2)      : 0;
     FontSpec fs  = fontForRole(TextRole::Caption);
     c.setFont(fs.handle);
@@ -60,7 +60,7 @@ void StatusBar::draw(Canvas& c, const StatusBarData& d) {
             rx = (uint16_t)(rx > wd->w + 2u ? rx - wd->w - 2u : 0u);
             aether::ui::draw::icon(c, rx, icy, wd->bitmap, wd->w, wd->h);
         } else {
-            rx = (uint16_t)(rx > (uint16_t)(CHAR_W + 2) ? rx - CHAR_W - 2 : 0);
+            rx = (uint16_t)(rx > (uint16_t)(nema::display::CHAR_W + 2) ? rx - nema::display::CHAR_W - 2 : 0);
             c.drawText(rx, ty, "W", textOn);
         }
     }

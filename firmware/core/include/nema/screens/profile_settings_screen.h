@@ -13,7 +13,7 @@ class ProfileSettingsScreen : public ComponentScreen {
 public:
     explicit ProfileSettingsScreen(Runtime& rt);
     void        onResume() override;
-    ui::UiNode* build(ui::NodeArena& a, Runtime& rt) override;
+    aether::ui::UiNode* build(aether::ui::NodeArena& a, Runtime& rt) override;
     void        onAction(input::Action a) override;
     void        draw(Canvas& c) override;
 
@@ -29,8 +29,8 @@ private:
     void        startEdit(Field f);
     static void onSelect(void* u);
 
-    ui::VirtualKeyboard kbd_;
-    ui::ScrollState     scroll_;
+    aether::ui::VirtualKeyboard kbd_;
+    aether::ui::ScrollState     scroll_;
     std::vector<Item> items_;
     Field             editField_ = Field::UserName;
     bool              editing_   = false;

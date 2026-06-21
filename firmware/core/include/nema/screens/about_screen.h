@@ -16,10 +16,10 @@ public:
     explicit AboutScreen(Runtime& rt);
     void        onResume() override;
     void        onAction(input::Action a) override;
-    ui::UiNode* build(ui::NodeArena& a, Runtime& rt) override;
+    aether::ui::UiNode* build(aether::ui::NodeArena& a, Runtime& rt) override;
 
 private:
-    ui::ScrollState          scroll_;
+    aether::ui::ScrollState          scroll_;
     std::vector<std::string> rows_;   // backing storage for Text node strings
 
     // Plan 70: modal dialog — owned here, defined in .cpp

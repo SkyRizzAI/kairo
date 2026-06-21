@@ -15,7 +15,7 @@
 //   - Remove, rename, or change signature → major++
 //
 // Pattern: Flipper Zero api_version u16.u16 (application_manifest.h:27–35).
-// Representasi final di manifest .kapp → Plan 59 (.papp packaging).
+// Representasi final di manifest .papp → Plan 59 (.papp packaging).
 
 namespace nema {
 

@@ -11,7 +11,7 @@
 
 namespace nema::js {
 
-using namespace nema::ui;
+using namespace aether::ui;
 
 static uint64_t nowMs() {
     using namespace std::chrono;

@@ -17,7 +17,7 @@
 
 namespace nema {
 
-using namespace ui;
+using namespace aether::ui;
 
 // ── VFS seeding ──────────────────────────────────────────────────────────────
 
@@ -195,7 +195,7 @@ bool DolphinApp::onKey(Key k, AppContext& ctx) {
 bool DolphinApp::drawRaw(Canvas& c, AppContext& ctx) {
     (void)ctx;
     using namespace aether::ui::draw;
-    const StyleTokens& t = nema::theme();
+    const aether::StyleTokens& t = aether::theme();
 
     uint16_t W = c.width();
     uint16_t H = c.height();

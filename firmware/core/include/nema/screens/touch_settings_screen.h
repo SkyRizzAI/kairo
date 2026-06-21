@@ -9,7 +9,7 @@ class Runtime;
 class TouchSettingsScreen : public ComponentScreen {
 public:
     explicit TouchSettingsScreen(Runtime& rt);
-    ui::UiNode* build(ui::NodeArena& a, Runtime& rt) override;
+    aether::ui::UiNode* build(aether::ui::NodeArena& a, Runtime& rt) override;
 };
 
 } // namespace nema

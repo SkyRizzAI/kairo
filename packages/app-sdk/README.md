@@ -1,6 +1,6 @@
 # nema — custom-app SDK
 
-Write Kairo device apps in **TSX** (React/Ink-style), build to a single `.kapp`,
+Write Palanu device apps in **TSX** (React/Ink-style), build to a `.papp` bundle,
 load on the device. Apps run on the embedded QuickJS engine and render through the
 **same native components** as built-in apps (Plan 37).
 
@@ -20,7 +20,7 @@ export default function App() {
 }
 ```
 
-`kapp.json`:
+`manifest.json`:
 ```json
 { "id": "com.you.counter", "name": "Counter", "version": "1.0.0", "entry": "App.tsx", "needs": ["http"] }
 ```
@@ -28,7 +28,7 @@ export default function App() {
 ## Build
 
 ```bash
-bun bin/nema-build.ts path/to/app        # → <id>.kapp (single file)
+bun bin/build.ts path/to/app             # → dist/<id>.papp/ (folder: manifest.json + app.js)
 ```
 
 ## Components
@@ -47,10 +47,10 @@ await nema.http.get(url);   // { status, body } — present only if the board ne
 A method is only present if the board supports it — guard with `nema.device.has(...)`.
 
 ## Loading
-- **Embedded** (now): apps compiled into the firmware (the built-in store) — see
-  `scripts/gen-embedded-apps.ts`.
-- **Installed / OTA** (planned): push a `.kapp` from Kairo Forge over BLE/USB — needs
-  the device filesystem layer first.
+- **Embedded** (now): apps compiled into the firmware (the built-in store) via the
+  generated `firmware/core/include/nema/apps/embedded_apps.h`.
+- **Installed / OTA**: push a `.papp` from Palanu Forge over BLE/USB/WebSocket — the
+  device installs it live into the launcher (volatile; or persisted to `/apps/`).
 
 ## Examples
 - `templates/counter` — useState + buttons.

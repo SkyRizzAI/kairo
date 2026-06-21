@@ -1,7 +1,9 @@
 #pragma once
 #include <cstdint>
 
-namespace nema::ui {
+// Shared display layout/text-metric constants (Plan 80) — used by core (AppHost),
+// the FbCon server, and Aether alike, so they live in the shared nema::display layer.
+namespace nema::display {
 
 // Font 5×8 metrics with 1px spacing — these are font-relative, NOT resolution-
 // dependent, so they stay as constants.
@@ -24,4 +26,4 @@ inline uint16_t contentRows(uint16_t h) { return contentH(h) / CHAR_H; }
 // Character columns that fit a given canvas width.
 inline uint16_t cols(uint16_t w) { return w / CHAR_W; }
 
-} // namespace nema::ui
+} // namespace aether::ui

@@ -9,6 +9,7 @@
 #include "nema/apps/dolphin_app.h"
 #include "nema/screens/home_screen.h"
 #include "nema/ui/view_dispatcher.h"
+#include "aether/boot.h"
 
 namespace {
     nema::WasmPlatform           platform;
@@ -28,6 +29,7 @@ int main() {
     rt.apps().installService(clockSvc, "com.palanu.svc.clock");
 
     rt.start();
+    aether::bootDisplay(rt);   // Plan 80: construct + start display servers + GUI loop
 
     static nema::DolphinApp dolphinApp;
     rt.apps().install(dolphinApp);

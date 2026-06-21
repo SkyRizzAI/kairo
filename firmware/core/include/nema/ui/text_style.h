@@ -4,7 +4,8 @@
 #include "nema/ui/font_registry.h"
 #include <cstdint>
 
-namespace nema::ui {
+namespace aether::ui {
+using namespace nema;  // Plan 80: nema core symbols (Canvas/Key/input/anim/fonts) in scope
 
 // Resolves a TextRole to a concrete font handle + integer render scale.
 // Layout (measure) and renderer (paint) BOTH go through here so sizes match.
@@ -13,7 +14,7 @@ namespace nema::ui {
 // setTextSize(). Until multi-size fonts exist (Plan 25 Phase 3), larger roles
 // use pixel-doubling (drawTextScaled) of FONT_5X8.
 struct FontSpec {
-    FontHandle handle;   // Plan 70: resolved via FontRegistry
+    nema::display::FontHandle handle;   // Plan 70: resolved via nema::display::FontRegistry
     uint8_t    scale;    // 1 = normal, 2 = pixel-doubled, ...
 };
 
@@ -31,4 +32,4 @@ uint16_t measureTextH(TextRole role);
 // A TextMetrics (for layout()) backed by the role table above. ctx unused.
 TextMetrics roleMetrics();
 
-} // namespace nema::ui
+} // namespace aether::ui

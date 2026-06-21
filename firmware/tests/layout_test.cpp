@@ -7,7 +7,7 @@
 #include <cstring>
 #include <cstdlib>
 
-using namespace nema::ui;
+using namespace aether::ui;
 
 static int g_fail = 0;
 #define CHECK(cond, msg) do { \

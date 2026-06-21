@@ -5,7 +5,8 @@
 #include "nema/ui/key.h"
 #include <cstdlib>   // abs
 
-namespace nema::ui {
+namespace aether::ui {
+using namespace nema;  // Plan 80: nema core symbols (Canvas/Key/input/anim/fonts) in scope
 
 // Gesture tuning.
 static constexpr int   DRAG_THRESH = 6;     // px of movement before a tap → drag
@@ -236,4 +237,4 @@ bool tickMomentum(ComponentState& st) {
     return true;
 }
 
-} // namespace nema::ui
+} // namespace aether::ui

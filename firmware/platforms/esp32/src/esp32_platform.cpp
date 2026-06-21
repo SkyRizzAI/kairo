@@ -18,6 +18,10 @@
 #include <esp_cpu.h>
 #include <esp_sntp.h>
 #include <esp_heap_caps.h>
+#include <esp_event.h>
+#include <mdns.h>
+#include "nema/event/event_bus.h"
+#include "nema/event/event.h"
 #include <string>
 #include <vector>
 #include <ctime>
@@ -58,9 +62,38 @@ void Esp32Platform::postRegister(Runtime& rt) {
         cable_.init(ble_);          // PLP GATT TX/RX on the radio
         mux_.add(&cable_);          // BLE cable
     }
+    // PLP over WebSocket (Plan 75): Forge web (browser) reaches the device over
+    // WiFi. The httpd only runs while online — bound on NetworkConnected, torn
+    // down on NetworkDisconnected, so no port is open when offline.
+    if (rt.capabilities().has(caps::NetWifi)) {
+        wsLink_.init(&rt.log());
+        mux_.add(&wsLink_);
+        rt.capabilities().add(caps::RemoteNet);
+        rt.capabilities().setState(caps::RemoteNet, ResourceState::Absent);  // up when online
+        Runtime* rtp = &rt;
+        rt.events().subscribe(events::NetworkConnected, [this, rtp](const Event&) {
+            wsLink_.begin(8477);
+            rtp->capabilities().setState(caps::RemoteNet, ResourceState::Available);
+            // mDNS so `<board>.local` resolves and Forge can discover the device.
+            if (!mdnsStarted_ && mdns_init() == ESP_OK) {
+                mdns_hostname_set(rtp->board().name());
+                mdns_instance_name_set("Palanu");
+                mdns_txt_item_t txt[] = { {"path", "/plp"}, {"authreq", "0"} };
+                mdns_service_add(nullptr, "_palanu", "_tcp", 8477, txt, 2);
+                mdnsStarted_ = true;
+            }
+        });
+        rt.events().subscribe(events::NetworkDisconnected, [this, rtp](const Event&) {
+            wsLink_.end();
+            rtp->capabilities().setState(caps::RemoteNet, ResourceState::Absent);
+        });
+    }
     link_.attach(&mux_, LinkService::Role::Device);
 
+    authStore_.init(config_);                           // session auth (Plan 74)
+    rt.container().registerService(&authStore_);        // resolvable by Settings->Remote
     remote_.init(link_, rt.input());                    // INPUT/SYSTEM dispatch
+    remote_.attachAuth(authStore_);                     // gate privileged channels
     remote_.attachLog(rt.log());                        // stream logs on LOG channel
     remote_.attachEvents(rt.events());                  // stream events on EVENT channel
     remote_.onPower(&Esp32Platform::powerThunk, this);
@@ -171,7 +204,7 @@ void Esp32Platform::postRegister(Runtime& rt) {
     if (disp) {
         tap_.init(*disp, link_);                            // decorate board display
         rt.container().registerAs<IDisplayDriver>(&tap_);   // Canvas renders into tap
-        link_.onReady(&Esp32Platform::readyThunk, this);    // push screen on connect
+        remote_.onReady(&Esp32Platform::readyThunk, this);  // push screen on connect (after auth)
     }
 
     remoteWired_ = true;
@@ -222,8 +255,8 @@ void Esp32Platform::power(PowerAction action) {
 
 void Esp32Platform::controlThunk(void* user, uint8_t op, const uint8_t* data, size_t len) {
     auto* s = static_cast<Esp32Platform*>(user);
-    if (op == ExtOp::AppInstall && s->rt_)   // OTA: install a pushed .kapp live (Plan 37)
-        JsAppStore::instance().installKapp(*s->rt_, (const char*)data, len);
+    if (op == ExtOp::AppInstall && s->rt_)   // OTA: install a pushed .papp live (Plan 37)
+        JsAppStore::instance().installPappBytes(*s->rt_, (const char*)data, len);
 }
 
 void Esp32Platform::idle() {

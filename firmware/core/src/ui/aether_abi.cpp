@@ -7,7 +7,7 @@
 #include "nema/ui/widgets.h"
 #include <cstring>
 
-using namespace nema::ui;
+using namespace aether::ui;
 
 // ── Per-frame arena ───────────────────────────────────────────────────────
 

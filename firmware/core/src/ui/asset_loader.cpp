@@ -261,7 +261,7 @@ const BitmapAsset* AssetPackRegistry::find(const char* handle) const {
     return nullptr;
 }
 
-const ui::IconDef* AssetPackRegistry::findIconDef(const char* handle) const {
+const aether::ui::IconDef* AssetPackRegistry::findIconDef(const char* handle) const {
     if (!handle) return nullptr;
     for (auto& e : entries_) {
         if (e.handle == handle && e.asset && e.asset->valid()) {

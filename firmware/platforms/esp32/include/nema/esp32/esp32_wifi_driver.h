@@ -8,6 +8,7 @@ namespace nema {
 
 class Logger;
 class AsyncEventPoster;
+class CapabilityRegistry;
 
 // Esp32WifiDriver — STA-mode WiFi for ESP32.
 //
@@ -25,16 +26,31 @@ public:
     void onRegister(Runtime& rt) override;   // capture deps + self-register
 
     // IWifiDriver
+    bool        isEnabled() const override { return enabled_; }
+    void        setEnabled(bool on) override;
     bool        connect(const char* ssid, const char* password = "") override;
+    bool        connectSaved(const char* ssid) override;
     void        disconnect() override;
     bool        isConnected() const override { return connected_; }
     const char* ssid()        const override { return ssid_; }
+
+    WifiState state()     const override { return state_; }
+    WifiError lastError() const override { return lastError_; }
+    int8_t    rssi()      const override;
 
     void                            scan() override;   // blocking (worker thread)
     const std::vector<WifiNetwork>& scanResults() const override { return scan_; }
     const char*  ip()       const override { return ip_; }
     WifiIpConfig ipConfig() const override;
     void         setIpConfig(const WifiIpConfig&) override;
+
+    // Saved networks (NVS-backed)
+    void   saveNetwork(const char* ssid, const char* password) override;
+    void   forgetNetwork(const char* ssid) override;
+    void   setAutoJoin(const char* ssid, bool on) override;
+    size_t savedCount() const override;
+    bool   savedAt(size_t i, WifiProfile& out) const override;
+    void   autoConnect() override;   // blocking (worker thread)
 
     // IService
     void start() override;
@@ -45,13 +61,18 @@ public:
     void onWifiEvent(int32_t event_id, void* event_data);
 
 private:
-    void loadCredentials();   // NVS → ssid_/pass_, attempt reconnect
-    void saveCredentials();   // ssid_/pass_ → NVS
+    void setState(WifiState s, WifiError e = WifiError::None);  // updates + posts event
+    void loadIpConfig();        // NVS → ipcfg_/staticIp_
+    void saveIpConfig();        // ipcfg_ → NVS
+    void applyStaticIp();       // push ipcfg_ static address onto esp_netif
 
-    Logger*           log_        = nullptr;
-    AsyncEventPoster* poster_     = nullptr;
+    Logger*             log_      = nullptr;
+    AsyncEventPoster*   poster_   = nullptr;
+    CapabilityRegistry* caps_     = nullptr;
     bool              connected_  = false;
-    bool              connecting_ = false;
+    bool              enabled_    = false;   // radio started (esp_wifi_start)
+    WifiState         state_      = WifiState::Disabled;
+    WifiError         lastError_  = WifiError::None;
     char              ssid_[33]   = {};
     char              pass_[65]   = {};
     char              ip_[16]     = "0.0.0.0";

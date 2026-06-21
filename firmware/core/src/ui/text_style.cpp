@@ -4,34 +4,43 @@
 #include "nema/ui/font_registry.h"
 #include <cstring>
 
-namespace nema::ui {
+namespace aether::ui {
+using namespace nema;  // Plan 80: nema core symbols (Canvas/Key/input/anim/fonts) in scope
 
 static TextSize g_size = TextSize::Normal;
 void     setTextSize(TextSize sz) { g_size = sz; }
 TextSize textSize()               { return g_size; }
 
 FontSpec fontForRole(TextRole role) {
-    const nema::FontTokens& f = nema::theme().font;
+    const aether::FontTokens& f = aether::theme().font;
     switch (role) {
-        case TextRole::Title:   return { Fonts::Primary,   f.title };
-        case TextRole::Mono:    return { Fonts::Mono,      1 };
-        case TextRole::Caption: return { Fonts::Secondary, f.caption };
+        case TextRole::Title:   return { nema::display::Fonts::Primary,   f.title };
+        case TextRole::Subhead: return { nema::display::Fonts::Bold8,     f.subhead };   // bold section header
+        case TextRole::Mono:    return { nema::display::Fonts::Mono,      1 };
+        case TextRole::Caption: return { nema::display::Fonts::Secondary, f.caption };
         case TextRole::Smart:   [[fallthrough]];
         case TextRole::Body:
-        default:                return { Fonts::Secondary, f.body };
+        default:                return { nema::display::Fonts::Secondary, f.body };
     }
 }
 
-static const BitmapFont& resolve(FontHandle h) { return *FontRegistry::instance().get(h); }
+static const nema::display::BitmapFont& resolve(nema::display::FontHandle h) { return *nema::display::FontRegistry::instance().get(h); }
 
 uint16_t measureTextW(const char* s, TextRole role) {
     if (!s || !*s) return 0;
     FontSpec fs = fontForRole(role);
     const auto& font = resolve(fs.handle);
-    size_t len = std::strlen(s);
-    int per  = (font.charW + font.spacing) * fs.scale;
-    int trail = font.spacing * fs.scale;
-    return (uint16_t)((int)len * per - trail);
+    // Sum per-glyph widths (proportional fonts) — falls back to charW for
+    // monospace fonts where widths==nullptr. Scale applies after summing.
+    uint32_t w = 0;
+    for (const char* p = s; *p; p++) {
+        uint8_t c = (uint8_t)*p;
+        uint8_t gw = (c >= font.firstChar && (uint8_t)(c - font.firstChar) < font.numChars)
+                     ? fontGlyphWidth(font, (uint8_t)(c - font.firstChar)) : font.charW;
+        w += (uint32_t)gw + font.spacing;
+    }
+    if (w == 0) return 0;
+    return (uint16_t)((w - font.spacing) * fs.scale);
 }
 
 uint16_t measureTextH(TextRole role) {
@@ -46,4 +55,4 @@ TextMetrics roleMetrics() {
     return TextMetrics{ metricsW, metricsH, nullptr };
 }
 
-} // namespace nema::ui
+} // namespace aether::ui

@@ -13,15 +13,15 @@
 #error "aether_abi.h requires C++"
 #endif
 
-namespace nema::ui { class NodeArena; }
+namespace aether::ui { class NodeArena; }
 
-// Opaque view handle (pointer to nema::ui::UiNode).
+// Opaque view handle (pointer to aether::ui::UiNode).
 using AetherView = void*;
 
 // Set/get the per-frame arena (called by the surface / Plan 55).
 // The ABI functions allocate UiNodes from this arena.
-void aether_set_arena(nema::ui::NodeArena* a);
-nema::ui::NodeArena* aether_get_arena();
+void aether_set_arena(aether::ui::NodeArena* a);
+aether::ui::NodeArena* aether_get_arena();
 
 // ── view interface ──────────────────────────────────────────────────
 

@@ -7,7 +7,7 @@ export type RuntimeTier = "js" | "wasm" | "native";
 /** Preferred display server. null/absent = any server accepted. */
 export type DisplayServer = "aether" | "fbcon" | null;
 
-export interface KappManifest {
+export interface PappManifest {
   /** Reverse-domain app id, e.g. "com.palanu.clock" */
   id: string;
 

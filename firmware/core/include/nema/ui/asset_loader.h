@@ -115,7 +115,7 @@ public:
     // Plan 71: IconDef bridge — returns an IconDef wrapping a registered
     // BitmapAsset. The returned pointer is valid as long as the BitmapAsset
     // is alive and registered.
-    const ui::IconDef* findIconDef(const char* handle) const;
+    const aether::ui::IconDef* findIconDef(const char* handle) const;
     void              clear();
 
 private:
@@ -124,7 +124,7 @@ private:
     struct Entry {
         std::string          handle;
         const BitmapAsset*   asset;
-        mutable ui::IconDef  def;   // IconDef wrapper rebuilt on lookup
+        mutable aether::ui::IconDef  def;   // IconDef wrapper rebuilt on lookup
     };
     std::vector<Entry> entries_;
 };

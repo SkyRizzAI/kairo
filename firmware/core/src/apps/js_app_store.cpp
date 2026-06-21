@@ -53,15 +53,14 @@ static std::pair<uint16_t, uint16_t> parseApiVersion(const std::string& s) {
     }
 }
 
-bool JsAppStore::installKapp(Runtime& rt, const char* bytes, size_t len) {
+bool JsAppStore::installPappBytes(Runtime& rt, const char* bytes, size_t len) {
     std::string s(bytes, len);
 
-    // Line 0: magic ("KAPP1" or "PAPP1")
+    // Line 0: magic ("PAPP1")
     auto nl1 = s.find('\n');
     if (nl1 == std::string::npos) return false;
     std::string magic = s.substr(0, nl1);
-    const bool isPapp1 = (magic == "PAPP1");
-    if (magic != "KAPP1" && !isPapp1) {
+    if (magic != "PAPP1") {
         rt.log().error("JsAppStore", "unknown bundle magic", {{"magic", magic}});
         return false;
     }
@@ -71,15 +70,10 @@ bool JsAppStore::installKapp(Runtime& rt, const char* bytes, size_t len) {
     if (nl2 == std::string::npos) return false;
     std::string manifestStr = s.substr(nl1 + 1, nl2 - nl1 - 1);
 
-    // PAPP1 line 2: entry filename (skip it — we only use the JS bundle bytes)
-    std::string js;
-    if (isPapp1) {
-        auto nl3 = s.find('\n', nl2 + 1);
-        if (nl3 == std::string::npos) return false;
-        js = s.substr(nl3 + 1);
-    } else {
-        js = s.substr(nl2 + 1);
-    }
+    // Line 2: entry filename (skip it — we only use the JS bundle bytes)
+    auto nl3 = s.find('\n', nl2 + 1);
+    if (nl3 == std::string::npos) return false;
+    std::string js = s.substr(nl3 + 1);
 
     // Parse manifest as full JSON (Plan 48 Fase 3 — nested fields needed).
     auto m = nlohmann::json::parse(manifestStr, nullptr, false);

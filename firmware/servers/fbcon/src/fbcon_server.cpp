@@ -1,4 +1,4 @@
-#include "nema/ui/fbcon_server.h"
+#include "fbcon/fbcon_server.h"
 #include "nema/ui/canvas.h"
 #include "nema/ui/ui_constants.h"
 #include "nema/ui/view_dispatcher.h"
@@ -9,7 +9,8 @@
 #include <cstring>
 #include <string>
 
-namespace nema {
+namespace fbcon {
+using namespace nema;
 
 // ── Keyboard layout ───────────────────────────────────────────────────────────
 // 4 char rows × 10 keys, + 1 action row with 3 wide keys.
@@ -35,8 +36,8 @@ static int snapActionCol(int col) {
     return ACT_ENT;
 }
 
-static constexpr uint16_t KEY_W  = ui::CHAR_W + 2;          // 8 px per cell
-static constexpr uint16_t KEY_H  = ui::CHAR_H + 2;          // 11 px per cell
+static constexpr uint16_t KEY_W  = nema::display::CHAR_W + 2;          // 8 px per cell
+static constexpr uint16_t KEY_H  = nema::display::CHAR_H + 2;          // 11 px per cell
 static constexpr uint16_t KBD_W  = KBD_COLS * KEY_W;        // 80 px wide
 static constexpr uint16_t KBD_H  = (KBD_CHAR_ROWS + 1) * KEY_H; // 55 px tall
 
@@ -64,9 +65,11 @@ FbconServer::FbconServer(Runtime& rt) : rt_(rt) {
 // ── renderFrame ───────────────────────────────────────────────────────────────
 
 void FbconServer::renderFrame(Canvas& c, ViewDispatcher&, const StatusBarData&) {
+    // Text console renders with the default theme (ADR 0002: each server applies
+    // its own; this keeps Aether's theme from bleeding in after a server switch).
     c.clear();
 
-    const uint16_t lh = ui::CHAR_H + 1;
+    const uint16_t lh = nema::display::CHAR_H + 1;
     if (c.height() < lh * 2) { c.flush(); return; }
 
     const uint16_t kbdH    = kbdOpen_ ? KBD_H : 0;
@@ -111,7 +114,7 @@ void FbconServer::drawKeyboard(Canvas& c) const {
 
     // Helper: draw one key cell. Selected key = white fill + dark glyph.
     auto cell = [&](uint16_t cx, uint16_t cy, uint16_t cw, const char* label, bool sel) {
-        uint16_t tx = cx + (cw - (uint16_t)(std::strlen(label) * ui::CHAR_W)) / 2;
+        uint16_t tx = cx + (cw - (uint16_t)(std::strlen(label) * nema::display::CHAR_W)) / 2;
         uint16_t ty = cy + 1;
         if (sel) {
             c.fillRect(cx, cy, cw, KEY_H, true);
@@ -264,4 +267,4 @@ void FbconServer::histNext() {
     inputBuf_ = session_.history[session_.history.size() - 1 - (size_t)histIdx_];
 }
 
-} // namespace nema
+}  // namespace fbcon

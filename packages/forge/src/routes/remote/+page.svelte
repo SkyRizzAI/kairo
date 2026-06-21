@@ -4,7 +4,7 @@
 	import { activeRemote, setRemote, clearRemote } from '$lib/remoteLink';
 	import SessionView from '$lib/components/SessionView.svelte';
 	import { Button } from '$lib/components/ui/button';
-	import { Cpu, Bluetooth, Usb, Unplug } from '@lucide/svelte';
+	import { Cpu, Bluetooth, Usb, Wifi, Unplug } from '@lucide/svelte';
 
 	// Resume the surviving session when navigating back to this page — the cable
 	// (Web Serial port / BLE link) stays open across navigation (see remoteLink).
@@ -12,6 +12,7 @@
 	let label = $state(activeRemote()?.label ?? '');
 	let error = $state('');
 	let busy = $state('');
+	let netHost = $state('skyrizz-e32.local');
 
 	function pickSimulator() {
 		error = '';
@@ -60,8 +61,30 @@
 		}
 	}
 
+	async function pickNet() {
+		error = '';
+		busy = 'net';
+		try {
+			const { WebSocketTransport } = await import('$lib/transport/WebSocketTransport');
+			if (!WebSocketTransport.available()) throw new Error('WebSocket not supported in this browser');
+			if (!netHost.trim()) throw new Error('Enter the device host (e.g. skyrizz-e32.local)');
+			const t = new WebSocketTransport(netHost);
+			// Construct the session first so onData/onState are wired before the socket
+			// opens; onState(true) then fires immediately and drives the PLP handshake.
+			const s = new RemoteSession(t);
+			await t.boot();
+			label = `Network (${netHost})`;
+			setRemote(s, label);
+			session = s;
+		} catch (e) {
+			error = (e as Error).message || 'Network connection failed';
+		} finally {
+			busy = '';
+		}
+	}
+
 	function disconnect() {
-		clearRemote(); // closes the cable for owned (BLE/USB) sessions
+		clearRemote(); // closes the cable for owned (BLE/USB/Network) sessions
 		session = null;
 	}
 
@@ -147,6 +170,33 @@
 					</Button>
 				</div>
 			{/each}
+
+			<!-- Network (WiFi) — PLP over WebSocket (Plan 75). Needs a flashed, online device. -->
+			<div class="border-border flex items-center gap-4 rounded-lg border p-4">
+				<div class="bg-accent flex size-10 shrink-0 items-center justify-center rounded-md">
+					<Wifi class="size-5" />
+				</div>
+				<div class="min-w-0 flex-1">
+					<div class="flex items-center gap-2">
+						<span class="font-medium">Network (Wi-Fi)</span>
+						<span class="bg-muted text-muted-foreground rounded px-1.5 py-0.5 text-[10px]">
+							needs device
+						</span>
+					</div>
+					<p class="text-muted-foreground text-xs">
+						A physical Palanu device over WiFi (WebSocket). Enter its hostname or IP.
+					</p>
+					<input
+						class="border-border bg-background mt-2 w-full rounded-md border px-2 py-1 text-xs"
+						placeholder="skyrizz-e32.local or 192.168.1.23"
+						bind:value={netHost}
+						onkeydown={(e) => e.key === 'Enter' && pickNet()}
+					/>
+				</div>
+				<Button size="sm" disabled={busy === 'net'} onclick={pickNet}>
+					{busy === 'net' ? '…' : 'Connect…'}
+				</Button>
+			</div>
 		</div>
 	</div>
 {/if}
