@@ -152,7 +152,8 @@ bool DolphinApp::drawRaw(Canvas& c, AppContext& ctx) {
         uint32_t s  = sW < sH ? sW : sH;
         uint16_t sw = (uint16_t)((uint32_t)dw * s / 256u);
         uint16_t sh = (uint16_t)((uint32_t)dh * s / 256u);
-        if (!sw) sw = dw; if (!sh) sh = dh;
+        if (!sw) sw = dw;
+        if (!sh) sh = dh;
         uint16_t sx = (uint16_t)(W > sw ? (W - sw) / 2 : 0);
         uint16_t sy = (uint16_t)(bannerH + (availH > sh ? (availH - sh) / 2 : 0));
 
