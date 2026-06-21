@@ -81,8 +81,8 @@ void WasmPlatform::registerDrivers(Runtime& rt) {
     rootFs_.mkdir("/system/assets/anims");
     rootFs_.write("/system/assets/anims/laptop.panim", kDolphinSleepPanim, kDolphinSleepPanimLen);
     // Create empty scan + data roots
-    rootFs_.mkdir("/apps");
-    rootFs_.mkdir("/data");
+    rootFs_.mkdir("/system/apps");
+    rootFs_.mkdir("/system/data");
     sdFs_.mkdir("/apps");       // appears as /sd/apps in VFS
     sdFs_.mkdir("/assets");     // appears as /sd/assets in VFS
     sdFs_.mkdir("/assets/anims");

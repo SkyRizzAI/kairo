@@ -23,7 +23,7 @@ void StorageService::init(Runtime& rt) {
 }
 
 std::string StorageService::resolveDataDir(const char* bundleId, bool critical) const {
-    if (critical) return std::string("/data/") + bundleId;
+    if (critical) return std::string("/system/data/") + bundleId;
     std::string loc;
     if (cfg_) cfg_->getString("stor", nsKey(bundleId).c_str(), loc);
     if (loc == "ext" && vfs_) {
@@ -32,7 +32,7 @@ std::string StorageService::resolveDataDir(const char* bundleId, bool critical) 
         if (vfs_->list("/sd/data", probe) || vfs_->list("/sd", probe))
             return std::string("/sd/data/") + bundleId;
     }
-    return std::string("/data/") + bundleId;
+    return std::string("/system/data/") + bundleId;
 }
 
 StorageLocation StorageService::locationOf(const char* bundleId) const {
@@ -53,11 +53,11 @@ bool StorageService::move(const char* bundleId, StorageLocation to) {
     if (!vfs_ || !cfg_) return false;
 
     std::string src = (to == StorageLocation::External)
-        ? "/data/"    + std::string(bundleId)
+        ? "/system/data/"    + std::string(bundleId)
         : "/sd/data/" + std::string(bundleId);
     std::string dst = (to == StorageLocation::External)
         ? "/sd/data/" + std::string(bundleId)
-        : "/data/"    + std::string(bundleId);
+        : "/system/data/"    + std::string(bundleId);
 
     std::vector<FsEntry> entries;
     if (!vfs_->list(src, entries)) {
@@ -105,7 +105,7 @@ std::vector<StorageService::AppStorageInfo> StorageService::allApps() const {
         info.bundleId      = m.id   ? m.id   : "";
         info.displayName   = m.name ? m.name : info.bundleId;
         info.location      = locationOf(info.bundleId.c_str());
-        info.internalBytes = scanDir("/data/"    + info.bundleId);
+        info.internalBytes = scanDir("/system/data/"    + info.bundleId);
         info.externalBytes = scanDir("/sd/data/" + info.bundleId);
         info.movable       = m.storageMovable;
         info.hasCritical   = m.hasCriticalData;
@@ -120,9 +120,9 @@ StorageService::VolumeInfo StorageService::internalVolume() const {
     VolumeInfo v;
     if (!vfs_) return v;
     std::vector<FsEntry> entries;
-    if (!vfs_->list("/data", entries)) return v;
+    if (!vfs_->list("/system/data", entries)) return v;
     for (auto& e : entries)
-        if (e.isDir) v.usedBytes += scanDir("/data/" + e.name);
+        if (e.isDir) v.usedBytes += scanDir("/system/data/" + e.name);
     return v;
 }
 

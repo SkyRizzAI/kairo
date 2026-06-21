@@ -202,7 +202,7 @@ bool installPappBundle(Runtime& rt, const PappPackage& pkg) {
     std::string id = mj.value("id", "");
     if (id.empty()) return false;
 
-    std::string dir = std::string("/apps/") + id + ".papp";
+    std::string dir = std::string("/system/apps/") + id + ".papp";
     fs->mkdir(dir);
 
     for (size_t i = 0; i < pkg.entryCount; ++i) {

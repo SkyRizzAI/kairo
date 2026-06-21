@@ -140,17 +140,46 @@ void Esp32Platform::postRegister(Runtime& rt) {
     rt.capabilities().setState(caps::Storage,
                                fsOk ? ResourceState::Available : ResourceState::Fault);
     if (fsOk) {
-        // Plan 83: one-time migration /badusb/ → /data/com.palanu.badusb/
-        // (old path from pre-83 firmware; rename preserves user scripts)
+        // One-time migrations (chained: each checks old → new path)
+        // Step 1: /badusb/ → /data/com.palanu.badusb/ (pre-83 firmware)
         {
             std::vector<FsEntry> probe;
-            bool oldExists = rootFs_.list("/badusb", probe);
-            std::vector<FsEntry> newProbe;
-            bool newExists = rootFs_.list("/data/com.palanu.badusb", newProbe);
-            if (oldExists && !newExists) {
-                rt.log().info("Esp32Platform", "migrating /badusb → /data/com.palanu.badusb");
-                rootFs_.mkdir("/data");
-                rootFs_.rename("/badusb", "/data/com.palanu.badusb");
+            if (rootFs_.list("/badusb", probe)) {
+                std::vector<FsEntry> p2;
+                if (!rootFs_.list("/data/com.palanu.badusb", p2)) {
+                    rt.log().info("Esp32Platform", "migrating /badusb → /data/com.palanu.badusb");
+                    rootFs_.mkdir("/data");
+                    rootFs_.rename("/badusb", "/data/com.palanu.badusb");
+                }
+            }
+        }
+        // Step 2: /data/ → /system/data/ , /apps/ → /system/apps/ (pre-84 firmware)
+        {
+            rootFs_.mkdir("/system");
+            rootFs_.mkdir("/system/data");
+            rootFs_.mkdir("/system/apps");
+            std::vector<FsEntry> dataEntries;
+            if (rootFs_.list("/data", dataEntries)) {
+                for (auto& e : dataEntries) {
+                    if (!e.isDir) continue;
+                    std::vector<FsEntry> f2;
+                    if (!rootFs_.list("/system/data/" + e.name, f2))
+                        rootFs_.rename("/data/" + e.name, "/system/data/" + e.name);
+                }
+                rootFs_.remove("/data");
+                rt.log().info("Esp32Platform", "migrated /data → /system/data");
+            }
+            std::vector<FsEntry> appEntries;
+            if (rootFs_.list("/apps", appEntries)) {
+                for (auto& e : appEntries) {
+                    if (e.isDir) continue;
+                    std::vector<uint8_t> buf;
+                    if (rootFs_.read("/apps/" + e.name, buf))
+                        rootFs_.write("/system/apps/" + e.name, buf.data(), buf.size());
+                    rootFs_.remove("/apps/" + e.name);
+                }
+                rootFs_.remove("/apps");
+                rt.log().info("Esp32Platform", "migrated /apps → /system/apps");
             }
         }
 
@@ -174,9 +203,9 @@ void Esp32Platform::postRegister(Runtime& rt) {
         // Seed factory animation — written every boot so it updates with firmware.
         rootFs_.write("/system/assets/anims/laptop.panim",
                       kDolphinSleepPanim, kDolphinSleepPanimLen);
-        rootFs_.mkdir("/apps");
-        rootFs_.mkdir("/data");
-        rootFs_.mkdir("/data/com.palanu.badusb");
+        rootFs_.mkdir("/system/apps");
+        rootFs_.mkdir("/system/data");
+        rootFs_.mkdir("/system/data/com.palanu.badusb");
 
         std::string demo = "REM Hello World — BadUSB demo\n"
                            "DELAY 500\n"
@@ -187,7 +216,7 @@ void Esp32Platform::postRegister(Runtime& rt) {
                            "DELAY 500\n"
                            "STRINGLN Hello from Palanu BadUSB!\n";
         // Factory scripts — always written so they update after firmware upgrades.
-        rootFs_.write("/data/com.palanu.badusb/demo.dd",
+        rootFs_.write("/system/data/com.palanu.badusb/demo.dd",
                       (const uint8_t*)demo.data(), demo.size());
         std::string rickroll =
             "REM Rickroll Mac — CMD+Space, Terminal, open Brave, fullscreen\n"
@@ -201,7 +230,7 @@ void Esp32Platform::postRegister(Runtime& rt) {
             "ENTER\n"
             "DELAY 2000\n"
             "STRING f\n";
-        rootFs_.write("/data/com.palanu.badusb/rickroll_mac.dd",
+        rootFs_.write("/system/data/com.palanu.badusb/rickroll_mac.dd",
                       (const uint8_t*)rickroll.data(), rickroll.size());
         std::vector<uint8_t> probe;
         if (!rootFs_.read("/readme.txt", probe)) {

@@ -22,11 +22,11 @@ AppStorage::AppStorage(std::string bundleId, IFileSystem* vfs,
 std::string AppStorage::resolvePath(const char* name) const {
     std::string base;
     if (critical_) {
-        base = "/data/" + bundleId_;
+        base = "/system/data/" + bundleId_;
     } else {
         std::string loc;
         cfg_.getString("stor", storNsKey(bundleId_).c_str(), loc);
-        base = (loc == "ext") ? "/sd/data/" + bundleId_ : "/data/" + bundleId_;
+        base = (loc == "ext") ? "/sd/data/" + bundleId_ : "/system/data/" + bundleId_;
     }
     if (!name || name[0] == '\0') return base;
     return base + "/" + name;
@@ -85,7 +85,7 @@ size_t AppStorage::usedBytes() const {
     if (!vfs_) return 0;
     size_t total = 0;
     // Scan both internal and external regardless of routing preference
-    for (const char* base : {"/data/", "/sd/data/"}) {
+    for (const char* base : {"/system/data/", "/sd/data/"}) {
         std::string dir = std::string(base) + bundleId_;
         std::vector<FsEntry> entries;
         if (!vfs_->list(dir, entries)) continue;
