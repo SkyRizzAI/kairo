@@ -1,7 +1,9 @@
 #pragma once
 #include "nema/app/component_app.h"
+#include <cstdint>
 #include <memory>
 #include <string>
+#include <vector>
 
 namespace nema::js { class JsEngine; }
 
@@ -49,6 +51,14 @@ public:
     // CLI apps use this path; UI apps use run() → onStart() → build() loop.
     void runProcess(ProcessContext& ctx) override;
 
+    // Set icon from raw bytes (icon.raw format: 4-byte header + 1-bit pixels).
+    // Must be called before installCustom() — manifest stores non-owning pointers.
+    void setIcon(std::vector<uint8_t> data);
+
+    const uint8_t* iconBitmap() const { return iconBitmap_; }
+    uint8_t        iconW()      const { return iconW_; }
+    uint8_t        iconH()      const { return iconH_; }
+
 protected:
     void        onStart(AppContext& ctx) override;
     aether::ui::UiNode* build(aether::ui::NodeArena& arena, AppContext& ctx) override;
@@ -59,6 +69,12 @@ private:
     std::unique_ptr<js::JsEngine> eng_;
     bool        loaded_ = false;
     char        errLine_[96] = "";
+
+    // Icon loaded from bundle (icon.raw). iconBitmap_ points into iconData_[4+].
+    std::vector<uint8_t> iconData_;
+    const uint8_t*       iconBitmap_ = nullptr;
+    uint8_t              iconW_      = 0;
+    uint8_t              iconH_      = 0;
 };
 
 } // namespace nema

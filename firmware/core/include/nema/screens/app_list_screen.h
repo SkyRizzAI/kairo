@@ -19,11 +19,15 @@ public:
 private:
     struct Row { AppListScreen* self; int index; };
 
-    aether::ui::ScrollState               scroll_;
-    std::vector<std::string>      names_;
-    std::vector<std::string>      ids_;
-    std::vector<const aether::ui::IconDef*> icons_; // Plan 53: per-app icon (may be nullptr)
-    std::vector<Row>              rows_;
+    // Plan 84: bundled 1-bit icon from a .papp app (non-owning pointer).
+    struct CustomIcon { const uint8_t* bitmap; uint8_t w, h; };
+
+    aether::ui::ScrollState                 scroll_;
+    std::vector<std::string>                names_;
+    std::vector<std::string>                ids_;
+    std::vector<const aether::ui::IconDef*> icons_;        // Plan 53: icon_pack icon
+    std::vector<CustomIcon>                 customIcons_;   // Plan 84: bundled raw icon
+    std::vector<Row>                        rows_;
 
     static void onLaunch(void* u);
 };

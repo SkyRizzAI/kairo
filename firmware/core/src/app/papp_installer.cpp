@@ -131,9 +131,25 @@ static bool installFromDir(Runtime& rt, IFileSystem* fs,
     if (!fs->read(dir + "/" + entryPath, code)) return false;
     std::string js(code.begin(), code.end());
 
+    // Load icon.raw if the manifest declares one.
+    // Format: 4-byte header (width u16le, height u16le) + 1-bit packed pixels.
+    std::vector<uint8_t> iconData;
+    std::string iconFile = mj.value("icon", "");
+    if (!iconFile.empty()) {
+        std::vector<uint8_t> iBytes;
+        if (fs->read(dir + "/" + iconFile, iBytes) && iBytes.size() >= 4) {
+            iconData = std::move(iBytes);
+        } else {
+            rt.log().warn("PappInstaller", "icon.raw not found or too small",
+                          {{"id", id}, {"icon", iconFile}});
+        }
+    }
+
     rt.log().info("PappInstaller", "install",
-                  {{"id", id}, {"name", name}, {"mode", modeStr}});
-    return JsAppStore::instance().installApp(rt, id, name, version, js, dsrv, mode);
+                  {{"id", id}, {"name", name}, {"mode", modeStr},
+                   {"icon", iconData.empty() ? "none" : iconFile}});
+    return JsAppStore::instance().installApp(rt, id, name, version, js, dsrv, mode,
+                                             std::move(iconData));
 }
 
 // Install from a single-file .papp FILE.

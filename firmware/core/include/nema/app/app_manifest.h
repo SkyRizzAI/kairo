@@ -1,5 +1,6 @@
 #pragma once
 #include "nema/app/runtime_tier.h"
+#include <cstdint>
 
 namespace nema {
 
@@ -57,6 +58,15 @@ struct AppManifest {
     // Icon handle (Plan 53 icon system — e.g. "feature.apps") or bundle-relative
     // path ("icons/app.xbm"). nullptr = generic icon per runtimeTier.
     const char* iconPath = nullptr;
+
+    // Plan 84 — custom bitmap icon loaded from .papp bundle (icon.raw).
+    // Format: 4-byte header (width u16le, height u16le) + 1-bit packed pixels
+    // (MSB first, row-major, stride = ceil(w/8)). Pointer is non-owning —
+    // the JsApp that installed this app owns the buffer and outlives the manifest.
+    // nullptr = no custom icon; fall back to iconPath / icon_pack.
+    const uint8_t* iconBitmap = nullptr;
+    uint8_t        iconW      = 0;
+    uint8_t        iconH      = 0;
 
     // Null-terminated array of required capability strings ("net.http", "storage",
     // …). nullptr or empty = no requirements. Checked against device capabilities

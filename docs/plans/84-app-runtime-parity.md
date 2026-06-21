@@ -145,21 +145,28 @@ struct AppManifest {
 
 **2c. Icon format**
 
-Icon di dalam `.papp` bundle **selalu raw RGB565** — tidak ada PNG di bundle, tidak ada
-decoder di firmware. Sederhana: firmware tinggal `memcpy` ke canvas buffer.
+Icon di dalam `.papp` bundle **selalu 1-bit raw** — konsisten dengan built-in icon_pack.
+Tidak ada PNG di bundle, tidak ada decoder di firmware.
 
 ```
-icon.raw = width(u16le) + height(u16le) + pixels(RGB565, row-major)
-         = 4 bytes header + (32 × 32 × 2) = 2052 bytes untuk icon 32×32
+icon.raw = width(u16le) + height(u16le) + pixels(1-bit, MSB first, row-major)
+stride   = ceil(width / 8) bytes per baris
+contoh   = 16×16 icon: 4 + ceil(16/8)*16 = 4 + 32 = 36 bytes
 ```
 
-Developer boleh simpan `icon.png` di source app mereka, tapi SDK yang convert saat build.
+Pilihan 1-bit (bukan RGB565) karena:
+- Konsisten dengan sistem icon_pack yang sudah ada (8×8 1-bit XBM)
+- `Icon()` UI node langsung bisa render — tidak butuh code baru
+- Bekerja di semua display termasuk e-ink (1bpp)
+- Ukuran jauh lebih kecil
+
+Developer simpan `icon.png` di source. SDK convert saat build.
 Yang masuk ke `.papp/` adalah `icon.raw` — bukan PNG.
 
 **Flow:**
 ```
 [source]              [build]              [bundle]           [device]
-icon.png  ──sharp──►  icon.raw  ──pack──►  .papp/icon.raw  ──read──►  canvas.drawBitmap()
+icon.png  ──sharp──►  icon.raw  ──pack──►  .papp/icon.raw  ──read──►  Icon() node
 ```
 
 **2d. `AppListScreen` tampilkan icon**
@@ -177,12 +184,13 @@ Build tool `packages/app-sdk/bin/build.ts` tambah step:
 4. Jika tidak ada: manifest tidak punya field `icon`, firmware pakai placeholder
 
 **Checklist Fase 2:**
-- [ ] Definisikan format `icon.raw`: 4-byte header (w, h sebagai u16le) + RGB565 pixels
-- [ ] `AppManifest` tambah field `iconData` (`std::vector<uint8_t>`, kosong jika tidak ada icon)
-- [ ] `installFromDir()` baca `icon` dari manifest → load `icon.raw` → simpan di `iconData`
-- [ ] `AppListScreen` tampilkan icon via `canvas.drawBitmap()`, fallback ke placeholder
-- [ ] `embedded_apps.h` tidak punya icon untuk sekarang (placeholder)
-- [ ] `packages/app-sdk/bin/build.ts` convert `icon.png` → `icon.raw` saat build
+- [x] Definisikan format `icon.raw`: 4-byte header (w, h sebagai u16le) + 1-bit packed pixels
+- [x] `AppManifest` tambah field `iconBitmap`, `iconW`, `iconH` (non-owning ptr, JsApp owns buffer)
+- [x] `JsApp` tambah `iconData_` vector + `setIcon()` method; `installApp()` terima `iconData`
+- [x] `installFromDir()` baca `icon` dari manifest → load `icon.raw` → pass ke `installApp()`
+- [x] `AppListScreen` tampilkan custom icon via `Icon()` node; fallback ke icon_pack
+- [x] `embedded_apps.h` tidak punya icon untuk sekarang (icon_pack fallback ke "feature.apps")
+- [x] `packages/app-sdk/bin/build.ts` convert `icon.png` → `icon.raw` saat build (via sharp)
 - [ ] Test: app dengan `icon.png` di source → bundle berisi `icon.raw` → muncul di launcher
 
 ---
@@ -308,6 +316,6 @@ call `nema_log()`, `nema_storage_write()`, dll via imported functions.
 | Fase | Status |
 |------|--------|
 | Fase 1 — CLI + UI dispatch | `[x]` done (kecuali test di device) |
-| Fase 2 — Launcher icon | `[ ]` not started |
+| Fase 2 — Launcher icon | `[x]` done (kecuali test di device) |
 | Fase 3 — Bug fixes aktif | `[~]` partial (BadUsbApp pending) |
 | Fase 4 — WASM parity | `[ ]` not started |

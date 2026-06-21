@@ -20,6 +20,14 @@ JsApp::JsApp(std::string id, std::string name, std::string version, std::string 
 
 JsApp::~JsApp() = default;
 
+void JsApp::setIcon(std::vector<uint8_t> data) {
+    if (data.size() < 4) return;
+    iconW_ = static_cast<uint8_t>(data[0] | (data[1] << 8));
+    iconH_ = static_cast<uint8_t>(data[2] | (data[3] << 8));
+    iconData_   = std::move(data);
+    iconBitmap_ = iconData_.data() + 4;  // bitmap bytes start after 4-byte header
+}
+
 void JsApp::runProcess(ProcessContext& ctx) {
     js::JsEngine eng;
     eng.setMemoryLimit(4 * 1024 * 1024);

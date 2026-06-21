@@ -8,13 +8,23 @@
 // Output: dist/<id>.papp/   (macOS .app-style folder ready to install)
 
 import { resolve, join, basename } from "path";
-import { mkdir, writeFile, rm } from "node:fs/promises";
+import { mkdir, writeFile, rm, access } from "node:fs/promises";
+import type sharp from "sharp";
 import type { PappManifest } from "../src/manifest";
 
 // ── Parse args ─────────────────────────────────────────────────────────────
+// Accepts: `palanu-build --dir <path>` or `palanu-build <path>` or cwd default.
 
 const dirFlag = Bun.argv.indexOf("--dir");
-const appDir = resolve(dirFlag >= 0 ? Bun.argv[dirFlag + 1] : ".");
+let appDirRaw = ".";
+if (dirFlag >= 0) {
+  appDirRaw = Bun.argv[dirFlag + 1];
+} else {
+  // First non-flag positional arg after the script itself
+  const positional = Bun.argv.slice(2).find(a => !a.startsWith("-"));
+  if (positional) appDirRaw = positional;
+}
+const appDir = resolve(appDirRaw);
 
 const manifestPath = join(appDir, "manifest.json");
 const manifest: PappManifest = JSON.parse(await Bun.file(manifestPath).text());
@@ -55,13 +65,77 @@ const outDir = join(appDir, "dist", `${manifest.id}.papp`);
 await rm(outDir, { recursive: true, force: true });
 await mkdir(outDir, { recursive: true });
 
-await writeFile(join(outDir, "manifest.json"), JSON.stringify(manifest, null, 2));
 await writeFile(join(outDir, jsName), js);
+
+// ── Icon pipeline ──────────────────────────────────────────────────────────
+// icon.raw format: 4-byte header (width u16le, height u16le) + 1-bit packed
+// pixels (MSB first, row-major, stride = ceil(w/8)).  Firmware renders this
+// via Icon() node — same code path as the built-in icon_pack.
+
+async function pngToIconRaw(pngPath: string): Promise<Uint8Array | null> {
+  let sharpMod: typeof sharp;
+  try {
+    sharpMod = (await import("sharp")).default as unknown as typeof sharp;
+  } catch {
+    console.warn("  warn: sharp not available — skipping icon.png → icon.raw");
+    console.warn("        run 'bun add sharp' in the SDK directory to enable auto-conversion");
+    return null;
+  }
+  const { data, info } = await (sharpMod as any)(pngPath)
+    .grayscale()
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+  const w = info.width as number;
+  const h = info.height as number;
+  const stride = Math.ceil(w / 8);
+  const bitmap = new Uint8Array(stride * h);
+  // Dark pixels (lum < 128) → bit set (pixel on), light → bit clear.
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      if (data[y * w + x] < 128) {
+        bitmap[y * stride + (x >> 3)] |= 0x80 >> (x & 7);  // MSB first
+      }
+    }
+  }
+  const raw = new Uint8Array(4 + bitmap.length);
+  raw[0] = w & 0xff;  raw[1] = (w >> 8) & 0xff;
+  raw[2] = h & 0xff;  raw[3] = (h >> 8) & 0xff;
+  raw.set(bitmap, 4);
+  return raw;
+}
+
+// Check for icon: prefer icon.raw (pre-converted), fall back to icon.png.
+let iconBytes: Uint8Array | null = null;
+const iconRawSrc = join(appDir, "icon.raw");
+const iconPngSrc = join(appDir, "icon.png");
+
+const rawExists  = await access(iconRawSrc).then(() => true).catch(() => false);
+const pngExists  = await access(iconPngSrc).then(() => true).catch(() => false);
+
+if (rawExists) {
+  iconBytes = new Uint8Array(await Bun.file(iconRawSrc).arrayBuffer());
+  console.log(`  icon.raw  (pre-converted, ${iconBytes.length}B)`);
+} else if (pngExists) {
+  iconBytes = await pngToIconRaw(iconPngSrc);
+  if (iconBytes) {
+    const w = iconBytes[0] | (iconBytes[1] << 8);
+    const h = iconBytes[2] | (iconBytes[3] << 8);
+    console.log(`  icon.png → icon.raw  (${w}×${h}, ${iconBytes.length}B)`);
+  }
+}
+
+if (iconBytes) {
+  await writeFile(join(outDir, "icon.raw"), iconBytes);
+  (manifest as any).icon = "icon.raw";
+}
+
+// Re-write manifest now that icon field may have been added.
+await writeFile(join(outDir, "manifest.json"), JSON.stringify(manifest, null, 2));
 
 const tier = manifest.runtime ?? "js";
 const server = manifest.display_server ?? "any";
 console.log(`✓ ${outDir}/`);
-console.log(`  manifest.json  app.js (${js.length}B)`);
+console.log(`  manifest.json  ${jsName} (${js.length}B)`);
 console.log(`  runtime=${tier}  server=${server}`);
 console.log("");
 console.log("  Install: copy this folder to /apps/ on your device");

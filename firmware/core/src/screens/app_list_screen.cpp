@@ -47,18 +47,26 @@ void AppListScreen::onLaunch(void* u) {
 }
 
 UiNode* AppListScreen::build(NodeArena& a, Runtime& rt) {
-    names_.clear(); ids_.clear(); icons_.clear(); rows_.clear();
+    names_.clear(); ids_.clear(); icons_.clear(); customIcons_.clear(); rows_.clear();
     for (const auto& m : rt.apps().list()) {
         if (m.type != AppType::App) continue;
         names_.push_back(m.name);
         ids_.push_back(m.id);
-        icons_.push_back(iconForApp(m));
+        // Prefer bundled raw icon (Plan 84); fall back to icon_pack handle.
+        if (m.iconBitmap && m.iconW && m.iconH) {
+            customIcons_.push_back({m.iconBitmap, m.iconW, m.iconH});
+            icons_.push_back(nullptr);  // unused when customIcons_ entry is valid
+        } else {
+            customIcons_.push_back({nullptr, 0, 0});
+            icons_.push_back(iconForApp(m));
+        }
     }
     bool empty = names_.empty();
     if (empty) {
         names_.push_back("No apps installed");
         ids_.push_back("");
         icons_.push_back(nullptr);
+        customIcons_.push_back({nullptr, 0, 0});
     }
     rows_.resize(names_.size());
 
@@ -82,11 +90,16 @@ UiNode* AppListScreen::build(NodeArena& a, Runtime& rt) {
         if (empty) {
             row = ListRow(a, names_[i].c_str(), onLaunch, &rows_[i]);
         } else {
-            // Icon (8×8) + SmartLabel (grows) + ">" accessory
-            const IconDef* ico = icons_[i];
-            UiNode* ico_node = ico
-                ? Icon(a, ico->bitmap, ico->w, ico->h)
-                : nullptr;
+            // Icon + SmartLabel (grows) + ">" accessory.
+            // Custom bundled icon (Plan 84) takes priority; fallback to icon_pack.
+            UiNode* ico_node;
+            const auto& ci = customIcons_[i];
+            if (ci.bitmap) {
+                ico_node = Icon(a, ci.bitmap, ci.w, ci.h);
+            } else {
+                const IconDef* ico = icons_[i];
+                ico_node = ico ? Icon(a, ico->bitmap, ico->w, ico->h) : nullptr;
+            }
             UiNode* lbl = SmartLabel(a, names_[i].c_str());
             if (lbl) lbl->style.flexGrow = 1;
             UiNode* acc = Text(a, ">", TextRole::Caption);

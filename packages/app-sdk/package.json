@@ -15,5 +15,8 @@
   "scripts": {
     "build:counter": "bun bin/build.ts templates/counter",
     "verify": "bun run scripts/verify.ts"
+  },
+  "dependencies": {
+    "sharp": "^0.33.0"
   }
 }

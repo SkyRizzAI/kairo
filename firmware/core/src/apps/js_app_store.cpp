@@ -18,7 +18,8 @@ JsAppStore& JsAppStore::instance() {
 
 bool JsAppStore::installApp(Runtime& rt, std::string id, std::string name,
                             std::string version, std::string js,
-                            std::string displayServer, AppMode mode) {
+                            std::string displayServer, AppMode mode,
+                            std::vector<uint8_t> iconData) {
     if (id.empty() || js.empty()) return false;
     for (auto& p : apps_) if (id == p->id()) return false;   // already installed
     if (version.empty()) version = "1.0.0";
@@ -26,6 +27,8 @@ bool JsAppStore::installApp(Runtime& rt, std::string id, std::string name,
                                             std::move(version), std::move(js),
                                             std::move(displayServer)));
     JsApp& app = *apps_.back();
+
+    if (!iconData.empty()) app.setIcon(std::move(iconData));
 
     // Plan 56/59 — build a full manifest that carries tier + display server.
     AppManifest m;
@@ -35,6 +38,9 @@ bool JsAppStore::installApp(Runtime& rt, std::string id, std::string name,
     m.runtimeTier   = RuntimeTier::Js;
     m.displayServer = app.displayServer();   // nullptr if not set
     m.mode          = mode;
+    m.iconBitmap    = app.iconBitmap();      // nullptr if no custom icon
+    m.iconW         = app.iconW();
+    m.iconH         = app.iconH();
     rt.apps().installCustom(app, m);         // appears in the launcher now
     return true;
 }
