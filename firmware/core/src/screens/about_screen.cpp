@@ -107,13 +107,27 @@ UiNode* AboutScreen::build(NodeArena& a, Runtime& rt) {
     root.align = Align::Stretch;
     Style sv;   sv.dir = FlexDir::Col; sv.gap = 1;
 
+    // Smart-scroll (Plan 79): About is read-only info, so group the rows into
+    // FocusStop landmarks split on blank-line separators. Each block becomes a
+    // non-selectable focus stop — Prev/Next walk block→block and top-align each,
+    // so button users can scroll all the way down (incl. the trailing Capabilities
+    // block) without any row being "selectable".
     UiNode* list = ScrollView(a, scroll_, sv, {});
-    UiNode* prev = nullptr;
-    for (auto& r : rows_) {
-        UiNode* t = Text(a, r.c_str(), TextRole::Body);
-        if (!t) break;
-        if (!prev) list->firstChild = t; else prev->nextSibling = t;
-        prev = t;
+    UiNode* prevSec = nullptr;
+    Style secS; secS.dir = FlexDir::Col; secS.gap = 1; secS.align = Align::Stretch;
+    for (size_t i = 0; i < rows_.size(); ) {
+        if (rows_[i].empty()) { ++i; continue; }       // skip separator runs
+        UiNode* sec = FocusStop(a, secS, {});
+        if (!sec) break;
+        UiNode* prevRow = nullptr;
+        for (; i < rows_.size() && !rows_[i].empty(); ++i) {
+            UiNode* t = Text(a, rows_[i].c_str(), TextRole::Body);
+            if (!t) break;
+            if (!prevRow) sec->firstChild = t; else prevRow->nextSibling = t;
+            prevRow = t;
+        }
+        if (!prevSec) list->firstChild = sec; else prevSec->nextSibling = sec;
+        prevSec = sec;
     }
 
     return View(a, root, {

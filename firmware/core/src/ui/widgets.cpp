@@ -65,6 +65,22 @@ UiNode* Pressable(NodeArena& a, void (*onPress)(void*), void* userdata,
     return n;
 }
 
+// FocusStop — a non-interactive focus landmark (smart-scroll, Plan 79). It joins
+// the flat focus traversal (Prev/Next can land on it and scroll it to the top) but
+// renders no select highlight and has no Activate action. Wrap a trailing info
+// block (header + read-only rows) in one so button nav can reach it instead of
+// being stuck below the last selectable item.
+UiNode* FocusStop(NodeArena& a, Style style, std::initializer_list<UiNode*> children) {
+    UiNode* n = a.alloc();
+    if (!n) return nullptr;
+    n->type       = NodeType::View;
+    n->style      = style;
+    n->focusable  = true;
+    n->focusInert = true;
+    setChildren(n, children);
+    return n;
+}
+
 UiNode* ScrollView(NodeArena& a, ScrollState& st, Style style,
                    std::initializer_list<UiNode*> children) {
     UiNode* n = a.alloc();

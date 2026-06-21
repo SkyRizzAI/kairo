@@ -76,6 +76,12 @@ struct UiNode {
     void  (*onPress)(void* userdata) = nullptr;
     void*   userdata  = nullptr;
     bool    focusable = false;
+    // Smart-scroll landmark (Plan 79): a focus STOP that is not interactive — it
+    // joins the flat focus traversal (so Prev/Next can land on it and scroll it
+    // into view) but draws no select highlight and has no Activate action. Used to
+    // make a trailing info block reachable by button nav instead of being stuck
+    // below the last selectable item. Set together with focusable = true.
+    bool    focusInert = false;
 
     // Value controls — Left/Right "fine adjust" for a focused control (dir −1/+1).
     // Used by Slider (and any stepper-like widget that wants arrow tuning).

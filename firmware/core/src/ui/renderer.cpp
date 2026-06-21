@@ -21,6 +21,7 @@ namespace {
 // Focus highlight. Plain square invert by default; rounded (r=1) inverted box
 // when the node opts into Style::selectBox (ListView rows, Flipper style).
 static void highlightBox(Canvas& c, const UiNode* n) {
+    if (n->focusInert) return;   // smart-scroll landmark: focus stop, no highlight
     if (n->style.selectBox && n->w >= 10 && n->h >= 3) {
         // Inset the right edge so the rounded box clears the dashed scrollbar.
         const uint16_t GUTTER = 5;

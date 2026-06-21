@@ -44,6 +44,12 @@ UiNode* Text(NodeArena& a, const char* str, TextRole role = TextRole::Body);
 UiNode* Pressable(NodeArena& a, void (*onPress)(void*), void* userdata,
                   Style style, std::initializer_list<UiNode*> children = {});
 
+// FocusStop: a non-interactive focus landmark (smart-scroll, Plan 79). Joins the
+// flat focus traversal so Prev/Next can land on it and scroll it to the top, but
+// draws no select highlight and has no Activate action. Wrap a trailing info block
+// (header + read-only rows) so button nav can reach it past the last selectable row.
+UiNode* FocusStop(NodeArena& a, Style style, std::initializer_list<UiNode*> children = {});
+
 // ScrollView: a scroll container. Children stack along style.dir (default Col =
 // vertical scroll). The viewport is BOUNDED by the parent flex layout (the node
 // claims leftover space via flexGrow, default 1); content longer than the

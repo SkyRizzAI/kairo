@@ -68,11 +68,13 @@ static bool ensureVisible(UiNode* root, const UiNode* foc) {
     if (!sn || !sn->scroll || sn->style.dir != FlexDir::Col) return false;
     const int pad = sn->style.padding;
     int top    = sn->y + pad;
-    int bottom = sn->y + sn->h - pad;
     int before = sn->scroll->scrollMain;
-    int sc = before;
-    if (foc->y < top)              sc -= (top - foc->y);
-    else if (foc->y + foc->h > bottom) sc += (foc->y + foc->h - bottom);
+    // Smart-scroll (Plan 79): web-style top-align — bring the focused stop's top to
+    // the viewport top on every focus change, clamped to [0, maxScroll]. Combined
+    // with focusInert landmarks this lets button nav reach a trailing info block
+    // (the clamp shows the very bottom of content when the last stop can't reach the
+    // top). Entering a new section snaps its first stop to the top.
+    int sc = before + (foc->y - top);
     if (sc < 0) sc = 0;
     int maxS = sn->scroll->maxScroll();
     if (sc > maxS) sc = maxS;
