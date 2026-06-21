@@ -32,6 +32,13 @@ export interface NemaSystem {
       set(key: string, value: string): void;
       remove(key: string): boolean;        // true if key existed
     };
+    fs: {
+      readFile(name: string): string | null;           // null = not found
+      writeFile(name: string, data: string): boolean;
+      listFiles(): string[];
+      removeFile(name: string): boolean;               // true if existed
+      bytesUsed(): number;
+    };
     // deprecated aliases on storage namespace (one major release)
     get(key: string): string | null;
     set(key: string, value: string): void;

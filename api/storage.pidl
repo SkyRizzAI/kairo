@@ -1,6 +1,7 @@
-// nema:storage — Per-app persistent key-value store.
-// Source: config/config_store.h
-// Backed by NVS on device, in-memory std::map on simulator.
+// nema:storage — Per-app persistent storage: key-value + file I/O.
+// Source: config/config_store.h (kv), nema/fs/app_storage.h (fs)
+// Backed by NVS on device, in-memory std::map on simulator (kv).
+// File I/O routes to /data/<bundle-id>/ (internal) or /sd/data/<bundle-id>/ (SD).
 // Constraints: namespace ≤ 15 chars, key ≤ 15 chars (NVS limits).
 // Per-app namespace = appId (host-injected).
 package nema:storage@1.0
@@ -23,4 +24,24 @@ interface kv {
 
     /// Delete a key. Returns true if the key existed.
     remove: func(key: string) -> bool
+}
+
+/// Isolated per-app file storage. Paths are relative names (no slashes).
+/// Routes to internal flash or SD card based on user routing preference.
+@core
+interface fs {
+    /// Read a file as a UTF-8 string. Returns none if the file does not exist.
+    read-file: func(name: string) -> option<string>
+
+    /// Write (create or overwrite) a file with UTF-8 content.
+    write-file: func(name: string, data: string) -> bool
+
+    /// List files in the app's storage directory.
+    list-files: func() -> list<string>
+
+    /// Delete a file. Returns true if it existed.
+    remove-file: func(name: string) -> bool
+
+    /// Total bytes used across all files for this app (internal + SD).
+    bytes-used: func() -> u64
 }

@@ -94,6 +94,16 @@ extern int64_t nema_storage__kv_get_int(const char* key);
 extern void nema_storage__kv_set_int(const char* key, int64_t value);
 /* Delete a key. Returns true if the key existed. */
 extern uint32_t nema_storage__kv_remove(const char* key);
+/* Read a file as a UTF-8 string. Returns none if the file does not exist. */
+extern const char* nema_storage__fs_read_file(const char* name);
+/* Write (create or overwrite) a file with UTF-8 content. */
+extern uint32_t nema_storage__fs_write_file(const char* name, const char* data);
+/* List files in the app's storage directory. */
+extern int32_t nema_storage__fs_list_files(void);
+/* Delete a file. Returns true if it existed. */
+extern uint32_t nema_storage__fs_remove_file(const char* name);
+/* Total bytes used across all files for this app (internal + SD). */
+extern uint64_t nema_storage__fs_bytes_used(void);
 
 /* ── nema:sys ──────────────────────────────────────────── */
 /* Log a message at the given level. level ∈ {"trace", "debug", "info", "warn", "error", "fatal"} */

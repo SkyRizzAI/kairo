@@ -139,6 +139,20 @@ declare namespace nema {
             remove(key: string): boolean;
     }
 
+      // core
+    namespace fs {
+      /** Read a file as a UTF-8 string. Returns none if the file does not exist. */
+            read-file(name: string): string | null;
+      /** Write (create or overwrite) a file with UTF-8 content. */
+            write-file(name: string, data: string): boolean;
+      /** List files in the app's storage directory. */
+            list-files(): string[];
+      /** Delete a file. Returns true if it existed. */
+            remove-file(name: string): boolean;
+      /** Total bytes used across all files for this app (internal + SD). */
+            bytes-used(): number;
+    }
+
   }
 
   namespace sys {

@@ -10,6 +10,7 @@
 #include "nema/system/system_info.h"
 #include "nema/service/service_container.h"
 #include "nema/config/config_store.h"
+#include "nema/fs/app_storage.h"
 #include "nema/hal/http_client.h"
 #include "nema/services/profile_service.h"
 #include "nema/ui/aether_abi.h"
@@ -106,6 +107,36 @@ public:
 
     bool kv_remove(std::string_view key) override {
         return rt_.config().remove(ns_.c_str(), std::string(key).c_str());
+    }
+
+    // ── nema:storage/fs ───────────────────────────────────────────────
+
+    std::optional<std::string> fs_read_file(std::string_view name) override {
+        nema::AppStorage stor(appId_, rt_.fs(), rt_.config(), false);
+        std::vector<uint8_t> buf;
+        if (!stor.read(std::string(name).c_str(), buf)) return std::nullopt;
+        return std::string(buf.begin(), buf.end());
+    }
+
+    bool fs_write_file(std::string_view name, std::string_view data) override {
+        nema::AppStorage stor(appId_, rt_.fs(), rt_.config(), false);
+        return stor.write(std::string(name).c_str(),
+                          reinterpret_cast<const uint8_t*>(data.data()), data.size());
+    }
+
+    std::vector<std::string> fs_list_files() override {
+        nema::AppStorage stor(appId_, rt_.fs(), rt_.config(), false);
+        return stor.list();
+    }
+
+    bool fs_remove_file(std::string_view name) override {
+        nema::AppStorage stor(appId_, rt_.fs(), rt_.config(), false);
+        return stor.remove(std::string(name).c_str());
+    }
+
+    uint64_t fs_bytes_used() override {
+        nema::AppStorage stor(appId_, rt_.fs(), rt_.config(), false);
+        return static_cast<uint64_t>(stor.usedBytes());
     }
 
     // ── nema:net/http ─────────────────────────────────────────────────

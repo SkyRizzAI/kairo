@@ -164,6 +164,21 @@ struct HostApi {
     // storage/kv.remove
     // Delete a key. Returns true if the key existed.
     virtual bool kv_remove(std::string_view key) = 0;
+    // storage/fs.read-file
+    // Read a file as a UTF-8 string. Returns none if the file does not exist.
+    virtual std::optional<std::string> fs_read_file(std::string_view name) = 0;
+    // storage/fs.write-file
+    // Write (create or overwrite) a file with UTF-8 content.
+    virtual bool fs_write_file(std::string_view name, std::string_view data) = 0;
+    // storage/fs.list-files
+    // List files in the app's storage directory.
+    virtual std::vector<std::string> fs_list_files() = 0;
+    // storage/fs.remove-file
+    // Delete a file. Returns true if it existed.
+    virtual bool fs_remove_file(std::string_view name) = 0;
+    // storage/fs.bytes-used
+    // Total bytes used across all files for this app (internal + SD).
+    virtual uint64_t fs_bytes_used() = 0;
 
     // ── nema:sys ───────────────────────────────────────
     // sys/log.log
