@@ -104,15 +104,15 @@ jadi Fase 4.
 `ProcessContext::argv` yang diset saat `launchProcess()`.
 
 **Checklist Fase 1:**
-- [ ] `installFromDir()` baca field `mode` dari manifest JSON
-- [ ] `AppManifest` field `mode` diset saat install dari dir dan dari embedded
-- [ ] `AppRegistry::launchProcess(id, argv[])` — fungsi baru untuk CLI launch
-- [ ] Thread spawn di `launchProcess` pakai `runProcess(ProcessContext)`, bukan `run(AppContext)`
-- [ ] `AppMode::Cli` app → `launchProcess` dari launcher (bukan `AppHostManager`)
-- [ ] `AppMode::Ui` app → existing path, tidak berubah
-- [ ] `AppMode::Hybrid` app → launcher pakai UI path; CLI launch pakai process path
-- [ ] JS `process.argv` wire ke `ProcessContext::argv`
-- [ ] JS `process.stdout.write` routing ke `rt.log()` saat di CLI mode
+- [x] `installFromDir()` baca field `mode` dari manifest JSON
+- [x] `AppManifest` field `mode` diset saat install dari dir dan dari embedded
+- [x] `AppRegistry::launchProcess(id, argv[])` — fungsi baru untuk CLI launch
+- [x] Thread spawn di `launchProcess` pakai `runProcess(ProcessContext)`, bukan `run(AppContext)`
+- [x] `AppMode::Cli` app → `launchProcess` dari launcher (bukan `AppHostManager`)
+- [x] `AppMode::Ui` app → existing path, tidak berubah
+- [x] `AppMode::Hybrid` app → launcher pakai UI path; CLI launch pakai process path
+- [x] JS `process.argv` wire ke `ProcessContext::argv` (sudah ada via setProcessContext)
+- [x] JS `process.stdout.write` routing ke `rt.log()` saat di CLI mode
 - [ ] Test: C++ app dengan `runProcess()` bisa jalan dari launcher dan output ke log
 - [ ] Test: JS app dengan `mode: "cli"` bisa jalan dari launcher, output ke log
 
@@ -230,9 +230,9 @@ Fix sementara (Fase 3): detect `runtime: "wasm"`, log error jelas, return false.
 Fix final (Fase 5): route ke WASM runtime.
 
 **Checklist Fase 3:**
-- [ ] `JsAppStore::apps_` ganti ke `std::list<unique_ptr<JsApp>>`
+- [x] `JsAppStore::apps_` ganti ke `std::list<unique_ptr<JsApp>>`
 - [ ] `BadUsbApp` migrate dari `ComponentScreen` ke `ComponentApp`
-- [ ] `installFromDir()` cek `runtime` field, tolak WASM dengan error jelas (bukan crash)
+- [x] `installFromDir()` cek `runtime` field, tolak WASM dengan error jelas (bukan crash)
 - [ ] Test: install 10+ JS apps tidak crash
 - [ ] Test: BadUSB muncul di launcher, jalan di thread sendiri
 
@@ -307,7 +307,7 @@ call `nema_log()`, `nema_storage_write()`, dll via imported functions.
 
 | Fase | Status |
 |------|--------|
-| Fase 1 — CLI + UI dispatch | `[ ]` not started |
+| Fase 1 — CLI + UI dispatch | `[x]` done (kecuali test di device) |
 | Fase 2 — Launcher icon | `[ ]` not started |
-| Fase 3 — Bug fixes aktif | `[ ]` not started |
+| Fase 3 — Bug fixes aktif | `[~]` partial (BadUsbApp pending) |
 | Fase 4 — WASM parity | `[ ]` not started |
