@@ -85,7 +85,7 @@ aether::ui::UiNode* StorageSettingsScreen::build(NodeArena& a, Runtime& rt) {
     {
         std::string v = intVol.totalBytes > 0
             ? fmtBytes(intVol.usedBytes) + " / " + fmtBytes(intVol.totalBytes)
-            : "Unknown";
+            : fmtBytes(intVol.usedBytes) + " used";
         ListEntry e; e.label = "Internal Flash"; e.value = pushVal(v);
         append(ListItemRow(a, e));
     }
@@ -94,7 +94,7 @@ aether::ui::UiNode* StorageSettingsScreen::build(NodeArena& a, Runtime& rt) {
         auto extVol = svc->externalVolume();
         std::string v = extVol.totalBytes > 0
             ? fmtBytes(extVol.usedBytes) + " / " + fmtBytes(extVol.totalBytes)
-            : "Unknown";
+            : fmtBytes(extVol.usedBytes) + " used";
         ListEntry e; e.label = "SD Card"; e.value = pushVal(v);
         append(ListItemRow(a, e));
     } else {
@@ -112,7 +112,7 @@ aether::ui::UiNode* StorageSettingsScreen::build(NodeArena& a, Runtime& rt) {
             size_t total = app.internalBytes + app.externalBytes;
             const char* locStr = (app.location == StorageLocation::External)
                                      ? "SD" : "Int";
-            std::string v = fmtBytes(total) + " \xB7 " + locStr;
+            std::string v = fmtBytes(total) + " / " + locStr;
 
             items_.push_back({this, i});
             ListEntry e;
