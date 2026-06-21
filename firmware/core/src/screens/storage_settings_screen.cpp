@@ -15,6 +15,9 @@ StorageSettingsScreen::StorageSettingsScreen(Runtime& rt)
 void StorageSettingsScreen::onResume() {
     scroll_.scrollMain = 0;
     state_.focus.focused = 0;
+    apps_.clear();
+    items_.clear();
+    vals_.clear();
     rt_.view().requestRedraw();
 }
 
@@ -67,30 +70,32 @@ aether::ui::UiNode* StorageSettingsScreen::build(NodeArena& a, Runtime& rt) {
         return View(a, root, { list });
     }
 
+    // vals_ owns all formatted value strings — ListEntry holds const char* into them.
+    vals_.clear();
+
+    auto pushVal = [&](const std::string& s) -> const char* {
+        vals_.push_back(s);
+        return vals_.back().c_str();
+    };
+
     // ── Volume overview ──────────────────────────────────────────────────────
     append(ListSection(a, "Storage"));
 
     auto intVol = svc->internalVolume();
     {
-        char val[32];
-        if (intVol.totalBytes > 0)
-            std::snprintf(val, sizeof(val), "%s / %s",
-                fmtBytes(intVol.usedBytes).c_str(), fmtBytes(intVol.totalBytes).c_str());
-        else
-            std::snprintf(val, sizeof(val), "Unknown");
-        ListEntry e; e.label = "Internal Flash"; e.value = val;
+        std::string v = intVol.totalBytes > 0
+            ? fmtBytes(intVol.usedBytes) + " / " + fmtBytes(intVol.totalBytes)
+            : "Unknown";
+        ListEntry e; e.label = "Internal Flash"; e.value = pushVal(v);
         append(ListItemRow(a, e));
     }
 
     if (svc->hasExternal()) {
         auto extVol = svc->externalVolume();
-        char val[32];
-        if (extVol.totalBytes > 0)
-            std::snprintf(val, sizeof(val), "%s / %s",
-                fmtBytes(extVol.usedBytes).c_str(), fmtBytes(extVol.totalBytes).c_str());
-        else
-            std::snprintf(val, sizeof(val), "Unknown");
-        ListEntry e; e.label = "SD Card"; e.value = val;
+        std::string v = extVol.totalBytes > 0
+            ? fmtBytes(extVol.usedBytes) + " / " + fmtBytes(extVol.totalBytes)
+            : "Unknown";
+        ListEntry e; e.label = "SD Card"; e.value = pushVal(v);
         append(ListItemRow(a, e));
     } else {
         ListEntry e; e.label = "SD Card"; e.value = "Not mounted";
@@ -100,22 +105,21 @@ aether::ui::UiNode* StorageSettingsScreen::build(NodeArena& a, Runtime& rt) {
     // ── Per-app list ─────────────────────────────────────────────────────────
     apps_ = svc->allApps();
     if (!apps_.empty()) {
+        bool hasExt = svc->hasExternal();
         append(ListSection(a, "Apps"));
         for (size_t i = 0; i < apps_.size(); ++i) {
             auto& app = apps_[i];
             size_t total = app.internalBytes + app.externalBytes;
             const char* locStr = (app.location == StorageLocation::External)
-                                     ? "SD Card" : "Internal";
-            char val[32];
-            std::snprintf(val, sizeof(val), "%s · %s",
-                fmtBytes(total).c_str(), locStr);
+                                     ? "SD" : "Int";
+            std::string v = fmtBytes(total) + " \xB7 " + locStr;
 
             items_.push_back({this, i});
             ListEntry e;
             e.label   = app.displayName.c_str();
-            e.value   = val;
-            e.chevron = app.movable && svc->hasExternal();
-            if (app.movable && svc->hasExternal()) {
+            e.value   = pushVal(v);
+            e.chevron = app.movable && hasExt;
+            if (app.movable && hasExt) {
                 e.onPress = onSelect;
                 e.user    = &items_.back();
             }

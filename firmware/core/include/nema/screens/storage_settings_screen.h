@@ -30,6 +30,7 @@ private:
     aether::ui::ScrollState           scroll_;
     std::vector<StorageService::AppStorageInfo> apps_;
     std::vector<AppItem>              items_;
+    std::vector<std::string>          vals_;   // owns formatted value strings (const char* safety)
 };
 
 } // namespace nema
