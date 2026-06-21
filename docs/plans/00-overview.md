@@ -177,7 +177,14 @@ Kerjakan **berurutan**; tiap dok punya `Depends on`. Centang status di sini saat
 |---|---|---|---|---|
 | — | _(belum ditulis)_ | Skematik PCB, board_config V1, bring-up, validasi | 16–18 | ⏳ future |
 
-### Phase 8 — Board Profile & Ecosystem Foundation (M9)
+### Phase 8 — Storage & App Ecosystem (M8)
+
+| # | Dokumen | Fitur / Stage | Depends on | Status |
+|---|---|---|---|---|
+| 83 | [`83-storage-architecture.md`](83-storage-architecture.md) | VFS restructure (`/system/assets/`, `/data/<id>/`) + AppStorage API (`ctx.storage()`) + StorageService (routing, move, usage) + NVS namespace fix + JS file storage bindings + Storage Settings screen | 82, 19.6 | ☐ |
+| 38 | [`38-storage-filesystem-hal.md`](38-storage-filesystem-hal.md) | Storage HAL maturation: streaming I/O, chunked read/write, SD hot-plug, quota enforcement | 83 | ☐ |
+
+### Phase 9 — Board Profile & Ecosystem Foundation (M9)
 
 > Fondasi data model untuk ekosistem tooling (Palanu Forge / Studio). Board mendeskripsikan layout fisik komponen, device render ASCII visualization, JSON export untuk web tooling.
 
