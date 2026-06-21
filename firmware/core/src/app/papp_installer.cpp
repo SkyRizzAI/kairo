@@ -21,7 +21,7 @@
 namespace nema {
 
 static constexpr int kRootCount = 2;
-static const char* kAppRoots[kRootCount] = { "/apps", "/sd/apps" };
+static const char* kAppRoots[kRootCount] = { "/system/apps", "/sd/apps" };
 
 // ── Cache ─────────────────────────────────────────────────────────────────
 

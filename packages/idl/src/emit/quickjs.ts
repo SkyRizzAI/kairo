@@ -170,6 +170,8 @@ function emitRegistration(ast: PidlAst): string {
   };
 
   // Build namespace objects (only those present in the AST)
+  // Warn loudly if an IDL interface is missing from the tree — catches exactly
+  // the bug where we added storage.fs to the PIDL but forgot to wire it here.
   const built = new Set<string>();
   for (const pkg of ast.packages) {
     const domain = pkg.name.split(":")[1] || pkg.name;
@@ -177,7 +179,14 @@ function emitRegistration(ast: PidlAst): string {
       const path = `${domain}.${iface.name}`;
       const leaf = `${domain}/${iface.name}`;
       const info = tree[path];
-      if (!info) continue;
+      if (!info) {
+        // ui.* is handled by the aether display server, not the nema global.
+        // input.input and profile.profile use a different wiring path.
+        const knownExclusions = new Set(["ui.view","ui.text","ui.interactive","ui.scroll","input.input","profile.profile"]);
+        if (!knownExclusions.has(path))
+          console.warn(`[quickjs] WARNING: interface '${path}' not in tree map — it will NOT be exposed to JS! Add it to the tree.`);
+        continue;
+      }
 
       // Ensure parent exists
       const parts = path.split(".");
