@@ -1,5 +1,6 @@
 #include "nema/system/capabilities.h"
 #include "nema/esp32/esp32_platform.h"
+#include "nema/assets/anims/dolphin_sleep_panim.h"
 #include "nema/runtime.h"
 #include "nema/board.h"
 #include "nema/config/config_store.h"
@@ -157,6 +158,9 @@ void Esp32Platform::postRegister(Runtime& rt) {
         rootFs_.mkdir("/system");
         rootFs_.mkdir("/system/assets");
         rootFs_.mkdir("/system/assets/anims");
+        // Seed factory animation — written every boot so it updates with firmware.
+        rootFs_.write("/system/assets/anims/laptop.panim",
+                      kDolphinSleepPanim, kDolphinSleepPanimLen);
         rootFs_.mkdir("/apps");
         rootFs_.mkdir("/data");
         rootFs_.mkdir("/data/com.palanu.badusb");
