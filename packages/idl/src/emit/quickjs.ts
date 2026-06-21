@@ -7,6 +7,7 @@ import { typeToString } from "../ast";
 // ── Helpers ────────────────────────────────────────────────────────────────
 
 function pascalCase(s: string): string { return s.split("-").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(""); }
+function camelCase(s: string): string { const p = pascalCase(s); return p.charAt(0).toLowerCase() + p.slice(1); }
 function methodName(ifaceName: string, funcName: string): string { return `${ifaceName}_${funcName}`.replace(/-/g, "_"); }
 function cppName(func: PidlFunc, iface: string): string { return `nema_${iface}_${func.name}`.replace(/-/g, "_"); }
 
@@ -154,6 +155,7 @@ function emitRegistration(ast: PidlAst): string {
     "sys.tasks":    { parent: "sys",       var: "sys_tasks" },
     "storage":      { parent: "nema",      var: "storage" },
     "storage.kv":   { parent: "storage",   var: "storage_kv" },
+    "storage.fs":   { parent: "storage",   var: "storage_fs" },
     "net":          { parent: "nema",      var: "net" },
     "net.http":     { parent: "net",       var: "net_http", gated: "net.http" },
     "net.wifi":     { parent: "net",       var: "net_wifi", gated: "net.wifi" },
@@ -201,7 +203,7 @@ function emitRegistration(ast: PidlAst): string {
       const leafVar = info.var;
       for (const fn of iface.functions) {
         const fnName = cppName(fn, iface.name);
-        lines.push(`    setFn(ctx, ${leafVar}, "${fn.name}", ${fnName}, ${fn.params.length});`);
+        lines.push(`    setFn(ctx, ${leafVar}, "${camelCase(fn.name)}", ${fnName}, ${fn.params.length});`);
       }
       lines.push("");
     }

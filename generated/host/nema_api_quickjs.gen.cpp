@@ -722,7 +722,7 @@ void installNemaApi(JSContext* ctx, HostApi* host, nema::CapabilityRegistry& cap
     }
     setFn(ctx, bt_ble, "enable", nema_ble_enable, 0);
     setFn(ctx, bt_ble, "disable", nema_ble_disable, 0);
-    setFn(ctx, bt_ble, "is-enabled", nema_ble_is_enabled, 0);
+    setFn(ctx, bt_ble, "isEnabled", nema_ble_is_enabled, 0);
 
     JSValue media = JS_NewObject(ctx);
     JS_SetPropertyStr(ctx, nema, "media", media);
@@ -758,7 +758,7 @@ void installNemaApi(JSContext* ctx, HostApi* host, nema::CapabilityRegistry& cap
     if (caps.has(nema::caps::NetWifi)) {
         JS_SetPropertyStr(ctx, net, "wifi", net_wifi);
     }
-    setFn(ctx, net_wifi, "is-connected", nema_wifi_is_connected, 0);
+    setFn(ctx, net_wifi, "isConnected", nema_wifi_is_connected, 0);
     setFn(ctx, net_wifi, "ssid", nema_wifi_ssid, 0);
     setFn(ctx, net_wifi, "ip", nema_wifi_ip, 0);
     setFn(ctx, net_wifi, "scan", nema_wifi_scan, 0);
@@ -771,9 +771,17 @@ void installNemaApi(JSContext* ctx, HostApi* host, nema::CapabilityRegistry& cap
     JS_SetPropertyStr(ctx, storage, "kv", storage_kv);
     setFn(ctx, storage_kv, "get", nema_kv_get, 1);
     setFn(ctx, storage_kv, "set", nema_kv_set, 2);
-    setFn(ctx, storage_kv, "get-int", nema_kv_get_int, 1);
-    setFn(ctx, storage_kv, "set-int", nema_kv_set_int, 2);
+    setFn(ctx, storage_kv, "getInt", nema_kv_get_int, 1);
+    setFn(ctx, storage_kv, "setInt", nema_kv_set_int, 2);
     setFn(ctx, storage_kv, "remove", nema_kv_remove, 1);
+
+    JSValue storage_fs = JS_NewObject(ctx);
+    JS_SetPropertyStr(ctx, storage, "fs", storage_fs);
+    setFn(ctx, storage_fs, "readFile", nema_fs_read_file, 1);
+    setFn(ctx, storage_fs, "writeFile", nema_fs_write_file, 2);
+    setFn(ctx, storage_fs, "listFiles", nema_fs_list_files, 0);
+    setFn(ctx, storage_fs, "removeFile", nema_fs_remove_file, 1);
+    setFn(ctx, storage_fs, "bytesUsed", nema_fs_bytes_used, 0);
 
     JSValue sys = JS_NewObject(ctx);
     JS_SetPropertyStr(ctx, nema, "sys", sys);

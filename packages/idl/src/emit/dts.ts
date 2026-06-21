@@ -4,13 +4,16 @@
 import type { PidlAst, PidlFunc, PidlInterface } from "../ast";
 import { typeToTsString } from "../ast";
 
+function camelCase(s: string): string { const p = s.split("-").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(""); return p.charAt(0).toLowerCase() + p.slice(1); }
+
 function funcToTs(fn: PidlFunc, indent: string): string {
-  const params = fn.params.map((p) => `${p.name}: ${typeToTsString(p.type)}`).join(", ");
+  const name = camelCase(fn.name);
+  const params = fn.params.map((p) => `${camelCase(p.name)}: ${typeToTsString(p.type)}`).join(", ");
   const ret = fn.returns ? typeToTsString(fn.returns) : "void";
   if (fn.annotations.blocking) {
-    return `${indent}${fn.name}(${params}): Promise<${ret}>;`;
+    return `${indent}${name}(${params}): Promise<${ret}>;`;
   }
-  return `${indent}${fn.name}(${params}): ${ret};`;
+  return `${indent}${name}(${params}): ${ret};`;
 }
 
 export function emitDts(ast: PidlAst): string {
