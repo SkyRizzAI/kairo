@@ -255,12 +255,14 @@ UiNode* ListInputRow(NodeArena& a, const ListInput& e) {
     UiNode* lchev = View(a, cv, { e.canPrev ? Text(a, "<", TextRole::Body) : nullptr });
     UiNode* rchev = View(a, cv, { e.canNext ? Text(a, ">", TextRole::Body) : nullptr });
 
-    // Value column — centered between the chevrons, also flex-basis:0. SmartLabel so
-    // long values (e.g. "Playstation 5", "live wallpaper") ellipsis when unfocused
-    // and marquee-scroll when the row is focused (Plan 81); short values fit as-is.
+    // Value column — centered between the chevrons, also flex-basis:0. SmartLabel fills
+    // the full column width (flexGrow+flexZero) so availW in the renderer = column width,
+    // not the natural text width — otherwise long text overflows past the right chevron.
     Style vc; vc.dir = FlexDir::Row; vc.align = Align::Center; vc.justify = Justify::Center;
     vc.flexGrow = RIGHT_W; vc.flexZero = true;
-    UiNode* vbox = View(a, vc, { SmartLabel(a, e.value ? e.value : "") });
+    UiNode* valLabel = SmartLabel(a, e.value ? e.value : "");
+    if (valLabel) { valLabel->style.flexGrow = 1; valLabel->style.flexZero = true; }
+    UiNode* vbox = View(a, vc, { valLabel });
 
     // Flat row: [5px] label | < | value | > | [4px]
     Style s; s.dir = FlexDir::Row; s.align = Align::Center;

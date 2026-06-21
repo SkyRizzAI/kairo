@@ -77,9 +77,15 @@ void ComponentScreen::onPointer(const input::PointerEvent& e) {
 }
 
 void ComponentScreen::tick(uint64_t) {
+    bool dirty = false;
     // Drive flick momentum (GuiService ticks every loop ~10ms).
     if (state_.dragScroll && state_.dragScroll->velocity != 0.0f)
-        if (aether::ui::tickMomentum(state_)) requestRedraw();
+        dirty = aether::ui::tickMomentum(state_);
+    // Marquee animation: any focused SmartLabel needs a continuous redraw so the
+    // scroll offset advances each frame (driven by setRenderTick in GuiService).
+    if (state_.focus.count > 0)
+        dirty = true;
+    if (dirty) requestRedraw();
 }
 
 } // namespace nema
