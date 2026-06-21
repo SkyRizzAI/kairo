@@ -116,21 +116,20 @@ UiNode* BluetoothSettingsScreen::build(NodeArena& a, Runtime& rt) {
     }
 
     bool en = c->isEnabled();
-    if (busy_)
-        std::snprintf(statusBuf_, sizeof(statusBuf_), "Working...");
-    else if (!en)
-        std::snprintf(statusBuf_, sizeof(statusBuf_), "Off");
-    else if (b && b->isAdvertising())
-        std::snprintf(statusBuf_, sizeof(statusBuf_), "Advertising as %s", c->deviceName());
-    else
-        std::snprintf(statusBuf_, sizeof(statusBuf_), "On");
-
-    append(ListSection(a, statusBuf_));
     append(Toggle(a, "Bluetooth", en, cbToggleEnable, this));
+
+    if (busy_) {
+        ListEntry e; e.label = "Working...";
+        append(ListItemRow(a, e));
+    } else if (en && b && b->isAdvertising()) {
+        std::snprintf(statusBuf_, sizeof(statusBuf_), "Advertising as %s", c->deviceName());
+        ListEntry e; e.label = statusBuf_;
+        append(ListItemRow(a, e));
+    }
 
     if (pendingPair_ && b) {
         pairPrompt_ = "Pair? code " + passkey_;
-        append(ListSection(a, pairPrompt_.c_str()));
+        append(ListSection(a, "Pair Request"));
         ListEntry confirm; confirm.label = "Confirm"; confirm.chevron = true;
         confirm.onPress = cbConfirmPair; confirm.user = this;
         append(ListItemRow(a, confirm));
