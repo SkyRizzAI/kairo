@@ -200,10 +200,13 @@ void marquee(Canvas& c, uint16_t x, uint16_t y, uint16_t w,
     // Draw two copies of the text separated by `cycle` pixels so the loop is
     // seamless — like an LED ticker/train: as copy 1 exits the left edge, copy 2
     // enters from the right with no gap or jump.
+    // textLeft: virtual screen x of the full text's left edge (may be off-screen left).
+    // copy 2 begins one `cycle` to the right — always positive since scrollPx < cycle.
+    int textLeft = (int)x - (int)scrollPx;
     c.setClip(x, y, w, lineH);
     if (firstChar < slen)
-        drawText(c, drawX, y, text + firstChar, fs);   // copy 1 (partial, already scrolled)
-    drawText(c, (uint16_t)(drawX + cycle), y, text, fs); // copy 2 (full, one cycle ahead)
+        drawText(c, drawX, y, text + firstChar, fs);             // copy 1: tail still on screen
+    drawText(c, (uint16_t)(textLeft + (int)cycle), y, text, fs); // copy 2: full text, one cycle ahead
     c.clearClip();
 }
 
