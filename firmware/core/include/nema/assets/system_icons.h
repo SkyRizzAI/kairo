@@ -38,7 +38,7 @@ static const uint8_t kIcWifiOff[] = {
 
 // ── Named icon descriptors ───────────────────────────────────────────────────
 
-inline constexpr Icon icBattery      = { 25,  8, kIcBattery      };
+inline constexpr Icon icBattery      = { 16,  8, kIcBattery      };
 inline constexpr Icon icCharging     = {  9, 10, kIcCharging      };
 inline constexpr Icon icBleIdle      = {  5,  8, kIcBleIdle       };
 inline constexpr Icon icBleConnected = { 16,  8, kIcBleConnected  };
