@@ -364,11 +364,11 @@ Settings → Storage
 
 ### Fase 4 — JS SDK file storage
 
-- [ ] Tambah IDL entries: `nema:storage/fs` (`readFile`, `writeFile`, `listFiles`, `removeFile`, `bytesUsed`)
-- [ ] Implementasi di `nema_host_impl.cpp`
-- [ ] Regenerate `nema_api.gen.h`
-- [ ] Update embedded runtime JS (`packages/app-sdk`) expose `nema.storage.readFile` dll.
-- [ ] Test via embedded JS sysinfo app
+- [x] Tambah IDL entries: `nema:storage/fs` (`readFile`, `writeFile`, `listFiles`, `removeFile`, `bytesUsed`)
+- [x] Implementasi di `nema_host_impl.cpp`
+- [x] Regenerate `nema_api.gen.h`
+- [x] Update `packages/app-sdk/src/system.ts` expose `nema.storage.fs.*` TypeScript types
+- [ ] Test via embedded JS sysinfo app (opsional — bisa dilakukan saat development app)
 
 ### Fase 5 — Storage Settings Screen
 
