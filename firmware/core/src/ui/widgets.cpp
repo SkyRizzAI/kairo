@@ -65,22 +65,6 @@ UiNode* Pressable(NodeArena& a, void (*onPress)(void*), void* userdata,
     return n;
 }
 
-// FocusStop — a non-interactive focus landmark (smart-scroll, Plan 79). It joins
-// the flat focus traversal (Prev/Next can land on it and scroll it to the top) but
-// renders no select highlight and has no Activate action. Wrap a trailing info
-// block (header + read-only rows) in one so button nav can reach it instead of
-// being stuck below the last selectable item.
-UiNode* FocusStop(NodeArena& a, Style style, std::initializer_list<UiNode*> children) {
-    UiNode* n = a.alloc();
-    if (!n) return nullptr;
-    n->type       = NodeType::View;
-    n->style      = style;
-    n->focusable  = true;
-    n->focusInert = true;
-    setChildren(n, children);
-    return n;
-}
-
 UiNode* ScrollView(NodeArena& a, ScrollState& st, Style style,
                    std::initializer_list<UiNode*> children) {
     UiNode* n = a.alloc();
@@ -240,14 +224,10 @@ UiNode* ListItemRow(NodeArena& a, const ListEntry& e) {
     if (e.value && *e.value) add(Text(a, e.value, TextRole::Body));
     if (e.chevron)           add(Text(a, ">", TextRole::Body));
     add(hspace(a, 4));                                  // clear the right rounding
-    // Smart-scroll (Plan 79): every row is a focus STOP so button nav can scroll
-    // through all of them. Interactive rows (onPress) highlight + activate normally;
-    // display-only rows become focusInert landmarks — reachable so the viewport can
-    // scroll to a trailing info block, but no select box and no Activate action.
-    if (row) {
-        row->focusable  = true;
-        row->focusInert = (e.onPress == nullptr);
-    }
+    // Display-only rows (no onPress) are NOT focus stops — focus rings belong only
+    // on selectable rows. A trailing info block is revealed by the scroll that
+    // top-aligns the last selectable item, not by focusing the info itself (Plan 79).
+    if (row) row->focusable = (e.onPress != nullptr);
     return row;
 }
 
