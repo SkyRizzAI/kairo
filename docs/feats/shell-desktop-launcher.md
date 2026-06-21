@@ -10,7 +10,11 @@ How the idle screen and the system menu work *now* (Plan 81 / [ADR 0004](../deci
 - **Launcher** — the system menu, opened from the Desktop. Its look is a
   selectable *skin*:
   - **PlayStation** (`playsta`) — horizontal carousel: banner title + a large
-    center tile with preview tiles either side + a position bar.
+    center tile + a position bar. Responsive layout:
+    - On tight screens (≤3 tiles fit), the selected tile sits **flush-left** — no
+      wasted left-buffer slot.
+    - The next right-side tile **peeks off the screen edge** as a scroll hint even
+      when partially clipped.
   - **Nintendo Wii** (`wii`) — 2-column channel-tile grid with a scrollbar.
   Entries: **Apps** (→ app list), **Files**, **Dolphin**, **Logs**, **Settings**.
   Back returns to the Desktop.
@@ -46,8 +50,9 @@ so a new skin or fit shows the next time the screen opens.
 - **`ILauncherTheme`** (`shell/launcher_theme.h`) — `draw(canvas, model, cursor)` +
   `columns()`. Skins: `PlayStationLauncher`, `WiiLauncher`.
 - **`IDesktopTheme`** (`shell/desktop_theme.h`) — `draw(canvas, rect)` + `tick()` +
-  `player()`. Skin: `LiveWallpaperDesktop` (reuses a dolphin showcase animation;
-  blits each frame with a fit/anchor nearest-neighbour scaler).
+  `player()`. Skin: `LiveWallpaperDesktop` — loads `anims/boxing.panim` from VFS
+  on `onResume()`; blits each frame with a fit/anchor nearest-neighbour scaler.
+  On WASM the `.panim` is embedded as a C array and seeded into MemFileSystem at boot.
 - **`shell_factory`** — maps a config name → a concrete skin. One line per new skin.
 - **`LauncherScreen`** owns the fixed entry model, the cursor, **linear**
   navigation (±1, board-agnostic), Activate routing, and Back→Desktop.

@@ -170,7 +170,7 @@ Sources: `refs/flipper-zero-momentum-firmware/assets/`
 
 | Symbol | Source file | Size | Status |
 |---|---|---|---|
-| `kIcBattery` | `StatusBar/Battery_25x8.png` | 25×8 | ✓ available |
+| `kIcBattery` | `StatusBar/Battery_25x8.png` | **16×8** (re-encoded — original 25×8 was disproportionately wide at 2× scale) | ✓ shipped |
 | `kIcCharging` | `StatusBar/Charging_lightning_9x10.png` | 9×10 | ✓ available |
 | `kIcBleIdle` | `StatusBar/Bluetooth_Idle_5x8.png` | 5×8 | ✓ available |
 | `kIcBleConnected` | `StatusBar/Bluetooth_Connected_16x8.png` | 16×8 | ✓ available |
@@ -220,11 +220,12 @@ as template (10×8 px, 3 bars style).
 
 | File | Source dir | Frames | Status |
 |---|---|---|---|
-| `/anims/doom.panim` | `dolphin/external/L1_Doom_128x64/` | 39 | ✓ available |
-| `/anims/boxing.panim` | `dolphin/external/L1_Boxing_128x64/` | 16 | ✓ available |
-| `/anims/sleep.panim` | `dolphin/external/L1_Sleep_128x64/` | 6 | ✓ available |
-| `/anims/tv.panim` | `dolphin/external/L1_Tv_128x47/` | 8 | ✓ available |
-| *(remaining 6)* | `dolphin/external/…` | varies | ✓ available |
+| `/anims/boxing.panim` | `dolphin/external/L1_Boxing_128x64/` | 7 | ✓ **shipped (only animation kept)** |
+| *(doom, sleep, tv, akira, cry, read, hacking, dj)* | `dolphin/external/…` | varies | 🗑 removed — one animation is enough for MVP |
+
+> Decision: reduced to `boxing.panim` only to minimise flash image size and LittleFS
+> partition erase time (~13 s → ~1 s). Additional animations can be side-loaded by
+> the user onto the microSD or via Forge later.
 
 ---
 
@@ -301,6 +302,8 @@ Launcher (HomeScreen / DesktopLauncher) renders two sections:
 - [x] Create `system_icons.h` aggregate header with `Icon` descriptors
 - [x] Wire all icons into status bar renderer (`status_bar.cpp`) — battery, wifi, ble, sd, lock
 - [x] ⚠ WiFi icons: hand-coded 10×8 pixel art placeholder (kIcWifiOn/Off) — TODO: final artwork
+- [x] WiFi icon visibility gated on `capabilities().available(caps::NetWifi)` — only shown when actually connected (not just hardware present)
+- [x] Battery icon re-encoded as 16×8 (body 14-wide + 2-px nub); was 25×8 — proportional to WiFi 10×8 at 2× display scale
 
 ### Phase 4 — T2 App Icon Animations
 
@@ -316,7 +319,10 @@ Launcher (HomeScreen / DesktopLauncher) renders two sections:
 - [x] Migrate `DolphinDemoScreen` to `PanimAsset` + `DOLPHIN_ENTRIES[]` path catalog
 - [x] Migrate `DolphinApp` to `PanimAsset` (removed `.bm` seeding)
 - [x] `dolphin_showcase.cpp` removed from build (895 KB freed); replaced by 24-line `dolphin_anim.cpp`
-- [x] `DesktopLivewall` loads `anims/doom.panim` from VFS on `onResume()`
+- [x] `DesktopLivewall` loads `anims/boxing.panim` from VFS on `onResume()` (single default)
+- [x] Animation catalog reduced to `boxing.panim` only; other `.panim` removed from `firmware/assets/`
+- [x] WASM embedded header (`dolphin_sleep_panim.h`) re-generated from `boxing.panim`; seeds `/anims/boxing.panim` in MemFileSystem
+- [x] LittleFS spiffs partition shrunk 5.8 MB → 512 KB (flash time ~13 s → ~1 s)
 
 ### Phase 6 — System Apps
 
