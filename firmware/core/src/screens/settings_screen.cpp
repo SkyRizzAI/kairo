@@ -44,7 +44,7 @@ void SettingsScreen::launch(Kind k) {
 UiNode* SettingsScreen::build(NodeArena& a, Runtime& rt) {
     items_.clear();
     auto& caps = rt.capabilities();
-    items_.push_back({this, Display,  "Display"});
+    items_.push_back({this, Display,  "Display & Appearances"});
     items_.push_back({this, Controls, "Controls"});
     if (caps.has(caps::NetWifi))
         items_.push_back({this, Wifi,      "Wi-Fi"});
