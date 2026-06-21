@@ -75,9 +75,9 @@ void WasmPlatform::registerDrivers(Runtime& rt) {
     rootFs_.seed("/readme.txt", "Palanu virtual filesystem (in-RAM, volatile).\n"
                                 "See examples/ folder for sample apps.\n"
                                 "Copy .papp folders to /apps/ or /sd/apps/.\n");
-    // Seed desktop animation — boxing.panim (128×64, 7 frames, 7KB).
+    // Seed desktop animation — laptop.panim (128×51, 8 frames, 6.4KB).
     rootFs_.mkdir("/anims");
-    rootFs_.write("/anims/boxing.panim", kDolphinSleepPanim, kDolphinSleepPanimLen);
+    rootFs_.write("/anims/laptop.panim", kDolphinSleepPanim, kDolphinSleepPanimLen);
     // Create empty scan roots (user uploads apps here)
     rootFs_.mkdir("/apps");
     rootFs_.mkdir("/data");
