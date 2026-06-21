@@ -49,6 +49,7 @@ private:
     uint64_t       sleepTimeoutMs_   = 15000;
     uint64_t       lockTimeoutMs_    = 15000;
     bool           enteredSleepFlag_ = false;
+    bool           lockScreenShown_  = false;  // true once display woken + LockScreen pushed
 
     ViewDispatcher*  vd_         = nullptr;
     IDisplayDriver*  display_    = nullptr;

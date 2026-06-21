@@ -29,7 +29,15 @@ bool DisplayPowerManager::deliverKey(Key k, uint64_t nowMs) {
         return true;
 
     case State::Locked:
-        if (vd_) vd_->handleKey(k);  // LockScreen at top of stack handles it
+        if (!lockScreenShown_) {
+            // First press while locked: wake display and reveal lock screen.
+            // This key is consumed as the "wake" tap — not forwarded as an unlock gesture.
+            if (display_) display_->wake();
+            if (vd_ && lockScreen_) { vd_->push(*lockScreen_); vd_->requestRedraw(); }
+            lockScreenShown_ = true;
+            return true;
+        }
+        if (vd_) vd_->handleKey(k);
         return true;
     }
     return false;
@@ -52,8 +60,9 @@ void DisplayPowerManager::tick(uint64_t nowMs) {
 
 void DisplayPowerManager::unlock() {
     if (vd_) vd_->pop();
-    state_          = State::Active;
-    lastActivityMs_ = clock_ ? clock_->millis() : 0;
+    state_           = State::Active;
+    lockScreenShown_ = false;
+    lastActivityMs_  = clock_ ? clock_->millis() : 0;
     if (vd_) vd_->requestRedraw();
 }
 
@@ -76,11 +85,9 @@ void DisplayPowerManager::enterSleep(uint64_t nowMs) {
 
 void DisplayPowerManager::enterLocked() {
     state_ = State::Locked;
-    if (display_) display_->wake();  // display is active again (LockScreen renders)
-    if (vd_ && lockScreen_) {
-        vd_->push(*lockScreen_);
-        vd_->requestRedraw();
-    }
+    lockScreenShown_ = false;
+    // Display stays off (already sleeping from enterSleep()).
+    // LockScreen is shown lazily on the first key press — see deliverKey().
 }
 
 void DisplayPowerManager::wake(uint64_t nowMs) {
