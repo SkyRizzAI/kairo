@@ -1,5 +1,5 @@
 #pragma once
-#include "nema/app/component_app.h"
+#include "nema/ui/component_screen.h"
 #include "nema/apps/badusb_parser.h"
 #include <string>
 #include <vector>
@@ -9,26 +9,20 @@ namespace nema {
 struct IFileSystem;
 struct IUsbHid;
 
-class BadUsbApp : public ComponentApp {
+class BadUsbApp : public ComponentScreen {
 public:
-    const char* id()       const override { return "com.palanu.badusb"; }
-    const char* name()     const override { return "BadUSB"; }
-    const char* category() const override { return "System"; }
+    explicit BadUsbApp(Runtime& rt) : ComponentScreen(rt) {}
 
-    bool fullscreen()      const override { return true; }
-    bool capturesInput()   const override { return true; }
+    bool fullscreen() const override { return true; }
 
-protected:
-    void onStart(AppContext& ctx) override;
-    aether::ui::UiNode* build(aether::ui::NodeArena& arena, AppContext& ctx) override;
-    bool onKey(Key k, AppContext& ctx) override;
-    uint32_t tickIntervalMs() const override { return running_ ? 50u : 0u; }
-    bool onTick(AppContext& ctx) override;
-    size_t arenaCapacity() const override { return 512; }
+    void onResume() override;
+    void tick(uint64_t nowMs) override;
+    void onAction(input::Action a) override;
+    aether::ui::UiNode* build(aether::ui::NodeArena& arena, Runtime& rt) override;
 
 private:
-    void scanScripts(AppContext& ctx);
-    void startExecution(AppContext& ctx);
+    void scanScripts();
+    void startExecution();
     void execNextCommand();
 
     struct ScriptEntry { std::string path; std::string name; };
@@ -40,8 +34,8 @@ private:
     size_t cmdIndex_ = 0;
     size_t cmdTotal_ = 0;
 
-    IFileSystem* fs_ = nullptr;
-    IUsbHid* hid_ = nullptr;
+    IFileSystem* fs_  = nullptr;
+    IUsbHid*    hid_  = nullptr;
 };
 
 } // namespace nema

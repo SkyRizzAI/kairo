@@ -8,7 +8,6 @@
 #include "nema/ui/view_dispatcher.h"
 #include "nema/input/input_action.h"
 #include "nema/runtime.h"
-#include "nema/app/app_registry.h"
 #include "nema/config/config_store.h"
 #include <cstdio>
 #include <cstring>
@@ -17,23 +16,22 @@ namespace nema {
 
 LauncherScreen::LauncherScreen(Runtime& rt)
     : ComponentScreen(rt),
-      appList_(rt), files_(rt), dolphin_(rt), logs_(rt), settings_(rt) {}
+      appList_(rt), files_(rt), dolphin_(rt), logs_(rt), settings_(rt), badUsb_(rt) {}
 
-// One entry record keyed by label, animation, fallback icon handle, and section.
+// One entry record keyed by label, animation, and fallback icon handle.
 struct EntryDef {
     const char*                    label;
     const nema::anim::Animation*   anim;        // T2 icon animation (may be null)
     const char*                    iconHandle;  // icon_pack fallback
-    const char*                    section = "Apps";
 };
 
 static const EntryDef kEntries[] = {
-    { "Apps",     &nema::assets::animIconApps,     "feature.apps",    "Apps"   },
-    { "Files",    nullptr,                          "file.folder",     "Apps"   },
-    { "Dolphin",  nullptr,                          "action.info",     "Apps"   },
-    { "Logs",     nullptr,                          "file.file",       "Apps"   },
-    { "Settings", &nema::assets::animIconSettings,  "feature.settings","Apps"   },
-    { "BadUSB",   &nema::assets::animIconBadusb,    nullptr,           "System" },
+    { "Apps",     &nema::assets::animIconApps,     "feature.apps"     },
+    { "Files",    nullptr,                          "file.folder"      },
+    { "Dolphin",  nullptr,                          "action.info"      },
+    { "Logs",     nullptr,                          "file.file"        },
+    { "Settings", &nema::assets::animIconSettings,  "feature.settings" },
+    { "BadUSB",   &nema::assets::animIconBadusb,    nullptr            },
 };
 static constexpr int kEntryCount = (int)(sizeof(kEntries) / sizeof(kEntries[0]));
 
@@ -44,8 +42,7 @@ void LauncherScreen::buildEntries() {
     for (int i = 0; i < kEntryCount; i++) {
         const EntryDef& def = kEntries[i];
         shell::LauncherEntry e;
-        e.label   = def.label;
-        e.section = def.section;
+        e.label = def.label;
 
         if (def.anim) {
             // T2 animated icon: create a player, wire its first frame as static fallback.
@@ -79,7 +76,7 @@ void LauncherScreen::activate(int i) {
         case 2: rt_.view().navigate(dolphin_);  break;
         case 3: rt_.view().navigate(logs_);     break;
         case 4: rt_.view().navigate(settings_); break;
-        case 5: rt_.apps().launch("com.palanu.badusb"); break;
+        case 5: rt_.view().navigate(badUsb_); break;
         default: break;
     }
 }

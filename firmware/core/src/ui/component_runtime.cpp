@@ -81,13 +81,15 @@ static constexpr int kScrollCtx = 24;
 static bool ensureVisible(UiNode* root, const UiNode* foc) {
     UiNode* sn = findScrollAncestor(root, foc);
     if (!sn || !sn->scroll || sn->style.dir != FlexDir::Col) return false;
+    const int pad  = sn->style.padding;
+    const int top  = sn->y + pad;           // SCREEN y of viewport top edge (fixed)
+    const int bot  = top + (int)sn->scroll->viewportMain; // SCREEN y of viewport bottom
     int before = sn->scroll->scrollMain;
-    int viewH  = (int)sn->scroll->viewportMain;
     int maxS   = sn->scroll->maxScroll();
 
-    // Section-aware top: extend upward over the run of non-focusable siblings
-    // (section header) immediately before foc, so the header scrolls into view
-    // together with the first item of each section.
+    // Section-aware: extend alignTop over the non-focusable sibling run before foc
+    // (i.e. the ListSection header), so the header scrolls into view with its first item.
+    // foc->y and siblings' y are all SCREEN-SPACE coordinates (layout already applied).
     int alignTop = foc->y;
     if (UiNode* par = parentOf(root, foc)) {
         UiNode* runStart = nullptr;
@@ -99,20 +101,22 @@ static bool ensureVisible(UiNode* root, const UiNode* foc) {
     }
     int focBottom = foc->y + (int)foc->h;
 
-    // Only scroll if the item (or its section header) is actually outside the viewport.
-    // This prevents fighting with the wrap-prevention nudge in dispatchNav.
-    bool abovePort = alignTop < before;
-    bool belowPort = focBottom > before + viewH;
+    // Compare in SCREEN SPACE — viewport window is [top, bot]. Only scroll when the
+    // item is actually outside; this prevents fighting with the dispatchNav nudge.
+    bool abovePort = alignTop < top;
+    bool belowPort = focBottom > bot;
     if (!abovePort && !belowPort) return false;
 
+    // Convert screen target back to a scroll offset.
+    // screen_y = top + (content_y - scrollMain)  →  sc = before + (screen_y - top).
     int sc;
     if (abovePort) {
-        // Scrolling up: place section header kScrollCtx px below viewport top.
-        sc = alignTop - kScrollCtx;
+        // Pull item/header up to kScrollCtx px below viewport top.
+        sc = before + (alignTop - top) - kScrollCtx;
     } else {
-        // Scrolling down: place item bottom kScrollCtx px above viewport bottom,
-        // so previous items remain visible above the newly focused one.
-        sc = focBottom + kScrollCtx - viewH;
+        // Push item down so its bottom lands kScrollCtx px above viewport bottom,
+        // keeping context items above it visible.
+        sc = before + (focBottom - bot) + kScrollCtx;
     }
     if (sc < 0) sc = 0;
     if (sc > maxS) sc = maxS;

@@ -15,11 +15,10 @@ namespace nema::shell {
 // One launcher tile/slot. Behaviour (what Activate does) lives in LauncherScreen,
 // keyed by index — the theme only needs what it takes to draw a slot.
 struct LauncherEntry {
-    const char*    label   = nullptr;
-    const char*    section = "Apps";  // group header ("Apps", "System", …)
-    const uint8_t* icon    = nullptr; // static 1-bit bitmap (row-major, MSB first)
-    uint8_t        iconW   = 0;
-    uint8_t        iconH   = 0;
+    const char*    label = nullptr;
+    const uint8_t* icon  = nullptr;   // static 1-bit bitmap (row-major, MSB first)
+    uint8_t        iconW = 0;
+    uint8_t        iconH = 0;
     // T2 animation: when set, skins show the current frame instead of `icon`.
     // The AnimationPlayer* is owned by LauncherScreen (one per entry, ticked in draw).
     nema::anim::AnimationPlayer* player = nullptr;

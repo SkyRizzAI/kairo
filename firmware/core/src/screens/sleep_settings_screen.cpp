@@ -168,6 +168,7 @@ void SleepSettingsScreen::onResume() {
     std::snprintf(infoScale_,    sizeof(infoScale_),    "%.4gx", (double)c.scale());
 
     scroll_.scrollMain = 0;
+    state_.focus.focused = 0;
     rt_.view().requestRedraw();
 }
 

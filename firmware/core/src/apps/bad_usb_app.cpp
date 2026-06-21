@@ -3,10 +3,11 @@
 #include "nema/hal/usb_hid.h"
 #include "nema/ui/widgets.h"
 #include "nema/ui/style_tokens.h"
-#include "nema/app/app_context.h"
+#include "nema/ui/view_dispatcher.h"
 #include "nema/runtime.h"
 #include "nema/log/logger.h"
 #include "nema/service/service_container.h"
+#include "nema/input/input_action.h"
 #include <cstdio>
 #include <cstring>
 
@@ -14,15 +15,17 @@ namespace nema {
 
 using namespace aether::ui;
 
-void BadUsbApp::onStart(AppContext& ctx) {
-    auto& rt = ctx.runtime();
-    fs_ = rt.fs();
-    hid_ = rt.container().resolve<IUsbHid>();
-    scanScripts(ctx);
+void BadUsbApp::onResume() {
+    fs_  = rt_.fs();
+    hid_ = rt_.container().resolve<IUsbHid>();
+    running_  = false;
+    selected_ = 0;
+    scanScripts();
+    dirty_ = true;
+    ComponentScreen::onResume();
 }
 
-void BadUsbApp::scanScripts(AppContext& ctx) {
-    (void)ctx;
+void BadUsbApp::scanScripts() {
     scripts_.clear();
     if (!fs_) return;
     std::vector<FsEntry> entries;
@@ -35,8 +38,48 @@ void BadUsbApp::scanScripts(AppContext& ctx) {
     }
 }
 
-aether::ui::UiNode* BadUsbApp::build(aether::ui::NodeArena& arena, AppContext& ctx) {
-    (void)ctx;
+void BadUsbApp::tick(uint64_t nowMs) {
+    ComponentScreen::tick(nowMs);
+    if (running_ && hid_) {
+        execNextCommand();
+        dirty_ = true;
+        requestRedraw();
+    }
+}
+
+void BadUsbApp::onAction(input::Action a) {
+    using input::Action;
+    if (running_) {
+        if (a == Action::Back) {
+            running_ = false;
+            if (hid_) hid_->releaseAll();
+            dirty_ = true;
+            requestRedraw();
+        }
+        return;
+    }
+    switch (a) {
+        case Action::Prev:
+        case Action::AdjustDown:
+            if (selected_ > 0) { selected_--; dirty_ = true; requestRedraw(); }
+            break;
+        case Action::Next:
+        case Action::AdjustUp:
+            if (selected_ < (int)scripts_.size() - 1) {
+                selected_++; dirty_ = true; requestRedraw();
+            }
+            break;
+        case Action::Activate:
+            if (!scripts_.empty() && hid_) startExecution();
+            break;
+        case Action::Back:
+            rt_.view().goBack();
+            break;
+        default: break;
+    }
+}
+
+aether::ui::UiNode* BadUsbApp::build(aether::ui::NodeArena& arena, Runtime&) {
     Style root; root.dir = FlexDir::Col; root.flexGrow = 1;
     root.padding = aether::theme().space.sm; root.gap = aether::theme().space.sm;
     root.align = Align::Stretch;
@@ -49,7 +92,7 @@ aether::ui::UiNode* BadUsbApp::build(aether::ui::NodeArena& arena, AppContext& c
             TitleBar(arena, "BadUSB"),
             SmartLabel(arena, "Running..."),
             SmartLabel(arena, prog),
-            SmartLabel(arena, "Hold Cancel to stop"),
+            SmartLabel(arena, "Back: stop"),
         });
     }
 
@@ -73,8 +116,7 @@ aether::ui::UiNode* BadUsbApp::build(aether::ui::NodeArena& arena, AppContext& c
             SmartLabel(arena, selectedName),
             SmartLabel(arena, count),
             SmartLabel(arena, "USB HID not enabled"),
-            SmartLabel(arena, "(TinyUSB pending)"),
-            SmartLabel(arena, "Up/Dn:sel Cancel:exit"),
+            SmartLabel(arena, "(TinyUSB mode required)"),
         });
     }
 
@@ -84,41 +126,12 @@ aether::ui::UiNode* BadUsbApp::build(aether::ui::NodeArena& arena, AppContext& c
             SmartLabel(arena, "Script:"),
             SmartLabel(arena, selectedName),
             SmartLabel(arena, count),
-            SmartLabel(arena, "Select: run"),
-            SmartLabel(arena, "Up/Dn: select"),
-            SmartLabel(arena, "Cancel: exit"),
+            SmartLabel(arena, "OK: run   Up/Dn: select"),
         }),
     });
 }
 
-bool BadUsbApp::onKey(Key k, AppContext& ctx) {
-    if (running_) {
-        if (k == Key::Cancel) {
-            running_ = false;
-            if (hid_) hid_->releaseAll();
-            return true;
-        }
-        return false;
-    }
-    switch (k) {
-        case Key::Up:
-            if (selected_ > 0) selected_--;
-            return true;
-        case Key::Down:
-            if (selected_ < (int)scripts_.size() - 1) selected_++;
-            return true;
-        case Key::Select:
-            if (!scripts_.empty() && hid_) startExecution(ctx);
-            return true;
-        case Key::Cancel:
-            ctx.requestExit(0);
-            return true;
-        default: break;
-    }
-    return false;
-}
-
-void BadUsbApp::startExecution(AppContext& ctx) {
+void BadUsbApp::startExecution() {
     if (scripts_.empty() || !fs_) return;
     std::vector<uint8_t> data;
     if (!fs_->read(scripts_[selected_].path, data)) return;
@@ -126,15 +139,11 @@ void BadUsbApp::startExecution(AppContext& ctx) {
     cmdIndex_ = 0;
     cmdTotal_ = parsedScript_.size();
     running_ = (cmdTotal_ > 0);
-    ctx.runtime().log().info("BadUsbApp", "executing",
+    rt_.log().info("BadUsbApp", "executing",
         {{"script", scripts_[selected_].name},
          {"cmds", std::to_string(cmdTotal_)}});
-}
-
-bool BadUsbApp::onTick(AppContext&) {
-    if (!running_ || !hid_) return false;
-    execNextCommand();
-    return true;
+    dirty_ = true;
+    requestRedraw();
 }
 
 void BadUsbApp::execNextCommand() {

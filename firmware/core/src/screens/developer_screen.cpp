@@ -11,6 +11,7 @@ DeveloperScreen::DeveloperScreen(Runtime& rt) : ComponentScreen(rt) {}
 
 void DeveloperScreen::onResume() {
     scroll_.scrollMain = 0;
+    state_.focus.focused = 0;
     rt_.view().requestRedraw();
 }
 

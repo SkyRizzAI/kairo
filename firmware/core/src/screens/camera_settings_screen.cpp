@@ -12,6 +12,7 @@ CameraSettingsScreen::CameraSettingsScreen(Runtime& rt) : ComponentScreen(rt, 64
 
 void CameraSettingsScreen::onResume() {
     scroll_.scrollMain = 0;
+    state_.focus.focused = 0;
     rt_.view().requestRedraw();
 }
 

@@ -12,6 +12,7 @@ SoundsSettingsScreen::SoundsSettingsScreen(Runtime& rt) : ComponentScreen(rt, 96
 
 void SoundsSettingsScreen::onResume() {
     scroll_.scrollMain = 0;
+    state_.focus.focused = 0;
     rt_.view().requestRedraw();
 }
 

@@ -55,6 +55,7 @@ void DesktopSettingScreen::onResume() {
     anchorIdx_ = findAnchorIdx();
     wallIdx_   = findWallIdx();
     scroll_.scrollMain = 0;
+    state_.focus.focused = 0;
     requestRedraw();
 }
 
