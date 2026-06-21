@@ -114,14 +114,20 @@ public:
     std::optional<std::string> fs_read_file(std::string_view name) override {
         nema::AppStorage stor(appId_, rt_.fs(), rt_.config(), false);
         std::vector<uint8_t> buf;
-        if (!stor.read(std::string(name).c_str(), buf)) return std::nullopt;
+        bool ok = stor.read(std::string(name).c_str(), buf);
+        rt_.log().info("AppStorage", ok ? "read ok" : "read miss",
+                       {{"app", appId_}, {"file", std::string(name)}});
+        if (!ok) return std::nullopt;
         return std::string(buf.begin(), buf.end());
     }
 
     bool fs_write_file(std::string_view name, std::string_view data) override {
         nema::AppStorage stor(appId_, rt_.fs(), rt_.config(), false);
-        return stor.write(std::string(name).c_str(),
-                          reinterpret_cast<const uint8_t*>(data.data()), data.size());
+        bool ok = stor.write(std::string(name).c_str(),
+                             reinterpret_cast<const uint8_t*>(data.data()), data.size());
+        rt_.log().info("AppStorage", ok ? "write ok" : "write FAIL",
+                       {{"app", appId_}, {"file", std::string(name)}, {"bytes", std::to_string(data.size())}});
+        return ok;
     }
 
     std::vector<std::string> fs_list_files() override {
