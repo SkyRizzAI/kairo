@@ -12,12 +12,13 @@
 namespace nema {
 
 static void drawIcon(Canvas& c, uint16_t x, uint16_t y, const nema::assets::Icon& ic, bool inv) {
-    // inv=true → invert pixels (white icon on dark status bar)
+    // inv=true → status bar is filled (ON), so icon 1-bits must be drawn OFF to
+    // produce a visible silhouette. inv=false → plain dark background, draw ON.
     for (uint8_t row = 0; row < ic.h; row++) {
         for (uint8_t col = 0; col < ic.w; col++) {
             uint32_t bit = (uint32_t)row * ic.w + col;
             bool on = (ic.data[bit / 8] >> (7 - (bit % 8))) & 1;
-            if (on != inv) c.drawPixel((uint16_t)(x + col), (uint16_t)(y + row));
+            if (on) c.drawPixel((uint16_t)(x + col), (uint16_t)(y + row), !inv);
         }
     }
 }
