@@ -11,6 +11,7 @@
 #include "nema/config/config_store.h"
 #include "nema/event/event_bus.h"
 #include "nema/apps/js_app_store.h"
+#include "nema/assets/anims/dolphin_sleep_panim.h"
 #include <string>
 #include <vector>
 #include <cstdlib>
@@ -74,6 +75,11 @@ void WasmPlatform::registerDrivers(Runtime& rt) {
     rootFs_.seed("/readme.txt", "Palanu virtual filesystem (in-RAM, volatile).\n"
                                 "See examples/ folder for sample apps.\n"
                                 "Copy .papp folders to /apps/ or /sd/apps/.\n");
+    // Seed dolphin desktop animation so the live wallpaper works out-of-the-box.
+    // sleep.panim = 4KB (128×64, 4 unique frames). doom.panim is on the hardware
+    // LittleFS and is the preferred default there, but the WASM MemFS is ephemeral.
+    rootFs_.mkdir("/anims");
+    rootFs_.write("/anims/sleep.panim", kDolphinSleepPanim, kDolphinSleepPanimLen);
     // Create empty scan roots (user uploads apps here)
     rootFs_.mkdir("/apps");
     rootFs_.mkdir("/data");
