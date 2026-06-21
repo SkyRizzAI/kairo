@@ -1,0 +1,6 @@
+{
+  "name": "@palanu-examples/counter",
+  "devDependencies": {
+    "nema": "workspace:*"
+  }
+}

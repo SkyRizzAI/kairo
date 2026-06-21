@@ -1,0 +1,10 @@
+{
+  "id": "com.palanu.example.sysinfo-wasm",
+  "name": "Sys Info (WASM)",
+  "version": "1.0.0",
+  "runtime": "wasm",
+  "mode": "cli",
+  "entry": "sysinfo.wasm",
+  "api_version": "1.0",
+  "category": "Demo"
+}

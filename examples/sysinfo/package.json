@@ -1,0 +1,6 @@
+{
+  "name": "@palanu-examples/sysinfo",
+  "devDependencies": {
+    "nema": "workspace:*"
+  }
+}
