@@ -145,29 +145,45 @@ struct AppManifest {
 
 **2c. Icon format**
 
-Pilihan format yang realistis untuk embedded:
-- **Raw RGB565** — langsung blit ke canvas, tidak perlu decoder. `icon.raw` = 32×32 × 2 bytes = 2 KB.
-- **PNG** — butuh decoder (lodepng/miniz), lebih fleksibel tapi +8–15 KB binary size.
+Icon di dalam `.papp` bundle **selalu raw RGB565** — tidak ada PNG di bundle, tidak ada
+decoder di firmware. Sederhana: firmware tinggal `memcpy` ke canvas buffer.
 
-Decision: **raw RGB565 dulu** (sudah ada `canvas.drawBitmap()`), PNG bisa Fase 4.
+```
+icon.raw = width(u16le) + height(u16le) + pixels(RGB565, row-major)
+         = 4 bytes header + (32 × 32 × 2) = 2052 bytes untuk icon 32×32
+```
+
+Developer boleh simpan `icon.png` di source app mereka, tapi SDK yang convert saat build.
+Yang masuk ke `.papp/` adalah `icon.raw` — bukan PNG.
+
+**Flow:**
+```
+[source]              [build]              [bundle]           [device]
+icon.png  ──sharp──►  icon.raw  ──pack──►  .papp/icon.raw  ──read──►  canvas.drawBitmap()
+```
 
 **2d. `AppListScreen` tampilkan icon**
 
-Icon di-load saat `installFromDir()` dan disimpan sebagai `std::vector<uint8_t>` di
-`AppManifest` (atau di-load lazy dari path). `AppListScreen` blit icon sebelum judul app.
+Icon di-load saat `installFromDir()` — baca file `icon.raw`, simpan raw bytes di
+`AppManifest::iconData`. `AppListScreen` blit via `canvas.drawBitmap()`.
+Jika tidak ada icon: tampilkan placeholder (kotak kosong atau initial huruf pertama nama app).
 
 **2e. `packages/app-sdk` — icon pipeline**
 
-Build tool sudah ada. Tambah: jika `icon.png` ada di source dir, convert ke RGB565 raw
-saat build. Bisa pakai `sharp` (sudah likely ada di bun ecosystem) atau `ffmpeg`.
+Build tool `packages/app-sdk/bin/build.ts` tambah step:
+1. Cek apakah `icon.png` ada di source dir
+2. Jika ada: convert ke RGB565 raw via `sharp` → tulis `dist/.../icon.raw`
+3. Update `manifest.json` di bundle: `"icon": "icon.raw"`
+4. Jika tidak ada: manifest tidak punya field `icon`, firmware pakai placeholder
 
 **Checklist Fase 2:**
-- [ ] `AppManifest` tambah field `iconPath` dan `iconData` (raw bytes)
-- [ ] `installFromDir()` baca `icon` dari manifest, load raw bytes dari file
-- [ ] `AppListScreen` tampilkan icon (32×32 fallback ke placeholder jika tidak ada)
-- [ ] `embedded_apps.h` format tidak berubah (embedded apps tidak punya icon untuk sekarang)
-- [ ] `packages/app-sdk/bin/build.ts` convert icon PNG → raw RGB565 jika ada
-- [ ] Test: app dengan icon muncul dengan icon di launcher
+- [ ] Definisikan format `icon.raw`: 4-byte header (w, h sebagai u16le) + RGB565 pixels
+- [ ] `AppManifest` tambah field `iconData` (`std::vector<uint8_t>`, kosong jika tidak ada icon)
+- [ ] `installFromDir()` baca `icon` dari manifest → load `icon.raw` → simpan di `iconData`
+- [ ] `AppListScreen` tampilkan icon via `canvas.drawBitmap()`, fallback ke placeholder
+- [ ] `embedded_apps.h` tidak punya icon untuk sekarang (placeholder)
+- [ ] `packages/app-sdk/bin/build.ts` convert `icon.png` → `icon.raw` saat build
+- [ ] Test: app dengan `icon.png` di source → bundle berisi `icon.raw` → muncul di launcher
 
 ---
 
