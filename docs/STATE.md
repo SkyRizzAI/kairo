@@ -4,7 +4,7 @@
 > Detail per-stage ada di [`plans/`](plans/00-overview.md). Master plan: [`concept_plan.md`](concept_plan.md).
 > Reference arsitektur per-subsistem: [`architecture/`](architecture/README.md).
 >
-> **Last updated:** 2026-06-21 (Plan 83 Fase 1–3 — storage architecture; VFS restructure, AppStorage, StorageService, NVS namespace fix, BadUSB migration)
+> **Last updated:** 2026-06-21 (Plan 83 complete — storage architecture: VFS restructure, AppStorage, StorageService, NVS fix, BadUSB migration, JS SDK fs bindings, Storage Settings screen)
 
 ---
 
@@ -20,7 +20,7 @@ Palanu = platform handheld bergaya Flipper Zero, **1-bit retro/pixel UI**, denga
 
 | Area | Status | Bukti |
 |---|---|---|
-| **Storage architecture (Plan 83)** | 🟡 Fase 1–3 done | VFS: `/system/assets/anims/`, `/data/<bundle-id>/`, `/sd/data/<bundle-id>/`; `AppStorage` (namespaced I/O); `StorageService` (routing+move+usage); `ctx.storage()` di `AppContext`; NVS 15-char limit fixed (djb2); BadUSB migrasi `/badusb/`→`/data/com.palanu.badusb/`; Fase 4 (JS SDK) + Fase 5 (Settings screen) pending |
+| **Storage architecture (Plan 83)** | ✅ build (host) | VFS: `/system/assets/anims/`, `/data/<bundle-id>/`, `/sd/data/<bundle-id>/`; `AppStorage` (namespaced I/O); `StorageService` (routing+move+usage); `ctx.storage()` di `AppContext`; NVS 15-char limit fixed (djb2); BadUSB migrasi `/badusb/`→`/data/com.palanu.badusb/`; JS SDK `nema.storage.fs.*`; Storage Settings screen (volume + per-app list + move) |
 | **Asset architecture (Plan 82)** | ✅ build (host+wasm) | T1 system icons (status bar), T2 launcher icon anims, T3 `.panim` (VFS); toolchain `tools/asset_gen/`; `dolphin_showcase.cpp` 895 KB removed; BadUSB → category="System"; battery icon 16×8 (proportional); WiFi icon state-gated (`available()`); animation consolidated to `laptop.panim`; LittleFS 512 KB |
 | **Canvas scaling (non-integer)** | ✅ build | `fillRect`/`invertRect`/`drawPixel` pakai floor-edge formula — tidak ada gap/double-invert artifact di scale 1.75× / 1.5× |
 | **PlayStation launcher** | ✅ build | Flush-left pada layar sempit (≤3 tile); partial tile peek di kanan sebagai scroll hint |

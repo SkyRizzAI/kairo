@@ -11,6 +11,7 @@
 #include "nema/screens/camera_settings_screen.h"
 #include "nema/screens/developer_screen.h"
 #include "nema/screens/profile_settings_screen.h"
+#include "nema/screens/storage_settings_screen.h"
 #include <memory>
 #include <vector>
 
@@ -27,7 +28,7 @@ public:
     aether::ui::UiNode* build(aether::ui::NodeArena& a, Runtime& rt) override;
 
 private:
-    enum Kind { Display, Controls, Wifi, Bluetooth, Remote, Touch, Sounds, Camera, Developer, About, Profile };
+    enum Kind { Display, Controls, Wifi, Bluetooth, Remote, Touch, Sounds, Camera, Developer, About, Profile, Storage };
     struct Item { SettingsScreen* self; Kind kind; const char* label; };
 
     AboutScreen          about_;
@@ -41,6 +42,7 @@ private:
     CameraSettingsScreen  cameraSettings_;
     DeveloperScreen      developer_;
     ProfileSettingsScreen profileSettings_;
+    StorageSettingsScreen storageSettings_;
 
     aether::ui::ScrollState   scroll_;
     std::vector<Item> items_;

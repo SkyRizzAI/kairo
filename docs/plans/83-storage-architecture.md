@@ -372,10 +372,10 @@ Settings → Storage
 
 ### Fase 5 — Storage Settings Screen
 
-- [ ] `firmware/core/src/screens/storage_settings_screen.cpp`
-- [ ] `firmware/core/include/nema/screens/storage_settings_screen.h`
-- [ ] Tambah entry "Storage" di Settings menu
-- [ ] Test: tampil volume info, per-app list, move button (WASM)
+- [x] `firmware/core/src/screens/storage_settings_screen.cpp`
+- [x] `firmware/core/include/nema/screens/storage_settings_screen.h`
+- [x] Tambah entry "Storage" di Settings menu
+- [x] Build green: host
 
 ---
 

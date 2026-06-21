@@ -65,6 +65,8 @@ set(AETHER_SRCS
     ${CMAKE_CURRENT_SOURCE_DIR}/../core/src/shell/launcher_wii.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../core/src/screens/app_list_screen.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../core/src/screens/file_browser_screen.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../core/src/screens/file_ops_modal.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../core/src/screens/file_text_viewer_screen.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../core/src/screens/logs_screen.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../core/src/screens/settings_screen.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../core/src/screens/wifi_settings_screen.cpp
@@ -82,6 +84,7 @@ set(AETHER_SRCS
     ${CMAKE_CURRENT_SOURCE_DIR}/../core/src/screens/camera_settings_screen.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../core/src/screens/developer_screen.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../core/src/screens/profile_settings_screen.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../core/src/screens/storage_settings_screen.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../core/src/screens/dolphin_demo.cpp
 )
 

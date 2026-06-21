@@ -12,7 +12,7 @@ using namespace aether::ui;
 SettingsScreen::SettingsScreen(Runtime& rt)
     : ComponentScreen(rt, 160), about_(rt), sleepSettings_(rt), wifiSettings_(rt),
       btSettings_(rt), remoteSettings_(rt), controls_(rt), touchSettings_(rt), sounds_(rt),
-      cameraSettings_(rt), developer_(rt), profileSettings_(rt) {}
+      cameraSettings_(rt), developer_(rt), profileSettings_(rt), storageSettings_(rt) {}
 
 void SettingsScreen::onResume() {
     scroll_.scrollMain = 0;
@@ -38,6 +38,7 @@ void SettingsScreen::launch(Kind k) {
         case Camera:     rt_.view().navigate(cameraSettings_);    break;
         case Developer:  rt_.view().navigate(developer_);        break;
         case Profile:    rt_.view().navigate(profileSettings_);   break;
+        case Storage:    rt_.view().navigate(storageSettings_);  break;
     }
 }
 
@@ -59,8 +60,9 @@ UiNode* SettingsScreen::build(NodeArena& a, Runtime& rt) {
         items_.push_back({this, Camera,   "Camera"});
     if (caps.has(caps::Profile))
         items_.push_back({this, Profile,  "Profile"});
+    items_.push_back({this, Storage,   "Storage"});
     items_.push_back({this, Developer, "Developer"});
-    items_.push_back({this, About,    "About"});
+    items_.push_back({this, About,     "About"});
 
     Style root; root.dir = FlexDir::Col; root.flexGrow = 1; root.align = Align::Stretch;
 
