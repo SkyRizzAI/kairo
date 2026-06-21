@@ -11,7 +11,7 @@ static std::string storNsKey(const std::string& bundleId) {
     uint32_t h = 5381;
     for (char c : bundleId) h = ((h << 5) + h) + (uint8_t)c;
     char buf[9];
-    snprintf(buf, sizeof(buf), "%08x", h);
+    snprintf(buf, sizeof(buf), "%08x", (unsigned int)h);
     return buf;
 }
 
