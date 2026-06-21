@@ -194,6 +194,10 @@ void Esp32Platform::postRegister(Runtime& rt) {
     }
     rt.log().info("Esp32Platform", "filesystem", {{"root", fsOk ? "littlefs" : "FAILED"}});
 
+    // Storage routing service — must init after VFS is ready.
+    storage_.init(rt);
+    rt.container().registerService(&storage_);
+
     // microSD (FAT) — only on boards that wire an SD socket (Plan 38). Non-fatal:
     // a missing card or failed mount just means "/sd" is absent; boot continues.
     // Once mounted, the VFS auto-surfaces "sd" when listing "/", so the File

@@ -10,6 +10,7 @@
 #include "nema/wasm/sim_ota_updater.h"
 #include "nema/services/cli_service.h"
 #include "nema/services/profile_service.h"
+#include "nema/services/storage_service.h"
 #include "nema/fs/mem_filesystem.h"
 #include "nema/fs/vfs.h"
 #include "nema/sim/sim_wifi_driver.h"
@@ -43,6 +44,7 @@ private:
     SimOtaUpdater      otaUpdater_;   // OTA dry-run for in-browser flow testing (Plan 39)
     CliService         cli_;
     ProfileService     profile_;   // owner identity (Plan 40)
+    StorageService     storage_;   // app data routing + management (Plan 83)
     Vfs                vfs_;       // mount table (root + demo /sd)
     MemFileSystem      rootFs_;    // mounted at "/"
     MemFileSystem      sdFs_;      // mounted at "/sd" (demonstrates a 2nd partition)

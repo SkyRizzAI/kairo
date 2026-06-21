@@ -17,6 +17,7 @@
 #include "nema/services/remote_service.h"
 #include "nema/services/cli_service.h"
 #include "nema/services/profile_service.h"
+#include "nema/services/storage_service.h"
 #include "nema/fs/mem_filesystem.h"
 #include "nema/fs/vfs.h"
 #include "nema/esp32/littlefs_filesystem.h"
@@ -68,6 +69,7 @@ private:
     Esp32OtaUpdater    otaUpdater_;   // firmware OTA via esp_ota (Plan 39)
     CliService         cli_;
     ProfileService     profile_;   // owner identity (Plan 40)
+    StorageService     storage_;   // app data routing + management (Plan 83)
     Vfs                vfs_;       // mount table
     LittleFsFileSystem rootFs_;    // "/"   — persistent (internal flash)
     MemFileSystem      tmpFs_;     // "/tmp" — volatile scratch (RAM)

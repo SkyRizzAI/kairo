@@ -87,6 +87,11 @@ void WasmPlatform::registerDrivers(Runtime& rt) {
     sdFs_.mkdir("/assets");     // appears as /sd/assets in VFS
     sdFs_.mkdir("/assets/anims");
     sdFs_.seed("/card.txt", "Drop .papp folders here. Scanned recursively.\n");
+
+    // Storage routing service — must init after VFS is ready (rt.setFs called above).
+    storage_.init(rt);
+    rt.container().registerService(&storage_);
+
     remote_.attachFs(vfs_);
 
     remote_.onReady(&WasmPlatform::readyThunk, this); // push current screen on connect (after auth)
