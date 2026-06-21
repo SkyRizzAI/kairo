@@ -106,6 +106,9 @@ constexpr int PIN_CAM_D7    = 6;
 constexpr uint8_t I2C_ADDR_ES7243E = 0x11;   // Audio ADC
 constexpr uint8_t I2C_ADDR_GC2145  = 0x3C;   // Camera SCCB
 
+// ── Secure element ─────────────────────────────────────────────────────────
+constexpr uint8_t I2C_ADDR_SE050   = 0x48;   // NXP SE050 (U18), reset via P0_SE_RST
+
 // ── Board Profile (physical layout) ───────────────────────────────────────
 // SkyRizz E32: TFT LCD center, 3 buttons below, 2 buttons on right side.
 //

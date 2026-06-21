@@ -8,6 +8,7 @@ idf_component_register(
         "src/es7243e_mic.cpp"
         "src/i2s_speaker.cpp"
         "src/gc2145_camera.cpp"
+        "src/se050_driver.cpp"
     INCLUDE_DIRS "include"
     REQUIRES
         core

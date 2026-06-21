@@ -13,6 +13,7 @@
 #include "nema/fs/mem_filesystem.h"
 #include "nema/fs/vfs.h"
 #include "nema/sim/sim_wifi_driver.h"
+#include "nema/wasm/sim_secure_element.h"
 
 namespace nema {
 
@@ -46,6 +47,7 @@ private:
     MemFileSystem      rootFs_;    // mounted at "/"
     MemFileSystem      sdFs_;      // mounted at "/sd" (demonstrates a 2nd partition)
     SimWifiDriver      wifi_;
+    SimSecureElement   secure_;    // software-emulated SE050 (Plan: crypto wallet)
     Runtime*           rt_ = nullptr;
 };
 

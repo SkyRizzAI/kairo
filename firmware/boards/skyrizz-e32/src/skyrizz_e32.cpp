@@ -92,6 +92,14 @@ void SkyRizzE32::describeHardware(Runtime& rt) {
     rt.hardware().add({"camera", DriverKind::Other, "GC2145 2MP @0x3C"});
     rt.capabilities().add(caps::Camera);
 
+    // Secure element — NXP SE050 (U18, shared I²C @0x48, reset via XL9535 P03).
+    // HW root-of-trust for the generic ISecureElement HAL; apps gate on
+    // caps::Secure. Crypto ops are scaffolded (ADR 0005) pending NXP middleware.
+    secure_.init(rt, expander_);
+    rt.container().registerAs<ISecureElement>(&secure_);
+    rt.hardware().add({"secure", DriverKind::Other, "NXP SE050 @0x48"});
+    rt.capabilities().add(caps::Secure);
+
     rt.log().info("SkyRizzE32", "hardware described",
         {{"mcu", "ESP32-S3-WROOM-1-N16R8"}, {"flash", "16MB"}, {"psram", "8MB"}});
 }

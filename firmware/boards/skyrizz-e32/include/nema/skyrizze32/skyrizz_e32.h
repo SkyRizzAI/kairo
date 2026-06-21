@@ -8,6 +8,7 @@
 #include "nema/skyrizze32/es7243e_mic.h"
 #include "nema/skyrizze32/i2s_speaker.h"
 #include "nema/skyrizze32/gc2145_camera.h"
+#include "nema/skyrizze32/se050_driver.h"
 
 namespace nema::skyrizze32 {
 
@@ -28,6 +29,7 @@ private:
     Es7243eMic      mic_;
     I2sSpeaker      speaker_;
     Gc2145Camera    camera_;
+    Se050Driver     secure_;
 };
 
 } // namespace nema::skyrizze32

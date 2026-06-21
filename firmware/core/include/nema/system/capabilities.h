@@ -51,5 +51,7 @@ inline constexpr const char* Storage       = "storage";
 inline constexpr const char* RemoteUsb     = "remote.usb";
 inline constexpr const char* RemoteNet     = "remote.net";   // Plan 75 — PLP over WebSocket
 inline constexpr const char* Profile       = "profile";
+inline constexpr const char* Secure        = "secure.element"; // HW root-of-trust (SE050 / ATECC608B)
+inline constexpr const char* SecureStore   = "secure.store";   // SE050-only secured key-value
 
 } // namespace nema::caps

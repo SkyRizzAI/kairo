@@ -83,6 +83,12 @@ void WasmPlatform::registerDrivers(Runtime& rt) {
 
     remote_.onReady(&WasmPlatform::readyThunk, this); // push current screen on connect (after auth)
 
+    // Secure element — software-emulated SE050 so the crypto-wallet feature can
+    // be developed/tested in the browser. Apps gate on caps::Secure (ADR 0005).
+    rt.container().registerAs<ISecureElement>(&secure_);
+    rt.hardware().add({"secure", DriverKind::Other, "sim SE050 (software)"});
+    rt.capabilities().add(caps::Secure);
+
     rt.hardware().add({"display", DriverKind::Display, "wasm 1-bit (remote)"});
     rt.capabilities().add(caps::Display);
     rt.capabilities().add(caps::Input);
