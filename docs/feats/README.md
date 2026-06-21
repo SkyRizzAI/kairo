@@ -14,6 +14,7 @@
 | File browser & storage (VFS) | [`file-browser.md`](file-browser.md) |
 | Custom apps (JS `.papp` + SDK) | [`custom-apps.md`](custom-apps.md) |
 | WiFi connectivity | [`wifi-connectivity.md`](wifi-connectivity.md) |
+| Secure element (HW root-of-trust; crypto-wallet foundation) | [`secure-element.md`](secure-element.md) |
 | Asset loader & animation pipeline | [`asset-loader.md`](asset-loader.md) |
 | Dolphin showcase — system screen | [`dolphin-system-screen.md`](dolphin-system-screen.md) |
 | Dolphin showcase — custom app | [`dolphin-custom-app.md`](dolphin-custom-app.md) |

@@ -4,7 +4,7 @@
 > Detail per-stage ada di [`plans/`](plans/00-overview.md). Master plan: [`concept_plan.md`](concept_plan.md).
 > Reference arsitektur per-subsistem: [`architecture/`](architecture/README.md).
 >
-> **Last updated:** 2026-06-21
+> **Last updated:** 2026-06-21 (Secure element HAL scaffold — ADR 0005)
 
 ---
 
@@ -36,6 +36,7 @@ Palanu = platform handheld bergaya Flipper Zero, **1-bit retro/pixel UI**, denga
 | **HTTP client HAL** (sim=curl, esp32=esp_http_client+TLS) | ✅ build | sim live Binance 200 |
 | **Ticker app** (BTC/USD via Binance, fetch di worker, UI tak freeze) | ✅ build | sim ✓ (HW pending) |
 | **Sim WiFi "router"** interaktif (network list, password, RSSI, online toggle) | ✅ | web panel + 4-skenario ✓ |
+| **Secure element HAL** (`ISecureElement`, `caps::Secure`; backend SE050 skyrizz + sim) | 🟡 scaffold | build host+wasm+esp32 ✓; ops crypto TODO (ADR 0005) — fondasi crypto wallet |
 
 **Pilar arsitektur "tidak pernah freeze" terbukti:** scan WiFi (1-3s) dan HTTP fetch (1-3s) jalan di `TaskRunner` worker thread sementara UI tetap render & responsif. Reference firmware-nya sendiri komentar "freezes UI during fetch" — Palanu tidak.
 
@@ -65,12 +66,18 @@ Nama kernel: **Nema** (νῆμα = "benang/thread"), namespace `nema::nema`. "Fu
 ## Navigasi UI
 
 ```
-Home (Apps / Logs / Settings)
- ├── Apps → AppRegistry.list() → launch app (thread sendiri via AppHost)
- │     Clock · Counter (+modal) · Stopwatch (fullscreen) · Task Demo · Ticker
- ├── Logs → uptime + jumlah app
- └── Settings → WiFi (→ WifiApp) · About (board/fw/caps)
+Desktop (live wallpaper, idle) — Plan 81
+ └── OK → Launcher (skin: PlayStation carousel | Nintendo Wii grid)
+       ├── Apps → AppRegistry.list() → launch app (thread sendiri via AppHost)
+       │     Clock · Counter (+modal) · Stopwatch (fullscreen) · Task Demo · Ticker
+       ├── Files · Dolphin · Logs
+       └── Settings → Display & Appearances (Theme/Desktop/Launcher/AssetsPack/StatusBar)
+             · WiFi · About (board/fw/caps)
 ```
+
+> Shell skins are swappable via `nema::shell` (Plan 81 / ADR 0004): Desktop and
+> Launcher each pick a skin from config (`display/desktop`, `display/launcher`).
+> See [`feats/shell-desktop-launcher.md`](feats/shell-desktop-launcher.md).
 
 ---
 

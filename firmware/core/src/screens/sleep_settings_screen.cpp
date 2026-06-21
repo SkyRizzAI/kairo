@@ -24,13 +24,19 @@ const SleepSettingsScreen::Option SleepSettingsScreen::kLockOpts[kLockCount] = {
     {"Off", DisplayPowerManager::kNever},
 };
 const char* SleepSettingsScreen::kThemeNames[kThemeCount] =
-    {"default", "compact", "large"};
+    {"flipper", "compact", "large"};
 const float SleepSettingsScreen::kScaleVals[kScaleCount] =
     {1.0f, 1.25f, 1.5f, 1.75f, 2.0f};
 const char* SleepSettingsScreen::kScaleLabels[kScaleCount] =
     {"1x", "1.25x", "1.5x", "1.75x", "2x"};
+const char* SleepSettingsScreen::kDesktopNames[kDesktopCount]   = {"livewal"};
+const char* SleepSettingsScreen::kDesktopLabels[kDesktopCount]  = {"live wallpaper"};
+const char* SleepSettingsScreen::kLauncherNames[kLauncherCount] = {"playsta", "wii"};
+const char* SleepSettingsScreen::kLauncherLabels[kLauncherCount]= {"Playstation 5", "Nintendo WII"};
+const char* SleepSettingsScreen::kAssetNames[kAssetCount]       = {"palanu"};
 
-SleepSettingsScreen::SleepSettingsScreen(Runtime& rt) : ComponentScreen(rt) {}
+SleepSettingsScreen::SleepSettingsScreen(Runtime& rt)
+    : ComponentScreen(rt), desktopSetting_(rt) {}
 
 int SleepSettingsScreen::findSleepIdx() const {
     uint64_t cur = rt_.dpm().sleepMs();
@@ -44,9 +50,17 @@ int SleepSettingsScreen::findLockIdx() const {
 }
 
 int SleepSettingsScreen::findThemeIdx() const {
-    std::string cur = rt_.config().getString("display", "theme", "default");
+    std::string cur = rt_.config().getString("display", "theme", kThemeNames[0]);
     for (int i = 0; i < kThemeCount; i++)
         if (cur == kThemeNames[i]) return i;
+    return 0;   // unknown / legacy "default" → flipper (index 0)
+}
+int SleepSettingsScreen::findNameIdx(const char* ns, const char* key,
+                                     const char* const* names, int count,
+                                     const char* def) const {
+    std::string cur = rt_.config().getString(ns, key, def);
+    for (int i = 0; i < count; i++)
+        if (cur == names[i]) return i;
     return 0;
 }
 int SleepSettingsScreen::findScaleIdx() const {
@@ -101,19 +115,49 @@ void SleepSettingsScreen::toggleFps() {
     rt_.setShowFps(on);
     rt_.config().setInt("debug", "fps", on ? 1 : 0);
 }
+// Shell appearance rows (Plan 81). Each persists the selected name; the Desktop /
+// Launcher screens re-read it on resume, so the new skin shows next time they open.
+void SleepSettingsScreen::cycleDesktop(int dir) {
+    desktopIdx_ = (desktopIdx_ + dir + kDesktopCount) % kDesktopCount;
+    rt_.config().setString("display", "desktop", kDesktopNames[desktopIdx_]);
+}
+void SleepSettingsScreen::cycleLauncher(int dir) {
+    launcherIdx_ = (launcherIdx_ + dir + kLauncherCount) % kLauncherCount;
+    rt_.config().setString("display", "launcher", kLauncherNames[launcherIdx_]);
+}
+void SleepSettingsScreen::cycleAsset(int dir) {
+    assetIdx_ = (assetIdx_ + dir + kAssetCount) % kAssetCount;
+    rt_.config().setString("display", "assets", kAssetNames[assetIdx_]);
+}
+void SleepSettingsScreen::toggleStatusBar() {
+    bool on = rt_.config().getIntOr("display", "statusbar", 1) == 0;  // flip
+    rt_.config().setInt("display", "statusbar", on ? 1 : 0);
+    rt_.view().requestRedraw();
+}
+void SleepSettingsScreen::openDesktopSetting() {
+    rt_.view().navigate(desktopSetting_);
+}
 
 void SleepSettingsScreen::sleepAdj(void* u, int dir){ static_cast<SleepSettingsScreen*>(u)->cycleSleep(dir); }
 void SleepSettingsScreen::lockAdj(void* u, int dir) { static_cast<SleepSettingsScreen*>(u)->cycleLock(dir); }
 void SleepSettingsScreen::themeAdj(void* u, int dir){ static_cast<SleepSettingsScreen*>(u)->cycleTheme(dir); }
 void SleepSettingsScreen::scaleAdj(void* u, int dir){ static_cast<SleepSettingsScreen*>(u)->cycleScale(dir); }
+void SleepSettingsScreen::desktopAdj(void* u, int dir) { static_cast<SleepSettingsScreen*>(u)->cycleDesktop(dir); }
+void SleepSettingsScreen::launcherAdj(void* u, int dir){ static_cast<SleepSettingsScreen*>(u)->cycleLauncher(dir); }
+void SleepSettingsScreen::assetAdj(void* u, int dir)   { static_cast<SleepSettingsScreen*>(u)->cycleAsset(dir); }
 void SleepSettingsScreen::onFps(void* u)            { static_cast<SleepSettingsScreen*>(u)->toggleFps(); }
 void SleepSettingsScreen::fpsAdj(void* u, int)      { static_cast<SleepSettingsScreen*>(u)->toggleFps(); }
+void SleepSettingsScreen::statusAdj(void* u, int)   { static_cast<SleepSettingsScreen*>(u)->toggleStatusBar(); }
+void SleepSettingsScreen::onDesktopSetting(void* u) { static_cast<SleepSettingsScreen*>(u)->openDesktopSetting(); }
 
 void SleepSettingsScreen::onResume() {
     sleepIdx_ = findSleepIdx();
     lockIdx_  = findLockIdx();
     themeIdx_ = findThemeIdx();
     scaleIdx_ = findScaleIdx();
+    desktopIdx_  = findNameIdx("display", "desktop",  kDesktopNames,  kDesktopCount,  kDesktopNames[0]);
+    launcherIdx_ = findNameIdx("display", "launcher", kLauncherNames, kLauncherCount, kLauncherNames[0]);
+    assetIdx_    = findNameIdx("display", "assets",   kAssetNames,    kAssetCount,    kAssetNames[0]);
 
     // Format display info once on enter — these don't change while the screen is open.
     auto& c = rt_.canvas();
@@ -142,6 +186,11 @@ UiNode* SleepSettingsScreen::build(NodeArena& a, Runtime&) {
         ListEntry e; e.label = label; e.value = value;   // display-only (no onPress)
         return ListItemRow(a, e);
     };
+    auto nav = [&](const char* label, void (*press)(void*)) {
+        ListEntry e; e.label = label; e.chevron = true;  // navigation row "label  >"
+        e.onPress = press; e.user = this;
+        return ListItemRow(a, e);
+    };
 
     return View(a, root, {
         ListContainer(a, scroll_, {
@@ -150,8 +199,14 @@ UiNode* SleepSettingsScreen::build(NodeArena& a, Runtime&) {
             input("Lock Screen After", kLockOpts[lockIdx_].label,   lockAdj),
             input("Debug FPS",         rt_.showFps() ? "ON" : "OFF", fpsAdj),
             ListSection(a, "Appearances"),
-            input("Theme",    kThemeNames[themeIdx_],   themeAdj),
-            input("UI Scale", kScaleLabels[scaleIdx_],  scaleAdj),
+            input("Theme",          kThemeNames[themeIdx_],     themeAdj),
+            input("Desktop",        kDesktopLabels[desktopIdx_],  desktopAdj),
+            nav  ("Desktop Setting",                             onDesktopSetting),
+            input("Launcher",       kLauncherLabels[launcherIdx_], launcherAdj),
+            input("Assets Pack",    kAssetNames[assetIdx_],     assetAdj),
+            input("Status Bar",     rt_.config().getIntOr("display", "statusbar", 1) ? "ON" : "OFF",
+                                                                statusAdj),
+            input("UI Scale",       kScaleLabels[scaleIdx_],    scaleAdj),
             ListSection(a, "Info"),
             info("Logical",  infoLogical_),
             info("Physical", infoPhysical_),

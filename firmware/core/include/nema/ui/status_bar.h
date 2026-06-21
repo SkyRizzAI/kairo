@@ -10,6 +10,7 @@ struct StatusBarData {
     int  minute  = 0;
     int  battery = 100;   // 0–100
     bool wifi    = false;
+    bool visible = true;  // Plan 81: global Status Bar ON/OFF (display/statusbar)
     const char* version = "v0.1";
 };
 

@@ -33,11 +33,11 @@ void AetherServer::renderFrame(Canvas& c, ViewDispatcher& vd, const StatusBarDat
     if (auto* s = vd.active()) {
         switch (s->mode()) {
         case ScreenMode::Normal:
-            StatusBar::draw(c, status);
+            if (status.visible) StatusBar::draw(c, status);   // Plan 81: global ON/OFF
             break;
         case ScreenMode::Modal: {
             if (auto* bg = vd.previous()) {
-                if (bg->mode() == ScreenMode::Normal) StatusBar::draw(c, status);
+                if (bg->mode() == ScreenMode::Normal && status.visible) StatusBar::draw(c, status);
                 bg->draw(c);
             }
             // Plan 70: dim the background with a 50% dither pattern before drawing the modal

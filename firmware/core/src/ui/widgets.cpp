@@ -130,15 +130,20 @@ UiNode* Icon(NodeArena& a, const uint8_t* bitmap, uint8_t w_px, uint8_t h_px,
 }
 
 UiNode* TitleBar(NodeArena& a, const char* title) {
-    // A Title-role Text node with a filled background; the renderer fills the
-    // box and draws the glyphs inverted (white). Themed padding; stretches full
-    // width when placed in a Stretch Col.
-    UiNode* n = Text(a, title, TextRole::Title);
-    if (n) {
-        n->style.background = true;
-        n->style.padding    = aether::theme().space.sm;
-    }
-    return n;
+    // Plan 81: a screen title is a subtle bold header (Subhead = Bold8), left-inset
+    // and aligned with row labels — NOT a big filled Title banner (Title is 3× under
+    // the "large" theme, which dwarfs everything). Same restrained look as a
+    // ListSection so every screen's header stays small + consistent.
+    Style col; col.dir = FlexDir::Col; col.align = Align::Start;
+    Style row; row.dir = FlexDir::Row; row.align = Align::Center;
+    Style top; top.height = 2;                       // (vspace/hspace are defined
+    Style bot; bot.height = 3;                       //  lower in this file, so the
+    Style left; left.width = 5; left.height = 1;     //  spacers are inlined here)
+    return View(a, col, {
+        View(a, top, {}),
+        View(a, row, { View(a, left, {}), Text(a, title, TextRole::Subhead) }),
+        View(a, bot, {}),
+    });
 }
 
 UiNode* ListRow(NodeArena& a, const char* label, void (*onPress)(void*), void* userdata) {
@@ -250,10 +255,12 @@ UiNode* ListInputRow(NodeArena& a, const ListInput& e) {
     UiNode* lchev = View(a, cv, { e.canPrev ? Text(a, "<", TextRole::Body) : nullptr });
     UiNode* rchev = View(a, cv, { e.canNext ? Text(a, ">", TextRole::Body) : nullptr });
 
-    // Value column — centered between the chevrons, also flex-basis:0.
+    // Value column — centered between the chevrons, also flex-basis:0. SmartLabel so
+    // long values (e.g. "Playstation 5", "live wallpaper") ellipsis when unfocused
+    // and marquee-scroll when the row is focused (Plan 81); short values fit as-is.
     Style vc; vc.dir = FlexDir::Row; vc.align = Align::Center; vc.justify = Justify::Center;
     vc.flexGrow = RIGHT_W; vc.flexZero = true;
-    UiNode* vbox = View(a, vc, { Text(a, e.value ? e.value : "", TextRole::Body) });
+    UiNode* vbox = View(a, vc, { SmartLabel(a, e.value ? e.value : "") });
 
     // Flat row: [5px] label | < | value | > | [4px]
     Style s; s.dir = FlexDir::Row; s.align = Align::Center;

@@ -54,6 +54,15 @@ set(AETHER_SRCS
     ${CMAKE_CURRENT_SOURCE_DIR}/../core/src/js/js_runtime.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../core/src/js/nema_host_impl.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../core/src/screens/home_screen.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../core/src/screens/desktop_screen.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../core/src/screens/launcher_screen.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../core/src/screens/desktop_setting_screen.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../core/src/shell/desktop_theme.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../core/src/shell/blit.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../core/src/shell/desktop_livewall.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../core/src/shell/shell_factory.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../core/src/shell/launcher_playstation.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../core/src/shell/launcher_wii.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../core/src/screens/app_list_screen.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../core/src/screens/file_browser_screen.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../core/src/screens/logs_screen.cpp

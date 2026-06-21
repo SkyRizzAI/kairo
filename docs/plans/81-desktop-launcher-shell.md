@@ -191,41 +191,47 @@ retired (its carousel lives on inside `PlayStationLauncher`).
 ## Tasks
 
 ### Phase 1 — Shell scaffolding
-- [ ] Create `nema/shell/launcher_model.h` — `LauncherEntry` + fixed system entry builder.
-- [ ] Create `nema/shell/launcher_theme.h` (`ILauncherTheme`) and `desktop_theme.h` (`IDesktopTheme`).
-- [ ] Create `shell/shell_factory.{h,cpp}` — `makeDesktop`/`makeLauncher` (default-fallback).
-- [ ] Define config keys + defaults: `display/desktop=livewal`, `display/launcher=playsta`, `display/assets=palanu`, `display/statusbar=1`.
+- [x] `nema/shell/launcher_theme.h` — `LauncherEntry`/`LauncherModel` + `ILauncherTheme` (model built in `LauncherScreen`).
+- [x] `nema/shell/launcher_theme.h` (`ILauncherTheme`) and `desktop_theme.h` (`IDesktopTheme` + FitMode/Anchor tables).
+- [x] `shell/shell_factory.{h,cpp}` — `makeDesktop`/`makeLauncher` (default-fallback).
+- [x] Config keys + defaults wired via screen reads: `display/desktop=livewal`, `display/launcher=playsta`, `display/assets=palanu`, `display/statusbar=1`.
 
 ### Phase 2 — Desktop
-- [ ] `drawBitmapFit(frame,w,h,fit,anchor)` blit helper — nearest-neighbour scale + 9-grid anchor (center/stretch/crop/fit).
-- [ ] `LiveWallpaperDesktop` skin (`livewal`) — reuse an existing dolphin animation as wallpaper source; draw via `drawBitmapFit` + `tick()`.
-- [ ] `DesktopScreen` (Fullscreen) — build theme from config, forward draw/tick, `Activate`→Launcher.
-- [ ] Register wallpaper animation player with `AnimationManager`.
+- [x] `blitFit()` helper (in `desktop_livewall.cpp`) — nearest-neighbour scale + 9-grid anchor (center/stretch/crop/fit).
+- [x] `LiveWallpaperDesktop` skin (`livewal`) — reuses dolphin showcase animation; draws via `blitFit`.
+- [x] `DesktopScreen` — builds skin from config, forwards draw, `Activate`→Launcher; Normal vs Fullscreen per status-bar flag.
+- [x] Register/unregister wallpaper animation player with `AnimationManager` across resume/pause.
 
 ### Phase 3 — Launcher
-- [ ] `LauncherScreen` — model + cursor + generic grid nav via `columns()`; `Activate` runs entry; Back→Desktop.
-- [ ] `PlayStationLauncher` (`playsta`) — port `HomeScreen::draw()` carousel; title from device name.
-- [ ] `WiiLauncher` (`wii`) — 2-column channel-tile grid + scrollbar, resolution-independent.
-- [ ] Wire `Apps ›` entry → `AppListScreen`; verify Files/Dolphin/Logs/Settings/BadUSB/Package route correctly.
+- [x] `LauncherScreen` — model + cursor + linear nav (board-agnostic); `Activate` runs entry; Back→Desktop.
+- [x] `PlayStationLauncher` (`playsta`) — ported `HomeScreen::draw()` carousel; title from `profile/name`.
+- [x] `WiiLauncher` (`wii`) — 2-column channel-tile grid + scrollbar, resolution-independent.
+- [x] Wire `Apps` entry → `AppListScreen`; Files/Dolphin/Logs/Settings route via owned sub-screens. (BadUSB/Package live under Apps per confirmed model.)
 
 ### Phase 4 — Settings (Display & Appearances)
-- [ ] Rename Theme value `default` → `flipper` (display + config), with back-compat read of `"default"`.
-- [ ] Add `Desktop`, `Launcher`, `Assets Pack` cycle rows + persistence.
-- [ ] Add `Status Bar` toggle row + gate in `GuiService` / shell screens.
-- [ ] Add `Desktop Setting ›` as a **navigation row** (chevron, `onPress`→ `rt_.view().navigate(desktopSetting_)`).
-- [ ] New `DesktopSettingScreen` (own sub-screen) — cycle rows: Wallpaper pick · `Fit` (center/stretch/crop/fit) · `Anchor` (9-grid), each persisting `desktop/wallpaper` / `desktop/fit` / `desktop/anchor`; changes redraw the desktop on back.
+- [x] Rename Theme value `default` → `flipper` (display + config), with back-compat read of `"default"`.
+- [x] Add `Desktop`, `Launcher`, `Assets Pack` cycle rows + persistence.
+- [x] Add `Status Bar` toggle row + gate in the shell screens (Normal/Fullscreen).
+- [x] Add `Desktop Setting ›` as a **navigation row** (chevron, `onPress`→ `navigate(desktopSetting_)`).
+- [x] New `DesktopSettingScreen` (own sub-screen) — cycle rows: Wallpaper · `Fit` · `Anchor`, persisting `desktop/wallpaper` / `desktop/fit` / `desktop/anchor`.
 
 ### Phase 5 — Cleanup & wiring
-- [ ] Swap boot push `HomeScreen` → `DesktopScreen` in all `targets/*/main.cpp`.
-- [ ] Retire `HomeScreen` (delete or keep only if still referenced).
-- [ ] Minimal Assets Pack wiring: cycle lists available packs (just `palanu` now), persists, applied at boot.
+- [x] Swap boot push `HomeScreen` → `DesktopScreen` in all targets (skyrizz-e32, dev-board, wasm).
+- [ ] Retire `HomeScreen` — now unreferenced by any target; kept in-tree for now (delete in a follow-up once confirmed unneeded).
+- [~] Assets Pack: cycle persists `display/assets`; actual pack loading at boot deferred (Plan 71 Phase 2).
 
 ### Phase 6 — Verify & docs
-- [ ] Build green: host (`nema_core`+`aether`), wasm, esp32 (`skyrizz-e32`).
-- [ ] Manual check in simulator: boot→desktop, OK→launcher, switch playsta↔wii, back→desktop.
-- [ ] Flash + verify on `skyrizz-e32`.
-- [ ] Docs: update `STATE.md`; add `docs/feats/shell-desktop-launcher.md`; ADR for the shell/skin split (`IDesktopTheme`/`ILauncherTheme` + config-driven selection); tick this checklist.
-- [ ] Conventional commit(s) so the changelog regenerates.
+- [x] Build green: host (12 ctest pass), wasm, esp32 (`skyrizz-e32`).
+- [x] Manual check in simulator: boot→desktop (live dolphin), OK→launcher, switch playsta↔wii, back→desktop — all verified via Forge.
+- [x] Visual rework (post-review): headers use Subhead not Title (no giant "PALANU" banner); Wii skin = drop-shadow channel tiles with scaled-up icons, 2 rows visible.
+- [x] PlayStation skin (2nd pass): focused tile enlarged with the app name to the right; dot indicator replaced by a **horizontal Flipper-style scrollbar** along the bottom.
+- [x] PlayStation skin (3rd pass, per ref #8): focused tile keeps the **same outline + transparent fill** as neighbours (just larger); "Launch" is a **filled chip in the border colour with inverted text**; strip **vertically centred** (responsive on any panel); tile/icon/Launch/name all scale together with the theme (sized off Subhead height).
+- [x] Settings: friendly display names that **marquee** when long — Launcher `Playstation 5`/`Nintendo WII`, Desktop `live wallpaper` (config keys stay `playsta`/`wii`/`livewal`); `ListInputRow` value switched to `SmartLabel`.
+- [x] Status Bar ON/OFF now **global + immediate**: `StatusBarData.visible` set from `display/statusbar` each frame in `GuiService`, gated in `AetherServer::renderFrame` → bar hidden on every screen when OFF.
+- [x] Live wallpaper default changed to fit=`fit`, anchor=`center`.
+- [ ] Flash + verify on `skyrizz-e32`. *(pending hardware)*
+- [x] Docs: updated `STATE.md`; added `docs/feats/shell-desktop-launcher.md` + ADR 0004; ticked this checklist.
+- [ ] Conventional commit(s) so the changelog regenerates. *(awaiting go-ahead)*
 
 ---
 

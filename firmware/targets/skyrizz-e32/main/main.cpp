@@ -12,7 +12,7 @@
 #include "nema/apps/hello_app.h"
 #include "nema/apps/bad_usb_app.h"
 #include "nema/apps/dolphin_app.h"
-#include "nema/screens/home_screen.h"
+#include "nema/screens/desktop_screen.h"
 #include "nema/ui/view_dispatcher.h"
 #include "aether/boot.h"
 
@@ -45,8 +45,8 @@ void setup() {
 
     nema::loadEmbeddedJsApps(rt);
 
-    static nema::HomeScreen hs(rt);
-    rt.view().push(hs);
+    static nema::DesktopScreen desktop(rt);   // Plan 81: idle wallpaper → launcher
+    rt.view().push(desktop);
 
     rt.log().info("Boot", "ready");
 }
