@@ -164,7 +164,7 @@ UiNode* WifiIpConfigScreen::build(NodeArena& a, Runtime& rt) {
         append(ListItemRow(a, e));
     }
 
-    return View(a, root, { TitleBar(a, "Configure IP"), list });
+    return View(a, root, { list });
 }
 
 } // namespace nema

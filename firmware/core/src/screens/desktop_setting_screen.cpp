@@ -70,7 +70,6 @@ UiNode* DesktopSettingScreen::build(NodeArena& a, Runtime&) {
     };
 
     return View(a, root, {
-        TitleBar(a, "Desktop"),
         ListContainer(a, scroll_, {
             ListSection(a, "Wallpaper"),
             input("Wallpaper", kWallNames[wallIdx_],            wallAdj),

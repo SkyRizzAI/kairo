@@ -194,7 +194,6 @@ UiNode* SleepSettingsScreen::build(NodeArena& a, Runtime&) {
     };
 
     return View(a, root, {
-        TitleBar(a, "Display & Appearances"),
         ListContainer(a, scroll_, {
             ListSection(a, "Display"),
             input("Sleep After",       kSleepOpts[sleepIdx_].label, sleepAdj),

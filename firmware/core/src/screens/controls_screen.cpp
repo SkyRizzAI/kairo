@@ -87,7 +87,7 @@ UiNode* ControlsScreen::build(NodeArena& a, Runtime& rt) {
     append(infoRow("Long Press",  rows_[actionBase + 7].c_str()));
     append(infoRow("Chord",       rows_[actionBase + 8].c_str()));
 
-    return View(a, root, { TitleBar(a, "Controls"), list });
+    return View(a, root, { list });
 }
 
 } // namespace nema

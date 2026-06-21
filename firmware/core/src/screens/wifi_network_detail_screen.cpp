@@ -119,7 +119,7 @@ UiNode* WifiNetworkDetailScreen::build(NodeArena& a, Runtime& rt) {
         ipRow("DNS",         rowbuf_[3]);
     }
 
-    return View(a, root, { TitleBar(a, ssid_.c_str()), list });
+    return View(a, root, { list });
 }
 
 } // namespace nema

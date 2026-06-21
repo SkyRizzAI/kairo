@@ -111,7 +111,7 @@ UiNode* RemoteSettingsScreen::build(NodeArena& a, Runtime& rt) {
     if (!st) {
         ListEntry e; e.label = "Remote unavailable";
         append(ListItemRow(a, e));
-        return View(a, root, { TitleBar(a, "Remote"), list });
+        return View(a, root, { list });
     }
 
     bool en = st->enabled();
@@ -148,7 +148,7 @@ UiNode* RemoteSettingsScreen::build(NodeArena& a, Runtime& rt) {
         append(ListItemRow(a, e));
     }
 
-    return View(a, root, { TitleBar(a, "Remote"), list });
+    return View(a, root, { list });
 }
 
 } // namespace nema

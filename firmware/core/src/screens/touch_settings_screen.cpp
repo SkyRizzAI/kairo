@@ -19,7 +19,6 @@ UiNode* TouchSettingsScreen::build(NodeArena& a, Runtime&) {
 
     ListEntry e; e.label = "No touch settings yet";
     return View(a, root, {
-        TitleBar(a, "Touch"),
         ListContainer(a, scroll_, {
             ListItemRow(a, e),
         }),

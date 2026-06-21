@@ -105,13 +105,13 @@ UiNode* BluetoothSettingsScreen::build(NodeArena& a, Runtime& rt) {
     if (!c) {
         ListEntry e; e.label = "No Bluetooth driver";
         append(ListItemRow(a, e));
-        return View(a, root, { TitleBar(a, "Bluetooth"), list });
+        return View(a, root, { list });
     }
     if (!rt.capabilities().available(caps::BtBle) && !c->isEnabled()) {
         if (rt.capabilities().stateOf(caps::BtBle) == ResourceState::Fault) {
             ListEntry e; e.label = "Bluetooth unavailable";
             append(ListItemRow(a, e));
-            return View(a, root, { TitleBar(a, "Bluetooth"), list });
+            return View(a, root, { list });
         }
     }
 
@@ -162,7 +162,7 @@ UiNode* BluetoothSettingsScreen::build(NodeArena& a, Runtime& rt) {
         }
     }
 
-    return View(a, root, { TitleBar(a, "Bluetooth"), list });
+    return View(a, root, { list });
 }
 
 } // namespace nema

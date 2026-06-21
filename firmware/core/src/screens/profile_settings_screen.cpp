@@ -122,7 +122,7 @@ aether::ui::UiNode* ProfileSettingsScreen::build(NodeArena& a, Runtime& rt) {
     if (!p) {
         ListEntry e; e.label = "Not available";
         append(ListItemRow(a, e));
-        return View(a, root, { TitleBar(a, "Profile"), list });
+        return View(a, root, { list });
     }
 
     auto add = [&](Field f, const char* label, const char* detail) {
@@ -146,7 +146,7 @@ aether::ui::UiNode* ProfileSettingsScreen::build(NodeArena& a, Runtime& rt) {
         append(ListItemRow(a, e));
     }
 
-    return View(a, root, { TitleBar(a, "Profile"), list });
+    return View(a, root, { list });
 }
 
 } // namespace nema

@@ -105,7 +105,7 @@ UiNode* AboutScreen::build(NodeArena& a, Runtime& rt) {
         }
     }
 
-    return View(a, root, { TitleBar(a, "About"), list });
+    return View(a, root, { list });
 }
 
 } // namespace nema

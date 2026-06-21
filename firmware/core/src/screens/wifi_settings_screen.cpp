@@ -176,14 +176,14 @@ UiNode* WifiSettingsScreen::build(NodeArena& a, Runtime& rt) {
     if (!d) {
         ListEntry e; e.label = "No Wi-Fi driver";
         append(ListItemRow(a, e));
-        return View(a, root, { TitleBar(a, "Wi-Fi"), list });
+        return View(a, root, { list });
     }
 
     bool on = d->isEnabled();
     append(Toggle(a, "Wi-Fi", on, cbToggleWifi, this));
 
     if (!on)
-        return View(a, root, { TitleBar(a, "Wi-Fi"), list });
+        return View(a, root, { list });
 
     const char* curSsid = d->isConnected() ? d->ssid() : "";
 
@@ -256,7 +256,7 @@ UiNode* WifiSettingsScreen::build(NodeArena& a, Runtime& rt) {
         append(ListItemRow(a, e));
     }
 
-    return View(a, root, { TitleBar(a, "Wi-Fi"), list });
+    return View(a, root, { list });
 }
 
 } // namespace nema

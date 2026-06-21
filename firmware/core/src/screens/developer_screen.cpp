@@ -40,7 +40,6 @@ UiNode* DeveloperScreen::build(NodeArena& a, Runtime&) {
     stopAether.onPress = onStopAether; stopAether.user = this;
 
     return View(a, root, {
-        TitleBar(a, "Developer"),
         ListContainer(a, scroll_, {
             ListItemRow(a, reboot),
             ListItemRow(a, stopAether),

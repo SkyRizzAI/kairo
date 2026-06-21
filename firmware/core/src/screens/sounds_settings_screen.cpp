@@ -93,7 +93,7 @@ UiNode* SoundsSettingsScreen::build(NodeArena& a, Runtime& rt) {
         append(ListItemRow(a, beep));
     }
 
-    return View(a, root, { TitleBar(a, "Sounds"), list });
+    return View(a, root, { list });
 }
 
 } // namespace nema
