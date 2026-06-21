@@ -20,6 +20,25 @@ JsApp::JsApp(std::string id, std::string name, std::string version, std::string 
 
 JsApp::~JsApp() = default;
 
+void JsApp::runProcess(ProcessContext& ctx) {
+    js::JsEngine eng;
+    eng.setMemoryLimit(4 * 1024 * 1024);
+    eng.setMaxStackSize(stackBytes() * 3 / 4);
+    eng.setDeadlineMs(5000);
+    eng.setHost(&ctx.runtime(), id_);
+    eng.setProcessContext(&ctx);   // wires process.argv, process.stdout, process.exit
+
+    // Evaluate module directly — no component capture (no render() loop).
+    // Top-level code runs synchronously. process.exit() throws a sentinel to
+    // unwind; if it was called, ctx.shouldExit() is already true.
+    bool ok = eng.ok() && eng.eval(js_.c_str(), id_.c_str(), /*asModule=*/true);
+    if (!ok && !ctx.shouldExit()) {
+        ctx.runtime().log().error("JsApp", "CLI eval failed",
+                                  {{"app", id_}, {"err", eng.lastError()}});
+        ctx.requestExit(1);
+    }
+}
+
 void JsApp::onStart(AppContext& ctx) {
     eng_ = std::make_unique<js::JsEngine>();
     eng_->setMemoryLimit(4 * 1024 * 1024);   // 4 MB JS heap ceiling (PSRAM on device)

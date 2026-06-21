@@ -44,6 +44,11 @@ public:
 #endif
     }
 
+    // Headless entry point (Plan 84 / Plan 54): run the JS module without a
+    // surface. Wires process.argv/stdout/exit then eval()s the module.
+    // CLI apps use this path; UI apps use run() → onStart() → build() loop.
+    void runProcess(ProcessContext& ctx) override;
+
 protected:
     void        onStart(AppContext& ctx) override;
     aether::ui::UiNode* build(aether::ui::NodeArena& arena, AppContext& ctx) override;
