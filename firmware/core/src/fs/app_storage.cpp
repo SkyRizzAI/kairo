@@ -44,8 +44,12 @@ bool AppStorage::write(const char* name, const uint8_t* data, size_t len) {
     if (!vfs_) return false;
     std::string path = resolvePath(name);
     auto slash = path.rfind('/');
-    if (slash != std::string::npos)
-        mkdirAll(vfs_, path.substr(0, slash));
+    if (slash != std::string::npos) {
+        std::string dir = path.substr(0, slash);
+        std::vector<FsEntry> probe;
+        if (!vfs_->list(dir, probe))
+            mkdirAll(vfs_, dir);
+    }
     return vfs_->write(path, data, len);
 }
 
