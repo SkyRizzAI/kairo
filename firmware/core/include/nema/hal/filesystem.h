@@ -31,6 +31,22 @@ struct IFileSystem : IDriver {
     virtual bool mkdir (const std::string& path) = 0;
     virtual bool remove(const std::string& path) = 0;
     virtual bool rename(const std::string& src, const std::string& dst) = 0;
+
+    // Recursively removes a path (file or non-empty directory).
+    // Default implementation walks with list()+remove(); backends may override
+    // if the underlying FS provides a native recursive-remove operation.
+    virtual bool removeAll(const std::string& path) {
+        std::vector<FsEntry> children;
+        if (list(path, children)) {
+            const bool slash = (path == "/");
+            for (const auto& c : children) {
+                std::string child = slash ? ("/" + c.name) : (path + "/" + c.name);
+                if (c.isDir) removeAll(child);
+                else         remove(child);
+            }
+        }
+        return remove(path);
+    }
 };
 
 } // namespace nema

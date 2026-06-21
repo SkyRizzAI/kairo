@@ -42,6 +42,7 @@ inline Code codeFromKey(nema::Key k) {
         case nema::Key::Right:  return Code::Right;
         case nema::Key::Select: return Code::Enter;
         case nema::Key::Cancel: return Code::Escape;
+        case nema::Key::Menu:   return Code::Menu;
         default:                 return Code::None;
     }
 }
@@ -55,6 +56,7 @@ inline nema::Key keyFromCode(Code c) {
         case Code::Right:  return nema::Key::Right;
         case Code::Enter:  return nema::Key::Select;
         case Code::Escape: return nema::Key::Cancel;
+        case Code::Menu:   return nema::Key::Menu;
         default:           return nema::Key::None;
     }
 }

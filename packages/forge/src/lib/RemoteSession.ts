@@ -71,7 +71,7 @@ async function sha256hex(s: string): Promise<string> {
 }
 
 export const Power = { Restart: 0x10, Sleep: 0x11, Shutdown: 0x12 } as const;
-export const Key = { Up: 1, Down: 2, Left: 3, Right: 4, Select: 5, Cancel: 6 } as const;
+export const Key = { Up: 1, Down: 2, Left: 3, Right: 4, Select: 5, Cancel: 6, Menu: 7 } as const;
 
 // Browser keyboard → Palanu Key. Shared by every view that forwards keystrokes to
 // a device (/remote SessionView, /simulator) so the mapping lives in one place.
@@ -594,6 +594,17 @@ export class RemoteSession {
 	}
 	removeFile(path: string) {
 		return this.#filePathOp(FileOp.Remove, path);
+	}
+	async removeAll(path: string): Promise<boolean> {
+		const children = await this.listDir(path);
+		if (children) {
+			const slash = path === '/';
+			for (const c of children) {
+				const child = slash ? '/' + c.name : path + '/' + c.name;
+				await this.removeAll(child);
+			}
+		}
+		return this.removeFile(path);
 	}
 	renameFile(src: string, dst: string) {
 		return this.#fileTwoPathOp(FileOp.Rename, src, dst);

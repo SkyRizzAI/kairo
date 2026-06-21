@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import {
+		Key,
 		RemoteSession,
 		Power,
 		KEY_MAP,
@@ -64,18 +65,39 @@
 		const offRejected = session.on('rejected', () => {
 			rejected = true;
 		});
+		let holdTimer: ReturnType<typeof setTimeout> | null = null;
+
 		const onKey = (e: KeyboardEvent) => {
 			const t = (e.target as HTMLElement)?.tagName;
 			if (t === 'INPUT' || t === 'TEXTAREA') return;
 			const k = KEY_MAP[e.key];
-			if (k) {
-				e.preventDefault();
-				session.sendKey(k);
+			if (!k) return;
+			e.preventDefault();
+			if (k === Key.Select) {
+				if (e.repeat) return;
+				holdTimer ??= setTimeout(() => {
+					holdTimer = null;
+					session.sendKey(Key.Menu);
+				}, 1000);
+				return;
+			}
+			session.sendKey(k);
+		};
+		const onKeyUp = (e: KeyboardEvent) => {
+			const t = (e.target as HTMLElement)?.tagName;
+			if (t === 'INPUT' || t === 'TEXTAREA') return;
+			if (KEY_MAP[e.key] !== Key.Select) return;
+			if (holdTimer !== null) {
+				clearTimeout(holdTimer);
+				holdTimer = null;
+				session.sendKey(Key.Select);
 			}
 		};
 		window.addEventListener('keydown', onKey);
+		window.addEventListener('keyup', onKeyUp);
 		return () => {
 			window.removeEventListener('keydown', onKey);
+			window.removeEventListener('keyup', onKeyUp);
 			offReady();
 			offProfile();
 			offScreen();

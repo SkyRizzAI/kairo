@@ -19,6 +19,7 @@ enum class Key : uint8_t {
     Right,
     Select,   // "OK" / confirm
     Cancel,   // "back" / escape
+    Menu,     // context menu (long-press OK on hardware; "m" key in simulator)
 };
 
 inline const char* keyName(Key k) {
@@ -29,6 +30,7 @@ inline const char* keyName(Key k) {
         case Key::Right:  return "Right";
         case Key::Select: return "Select";
         case Key::Cancel: return "Cancel";
+        case Key::Menu:   return "Menu";
         default:          return "None";
     }
 }
@@ -41,6 +43,7 @@ inline Key keyFromName(const char* s) {
     if (!std::strcmp(s, "Right"))  return Key::Right;
     if (!std::strcmp(s, "Select")) return Key::Select;
     if (!std::strcmp(s, "Cancel")) return Key::Cancel;
+    if (!std::strcmp(s, "Menu"))   return Key::Menu;
     return Key::None;
 }
 

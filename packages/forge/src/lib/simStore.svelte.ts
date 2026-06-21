@@ -95,6 +95,17 @@ class SimStore {
 	removeFile(path: string) {
 		return this.#s.removeFile(path);
 	}
+	async removeAll(path: string): Promise<boolean> {
+		const children = await this.listDir(path);
+		if (children) {
+			const slash = path === '/';
+			for (const c of children) {
+				const child = slash ? '/' + c.name : path + '/' + c.name;
+				await this.removeAll(child);
+			}
+		}
+		return this.removeFile(path);
+	}
 	renameFile(src: string, dst: string) {
 		return this.#s.renameFile(src, dst);
 	}

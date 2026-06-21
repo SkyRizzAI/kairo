@@ -5,7 +5,7 @@
 	// it never clutters, and Logs/Events/Services on the right.
 	import { onMount } from 'svelte';
 	import { simStore } from '$lib/simStore.svelte';
-	import { Power, KEY_MAP, frameDims } from '$lib/RemoteSession';
+	import { Key, Power, KEY_MAP, frameDims } from '$lib/RemoteSession';
 	import { Button } from '$lib/components/ui/button';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Input } from '$lib/components/ui/input';
@@ -96,17 +96,41 @@
 			sessionStorage.removeItem(AUTOBOOT);
 			simStore.boot(); // came here via Restart → power back on automatically
 		}
+		let holdTimer: ReturnType<typeof setTimeout> | null = null;
+
 		const onKey = (e: KeyboardEvent) => {
 			const tag = (e.target as HTMLElement)?.tagName;
 			if (tag === 'INPUT' || tag === 'TEXTAREA') return;
 			const k = KEY_MAP[e.key];
-			if (k) {
-				e.preventDefault();
-				simStore.sendKey(k);
+			if (!k) return;
+			e.preventDefault();
+			// Select (Enter/Space): hold 1 s → Menu, tap → Select.
+			if (k === Key.Select) {
+				if (e.repeat) return;
+				holdTimer ??= setTimeout(() => {
+					holdTimer = null;
+					simStore.sendKey(Key.Menu);
+				}, 1000);
+				return;
+			}
+			simStore.sendKey(k);
+		};
+		const onKeyUp = (e: KeyboardEvent) => {
+			const tag = (e.target as HTMLElement)?.tagName;
+			if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+			if (KEY_MAP[e.key] !== Key.Select) return;
+			if (holdTimer !== null) {
+				clearTimeout(holdTimer);
+				holdTimer = null;
+				simStore.sendKey(Key.Select);
 			}
 		};
 		window.addEventListener('keydown', onKey);
-		return () => window.removeEventListener('keydown', onKey);
+		window.addEventListener('keyup', onKeyUp);
+		return () => {
+			window.removeEventListener('keydown', onKey);
+			window.removeEventListener('keyup', onKeyUp);
+		};
 	});
 
 	const levelColor = (l: number) =>

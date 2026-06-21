@@ -26,6 +26,7 @@
 		writeFile(path: string, data: Uint8Array): Promise<boolean>;
 		mkdir(path: string): Promise<boolean>;
 		removeFile(path: string): Promise<boolean>;
+		removeAll(path: string): Promise<boolean>;
 		renameFile(src: string, dst: string): Promise<boolean>;
 		copyFile(src: string, dst: string): Promise<boolean>;
 	}
@@ -101,7 +102,7 @@
 	}
 
 	async function del(e: FileEntry) {
-		await fs.removeFile(join(cwd, e.name));
+		await fs.removeAll(join(cwd, e.name));
 		await refresh();
 	}
 

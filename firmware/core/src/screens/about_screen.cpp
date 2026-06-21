@@ -28,14 +28,16 @@ public:
 
     UiNode* build(NodeArena& a, Runtime& rt) override {
         const auto& info = rt.info();
-        char body[128];
-        std::snprintf(body, sizeof(body), "%s\n%s\nFW: %s",
+        std::snprintf(body_, sizeof(body_), "%s\n%s\nFW: %s",
                       info.boardName.c_str(),
                       info.platformName.c_str(),
                       info.firmwareVersion.c_str());
-        DialogButton ok = {"OK", nullptr, nullptr};
-        return Dialog(a, "ABOUT PALANU", body, nullptr, 0, 0, &ok, 1);
+        return Dialog(a, "ABOUT PALANU", body_, nullptr, 0, 0, &okBtn_, 1);
     }
+
+private:
+    char         body_[128] = {};
+    DialogButton okBtn_     = {"OK", nullptr, nullptr};
 };
 
 AboutScreen::AboutScreen(Runtime& rt) : ComponentScreen(rt, 320) {

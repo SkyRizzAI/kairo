@@ -47,7 +47,7 @@ const char* E32KeyMap::hintFor(Action a) const {
         case Action::Next:       return "Dn";       // side bottom (navigate next)
         case Action::Activate:   return "OK";       // center (SW2), single tap
         case Action::Back:       return "2x OK";    // center (SW2), double tap
-        case Action::Pause:      return "Hold OK";  // center (SW2), long-hold
+        case Action::Menu:       return "Hold OK";  // center (SW2), long-hold
         case Action::AdjustUp:   return "Right";    // below right (value up)
         case Action::AdjustDown: return "Left";     // below left  (value down)
         default:                 return "";
@@ -62,7 +62,8 @@ bool E32KeyMap::hasCode(Code c) const {
         case Code::Left:
         case Code::Right:
         case Code::Enter:
-        case Code::Escape: return true;
+        case Code::Escape:
+        case Code::Menu:   return true;
         default:           return false;
     }
 }
@@ -74,7 +75,8 @@ bool E32KeyMap::canReach(Action a) const {
         case Action::Activate:
         case Action::Back:
         case Action::AdjustUp:
-        case Action::AdjustDown: return true;
+        case Action::AdjustDown:
+        case Action::Menu:       return true;
         default:                  return false;
     }
 }
@@ -88,7 +90,7 @@ Code E32KeyMap::idToCode(uint8_t id, Gesture g) {
         case BTN_UP:     return Code::Up;
         case BTN_DOWN:   return Code::Down;
         case BTN_MIDDLE:
-            if (g == Gesture::Hold)   return Code::None;     // pause — no code
+            if (g == Gesture::Hold)   return Code::Menu;     // context menu
             if (g == Gesture::Double) return Code::Escape;   // back
             return Code::Enter;                              // tap = OK
         default:         return Code::None;
@@ -107,8 +109,8 @@ Action E32KeyMap::idToAction(uint8_t id, Gesture g) {
         case BTN_LEFT:   return Action::AdjustDown;  // value down / left
         case BTN_RIGHT:  return Action::AdjustUp;    // value up / right
         case BTN_MIDDLE:
-            // Board gesture profile: tap = OK, double = Back, long-hold = Pause.
-            if (g == Gesture::Hold)   return Action::Pause;
+            // Board gesture profile: tap = OK, double = Back, long-hold = Menu.
+            if (g == Gesture::Hold)   return Action::Menu;
             if (g == Gesture::Double) return Action::Back;
             if (g == Gesture::Short)  return Action::Activate;
             return Action::None;
