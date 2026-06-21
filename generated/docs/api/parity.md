@@ -5,7 +5,7 @@
 
 ## Coverage
 
-**Total functions:** 45
+**Total functions:** 50
 
 | Interface | Function | Host C++ | QuickJS | WASM .h | JS .d.ts | Docs | Impl |
 |---|---|---|---|---|---|---|---|
@@ -42,6 +42,11 @@
 | `nema:storage/kv` | `get-int` | — | — | — | — | ✅ | — |
 | `nema:storage/kv` | `set-int` | — | — | — | — | ✅ | — |
 | `nema:storage/kv` | `remove` | — | — | — | — | ✅ | — |
+| `nema:storage/fs` | `read-file` | — | — | — | — | ✅ | — |
+| `nema:storage/fs` | `write-file` | — | — | — | — | ✅ | — |
+| `nema:storage/fs` | `list-files` | — | — | — | — | ✅ | — |
+| `nema:storage/fs` | `remove-file` | — | — | — | — | ✅ | — |
+| `nema:storage/fs` | `bytes-used` | — | — | — | — | ✅ | — |
 | `nema:sys/log` | `log` | — | — | — | — | ✅ | — |
 | `nema:sys/device` | `name` | — | — | — | — | ✅ | — |
 | `nema:sys/device` | `caps` | — | — | — | — | ✅ | — |

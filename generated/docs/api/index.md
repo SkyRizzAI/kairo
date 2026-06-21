@@ -20,6 +20,7 @@
 | [`nema:net/wifi`](./nema_net_wifi.md) | `nema:net@1.0` | `net.wifi` | 6 |
 | [`nema:profile/profile`](./nema_profile_profile.md) | `nema:profile@1.0` | `profile` | 4 |
 | [`nema:storage/kv`](./nema_storage_kv.md) | `nema:storage@1.0` | core | 5 |
+| [`nema:storage/fs`](./nema_storage_fs.md) | `nema:storage@1.0` | core | 5 |
 | [`nema:sys/log`](./nema_sys_log.md) | `nema:sys@1.0` | core | 1 |
 | [`nema:sys/device`](./nema_sys_device.md) | `nema:sys@1.0` | core | 4 |
 | [`nema:sys/events`](./nema_sys_events.md) | `nema:sys@1.0` | core | 3 |
