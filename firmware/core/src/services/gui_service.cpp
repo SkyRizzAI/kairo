@@ -100,7 +100,7 @@ void GuiService::refreshStatus(uint64_t now) {
         status_.hour   = tm->tm_hour;
         status_.minute = tm->tm_min;
     }
-    status_.wifi = rt_.capabilities().has(caps::NetWifi);
+    status_.wifi = rt_.capabilities().available(caps::NetWifi);
     rt_.view().requestRedraw();
 }
 
