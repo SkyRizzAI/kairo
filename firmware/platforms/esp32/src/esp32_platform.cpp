@@ -154,6 +154,19 @@ void Esp32Platform::postRegister(Runtime& rt) {
             }
         }
 
+        // Plan 83: remove legacy /anims/ root dir (pre-83 firmware put animation
+        // files here; now at /system/assets/anims/). Safe to delete — nothing
+        // user-created lived there, only firmware-seeded files.
+        {
+            std::vector<FsEntry> entries;
+            if (rootFs_.list("/anims", entries)) {
+                for (auto& e : entries)
+                    if (!e.isDir) rootFs_.remove("/anims/" + e.name);
+                rootFs_.remove("/anims");
+                rt.log().info("Esp32Platform", "removed legacy /anims dir");
+            }
+        }
+
         // Seed directory structure. mkdir() is idempotent — safe on every boot.
         rootFs_.mkdir("/system");
         rootFs_.mkdir("/system/assets");
