@@ -29,6 +29,12 @@ void SkyRizzE32::describeHardware(Runtime& rt) {
     rt.container().registerService(&expander_);
     rt.hardware().add({"expander", DriverKind::Other, "XL9535 16-bit I2C"});
 
+    // ILI9341 at ~2.8" is ~143 DPI, below the 200-DPI auto-detect threshold for 2×.
+    // Seed 2× as the first-boot default; user can override via Settings.
+    if (auto* cfg = rt.container().resolve<IConfigStore>())
+        if (cfg->getIntOr("aether", "scale", 0) == 0)
+            cfg->setInt("aether", "scale", 200);
+
     // Load gesture timing from config (or use defaults)
     uint32_t longMs = 500;
     if (auto* cfg = rt.container().resolve<IConfigStore>())
