@@ -260,5 +260,6 @@ void AppHost::requestExit(int code) {
 bool AppHost::shouldExit() const { return thread_.shouldStop(); }
 int  AppHost::exitCode()   const { return exitCode_; }
 Runtime& AppHost::runtime()      { return rt_; }
+const char* AppHost::bundleId()  const { return app_.id(); }
 
 } // namespace nema

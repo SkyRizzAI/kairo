@@ -66,6 +66,9 @@ public:
     bool     nextInput(InputEvent& out) override;
     bool     waitInput(InputEvent& out, uint32_t timeoutMs) override;
 
+    // AppContext — app identity (Plan 83)
+    const char* bundleId() const override;
+
     // ProcessContext — process primitives (Plan 54)
     const std::vector<std::string>& args() const override;
     const std::string&              cwd()  const override;

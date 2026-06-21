@@ -32,6 +32,7 @@ src/input/gesture.cpp
     src/system/board_profile.cpp
     src/fs/mem_filesystem.cpp
     src/fs/vfs.cpp
+    src/fs/app_storage.cpp
     src/crypto/sha256.cpp
     src/services/profile_service.cpp
     src/services/clock_service.cpp
@@ -39,6 +40,7 @@ src/input/gesture.cpp
     src/services/ntp_service.cpp
     src/services/cli_service.cpp
     src/app/app_registry.cpp
+    src/app/app_context.cpp
     src/app/app_host.cpp
     src/app/app_host_manager.cpp
     src/app/papp_package.cpp
@@ -54,6 +56,7 @@ src/input/gesture.cpp
     src/ui/font_reg12.cpp
     src/ui/font_bold12.cpp
     src/ui/view_dispatcher.cpp
+    src/services/storage_service.cpp
     src/services/display_power_manager.cpp
     src/services/audio_service.cpp
     src/services/camera_service.cpp

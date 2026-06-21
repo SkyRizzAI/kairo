@@ -66,6 +66,14 @@ struct AppManifest {
     // Target System API version ("major.minor", Plan 48). Major mismatch vs host
     // api_version → install rejected. nullptr = "1.0".
     const char* apiVersion = "1.0";
+
+    // Plan 83 — storage management hints.
+    // storageMovable: user can move this app's data to SD card via Storage settings.
+    // hasCriticalData: app stores credentials/keys that must always stay on internal
+    //   flash (e.g. security apps). Setting this to true adds a warning in the UI
+    //   that some data cannot be moved, even if storageMovable is true.
+    bool storageMovable   = true;
+    bool hasCriticalData  = false;
 };
 
 } // namespace nema

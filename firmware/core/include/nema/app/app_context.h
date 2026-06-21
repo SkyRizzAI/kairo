@@ -1,6 +1,7 @@
 #pragma once
 #include "nema/ui/surface.h"
 #include "nema/proc/process_context.h"
+#include "nema/fs/app_storage.h"
 
 // Plan 54/55 — AppContext: the full process + surface interface an app gets.
 //
@@ -22,6 +23,18 @@ public:
     // requestExit/exitCode (with code) are now on ProcessContext.
     // Use requestExit(code) instead of the old zero-arg requestExit().
     using ProcessContext::requestExit;
+
+    // ── App identity ─────────────────────────────────────────────────
+    // Bundle ID of the running app ("com.palanu.clock").
+    // Implemented by AppHost; used to namespace storage and logs.
+    virtual const char* bundleId() const = 0;
+
+    // ── Namespaced storage (Plan 83) ─────────────────────────────────
+    // Returns an AppStorage scoped to this app's bundle ID.
+    // Prefers internal flash; routes to SD if user moved the app's data there.
+    // Use criticalStorage() for credentials / private keys (always internal).
+    AppStorage storage();
+    AppStorage criticalStorage();
 };
 
 } // namespace nema
