@@ -46,8 +46,9 @@ protected:
     Runtime&           rt_;
     aether::ui::NodeArena      arena_;
     aether::ui::ComponentState state_;
-    aether::ui::UiNode*        root_   = nullptr;
-    bool               dirty_  = true;   // Plan 70: only rebuild tree when model changed
+    aether::ui::UiNode*        root_        = nullptr;
+    bool               dirty_       = true;   // Plan 70: only rebuild tree when model changed
+    uint64_t           lastMarqueeMs_ = 0;    // rate-limiter for continuous marquee redraws
 };
 
 } // namespace nema

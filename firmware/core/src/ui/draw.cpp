@@ -180,7 +180,9 @@ void marquee(Canvas& c, uint16_t x, uint16_t y, uint16_t w,
 
     const uint16_t GAP = 16;  // blank pixels between repeats
     uint32_t cycle  = (uint32_t)textW + GAP;
-    uint32_t offset = tick % cycle;  // pixels to scroll left
+    // Scroll at ~40px/sec: divide ms tick by 25 before modulo so the marquee
+    // moves slowly enough to read on any display refresh rate.
+    uint32_t offset = (tick / 25) % cycle;
 
     uint16_t charW_px = (uint16_t)((resolve(fs.handle).charW + resolve(fs.handle).spacing) * fs.scale);
 

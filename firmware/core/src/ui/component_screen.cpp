@@ -76,15 +76,18 @@ void ComponentScreen::onPointer(const input::PointerEvent& e) {
     }
 }
 
-void ComponentScreen::tick(uint64_t) {
+void ComponentScreen::tick(uint64_t nowMs) {
     bool dirty = false;
     // Drive flick momentum (GuiService ticks every loop ~10ms).
     if (state_.dragScroll && state_.dragScroll->velocity != 0.0f)
         dirty = aether::ui::tickMomentum(state_);
-    // Marquee animation: any focused SmartLabel needs a continuous redraw so the
-    // scroll offset advances each frame (driven by setRenderTick in GuiService).
-    if (state_.focus.count > 0)
+    // Marquee animation: rate-limited to ~15fps (66ms) so the display doesn't
+    // flicker from continuous full-speed redraws. Marquee speed itself is
+    // controlled by the tick/25 divisor in draw::marquee (~40px/sec).
+    if (state_.focus.count > 0 && (nowMs - lastMarqueeMs_) >= 66) {
+        lastMarqueeMs_ = nowMs;
         dirty = true;
+    }
     if (dirty) requestRedraw();
 }
 
