@@ -7,7 +7,7 @@
 >
 > - Decision: [ADR 0002](../decisions/0002-nema-aether-boundary.md) (supersedes Plan 60 §3 namespacing).
 > - Depends on: 43 (IDisplayServer), 51 (server negotiation), 53 (StyleTokens), 60 (Aether rewrite).
-> - Status: ☐ planned.
+> - Status: ✅ DONE — aether + fbcon are separate sibling libs; core names no server. See Status below.
 
 ---
 
