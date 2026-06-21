@@ -79,10 +79,15 @@ void PlayStationLauncher::draw(nema::Canvas& c, const LauncherModel& m, int curs
     uint16_t iconMidY = (uint16_t)(bigTop + (big - chipH) / 2);
     uint16_t smallTop = (uint16_t)(iconMidY > small / 2 ? iconMidY - small / 2 : 0);
 
+    // Show a left-neighbour only when the screen is wide enough that we'd still
+    // fit ≥2 right tiles after it. On tight logical resolutions (≤3 tiles total)
+    // the selected tile sits flush-left — no "already-seen" buffer eating slots.
+    bool showLeft = (cursor > 0) &&
+                    ((int)(W - 5 - small - gap - big - gap) / (int)(small + gap) >= 2);
+
     uint16_t x = 5;
 
-    // Previous neighbour (outline tile, white icon — same style as the focused one).
-    if (cursor > 0) {
+    if (showLeft) {
         drawTile(c, x, smallTop, small, m.items[cursor - 1], false);
         x = (uint16_t)(x + small + gap);
     }
