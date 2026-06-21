@@ -135,7 +135,7 @@ void PlayStationLauncher::draw(nema::Canvas& c, const LauncherModel& m, int curs
     // they don't collide), at the same small-tile row.
     x = (uint16_t)(bigX + big + gap);
     for (int i = cursor + 1; i < n; i++) {
-        if (x + small > W) break;
+        if (x >= W) break;
         drawTile(c, x, smallTop, small, m.items[i], false);
         x = (uint16_t)(x + small + gap);
     }
