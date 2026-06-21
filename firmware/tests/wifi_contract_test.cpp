@@ -4,6 +4,7 @@
 // trips this.
 #include "null_wifi_driver.h"
 #include <cstdio>
+#include <string>
 
 using namespace nema;
 
