@@ -32,15 +32,20 @@ std::string AppStorage::resolvePath(const char* name) const {
     return base + "/" + name;
 }
 
+// Create all path components that don't exist yet (recursive mkdir).
+static void mkdirAll(IFileSystem* vfs, const std::string& path) {
+    for (size_t i = 1; i < path.size(); ++i) {
+        if (path[i] == '/') vfs->mkdir(path.substr(0, i));
+    }
+    vfs->mkdir(path);
+}
+
 bool AppStorage::write(const char* name, const uint8_t* data, size_t len) {
     if (!vfs_) return false;
     std::string path = resolvePath(name);
-    // Ensure parent dir exists
     auto slash = path.rfind('/');
-    if (slash != std::string::npos) {
-        std::string dir = path.substr(0, slash);
-        vfs_->mkdir(dir);
-    }
+    if (slash != std::string::npos)
+        mkdirAll(vfs_, path.substr(0, slash));
     return vfs_->write(path, data, len);
 }
 

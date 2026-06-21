@@ -66,6 +66,9 @@ bool StorageService::move(const char* bundleId, StorageLocation to) {
         return true;
     }
 
+    // mkdir each component so /sd/system/data/<id> works even on fresh SD card.
+    for (size_t i = 1; i < dst.size(); ++i)
+        if (dst[i] == '/') vfs_->mkdir(dst.substr(0, i));
     vfs_->mkdir(dst);
     for (auto& e : entries) {
         if (e.isDir) continue;
