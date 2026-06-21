@@ -33,6 +33,8 @@ public:
     void invertRect (uint16_t x, uint16_t y, uint16_t w, uint16_t h)         override;
     void clear(bool on = false)                                              override;
     void flush()                                                             override;
+    void sleep() override { setBacklight(false); }
+    void wake()  override { setBacklight(true);  }
     // Direct RGB565 blit — bypasses 1-bit framebuf for camera/color content.
     // Handles panel inversion (inverts each pixel before SPI write).
     void blitRgb565(const uint8_t* buf,
