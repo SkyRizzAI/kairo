@@ -74,9 +74,13 @@ static UiNode* parentOf(UiNode* n, const UiNode* target) {
 }
 
 // Pixels of context kept above/below the focused item when scrolling it into view.
-// Going UP: section header lands kScrollCtx px from viewport top.
-// Going DOWN: item bottom lands kScrollCtx px from viewport bottom (shows context above).
-static constexpr int kScrollCtx = 24;
+// Going UP: section header lands ctx px from viewport top.
+// Going DOWN: item bottom lands ctx px from viewport bottom (shows context above).
+// Use ~1/6 of the viewport so the buffer scales with small 2x-DPI screens.
+static int scrollCtx(int viewportH) {
+    int c = viewportH / 6;
+    return c < 4 ? 4 : c;
+}
 
 static bool ensureVisible(UiNode* root, const UiNode* foc) {
     UiNode* sn = findScrollAncestor(root, foc);
@@ -109,14 +113,12 @@ static bool ensureVisible(UiNode* root, const UiNode* foc) {
 
     // Convert screen target back to a scroll offset.
     // screen_y = top + (content_y - scrollMain)  →  sc = before + (screen_y - top).
+    int ctx = scrollCtx((int)sn->scroll->viewportMain);
     int sc;
     if (abovePort) {
-        // Pull item/header up to kScrollCtx px below viewport top.
-        sc = before + (alignTop - top) - kScrollCtx;
+        sc = before + (alignTop - top) - ctx;
     } else {
-        // Push item down so its bottom lands kScrollCtx px above viewport bottom,
-        // keeping context items above it visible.
-        sc = before + (focBottom - bot) + kScrollCtx;
+        sc = before + (focBottom - bot) + ctx;
     }
     if (sc < 0) sc = 0;
     if (sc > maxS) sc = maxS;
