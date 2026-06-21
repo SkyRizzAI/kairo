@@ -80,11 +80,11 @@ if(ESP_PLATFORM)
     idf_component_register(
         SRCS ${AETHER_SRCS}
         INCLUDE_DIRS "include"
-        REQUIRES core quickjs wasm3_idf
+        REQUIRES core fbcon quickjs wasm3_idf
     )
 else()
     add_library(aether STATIC ${AETHER_SRCS})
     target_include_directories(aether PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
     target_compile_features(aether PUBLIC cxx_std_17)
-    target_link_libraries(aether PUBLIC nema_core quickjs wasm3)
+    target_link_libraries(aether PUBLIC nema_core fbcon quickjs wasm3)
 endif()

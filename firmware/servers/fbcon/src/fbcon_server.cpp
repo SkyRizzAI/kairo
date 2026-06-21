@@ -1,4 +1,4 @@
-#include "nema/ui/fbcon_server.h"
+#include "fbcon/fbcon_server.h"
 #include "nema/ui/canvas.h"
 #include "nema/ui/ui_constants.h"
 #include "nema/ui/view_dispatcher.h"
@@ -9,7 +9,8 @@
 #include <cstring>
 #include <string>
 
-namespace nema {
+namespace fbcon {
+using namespace nema;
 
 // ── Keyboard layout ───────────────────────────────────────────────────────────
 // 4 char rows × 10 keys, + 1 action row with 3 wide keys.
@@ -266,4 +267,4 @@ void FbconServer::histNext() {
     inputBuf_ = session_.history[session_.history.size() - 1 - (size_t)histIdx_];
 }
 
-} // namespace nema
+}  // namespace fbcon

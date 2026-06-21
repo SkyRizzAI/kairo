@@ -44,7 +44,6 @@ src/input/gesture.cpp
     src/app/papp_package.cpp
     src/app/papp_installer.cpp
     src/ui/canvas.cpp
-    src/ui/fbcon_server.cpp
     src/ui/font_registry.cpp
     src/ui/font_5x8.cpp
     src/ui/font_6x8.cpp

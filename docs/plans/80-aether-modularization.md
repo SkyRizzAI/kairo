@@ -36,9 +36,9 @@ Delivered in order:
    (constructs the servers, configures theme/scale/FPS, registers them, installs the modal
    factory, starts the GUI loop). Wired into wasm / skyrizz-e32 / dev-board.
 
-**Remaining nicety (not a boundary violation):** `fbcon` still lives in `nema_core` (it is
-core-dependency-only — Canvas + nema::display + IDisplayServer). Promoting it to its own
-`firmware/servers/fbcon/` lib is a clean follow-up, not required for swappability.
+**Both servers are now independent sibling libs** — `libaether` (rich 1-bit UI) and
+`libfbcon` (text console, `namespace fbcon::`), each an ESP-IDF component + host lib.
+`nema_core` contains NO display server at all; a target links whichever it wants.
 
 ## 1. Goal & invariants
 
@@ -160,4 +160,4 @@ later shared `ui-runtime`).
 - [x] Phase 4 component system + screens + server → aether (incl. JS app runtime + GuiService)
 - [x] Phase 5 build wiring: `libaether` (host + IDF component), `aether::bootDisplay(rt)` is
   the "new server" recipe; targets link it. Kernel decoupled (Runtime/DPM/AppHostManager).
-- [ ] Follow-up: promote `fbcon` to its own `firmware/servers/fbcon/` lib (core-only today)
+- [x] Follow-up: `fbcon` promoted to its own `firmware/servers/fbcon/` lib (namespace `fbcon::`)

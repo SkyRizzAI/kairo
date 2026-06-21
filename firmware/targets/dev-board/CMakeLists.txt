@@ -13,6 +13,7 @@ cmake_minimum_required(VERSION 3.20)
 set(EXTRA_COMPONENT_DIRS
     "${CMAKE_CURRENT_LIST_DIR}/../../core"                  # → core
     "${CMAKE_CURRENT_LIST_DIR}/../../aether"                # → aether (Plan 80)
+    "${CMAKE_CURRENT_LIST_DIR}/../../servers/fbcon"      # → fbcon (text console, Plan 80)
     "${CMAKE_CURRENT_LIST_DIR}/../../platforms/esp32"       # → esp32
     "${CMAKE_CURRENT_LIST_DIR}/../../boards/dev-board"      # → dev-board
     "${CMAKE_CURRENT_LIST_DIR}/../../vendor/arduino-libs"   # → GxEPD2, Adafruit_* (container)

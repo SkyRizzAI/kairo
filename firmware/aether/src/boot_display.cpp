@@ -5,7 +5,7 @@
 #include "nema/screens/close_and_open_modal.h"
 #include "nema/ui/screen.h"
 #include "nema/ui/aether_server.h"
-#include "nema/ui/fbcon_server.h"
+#include "fbcon/fbcon_server.h"
 #include "nema/ui/style_tokens.h"
 #include "nema/ui/canvas.h"
 #include "nema/config/config_store.h"
@@ -18,7 +18,7 @@ namespace aether {
 void bootDisplay(nema::Runtime& rt) {
     // Owned for the process lifetime — the GUI loop and registry hold pointers.
     static nema::AetherServer aetherSrv(rt.clock());
-    static nema::FbconServer  fbconSrv(rt);
+    static fbcon::FbconServer  fbconSrv(rt);
     static nema::GuiService   gui(rt);
 
     // Aether owns its presentational state (theme + scale + FPS overlay); load it
