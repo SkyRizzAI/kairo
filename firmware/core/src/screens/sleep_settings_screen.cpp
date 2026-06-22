@@ -31,8 +31,8 @@ const char* SleepSettingsScreen::kScaleLabels[kScaleCount] =
     {"1x", "1.25x", "1.5x", "1.75x", "2x"};
 const char* SleepSettingsScreen::kDesktopNames[kDesktopCount]   = {"livewal"};
 const char* SleepSettingsScreen::kDesktopLabels[kDesktopCount]  = {"live wallpaper"};
-const char* SleepSettingsScreen::kLauncherNames[kLauncherCount] = {"playsta", "wii"};
-const char* SleepSettingsScreen::kLauncherLabels[kLauncherCount]= {"Playstation 5", "Nintendo WII"};
+const char* SleepSettingsScreen::kLauncherNames[kLauncherCount] = {"playsta", "wii", "compact"};
+const char* SleepSettingsScreen::kLauncherLabels[kLauncherCount]= {"Playstation 5", "Nintendo WII", "Compact"};
 const char* SleepSettingsScreen::kAssetNames[kAssetCount]       = {"palanu"};
 
 SleepSettingsScreen::SleepSettingsScreen(Runtime& rt)

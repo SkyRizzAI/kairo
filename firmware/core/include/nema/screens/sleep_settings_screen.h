@@ -31,9 +31,9 @@ private:
     static const char*  kDesktopNames[];    // config value: "livewal"
     static const char*  kDesktopLabels[];   // display: "live wallpaper"
     static constexpr int kDesktopCount = 1;
-    static const char*  kLauncherNames[];   // config value: "playsta" | "wii"
-    static const char*  kLauncherLabels[];  // display: "Playstation 5" | "Nintendo WII"
-    static constexpr int kLauncherCount = 2;
+    static const char*  kLauncherNames[];   // config value: "playsta" | "wii" | "compact"
+    static const char*  kLauncherLabels[];  // display labels
+    static constexpr int kLauncherCount = 3;
     static const char*  kAssetNames[];      // "palanu" (one pack for now)
     static constexpr int kAssetCount = 1;
 
