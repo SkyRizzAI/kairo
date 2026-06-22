@@ -397,7 +397,7 @@ interface lease {
 - [x] Fase 6 — Crash-safety (WASM watchdog, invariant doc, lease cleanup verify)
 - [x] Fase 7 — Settings Apps→detail + relokasi storage
 - [x] Fase 8 — Example Marauder-equivalent + verifikasi G1–G8
-- [ ] ADR 0007 — Hybrid raw radio access + lease/permission model
+- [x] ADR 0008 — Hybrid raw radio access + lease/permission model
 
 ---
 

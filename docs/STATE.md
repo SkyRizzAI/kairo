@@ -4,7 +4,7 @@
 > Detail per-stage ada di [`plans/`](plans/00-overview.md). Master plan: [`concept_plan.md`](concept_plan.md).
 > Reference arsitektur per-subsistem: [`architecture/`](architecture/README.md).
 >
-> **Last updated:** 2026-06-22 (font pack system + DPM render-gate fix)
+> **Last updated:** 2026-06-23 (Plan 87: App Capability, Radio HAL & Permission — WiFi Marauder)
 
 ---
 
@@ -20,6 +20,7 @@ Palanu = platform handheld bergaya Flipper Zero, **1-bit retro/pixel UI**, denga
 
 | Area | Status | Bukti |
 |---|---|---|
+| **App capability + Radio HAL (Plan 87)** | ✅ build | Three-axis access control (Capability · Permission · Lease); `PermissionService` tiered (benign auto-grant, sensitive prompt); `ResourceBroker` exclusivity groups (net.wifi.* single-owner); `SystemWifiManager` suspend/restore on app lease; `IRadioWifi` HAL (scan/monitor/inject/deauth/beacon); ESP32 promiscuous + `esp_wifi_80211_tx`; WASM watchdog (`m3_Yield` abort hook + memory quota); Settings→Apps→[app] (permission revoke + uninstall); `wifi.*` WASM host imports (10 functions); **WiFi Marauder** example WASM app (scan/deauth/monitor/beacon); ADR 0008 |
 | **App runtime parity (Plan 84)** | ✅ build (host) | CLI/UI/Hybrid dispatch dari `AppMode`; `launchProcess()` spawn thread untuk mode Cli; WASM headless via `WasmApp:ComponentApp` + `WasmAppStore`; `wasm_nema.cpp` bridge (log/device/storage); icon pipeline `icon.raw` (1-bit) di launcher; `BadUsbApp` → `ComponentApp` (thread sendiri); `JsAppStore::apps_` → `std::list` (stable pointers) |
 | **Storage architecture (Plan 83)** | ✅ build (host) | VFS: `/system/assets/anims/`, `/data/<bundle-id>/`, `/sd/data/<bundle-id>/`; `AppStorage` (namespaced I/O); `StorageService` (routing+move+usage); `ctx.storage()` di `AppContext`; NVS 15-char limit fixed (djb2); BadUSB migrasi `/badusb/`→`/data/com.palanu.badusb/`; JS SDK `nema.storage.fs.*`; Storage Settings screen (volume + per-app list + move) |
 | **Asset architecture (Plan 82)** | ✅ build (host+wasm) | T1 system icons (status bar), T2 launcher icon anims, T3 `.panim` (VFS); toolchain `tools/asset_gen/`; `dolphin_showcase.cpp` 895 KB removed; BadUSB → category="System"; battery icon 16×8 (proportional); WiFi icon state-gated (`available()`); animation consolidated to `laptop.panim`; LittleFS 512 KB |
