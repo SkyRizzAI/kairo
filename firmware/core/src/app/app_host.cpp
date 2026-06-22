@@ -76,6 +76,10 @@ void AppHost::onResume() {
     started_  = true;
     finished_ = false;
     rt_.log().info("AppHost", "enter", {{"w", std::to_string(w_)}, {"h", std::to_string(h_)}});
+    // Pre-resolve storage paths on this (GUI / internal-RAM) thread before the
+    // app thread starts. JS/WASM app threads use PSRAM stacks; NVS flash reads
+    // disable the SPI cache which also disables PSRAM → assert if called there.
+    warmStorage();
     // App thread on core 0 (off the GUI/core-1). May block freely.
     // Stack size comes from the app: JS apps need more (QuickJS recurses deeply).
     thread_.start({"nema_app", app_.stackBytes(), 5, 0}, &AppHost::threadEntry, this);

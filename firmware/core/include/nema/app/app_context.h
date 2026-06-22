@@ -2,6 +2,7 @@
 #include "nema/ui/surface.h"
 #include "nema/proc/process_context.h"
 #include "nema/fs/app_storage.h"
+#include <optional>
 
 // Plan 54/55 — AppContext: the full process + surface interface an app gets.
 //
@@ -30,11 +31,20 @@ public:
     virtual const char* bundleId() const = 0;
 
     // ── Namespaced storage (Plan 83) ─────────────────────────────────
-    // Returns an AppStorage scoped to this app's bundle ID.
-    // Prefers internal flash; routes to SD if user moved the app's data there.
-    // Use criticalStorage() for credentials / private keys (always internal).
-    AppStorage storage();
-    AppStorage criticalStorage();
+    // Returns an AppStorage scoped to this app's bundle ID. The storage object
+    // is cached — construction (which reads NVS) happens once on an
+    // internal-RAM thread via warmStorage(), called by AppHost before the
+    // PSRAM-stacked app thread starts.
+    AppStorage& storage();
+    AppStorage& criticalStorage();
+
+    // Pre-constructs both storage objects on the calling thread (must be an
+    // internal-RAM thread). AppHost::onResume() calls this before thread_.start().
+    void warmStorage();
+
+private:
+    mutable std::optional<AppStorage> storage_;
+    mutable std::optional<AppStorage> critStorage_;
 };
 
 } // namespace nema

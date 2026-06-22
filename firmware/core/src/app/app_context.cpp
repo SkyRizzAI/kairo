@@ -4,12 +4,19 @@
 
 namespace nema {
 
-AppStorage AppContext::storage() {
-    return AppStorage(bundleId(), runtime().fs(), runtime().config(), false);
+void AppContext::warmStorage() {
+    if (!storage_)     storage_.emplace(bundleId(), runtime().fs(), runtime().config(), false);
+    if (!critStorage_) critStorage_.emplace(bundleId(), runtime().fs(), runtime().config(), true);
 }
 
-AppStorage AppContext::criticalStorage() {
-    return AppStorage(bundleId(), runtime().fs(), runtime().config(), true);
+AppStorage& AppContext::storage() {
+    if (!storage_) storage_.emplace(bundleId(), runtime().fs(), runtime().config(), false);
+    return *storage_;
+}
+
+AppStorage& AppContext::criticalStorage() {
+    if (!critStorage_) critStorage_.emplace(bundleId(), runtime().fs(), runtime().config(), true);
+    return *critStorage_;
 }
 
 } // namespace nema

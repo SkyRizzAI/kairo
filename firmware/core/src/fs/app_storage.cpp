@@ -17,19 +17,24 @@ static std::string storNsKey(const std::string& bundleId) {
 
 AppStorage::AppStorage(std::string bundleId, IFileSystem* vfs,
                        IConfigStore& cfg, bool critical)
-    : bundleId_(std::move(bundleId)), vfs_(vfs), cfg_(cfg), critical_(critical) {}
-
-std::string AppStorage::resolvePath(const char* name) const {
-    std::string base;
+    : bundleId_(std::move(bundleId)), vfs_(vfs), cfg_(cfg), critical_(critical) {
+    // Resolve the base path here, not in resolvePath(). nvs_get_str() disables
+    // the SPI cache — on ESP32-S3, this also disables PSRAM. If this constructor
+    // ran on a PSRAM-stacked thread (JS/WASM app threads), the CPU would lose
+    // access to its own stack mid-call → assert crash. Callers must construct
+    // AppStorage on an internal-RAM thread (see AppContext::warmStorage()).
     if (critical_) {
-        base = "/system/data/" + bundleId_;
+        base_ = "/system/data/" + bundleId_;
     } else {
         std::string loc;
         cfg_.getString("stor", storNsKey(bundleId_).c_str(), loc);
-        base = (loc == "ext") ? "/sd/data/" + bundleId_ : "/system/data/" + bundleId_;
+        base_ = (loc == "ext") ? "/sd/data/" + bundleId_ : "/system/data/" + bundleId_;
     }
-    if (!name || name[0] == '\0') return base;
-    return base + "/" + name;
+}
+
+std::string AppStorage::resolvePath(const char* name) const {
+    if (!name || name[0] == '\0') return base_;
+    return base_ + "/" + name;
 }
 
 // Create all path components that don't exist yet (recursive mkdir).

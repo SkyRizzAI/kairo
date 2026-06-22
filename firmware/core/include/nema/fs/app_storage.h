@@ -36,13 +36,17 @@ public:
     AppStorage critical() const;
 
 private:
-    // Resolves a relative name to an absolute VFS path.
     std::string resolvePath(const char* name) const;
 
     std::string   bundleId_;
     IFileSystem*  vfs_;
     IConfigStore& cfg_;
     bool          critical_;
+    // Pre-resolved in the constructor (NVS read happens there, not on every I/O
+    // call). Must be constructed on a thread with an internal-RAM stack — PSRAM
+    // threads cannot call nvs_get_str() because NVS disables the SPI cache which
+    // also makes PSRAM inaccessible. See AppContext::warmStorage().
+    std::string   base_;
 };
 
 } // namespace nema
