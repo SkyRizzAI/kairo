@@ -3,7 +3,6 @@
 // survives) instead of corrupting the stack. Covers both deep *parsing* (the ESP
 // freeze risk) and deep *execution*, under a coordinated stack guard.
 #include "nema/js/js_engine.h"
-#include "nema/apps/embedded_apps.h"
 #include <cstdio>
 #include <string>
 
@@ -47,12 +46,17 @@ int main() {
         std::printf("    err: %.60s\n", eng.lastError().c_str());
     }
 
-    // 3) After failures the process is fine: a real app loads under the SAME guard.
+    // 3) After failures the process is fine: a minimal app loads under the SAME guard.
     {
         js::JsEngine eng;
         eng.setMaxStackSize(GUARD);
-        bool ok = eng.loadApp(EMBEDDED_APPS[0].js, EMBEDDED_APPS[0].id);
-        CHECK(ok, "real app still loads under the coordinated guard");
+        const char* js =
+            "import{View as V,Text as T}from'nema';"
+            "import{jsxDEV as f}from'nema/jsx-dev-runtime';"
+            "function App(){return f(V,{children:f(T,{children:'ok'},0,false)},0,false);}"
+            "export{App as default};\n";
+        bool ok = eng.loadApp(js, "com.palanu.test.minimal");
+        CHECK(ok, "minimal app still loads under the coordinated guard");
         if (!ok) std::printf("    err: %s\n", eng.lastError().c_str());
     }
 

@@ -8,9 +8,6 @@
 #include "nema/skyrizze32/skyrizz_e32.h"
 #include "nema/services/clock_service.h"
 #include "nema/app/app_registry.h"
-#include "nema/apps/js_app_store.h"
-#include "nema/apps/hello_app.h"
-#include "nema/apps/dolphin_app.h"
 #include "nema/apps/bad_usb_app.h"
 #include "aether/screens/desktop_screen.h"
 #include "nema/ui/view_dispatcher.h"
@@ -34,16 +31,8 @@ void setup() {
     rt.start();
     aether::bootDisplay(rt);   // Plan 80: construct + start display servers + GUI loop
 
-    static nema::HelloApp helloApp;
-    rt.apps().install(helloApp);
-
-    static nema::DolphinApp dolphinApp;
-    rt.apps().install(dolphinApp);
-
     static nema::BadUsbApp badUsbApp;
     rt.apps().install(badUsbApp, "1.0.0");
-
-    nema::loadEmbeddedJsApps(rt);
 
     static nema::DesktopScreen desktop(rt);   // Plan 81: idle wallpaper → launcher
     rt.view().push(desktop);
