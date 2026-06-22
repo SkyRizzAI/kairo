@@ -43,7 +43,12 @@ public:
     WasmEngine& operator=(const WasmEngine&) = delete;
 
     // Allocate the wasm3 environment and runtime. stackBytes comes from app config.
-    bool init(size_t stackBytes, size_t memQuotaBytes = 65536);
+    // memQuotaBytes caps memory.grow (0 = no cap — wasm3 is bounded by host RAM).
+    // The default is 0 (uncapped): the WASM binary's own initial-page declaration
+    // determines how much linear memory is allocated at load time. A non-zero value
+    // is a hard ceiling enforced by ResizeMemory; set it only when the manifest
+    // declares an explicit mem_quota_bytes.
+    bool init(size_t stackBytes, size_t memQuotaBytes = 0);
 
     // Parse + load a .wasm module.
     bool load(const uint8_t* wasm, size_t len);
