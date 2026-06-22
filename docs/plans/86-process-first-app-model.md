@@ -1,6 +1,6 @@
 # Plan 86 — Process-First App Model (Node/Electron-style)
 
-> **Status:** IN PROGRESS — Fase 0–7 done (Fase 7 examples written; build+run requires wasi-sdk).
+> **Status:** DONE — Fase 0–8 complete. (Fase 7 examples written; build+run requires wasi-sdk.)
 > **Last updated:** 2026-06-22
 
 ---
@@ -409,7 +409,7 @@ Plus regресi: **13/13 host test** (`firmware/tests/`) tetap pass tiap fase.
 - [x] Fase 5 — SDK DX: `printf` shim (`%d %u %x %s %c %%`) + `display_*` aliases
 - [x] Fase 6 — `.papp.zip` build + Forge auto-unpack
 - [x] Fase 7 — Examples + verifikasi G1–G9
-- [ ] Fase 8 — Konvergensi JS/TSX + built-in (doc + no-regression)
+- [x] Fase 8 — Konvergensi JS/TSX + built-in (doc + no-regression)
 
 ---
 

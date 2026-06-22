@@ -94,7 +94,8 @@ delay(ms)                      // yield app thread
 ```
 
 Actions: `ACT_NONE=0`, `ACT_PREV=1`, `ACT_NEXT=2`, `ACT_ACTIVATE=3`, `ACT_BACK=4`,
-`ACT_UP=5`, `ACT_DOWN=6`, `ACT_LEFT=7`, `ACT_RIGHT=8`.
+`ACT_UP=5` (AdjustUp), `ACT_DOWN=6` (AdjustDown).
+Up/Down/Left/Right d-pad keys are mapped to Prev/Next by the board keymap.
 
 ## SDK header (Plan 86 Fase 5)
 
@@ -104,25 +105,67 @@ WASI libc), all `canvas_*`/`ui_*`/`input_*` declarations, and `COLOR_*` constant
 ## Example — minimal app
 
 ```c
+// Terminal app — no UI. Shows on terminal screen.
 #include "nema_api.h"
-
-int main(int argc, char* argv[]) {
-    printf("Hello! argc=%d\n", argc);   // → terminal screen (no UI call)
+NEMA_EXPORT int main(void) {
+    char name[64] = "World";
+    if (nema_argc() > 1) nema_argv_get(1, name, sizeof(name));
+    printf("Hello, %s!\n", name);
     return 0;
 }
 ```
 
 ```c
+// Canvas app — raw pixel drawing. First canvas_flush() flips to Gui mode.
 #include "nema_api.h"
-
-int main(int argc, char* argv[]) {
-    canvas_clear(COLOR_BLACK);
-    canvas_text(10, 10, "Hello Palanu!", COLOR_WHITE);
-    canvas_flush();                      // ← opens Gui window
-    while (input_wait(5000) != ACT_BACK) {}
+NEMA_EXPORT int main(void) {
+    int w = canvas_width(), h = canvas_height();
+    canvas_clear(COLOR_BG);
+    canvas_text(2, 2, "Hello Palanu!", COLOR_FG);
+    canvas_flush();
+    while (input_wait(0) != ACT_BACK) {}
     return 0;
 }
 ```
+
+```c
+// Retained-UI app — declarative widgets, focus navigation.
+#include "nema_api.h"
+NEMA_EXPORT int main(void) {
+    int count = 0;
+    while (1) {
+        ui_begin();
+        ui_title("Counter");
+        ui_button("+1", 1);
+        ui_button("-1", 2);
+        ui_end();
+        int ev = ui_wait_event();
+        if (ev == EV_BACK) break;
+        if (ev == 1) count++;
+        if (ev == 2) count--;
+    }
+    return 0;
+}
+```
+
+## JS/TSX apps — convergence path (Plan 86 Fase 8)
+
+Existing JS/TSX apps **continue to work unchanged** — no breaking changes.
+Under the hood they already follow the process-first model:
+
+| JS/TSX concept | Process-first mapping |
+|---|---|
+| `class MyApp extends ComponentApp` | a process whose `main()` calls `ui_begin()/ui_end()` equivalent |
+| `build(arena, rt) → UiNode*` | the retained-UI frame declaraction |
+| `onAction(action)` | the event dispatch (equivalent to `ui_wait_event()` return) |
+| `AppHost` running `run()` loop | the host-side event loop, same as `wasm_ui.cpp` does for WASM |
+
+The north-star: a future JS API would be `const ui = require('nema/ui'); ui.begin()...`
+instead of TSX class syntax, mirroring the WASM ABI exactly. Until then, the TSX
+`ComponentApp` pattern remains the idiomatic way to write JS apps.
+
+**No regression guarantee:** the `AppHost` and `ComponentApp` paths are unchanged.
+Any app that built before Plan 86 continues to build and run.
 
 ## What changed from the old model
 
@@ -130,5 +173,7 @@ int main(int argc, char* argv[]) {
 |---|---|
 | Manifest declared `"mode":"cli"\|"ui"` | Manifest has no `mode`; field ignored |
 | Launcher routed Cli → headless, Ui → AppHost | Launcher always uses AppHost |
+| WASM `main(int argc, char* argv[])` with dead args | `NEMA_EXPORT int main(void)` + `nema_argc()`/`nema_argv_get()` |
 | WASM apps ran synchronously in `onStart()` | WASM `main()` runs on app thread (Fase 1) |
 | No canvas/UI ABI for WASM | `canvas.*`, `ui.*`, `input.*` imports (Fase 2–4) |
+| No install flow for WASM bundles | `.papp.zip` upload in Forge → auto-unpack → AppScan (Fase 6) |
