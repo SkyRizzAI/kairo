@@ -3,6 +3,6 @@
 #pragma once
 namespace nema {
 struct EmbeddedApp { const char* id; const char* name; const char* js; };
-inline const EmbeddedApp EMBEDDED_APPS[] = {};
+inline const EmbeddedApp* const EMBEDDED_APPS = nullptr;
 inline constexpr int EMBEDDED_APP_COUNT = 0;
 }
