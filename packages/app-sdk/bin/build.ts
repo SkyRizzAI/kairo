@@ -100,8 +100,8 @@ if (manifest.runtime === "wasm") {
   }
 
   const js = await result.outputs[0].text();
-  const jsName = basename(entryFile).replace(/\.(tsx?|jsx?)$/, ".js");
-  await writeFile(join(outDir, jsName), js);
+  await writeFile(join(outDir, "app.js"), js);
+  manifest.entry = "app.js";  // normalize: firmware installer looks for app.js
 }
 
 // ── Icon pipeline ──────────────────────────────────────────────────────────

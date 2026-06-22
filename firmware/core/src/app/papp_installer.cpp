@@ -165,8 +165,21 @@ static bool installFromDir(Runtime& rt, IFileSystem* fs,
     }
 
     // ── JS: load the bundle and install via JsAppStore ─────────────────────
+    // Candidates: manifest entry (with .tsx/.jsx → .js), then fallbacks.
     std::string entryPath;
-    for (const char* c : {"app.js", "main.js"}) {
+    std::vector<std::string> jsCandidates;
+    {
+        std::string me = mj.value("entry", "");
+        if (!me.empty()) {
+            // normalize extension: App.tsx → App.js
+            auto dot = me.rfind('.');
+            if (dot != std::string::npos) me = me.substr(0, dot) + ".js";
+            jsCandidates.push_back(me);
+        }
+    }
+    jsCandidates.push_back("app.js");
+    jsCandidates.push_back("main.js");
+    for (const auto& c : jsCandidates) {
         std::vector<uint8_t> d;
         if (fs->read(dir + "/" + c, d)) { entryPath = c; break; }
     }
