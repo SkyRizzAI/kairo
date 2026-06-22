@@ -4,8 +4,27 @@
 #include "nema/proc/process_context.h"
 #include "wasm3.h"
 #include "m3_env.h"
+#include <atomic>
+
+// ── WASM watchdog (Plan 87 Fase 6) ────────────────────────────────────────
+// m3_Yield() is a WEAK symbol in wasm3. Our strong definition is called at
+// every WASM function call boundary. Returning m3Err_trapAbort traps the VM
+// immediately without any cleanup inside guest code.
+//
+// Scope: single-engine-at-a-time (Palanu single-app model). If future versions
+// run concurrent engines, replace with a thread-local pointer.
+static std::atomic<bool> g_vmAbort{false};
+
+extern "C" M3Result m3_Yield() {
+    return g_vmAbort.load(std::memory_order_relaxed)
+           ? m3Err_trapAbort
+           : m3Err_none;
+}
 
 namespace nema {
+
+void WasmEngine::requestAbort() { g_vmAbort.store(true,  std::memory_order_release); }
+void WasmEngine::clearAbort()   { g_vmAbort.store(false, std::memory_order_release); }
 
 WasmEngine::WasmEngine() = default;
 
@@ -26,7 +45,10 @@ bool WasmEngine::init(size_t stackBytes, size_t memQuotaBytes) {
     rt_ = m3_NewRuntime(env_, (uint32_t)stackBytes, nullptr);
     if (!rt_) { err_ = "m3_NewRuntime failed"; return false; }
 
-    (void)memQuotaBytes;  // quota enforced in Phase 6
+    // Cap linear memory growth (Plan 87 Fase 6). wasm3 enforces this in
+    // ResizeMemory — a memory.grow past the limit traps with mallocFailed.
+    if (memQuotaBytes > 0)
+        rt_->memoryLimit = static_cast<uint32_t>(memQuotaBytes);
     return true;
 }
 
@@ -44,6 +66,7 @@ bool WasmEngine::load(const uint8_t* wasm, size_t len) {
 
 int WasmEngine::runStart(ProcessContext& ctx, const char* appId, ISurface* surface) {
     if (!rt_ || !mod_) { err_ = "not loaded"; return -1; }
+    clearAbort();  // reset any stale abort from a previous run or force-quit
 
     // Attach the host context to the runtime so import trampolines can reach the
     // kernel. host_ is a member, so it outlives this call.
@@ -76,8 +99,19 @@ int WasmEngine::runStart(ProcessContext& ctx, const char* appId, ISurface* surfa
         if (res) { err_ = res; return -1; }
         res = m3_CallV(startFn);
     }
-    // proc_exit() in WASI apps unwinds via m3Err_trapExit — that's normal.
-    if (res && res != m3Err_trapExit) { err_ = res; return -1; }
+    clearAbort();  // clear so the next app start is clean
+
+    // proc_exit() → m3Err_trapExit (normal cooperative exit).
+    // requestAbort() → m3Err_trapAbort (watchdog / force-quit — exit 130, SIGKILL convention).
+    if (res == m3Err_trapExit || res == nullptr) {
+        // normal
+    } else if (res == m3Err_trapAbort) {
+        err_ = "killed";
+        return 130;  // conventional SIGKILL exit code
+    } else {
+        err_ = res;
+        return -1;
+    }
 
     return ctx.shouldExit() ? ctx.exitCode() : 0;
 }

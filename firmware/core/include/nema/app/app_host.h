@@ -61,6 +61,11 @@ public:
     // (CPU ~0, stack+state preserved); resume = enter() again (re-push) clears it.
     void        setPaused(bool v) { paused_.store(v, std::memory_order_release); }
     bool        isPaused() const  { return paused_.load(std::memory_order_acquire); }
+
+    // Escalated kill (Plan 87 Fase 6). Combines requestExit() (cooperative) with
+    // app_.requestAbort() (VM-level trap) for apps that don't honour shouldExit().
+    // Safe to call from any thread; idempotent.
+    void forceQuit();
     const char* appName() const;
     void update(Key key) override;   // forward key → mailbox (legacy/direct)
     // Lossless input bridge: GuiService dispatches onAction(action) then

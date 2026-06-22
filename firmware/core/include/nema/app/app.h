@@ -40,6 +40,12 @@ struct IApp {
 
     // Launcher group label. Default "Apps". System tools return "System".
     virtual const char* category() const { return "Apps"; }
+
+    // Escalated kill (Plan 87 Fase 6). Called after requestExit() if the app
+    // has not terminated within the watchdog grace period. WASM: traps the VM
+    // at the next function-call boundary via m3_Yield. JS: similar.
+    // Default: no-op (native C++ apps are expected to honour shouldExit()).
+    virtual void requestAbort() {}
 };
 
 } // namespace nema

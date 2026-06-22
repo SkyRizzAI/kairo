@@ -279,6 +279,13 @@ void AppHost::requestExit(int code) {
     thread_.requestStop();
     paused_.store(false);
 }
+
+void AppHost::forceQuit() {
+    exitCode_ = 130;  // SIGKILL convention
+    thread_.requestStop();
+    paused_.store(false);
+    app_.requestAbort();  // VM-level trap; no-op for native/JS apps
+}
 bool AppHost::shouldExit() const { return thread_.shouldStop(); }
 int  AppHost::exitCode()   const { return exitCode_; }
 Runtime& AppHost::runtime()      { return rt_; }

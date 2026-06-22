@@ -67,6 +67,14 @@ public:
 
     const std::string& lastError() const { return err_; }
 
+    // ── Watchdog (Plan 87 Fase 6) ──────────────────────────────────────────
+    // requestAbort: signal the currently executing VM to stop at the next
+    // function-call boundary (m3_Yield hook). Thread-safe and idempotent.
+    // clearAbort:   reset the flag (called internally at runStart()).
+    // forceQuit (App level): see IApp::requestAbort().
+    static void requestAbort();
+    static void clearAbort();
+
 private:
     M3Environment* env_ = nullptr;
     M3Runtime*     rt_  = nullptr;

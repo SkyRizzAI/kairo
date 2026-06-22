@@ -45,6 +45,9 @@ public:
     // rather than the default nav dispatch that would ignore them.
     bool capturesInput() const override { return true; }
 
+    // Escalated kill: signal the wasm3 VM to trap at its next call boundary.
+    void requestAbort() override;
+
     // UI path (mode=ui): runs WASM synchronously in onStart() then shows
     // captured output on screen. Any key press exits after WASM completes.
     void onStart(AppContext& ctx) override;

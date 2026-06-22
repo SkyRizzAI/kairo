@@ -26,6 +26,10 @@ void WasmApp::setIcon(std::vector<uint8_t> data) {
     iconBitmap_ = iconData_.data() + 4;
 }
 
+void WasmApp::requestAbort() {
+    WasmEngine::requestAbort();
+}
+
 // ── Shared WASM execution ──────────────────────────────────────────────────
 
 void WasmApp::runWasm(ProcessContext& ctx, ISurface* surface) {
