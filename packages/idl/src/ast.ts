@@ -28,7 +28,12 @@ export interface PidlFunc {
   doc?: string;
   params: PidlField[];
   returns: TypeNode | null;
-  annotations: { blocking: boolean };
+  annotations: {
+    blocking: boolean;
+    capability: string | null;          // @capability("net.wifi.monitor")
+    tier: 'ambient' | 'benign' | 'sensitive' | null;  // @tier(sensitive)
+    lease: boolean;                     // @lease — requires ResourceBroker grant
+  };
 }
 
 export interface PidlInterface {

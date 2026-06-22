@@ -45,6 +45,9 @@ interface PidlFunc {
 
 interface FuncAnnotations {
   blocking: boolean;
+  capability: string | null;
+  tier: 'ambient' | 'benign' | 'sensitive' | null;
+  lease: boolean;
 }
 
 interface PidlInterface {
@@ -80,7 +83,9 @@ const KNOWN_CAPS = new Set([
   "input.back", "input.adjust", "input.2d", "input.touch",
   "camera", "audio.input", "audio.output", "rgb",
   "sensors.environment", "sensors.light", "sensors.motion",
-  "net.wifi", "net.http", "bt.ble",
+  "net.wifi", "net.wifi.managed", "net.wifi.scan",
+  "net.wifi.monitor", "net.wifi.inject", "net.wifi.ap",
+  "net.http", "bt.ble",
   "storage", "remote.usb", "profile",
 ]);
 
@@ -165,7 +170,8 @@ function classify(line: string): ParsedLine {
   if (trimmed.startsWith("//")) return { kind: "comment", text: trimmed.slice(2).trim() };
   if (trimmed === "}") return { kind: "close", text: "" };
 
-  const annMatch = trimmed.match(/^@(\w[\w-]*)\(?"?([^"]*)"?\)?$/);
+  // Handles: @name  @name("quoted")  @name(unquoted)
+  const annMatch = trimmed.match(/^@(\w[\w-]*)(?:\("?([^")\s]*)"?\))?$/);
   if (annMatch) {
     return { kind: "annotation", text: annMatch[1], param: annMatch[2] || undefined };
   }
@@ -207,9 +213,16 @@ function collectAnnotations(annLines: ParsedLine[]): InterfaceAnnotations {
 }
 
 function collectFuncAnnotations(annLines: ParsedLine[]): FuncAnnotations {
-  const result: FuncAnnotations = { blocking: false };
+  const result: FuncAnnotations = { blocking: false, capability: null, tier: null, lease: false };
   for (const l of annLines) {
     if (l.text === "blocking") result.blocking = true;
+    else if (l.text === "capability") result.capability = l.param || null;
+    else if (l.text === "tier") {
+      const t = l.param;
+      if (t === "ambient" || t === "benign" || t === "sensitive") result.tier = t;
+    }
+    else if (l.text === "lease") result.lease = true;
+    // unknown annotations silently ignored (forward-compatible)
   }
   return result;
 }
@@ -401,12 +414,22 @@ function validate(ast: PidlAst) {
       allRecords.set(rec.name, rec);
     }
 
-    // Validate capability references
+    // Validate capability references (interface-level and function-level)
     for (const iface of pkg.interfaces) {
       if (iface.annotations.capability) {
         if (!KNOWN_CAPS.has(iface.annotations.capability))
           throw new Error(
             `Unknown capability "${iface.annotations.capability}" in ${pkg.name}/${iface.name}`
+          );
+      }
+      for (const fn of iface.functions) {
+        if (fn.annotations.capability && !KNOWN_CAPS.has(fn.annotations.capability))
+          throw new Error(
+            `Unknown capability "${fn.annotations.capability}" in ${pkg.name}/${iface.name}.${fn.name}`
+          );
+        if (fn.annotations.lease && !fn.annotations.capability)
+          throw new Error(
+            `@lease without @capability in ${pkg.name}/${iface.name}.${fn.name}`
           );
       }
     }

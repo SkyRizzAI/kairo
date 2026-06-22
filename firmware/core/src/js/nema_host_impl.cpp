@@ -67,6 +67,22 @@ public:
         return rt_.capabilities().available(std::string(cap));
     }
 
+    // ── nema:sys/perm ─────────────────────────────────────────────────
+    // @future Fase 1: replace with PermissionService calls.
+
+    uint8_t perm_status(std::string_view) override { return 0; }   // 0=not_asked
+    uint8_t perm_request(std::string_view) override { return 1; }  // 1=granted (stub)
+
+    // ── nema:sys/lease ────────────────────────────────────────────────
+    // @future Fase 2: replace with ResourceBroker calls.
+
+    NemaResult<uint32_t, LeaseError> lease_acquire(std::string_view) override {
+        return {true, 0u, {}};  // stub: always grant, handle=0
+    }
+    NemaResult<void, std::string> lease_release(uint32_t) override {
+        return {true, {}};
+    }
+
     // ── nema:sys/events ───────────────────────────────────────────────
     // @future — not yet implemented; stubs log a warning.
 
@@ -167,6 +183,40 @@ public:
         return {false, "wifi not implemented"};
     }
     void wifi_disconnect() override {}
+
+    // ── nema:wifi/radio ───────────────────────────────────────────────
+    // @future Fase 4: implement via IRadioWifi (esp32_wifi_radio.cpp / sim_wifi_radio.cpp).
+
+    NemaResult<std::vector<ScanResult>, std::string> radio_scan() override {
+        return {false, {}, "not_impl"};
+    }
+    NemaResult<void, std::string> radio_monitor_open(uint8_t) override {
+        return {false, "not_impl"};
+    }
+    NemaResult<std::vector<uint8_t>, std::string> radio_monitor_read(uint32_t) override {
+        return {false, {}, "not_impl"};
+    }
+    NemaResult<void, std::string> radio_monitor_close() override {
+        return {false, "not_impl"};
+    }
+    NemaResult<void, std::string> radio_inject(uint8_t, const std::vector<uint8_t>&) override {
+        return {false, "not_impl"};
+    }
+    NemaResult<void, std::string> radio_deauth_start(std::string_view, uint8_t) override {
+        return {false, "not_impl"};
+    }
+    NemaResult<void, std::string> radio_deauth_stop() override {
+        return {false, "not_impl"};
+    }
+    NemaResult<void, std::string> radio_beacon_spam_start(const std::vector<std::string>&) override {
+        return {false, "not_impl"};
+    }
+    NemaResult<void, std::string> radio_beacon_spam_stop() override {
+        return {false, "not_impl"};
+    }
+    NemaResult<std::vector<uint8_t>, std::string> radio_wait_event(uint32_t) override {
+        return {false, {}, "not_impl"};
+    }
 
     // ── nema:profile ──────────────────────────────────────────────────
 

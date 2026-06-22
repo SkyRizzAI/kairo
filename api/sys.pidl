@@ -51,6 +51,42 @@ record field {
     value: string,
 }
 
+/// Permission query/request API. Plan 87.
+/// Apps use this to check their own permission status and request grants.
+/// Host implementation delegated to PermissionService (Fase 1).
+@core
+interface perm {
+    /// Query permission status for a capability.
+    /// Returns: 0=not_asked  1=granted  2=denied
+    status: func(cap: string) -> u8
+
+    /// Request permission for a capability.
+    /// For sensitive capabilities this triggers the Allow/Deny screen.
+    /// Returns: 1=granted  2=denied
+    request: func(cap: string) -> u8
+}
+
+/// Resource lease API. Plan 87.
+/// Apps acquire an exclusive lease before accessing radio hardware.
+/// Host implementation delegated to ResourceBroker (Fase 2).
+@core
+interface lease {
+    /// Acquire an exclusive lease for a capability.
+    /// Returns a lease handle on success, or a lease-error if busy/denied.
+    acquire: func(cap: string) -> result<u32, lease-error>
+
+    /// Release a previously acquired lease.
+    release: func(lease-handle: u32) -> result<tuple<>, string>
+}
+
+/// Error returned when lease acquisition fails.
+record lease-error {
+    /// "busy" | "unavailable" | "denied"
+    code: string,
+    /// App ID of the current owner (set when code == "busy").
+    owner: string,
+}
+
 /// Async task scheduling + timers. Maps to TaskRunner (task_runner.h:33).
 /// @future — not yet exposed in JS v0. Basis for setTimeout/setInterval.
 @core

@@ -16,7 +16,9 @@ function cppParamType2(t: TypeNode): string {
   switch (t.kind) {
     case "string": return "std::string";
     case "bool":   return "bool";
-    case "u8": case "u16": case "u32": case "s32": case "handle": return "int32_t";
+    case "u8":  return "uint8_t";
+    case "u16": return "uint16_t";
+    case "u32": case "s32": case "handle": return "int32_t";
     case "s64": case "u64": return "int64_t";
     case "f32": case "f64": return "double";
     case "list": return `std::vector<${cppParamType2(t.inner!)}>`;
@@ -69,11 +71,14 @@ function qjsMarshal(t: TypeNode, cppExpr: string): string {
     }
     case "result": {
       const okVal = qjsMarshal(t.ok!, "v");
-      const errVal = qjsMarshal(t.err!, "e");
+      // String errors throw a JS TypeError; struct errors marshal via wrapErr (JS_UNDEFINED stub).
+      const errVal = t.err!.kind === "string"
+        ? `JS_ThrowTypeError(c, "%s", e.c_str())`
+        : qjsMarshal(t.err!, "e");
       if (t.ok!.kind === "tuple" && (!t.ok!.fields || t.ok!.fields.length === 0)) {
-        return `marshalResultVoid(ctx, ${cppExpr}, [ctx](JSContext* c, auto& e) { (void)c; return ${errVal}; })`;
+        return `marshalResultVoid(ctx, ${cppExpr}, [ctx](JSContext* c, auto& e) { return ${errVal}; })`;
       }
-      return `marshalResult(ctx, ${cppExpr}, [ctx](JSContext* c, auto& v) { (void)c; return ${okVal}; }, [ctx](JSContext* c, auto& e) { (void)c; return ${errVal}; })`;
+      return `marshalResult(ctx, ${cppExpr}, [ctx](JSContext* c, auto& v) { (void)c; return ${okVal}; }, [ctx](JSContext* c, auto& e) { return ${errVal}; })`;
     }
     case "ref": return `marshalRecord(ctx, ${cppExpr})`;
     case "tuple": {
@@ -101,6 +106,19 @@ function emitFuncWrapper(func: PidlFunc, iface: string): string {
   lines.push("    auto* host = e->hostApi();");
   lines.push("    if (!host) return JS_UNDEFINED;");
   lines.push("");
+
+  // Emit gating prolog for sensitive functions (Plan 87 §4.7).
+  const ann = func.annotations;
+  if (ann.capability && ann.tier === "sensitive") {
+    lines.push(`    // @capability("${ann.capability}") @tier(sensitive)${ann.lease ? " @lease" : ""}`);
+    lines.push(`    if (!host->perm_check(e->appId(), "${ann.capability}"))`);
+    lines.push(`        return JS_ThrowTypeError(ctx, "ERR_PERMISSION: ${ann.capability}");`);
+    if (ann.lease) {
+      lines.push(`    if (!host->lease_check(e->appId(), "${ann.capability}"))`);
+      lines.push(`        return JS_ThrowTypeError(ctx, "ERR_NO_LEASE: ${ann.capability}");`);
+    }
+    lines.push("");
+  }
 
   // Unmarshal params
   for (let i = 0; i < func.params.length; i++) {
@@ -153,6 +171,8 @@ function emitRegistration(ast: PidlAst): string {
     "sys.device":   { parent: "sys",       var: "sys_device" },
     "sys.events":   { parent: "sys",       var: "sys_events" },
     "sys.tasks":    { parent: "sys",       var: "sys_tasks" },
+    "sys.perm":     { parent: "sys",       var: "sys_perm" },   // Plan 87: permission query
+    "sys.lease":    { parent: "sys",       var: "sys_lease" },  // Plan 87: broker lease
     "storage":      { parent: "nema",      var: "storage" },
     "storage.kv":   { parent: "storage",   var: "storage_kv" },
     "storage.fs":   { parent: "storage",   var: "storage_fs" },
@@ -167,6 +187,8 @@ function emitRegistration(ast: PidlAst): string {
     "media.audio-output": { parent: "media", var: "media_audio_output", gated: "audio.output" },
     "media.camera": { parent: "media",      var: "media_camera", gated: "camera" },
     "input":        { parent: "nema",      var: "input",    gated: "input" },
+    "wifi":         { parent: "nema",      var: "wifi" },        // Plan 87: WiFi radio HAL
+    "wifi.radio":   { parent: "wifi",      var: "wifi_radio" }, // func-level gating only
   };
 
   // Build namespace objects (only those present in the AST)
@@ -338,17 +360,18 @@ static JSValue marshalList(JSContext* ctx, const std::vector<T>& vec, F wrap) {
     return arr;
 }
 
-// Marshal NemaResult<T,E> → JS (ok object or throw)
+// Marshal NemaResult<T,E> → JS (ok value, or throw with wrapErr result as message).
+// wrapErr can produce JS_NewString for string errors or marshalRecord for struct errors.
 template <typename T, typename E, typename FW, typename FE>
 static JSValue marshalResult(JSContext* ctx, const NemaResult<T,E>& r, FW wrapOk, FE wrapErr) {
     if (r.ok) return wrapOk(ctx, r.value);
-    return JS_ThrowTypeError(ctx, r.error.c_str());
+    return wrapErr(ctx, r.error);
 }
 
 template <typename E, typename FE>
 static JSValue marshalResultVoid(JSContext* ctx, const NemaResult<void,E>& r, FE wrapErr) {
     if (r.ok) return JS_NewObject(ctx);
-    return JS_ThrowTypeError(ctx, r.error.c_str());
+    return wrapErr(ctx, r.error);
 }
 
 // Stub marshalling for records + tuples (used by @future interfaces).

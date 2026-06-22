@@ -144,6 +144,11 @@ export function emitHostCpp(ast: PidlAst): string {
   lines.push("struct HostApi {");
   lines.push("    virtual ~HostApi() = default;");
   lines.push("");
+  lines.push("    // ── Plan 87 gating stubs (overridden by PermissionService/ResourceBroker) ─");
+  lines.push("    // Default: allow all — replaced in Fase 1 (perm) and Fase 2 (lease).");
+  lines.push("    virtual bool perm_check(std::string_view /*app_id*/, std::string_view /*cap*/) { return true; }");
+  lines.push("    virtual bool lease_check(std::string_view /*app_id*/, std::string_view /*cap*/) { return true; }");
+  lines.push("");
 
   for (const pkg of ast.packages) {
     if (pkg.name.startsWith("palanu:")) continue; // TS-only wire protocol, not C++ host API

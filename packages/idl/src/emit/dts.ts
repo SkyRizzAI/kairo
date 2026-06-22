@@ -10,10 +10,23 @@ function funcToTs(fn: PidlFunc, indent: string): string {
   const name = camelCase(fn.name);
   const params = fn.params.map((p) => `${camelCase(p.name)}: ${typeToTsString(p.type)}`).join(", ");
   const ret = fn.returns ? typeToTsString(fn.returns) : "void";
-  if (fn.annotations.blocking) {
-    return `${indent}${name}(${params}): Promise<${ret}>;`;
+
+  const lines: string[] = [];
+  const ann = fn.annotations;
+  if (ann.capability || fn.doc) {
+    lines.push(`${indent}/**`);
+    if (fn.doc) {
+      for (const dline of fn.doc.split("\n")) lines.push(`${indent} * ${dline.trim()}`);
+    }
+    if (ann.capability) lines.push(`${indent} * @requires ${ann.capability} (${ann.tier ?? "ambient"}${ann.lease ? " +lease" : ""})`);
+    lines.push(`${indent} */`);
   }
-  return `${indent}${name}(${params}): ${ret};`;
+  if (ann.blocking) {
+    lines.push(`${indent}${name}(${params}): Promise<${ret}>;`);
+  } else {
+    lines.push(`${indent}${name}(${params}): ${ret};`);
+  }
+  return lines.join("\n");
 }
 
 export function emitDts(ast: PidlAst): string {
@@ -43,12 +56,7 @@ export function emitDts(ast: PidlAst): string {
       lines.push(`    namespace ${iface.name} {`);
 
       for (const fn of iface.functions) {
-        if (fn.doc) {
-          for (const dline of fn.doc.split("\n")) {
-            lines.push(`      /** ${dline.trim()} */`);
-          }
-        }
-        lines.push(`      ${funcToTs(fn, "      ")}`);
+        lines.push(funcToTs(fn, "      "));
       }
 
       lines.push("    }");

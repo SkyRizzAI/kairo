@@ -77,17 +77,18 @@ static JSValue marshalList(JSContext* ctx, const std::vector<T>& vec, F wrap) {
     return arr;
 }
 
-// Marshal NemaResult<T,E> → JS (ok object or throw)
+// Marshal NemaResult<T,E> → JS (ok value, or throw with wrapErr result as message).
+// wrapErr can produce JS_NewString for string errors or marshalRecord for struct errors.
 template <typename T, typename E, typename FW, typename FE>
 static JSValue marshalResult(JSContext* ctx, const NemaResult<T,E>& r, FW wrapOk, FE wrapErr) {
     if (r.ok) return wrapOk(ctx, r.value);
-    return JS_ThrowTypeError(ctx, r.error.c_str());
+    return wrapErr(ctx, r.error);
 }
 
 template <typename E, typename FE>
 static JSValue marshalResultVoid(JSContext* ctx, const NemaResult<void,E>& r, FE wrapErr) {
     if (r.ok) return JS_NewObject(ctx);
-    return JS_ThrowTypeError(ctx, r.error.c_str());
+    return wrapErr(ctx, r.error);
 }
 
 // Stub marshalling for records + tuples (used by @future interfaces).
@@ -198,7 +199,7 @@ static JSValue nema_ble_enable(JSContext* ctx, JSValueConst, int argc, JSValueCo
     if (!host) return JS_UNDEFINED;
 
     auto __ret = host->ble_enable();
-    return marshalResultVoid(ctx, __ret, [ctx](JSContext* c, auto& e) { (void)c; return JS_NewString(ctx, e.c_str()); });
+    return marshalResultVoid(ctx, __ret, [ctx](JSContext* c, auto& e) { return JS_ThrowTypeError(c, "%s", e.c_str()); });
 }
 
 // ble.disable
@@ -288,7 +289,7 @@ static JSValue nema_camera_capture(JSContext* ctx, JSValueConst, int argc, JSVal
     if (!host) return JS_UNDEFINED;
 
     auto __ret = host->camera_capture();
-    return marshalResult(ctx, __ret, [ctx](JSContext* c, auto& v) { (void)c; return JS_NewString(ctx, v.c_str()); }, [ctx](JSContext* c, auto& e) { (void)c; return JS_NewString(ctx, e.c_str()); });
+    return marshalResult(ctx, __ret, [ctx](JSContext* c, auto& v) { (void)c; return JS_NewString(ctx, v.c_str()); }, [ctx](JSContext* c, auto& e) { return JS_ThrowTypeError(c, "%s", e.c_str()); });
 }
 
 // http.get
@@ -301,7 +302,7 @@ static JSValue nema_http_get(JSContext* ctx, JSValueConst, int argc, JSValueCons
 
     std::string url = jsToString(ctx, argv[0]);
     auto __ret = host->http_get(url);
-    return marshalResult(ctx, __ret, [ctx](JSContext* c, auto& v) { (void)c; return marshalRecord(ctx, v); }, [ctx](JSContext* c, auto& e) { (void)c; return JS_NewString(ctx, e.c_str()); });
+    return marshalResult(ctx, __ret, [ctx](JSContext* c, auto& v) { (void)c; return marshalRecord(ctx, v); }, [ctx](JSContext* c, auto& e) { return JS_ThrowTypeError(c, "%s", e.c_str()); });
 }
 
 // http.post
@@ -316,7 +317,7 @@ static JSValue nema_http_post(JSContext* ctx, JSValueConst, int argc, JSValueCon
     std::string body = jsToString(ctx, argv[1]);
     std::string content_type = jsToString(ctx, argv[2]);
     auto __ret = host->http_post(url, body, content_type);
-    return marshalResult(ctx, __ret, [ctx](JSContext* c, auto& v) { (void)c; return marshalRecord(ctx, v); }, [ctx](JSContext* c, auto& e) { (void)c; return JS_NewString(ctx, e.c_str()); });
+    return marshalResult(ctx, __ret, [ctx](JSContext* c, auto& v) { (void)c; return marshalRecord(ctx, v); }, [ctx](JSContext* c, auto& e) { return JS_ThrowTypeError(c, "%s", e.c_str()); });
 }
 
 // wifi.is-connected
@@ -375,7 +376,7 @@ static JSValue nema_wifi_connect(JSContext* ctx, JSValueConst, int argc, JSValue
     std::string ssid = jsToString(ctx, argv[0]);
     std::string password = jsToString(ctx, argv[1]);
     auto __ret = host->wifi_connect(ssid, password);
-    return marshalResultVoid(ctx, __ret, [ctx](JSContext* c, auto& e) { (void)c; return JS_NewString(ctx, e.c_str()); });
+    return marshalResultVoid(ctx, __ret, [ctx](JSContext* c, auto& e) { return JS_ThrowTypeError(c, "%s", e.c_str()); });
 }
 
 // wifi.disconnect
@@ -653,6 +654,54 @@ static JSValue nema_events_publish(JSContext* ctx, JSValueConst, int argc, JSVal
     return JS_UNDEFINED;
 }
 
+// perm.status
+static JSValue nema_perm_status(JSContext* ctx, JSValueConst, int argc, JSValueConst* argv) {
+    (void)argc; (void)argv;
+    auto* e = engineOf(ctx);
+    auto* host = e->hostApi();
+    if (!host) return JS_UNDEFINED;
+
+    std::string cap = jsToString(ctx, argv[0]);
+    auto __ret = host->perm_status(cap);
+    return JS_NewInt32(ctx, __ret);
+}
+
+// perm.request
+static JSValue nema_perm_request(JSContext* ctx, JSValueConst, int argc, JSValueConst* argv) {
+    (void)argc; (void)argv;
+    auto* e = engineOf(ctx);
+    auto* host = e->hostApi();
+    if (!host) return JS_UNDEFINED;
+
+    std::string cap = jsToString(ctx, argv[0]);
+    auto __ret = host->perm_request(cap);
+    return JS_NewInt32(ctx, __ret);
+}
+
+// lease.acquire
+static JSValue nema_lease_acquire(JSContext* ctx, JSValueConst, int argc, JSValueConst* argv) {
+    (void)argc; (void)argv;
+    auto* e = engineOf(ctx);
+    auto* host = e->hostApi();
+    if (!host) return JS_UNDEFINED;
+
+    std::string cap = jsToString(ctx, argv[0]);
+    auto __ret = host->lease_acquire(cap);
+    return marshalResult(ctx, __ret, [ctx](JSContext* c, auto& v) { (void)c; return JS_NewInt32(ctx, v); }, [ctx](JSContext* c, auto& e) { return marshalRecord(ctx, e); });
+}
+
+// lease.release
+static JSValue nema_lease_release(JSContext* ctx, JSValueConst, int argc, JSValueConst* argv) {
+    (void)argc; (void)argv;
+    auto* e = engineOf(ctx);
+    auto* host = e->hostApi();
+    if (!host) return JS_UNDEFINED;
+
+    auto lease_handle = jsToU32(ctx, argv[0]);
+    auto __ret = host->lease_release(lease_handle);
+    return marshalResultVoid(ctx, __ret, [ctx](JSContext* c, auto& e) { return JS_ThrowTypeError(c, "%s", e.c_str()); });
+}
+
 // tasks.submit
 static JSValue nema_tasks_submit(JSContext* ctx, JSValueConst, int argc, JSValueConst* argv) {
     (void)argc; (void)argv;
@@ -702,6 +751,181 @@ static JSValue nema_tasks_cancel(JSContext* ctx, JSValueConst, int argc, JSValue
     auto token = jsToI32(ctx, argv[0]);
     host->tasks_cancel(token);
     return JS_UNDEFINED;
+}
+
+// radio.scan
+// @blocking — dispatched via TaskRunner (the host wraps as async).
+static JSValue nema_radio_scan(JSContext* ctx, JSValueConst, int argc, JSValueConst* argv) {
+    (void)argc; (void)argv;
+    auto* e = engineOf(ctx);
+    auto* host = e->hostApi();
+    if (!host) return JS_UNDEFINED;
+
+    auto __ret = host->radio_scan();
+    return marshalResult(ctx, __ret, [ctx](JSContext* c, auto& v) { (void)c; return marshalList(ctx, v, [ctx](JSContext* c, auto& v) { (void)c; return marshalRecord(ctx, v); }); }, [ctx](JSContext* c, auto& e) { return JS_ThrowTypeError(c, "%s", e.c_str()); });
+}
+
+// radio.monitor-open
+static JSValue nema_radio_monitor_open(JSContext* ctx, JSValueConst, int argc, JSValueConst* argv) {
+    (void)argc; (void)argv;
+    auto* e = engineOf(ctx);
+    auto* host = e->hostApi();
+    if (!host) return JS_UNDEFINED;
+
+    // @capability("net.wifi.monitor") @tier(sensitive) @lease
+    if (!host->perm_check(e->appId(), "net.wifi.monitor"))
+        return JS_ThrowTypeError(ctx, "ERR_PERMISSION: net.wifi.monitor");
+    if (!host->lease_check(e->appId(), "net.wifi.monitor"))
+        return JS_ThrowTypeError(ctx, "ERR_NO_LEASE: net.wifi.monitor");
+
+    auto channel = jsToU32(ctx, argv[0]);
+    auto __ret = host->radio_monitor_open(channel);
+    return marshalResultVoid(ctx, __ret, [ctx](JSContext* c, auto& e) { return JS_ThrowTypeError(c, "%s", e.c_str()); });
+}
+
+// radio.monitor-read
+// @blocking — dispatched via TaskRunner (the host wraps as async).
+static JSValue nema_radio_monitor_read(JSContext* ctx, JSValueConst, int argc, JSValueConst* argv) {
+    (void)argc; (void)argv;
+    auto* e = engineOf(ctx);
+    auto* host = e->hostApi();
+    if (!host) return JS_UNDEFINED;
+
+    // @capability("net.wifi.monitor") @tier(sensitive) @lease
+    if (!host->perm_check(e->appId(), "net.wifi.monitor"))
+        return JS_ThrowTypeError(ctx, "ERR_PERMISSION: net.wifi.monitor");
+    if (!host->lease_check(e->appId(), "net.wifi.monitor"))
+        return JS_ThrowTypeError(ctx, "ERR_NO_LEASE: net.wifi.monitor");
+
+    auto max = jsToU32(ctx, argv[0]);
+    auto __ret = host->radio_monitor_read(max);
+    return marshalResult(ctx, __ret, [ctx](JSContext* c, auto& v) { (void)c; return marshalList(ctx, v, [ctx](JSContext* c, auto& v) { (void)c; return JS_NewInt32(ctx, v); }); }, [ctx](JSContext* c, auto& e) { return JS_ThrowTypeError(c, "%s", e.c_str()); });
+}
+
+// radio.monitor-close
+static JSValue nema_radio_monitor_close(JSContext* ctx, JSValueConst, int argc, JSValueConst* argv) {
+    (void)argc; (void)argv;
+    auto* e = engineOf(ctx);
+    auto* host = e->hostApi();
+    if (!host) return JS_UNDEFINED;
+
+    // @capability("net.wifi.monitor") @tier(sensitive) @lease
+    if (!host->perm_check(e->appId(), "net.wifi.monitor"))
+        return JS_ThrowTypeError(ctx, "ERR_PERMISSION: net.wifi.monitor");
+    if (!host->lease_check(e->appId(), "net.wifi.monitor"))
+        return JS_ThrowTypeError(ctx, "ERR_NO_LEASE: net.wifi.monitor");
+
+    auto __ret = host->radio_monitor_close();
+    return marshalResultVoid(ctx, __ret, [ctx](JSContext* c, auto& e) { return JS_ThrowTypeError(c, "%s", e.c_str()); });
+}
+
+// radio.inject
+static JSValue nema_radio_inject(JSContext* ctx, JSValueConst, int argc, JSValueConst* argv) {
+    (void)argc; (void)argv;
+    auto* e = engineOf(ctx);
+    auto* host = e->hostApi();
+    if (!host) return JS_UNDEFINED;
+
+    // @capability("net.wifi.inject") @tier(sensitive) @lease
+    if (!host->perm_check(e->appId(), "net.wifi.inject"))
+        return JS_ThrowTypeError(ctx, "ERR_PERMISSION: net.wifi.inject");
+    if (!host->lease_check(e->appId(), "net.wifi.inject"))
+        return JS_ThrowTypeError(ctx, "ERR_NO_LEASE: net.wifi.inject");
+
+    auto channel = jsToU32(ctx, argv[0]);
+    std::vector<uint8_t> frame = {};
+    auto __ret = host->radio_inject(channel, frame);
+    return marshalResultVoid(ctx, __ret, [ctx](JSContext* c, auto& e) { return JS_ThrowTypeError(c, "%s", e.c_str()); });
+}
+
+// radio.deauth-start
+static JSValue nema_radio_deauth_start(JSContext* ctx, JSValueConst, int argc, JSValueConst* argv) {
+    (void)argc; (void)argv;
+    auto* e = engineOf(ctx);
+    auto* host = e->hostApi();
+    if (!host) return JS_UNDEFINED;
+
+    // @capability("net.wifi.inject") @tier(sensitive) @lease
+    if (!host->perm_check(e->appId(), "net.wifi.inject"))
+        return JS_ThrowTypeError(ctx, "ERR_PERMISSION: net.wifi.inject");
+    if (!host->lease_check(e->appId(), "net.wifi.inject"))
+        return JS_ThrowTypeError(ctx, "ERR_NO_LEASE: net.wifi.inject");
+
+    std::string bssid = jsToString(ctx, argv[0]);
+    auto channel = jsToU32(ctx, argv[1]);
+    auto __ret = host->radio_deauth_start(bssid, channel);
+    return marshalResultVoid(ctx, __ret, [ctx](JSContext* c, auto& e) { return JS_ThrowTypeError(c, "%s", e.c_str()); });
+}
+
+// radio.deauth-stop
+static JSValue nema_radio_deauth_stop(JSContext* ctx, JSValueConst, int argc, JSValueConst* argv) {
+    (void)argc; (void)argv;
+    auto* e = engineOf(ctx);
+    auto* host = e->hostApi();
+    if (!host) return JS_UNDEFINED;
+
+    // @capability("net.wifi.inject") @tier(sensitive) @lease
+    if (!host->perm_check(e->appId(), "net.wifi.inject"))
+        return JS_ThrowTypeError(ctx, "ERR_PERMISSION: net.wifi.inject");
+    if (!host->lease_check(e->appId(), "net.wifi.inject"))
+        return JS_ThrowTypeError(ctx, "ERR_NO_LEASE: net.wifi.inject");
+
+    auto __ret = host->radio_deauth_stop();
+    return marshalResultVoid(ctx, __ret, [ctx](JSContext* c, auto& e) { return JS_ThrowTypeError(c, "%s", e.c_str()); });
+}
+
+// radio.beacon-spam-start
+static JSValue nema_radio_beacon_spam_start(JSContext* ctx, JSValueConst, int argc, JSValueConst* argv) {
+    (void)argc; (void)argv;
+    auto* e = engineOf(ctx);
+    auto* host = e->hostApi();
+    if (!host) return JS_UNDEFINED;
+
+    // @capability("net.wifi.inject") @tier(sensitive) @lease
+    if (!host->perm_check(e->appId(), "net.wifi.inject"))
+        return JS_ThrowTypeError(ctx, "ERR_PERMISSION: net.wifi.inject");
+    if (!host->lease_check(e->appId(), "net.wifi.inject"))
+        return JS_ThrowTypeError(ctx, "ERR_NO_LEASE: net.wifi.inject");
+
+    std::vector<std::string> ssid_list = {};
+    auto __ret = host->radio_beacon_spam_start(ssid_list);
+    return marshalResultVoid(ctx, __ret, [ctx](JSContext* c, auto& e) { return JS_ThrowTypeError(c, "%s", e.c_str()); });
+}
+
+// radio.beacon-spam-stop
+static JSValue nema_radio_beacon_spam_stop(JSContext* ctx, JSValueConst, int argc, JSValueConst* argv) {
+    (void)argc; (void)argv;
+    auto* e = engineOf(ctx);
+    auto* host = e->hostApi();
+    if (!host) return JS_UNDEFINED;
+
+    // @capability("net.wifi.inject") @tier(sensitive) @lease
+    if (!host->perm_check(e->appId(), "net.wifi.inject"))
+        return JS_ThrowTypeError(ctx, "ERR_PERMISSION: net.wifi.inject");
+    if (!host->lease_check(e->appId(), "net.wifi.inject"))
+        return JS_ThrowTypeError(ctx, "ERR_NO_LEASE: net.wifi.inject");
+
+    auto __ret = host->radio_beacon_spam_stop();
+    return marshalResultVoid(ctx, __ret, [ctx](JSContext* c, auto& e) { return JS_ThrowTypeError(c, "%s", e.c_str()); });
+}
+
+// radio.wait-event
+// @blocking — dispatched via TaskRunner (the host wraps as async).
+static JSValue nema_radio_wait_event(JSContext* ctx, JSValueConst, int argc, JSValueConst* argv) {
+    (void)argc; (void)argv;
+    auto* e = engineOf(ctx);
+    auto* host = e->hostApi();
+    if (!host) return JS_UNDEFINED;
+
+    // @capability("net.wifi.monitor") @tier(sensitive) @lease
+    if (!host->perm_check(e->appId(), "net.wifi.monitor"))
+        return JS_ThrowTypeError(ctx, "ERR_PERMISSION: net.wifi.monitor");
+    if (!host->lease_check(e->appId(), "net.wifi.monitor"))
+        return JS_ThrowTypeError(ctx, "ERR_NO_LEASE: net.wifi.monitor");
+
+    auto timeout_ms = jsToU32(ctx, argv[0]);
+    auto __ret = host->radio_wait_event(timeout_ms);
+    return marshalResult(ctx, __ret, [ctx](JSContext* c, auto& v) { (void)c; return marshalList(ctx, v, [ctx](JSContext* c, auto& v) { (void)c; return JS_NewInt32(ctx, v); }); }, [ctx](JSContext* c, auto& e) { return JS_ThrowTypeError(c, "%s", e.c_str()); });
 }
 
 } // anon namespace
@@ -802,12 +1026,37 @@ void installNemaApi(JSContext* ctx, HostApi* host, nema::CapabilityRegistry& cap
     setFn(ctx, sys_events, "unsubscribe", nema_events_unsubscribe, 1);
     setFn(ctx, sys_events, "publish", nema_events_publish, 2);
 
+    JSValue sys_perm = JS_NewObject(ctx);
+    JS_SetPropertyStr(ctx, sys, "perm", sys_perm);
+    setFn(ctx, sys_perm, "status", nema_perm_status, 1);
+    setFn(ctx, sys_perm, "request", nema_perm_request, 1);
+
+    JSValue sys_lease = JS_NewObject(ctx);
+    JS_SetPropertyStr(ctx, sys, "lease", sys_lease);
+    setFn(ctx, sys_lease, "acquire", nema_lease_acquire, 1);
+    setFn(ctx, sys_lease, "release", nema_lease_release, 1);
+
     JSValue sys_tasks = JS_NewObject(ctx);
     JS_SetPropertyStr(ctx, sys, "tasks", sys_tasks);
     setFn(ctx, sys_tasks, "submit", nema_tasks_submit, 2);
     setFn(ctx, sys_tasks, "timeout", nema_tasks_timeout, 2);
     setFn(ctx, sys_tasks, "interval", nema_tasks_interval, 2);
     setFn(ctx, sys_tasks, "cancel", nema_tasks_cancel, 1);
+
+    JSValue wifi = JS_NewObject(ctx);
+    JS_SetPropertyStr(ctx, nema, "wifi", wifi);
+    JSValue wifi_radio = JS_NewObject(ctx);
+    JS_SetPropertyStr(ctx, wifi, "radio", wifi_radio);
+    setFn(ctx, wifi_radio, "scan", nema_radio_scan, 0);
+    setFn(ctx, wifi_radio, "monitorOpen", nema_radio_monitor_open, 1);
+    setFn(ctx, wifi_radio, "monitorRead", nema_radio_monitor_read, 1);
+    setFn(ctx, wifi_radio, "monitorClose", nema_radio_monitor_close, 0);
+    setFn(ctx, wifi_radio, "inject", nema_radio_inject, 2);
+    setFn(ctx, wifi_radio, "deauthStart", nema_radio_deauth_start, 2);
+    setFn(ctx, wifi_radio, "deauthStop", nema_radio_deauth_stop, 0);
+    setFn(ctx, wifi_radio, "beaconSpamStart", nema_radio_beacon_spam_start, 1);
+    setFn(ctx, wifi_radio, "beaconSpamStop", nema_radio_beacon_spam_stop, 0);
+    setFn(ctx, wifi_radio, "waitEvent", nema_radio_wait_event, 1);
 
     // device.name + device.caps (static properties)
     JS_SetPropertyStr(ctx, sys_device, "name", JS_NewString(ctx, host->device_name().c_str()));

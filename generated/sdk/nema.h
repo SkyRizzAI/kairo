@@ -122,6 +122,14 @@ extern int32_t nema_sys__events_subscribe(const char* name, int32_t handler);
 extern void nema_sys__events_unsubscribe(int32_t token);
 /* Publish an event with optional string fields. */
 extern void nema_sys__events_publish(const char* name, int32_t fields);
+/* Query permission status for a capability. Returns: 0=not_asked  1=granted  2=denied */
+extern uint32_t nema_sys__perm_status(const char* cap);
+/* Request permission for a capability. For sensitive capabilities this triggers the Allow/Deny screen. Returns: 1=granted  2=denied */
+extern uint32_t nema_sys__perm_request(const char* cap);
+/* Acquire an exclusive lease for a capability. Returns a lease handle on success, or a lease-error if busy/denied. */
+extern int32_t nema_sys__lease_acquire(const char* cap, uint32_t* out_value);
+/* Release a previously acquired lease. */
+extern int32_t nema_sys__lease_release(uint32_t lease_handle);
 /* Submit a job to run on a worker thread; done() is called on the UI loop. @blocking marks that the job may block (http, wifi scan, ble enable). */
 extern void nema_sys__tasks_submit(int32_t job, int32_t done);
 /* Schedule a callback after delay milliseconds (one-shot). */
@@ -130,6 +138,38 @@ extern int32_t nema_sys__tasks_timeout(uint32_t ms, int32_t callback);
 extern int32_t nema_sys__tasks_interval(uint32_t ms, int32_t callback);
 /* Cancel a pending timeout/interval by handle. */
 extern void nema_sys__tasks_cancel(int32_t token);
+
+/* ── nema:wifi ─────────────────────────────────────────── */
+/* Scan for visible APs. @blocking — runs on worker. Auto-grant (benign): no permission prompt. No exclusive lease required. */
+/* requires: @capability("net.wifi.scan") @tier(benign) */
+extern int32_t nema_wifi__radio_scan(int32_t* out_value);
+/* Open promiscuous/monitor mode on the given channel. Requires user permission (sensitive) and an exclusive lease. */
+/* requires: @capability("net.wifi.monitor") @tier(sensitive) @lease */
+extern int32_t nema_wifi__radio_monitor_open(uint32_t channel);
+/* Read raw 802.11 frames from the ring buffer (up to max bytes). Drops frames when ring is full — radio never stalls. */
+/* requires: @capability("net.wifi.monitor") @tier(sensitive) @lease */
+extern int32_t nema_wifi__radio_monitor_read(uint32_t max, int32_t* out_value);
+/* Close monitor mode and release promiscuous capture. */
+/* requires: @capability("net.wifi.monitor") @tier(sensitive) @lease */
+extern int32_t nema_wifi__radio_monitor_close(void);
+/* Inject a raw 802.11 frame on the given channel. */
+/* requires: @capability("net.wifi.inject") @tier(sensitive) @lease */
+extern int32_t nema_wifi__radio_inject(uint32_t channel, int32_t frame);
+/* Start continuous deauth loop (firmware-native, timing-critical). App receives events via wait-event; the loop itself never touches the sandbox. */
+/* requires: @capability("net.wifi.inject") @tier(sensitive) @lease */
+extern int32_t nema_wifi__radio_deauth_start(const char* bssid, uint32_t channel);
+/* Stop the deauth loop. */
+/* requires: @capability("net.wifi.inject") @tier(sensitive) @lease */
+extern int32_t nema_wifi__radio_deauth_stop(void);
+/* Start beacon spam (multiple fake SSIDs, firmware-native loop). */
+/* requires: @capability("net.wifi.inject") @tier(sensitive) @lease */
+extern int32_t nema_wifi__radio_beacon_spam_start(int32_t ssid_list);
+/* Stop the beacon spam loop. */
+/* requires: @capability("net.wifi.inject") @tier(sensitive) @lease */
+extern int32_t nema_wifi__radio_beacon_spam_stop(void);
+/* Block until the next matured radio event arrives (timeout_ms=0 → poll). Returns serialised event bytes; format is runtime-defined (JSON or binary). */
+/* requires: @capability("net.wifi.monitor") @tier(sensitive) @lease */
+extern int32_t nema_wifi__radio_wait_event(uint32_t timeout_ms, int32_t* out_value);
 
 #ifdef __cplusplus
 }

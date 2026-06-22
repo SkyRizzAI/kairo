@@ -76,6 +76,13 @@ function emitFunc(func: PidlFunc, pkg: string, iface: string): string {
   if (func.doc) {
     lines.push(`/* ${func.doc.split("\n")[0].trim()} */`);
   }
+  // Emit capability/tier/lease requirements as a comment for app developers.
+  const ann = func.annotations;
+  if (ann.capability) {
+    const tierStr = ann.tier ?? "ambient";
+    const leaseStr = ann.lease ? " @lease" : "";
+    lines.push(`/* requires: @capability("${ann.capability}") @tier(${tierStr})${leaseStr} */`);
+  }
   lines.push(`extern ${ret} ${name}(${paramStr});`);
   return lines.join("\n");
 }

@@ -1,0 +1,100 @@
+// nema:wifi — WiFi radio HAL (raw/thick access). Plan 87 Fase 0.
+// This is the RADIO layer, separate from nema:net/wifi (cooked STA management).
+// All functions use func-level @capability/@tier/@lease annotations (Plan 87 §4.2).
+//
+// Two modes:
+//   Thick primitives — firmware runs the loop native on Core 0; app receives events.
+//   Raw escape — monitor ring buffer + inject passthrough for novel experiments.
+package nema:wifi@1.0
+
+/// One AP found during a WiFi scan.
+record scan-result {
+    bssid: string,
+    ssid: string,
+    channel: u8,
+    rssi: s32,
+    auth: string,
+}
+
+/// WiFi radio interface: thick primitives + raw escape.
+/// Interface is @core (no namespace-level gate); each function declares its own
+/// @capability/@tier/@lease so the emitter inserts per-call gating prologues.
+@core
+interface radio {
+    // ── Cooked scan (benign, no lease) ────────────────────────────────────────
+
+    /// Scan for visible APs. @blocking — runs on worker.
+    /// Auto-grant (benign): no permission prompt. No exclusive lease required.
+    @capability("net.wifi.scan")
+    @tier(benign)
+    @blocking
+    scan: func() -> result<list<scan-result>, string>
+
+    // ── Monitor mode (sensitive, exclusive lease) ──────────────────────────────
+
+    /// Open promiscuous/monitor mode on the given channel.
+    /// Requires user permission (sensitive) and an exclusive lease.
+    @capability("net.wifi.monitor")
+    @tier(sensitive)
+    @lease
+    monitor-open: func(channel: u8) -> result<tuple<>, string>
+
+    /// Read raw 802.11 frames from the ring buffer (up to max bytes).
+    /// Drops frames when ring is full — radio never stalls.
+    @capability("net.wifi.monitor")
+    @tier(sensitive)
+    @lease
+    @blocking
+    monitor-read: func(max: u32) -> result<list<u8>, string>
+
+    /// Close monitor mode and release promiscuous capture.
+    @capability("net.wifi.monitor")
+    @tier(sensitive)
+    @lease
+    monitor-close: func() -> result<tuple<>, string>
+
+    // ── Frame injection (sensitive, exclusive lease) ───────────────────────────
+
+    /// Inject a raw 802.11 frame on the given channel.
+    @capability("net.wifi.inject")
+    @tier(sensitive)
+    @lease
+    inject: func(channel: u8, frame: list<u8>) -> result<tuple<>, string>
+
+    // ── Thick primitives — loop runs native on Core 0 ─────────────────────────
+
+    /// Start continuous deauth loop (firmware-native, timing-critical).
+    /// App receives events via wait-event; the loop itself never touches the sandbox.
+    @capability("net.wifi.inject")
+    @tier(sensitive)
+    @lease
+    deauth-start: func(bssid: string, channel: u8) -> result<tuple<>, string>
+
+    /// Stop the deauth loop.
+    @capability("net.wifi.inject")
+    @tier(sensitive)
+    @lease
+    deauth-stop: func() -> result<tuple<>, string>
+
+    /// Start beacon spam (multiple fake SSIDs, firmware-native loop).
+    @capability("net.wifi.inject")
+    @tier(sensitive)
+    @lease
+    beacon-spam-start: func(ssid-list: list<string>) -> result<tuple<>, string>
+
+    /// Stop the beacon spam loop.
+    @capability("net.wifi.inject")
+    @tier(sensitive)
+    @lease
+    beacon-spam-stop: func() -> result<tuple<>, string>
+
+    // ── Matured events (wait/poll, pola ui_wait_event) ────────────────────────
+
+    /// Block until the next matured radio event arrives (timeout_ms=0 → poll).
+    /// Returns serialised event bytes; format is runtime-defined (JSON or binary).
+    @capability("net.wifi.monitor")
+    @tier(sensitive)
+    @lease
+    @blocking
+    wait-event: func(timeout-ms: u32) -> result<list<u8>, string>
+}

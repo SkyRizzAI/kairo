@@ -46,11 +46,32 @@ struct Field {
     std::string value;
 };
 
+// Error returned when lease acquisition fails.
+struct LeaseError {
+    std::string code;
+    std::string owner;
+};
+
+// Records from nema:wifi
+// One AP found during a WiFi scan.
+struct ScanResult {
+    std::string bssid;
+    std::string ssid;
+    uint8_t channel;
+    int32_t rssi;
+    std::string auth;
+};
+
 // ── HostApi — generated abstract class (Plan 49) ──────────────
 // Implement this ONCE in nema_host_impl.cpp (hand-written, calls rt.*).
 // Adding a function to the IDL without updating the impl → build error.
 struct HostApi {
     virtual ~HostApi() = default;
+
+    // ── Plan 87 gating stubs (overridden by PermissionService/ResourceBroker) ─
+    // Default: allow all — replaced in Fase 1 (perm) and Fase 2 (lease).
+    virtual bool perm_check(std::string_view /*app_id*/, std::string_view /*cap*/) { return true; }
+    virtual bool lease_check(std::string_view /*app_id*/, std::string_view /*cap*/) { return true; }
 
     // ── aether:ui ───────────────────────────────────────
     // ui/view.view-begin
@@ -205,6 +226,18 @@ struct HostApi {
     // sys/events.publish
     // Publish an event with optional string fields.
     virtual void events_publish(std::string_view name, const std::vector<Field>& fields) = 0;
+    // sys/perm.status
+    // Query permission status for a capability. Returns: 0=not_asked  1=granted  2=denied
+    virtual uint8_t perm_status(std::string_view cap) = 0;
+    // sys/perm.request
+    // Request permission for a capability. For sensitive capabilities this triggers the Allow/Deny screen. Returns: 1=granted  2=denied
+    virtual uint8_t perm_request(std::string_view cap) = 0;
+    // sys/lease.acquire
+    // Acquire an exclusive lease for a capability. Returns a lease handle on success, or a lease-error if busy/denied.
+    virtual NemaResult<uint32_t, LeaseError> lease_acquire(std::string_view cap) = 0;
+    // sys/lease.release
+    // Release a previously acquired lease.
+    virtual NemaResult<void, std::string> lease_release(uint32_t lease_handle) = 0;
     // sys/tasks.submit
     // Submit a job to run on a worker thread; done() is called on the UI loop. @blocking marks that the job may block (http, wifi scan, ble enable).
     virtual void tasks_submit(int32_t job, int32_t done) = 0;
@@ -217,5 +250,37 @@ struct HostApi {
     // sys/tasks.cancel
     // Cancel a pending timeout/interval by handle.
     virtual void tasks_cancel(int32_t token) = 0;
+
+    // ── nema:wifi ───────────────────────────────────────
+    // wifi/radio.scan [@blocking]
+    // Scan for visible APs. @blocking — runs on worker. Auto-grant (benign): no permission prompt. No exclusive lease required.
+    virtual NemaResult<std::vector<ScanResult>, std::string> radio_scan() = 0;
+    // wifi/radio.monitor-open
+    // Open promiscuous/monitor mode on the given channel. Requires user permission (sensitive) and an exclusive lease.
+    virtual NemaResult<void, std::string> radio_monitor_open(uint8_t channel) = 0;
+    // wifi/radio.monitor-read [@blocking]
+    // Read raw 802.11 frames from the ring buffer (up to max bytes). Drops frames when ring is full — radio never stalls.
+    virtual NemaResult<std::vector<uint8_t>, std::string> radio_monitor_read(uint32_t max) = 0;
+    // wifi/radio.monitor-close
+    // Close monitor mode and release promiscuous capture.
+    virtual NemaResult<void, std::string> radio_monitor_close() = 0;
+    // wifi/radio.inject
+    // Inject a raw 802.11 frame on the given channel.
+    virtual NemaResult<void, std::string> radio_inject(uint8_t channel, const std::vector<uint8_t>& frame) = 0;
+    // wifi/radio.deauth-start
+    // Start continuous deauth loop (firmware-native, timing-critical). App receives events via wait-event; the loop itself never touches the sandbox.
+    virtual NemaResult<void, std::string> radio_deauth_start(std::string_view bssid, uint8_t channel) = 0;
+    // wifi/radio.deauth-stop
+    // Stop the deauth loop.
+    virtual NemaResult<void, std::string> radio_deauth_stop() = 0;
+    // wifi/radio.beacon-spam-start
+    // Start beacon spam (multiple fake SSIDs, firmware-native loop).
+    virtual NemaResult<void, std::string> radio_beacon_spam_start(const std::vector<std::string>& ssid_list) = 0;
+    // wifi/radio.beacon-spam-stop
+    // Stop the beacon spam loop.
+    virtual NemaResult<void, std::string> radio_beacon_spam_stop() = 0;
+    // wifi/radio.wait-event [@blocking]
+    // Block until the next matured radio event arrives (timeout_ms=0 → poll). Returns serialised event bytes; format is runtime-defined (JSON or binary).
+    virtual NemaResult<std::vector<uint8_t>, std::string> radio_wait_event(uint32_t timeout_ms) = 0;
 
 };
