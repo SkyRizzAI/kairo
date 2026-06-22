@@ -81,8 +81,13 @@ private:
 //   wasi:   minimal WASI surface (fd 0/1/2, argv, exit).
 //   nema:   system API (log, device info, app storage, argv).
 //   canvas: raw drawing surface (Plan 86 Fase 2).
+//   ui:     retained-mode UI widgets (Plan 86 Fase 3).
 void linkWasiImports(struct M3Module* mod);
 void linkNemaImports(struct M3Module* mod);
 void linkCanvasImports(struct M3Module* mod);
+void linkUiImports(struct M3Module* mod);
+
+// Reset per-run UI state between WASM runs (call before each new run).
+void resetUiState();
 
 } // namespace nema

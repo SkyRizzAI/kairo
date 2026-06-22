@@ -125,6 +125,66 @@ extern void canvas_text(int x, int y, const char* msg, int color);
 NEMA_IMPORT("canvas", "canvas_flush")
 extern void canvas_flush(void);
 
+// ── Retained UI ABI (Plan 86 Fase 3) ─────────────────────────────────────────
+// Declarative retained-mode UI. App owns the event loop — NO host→guest callbacks.
+//
+// Usage pattern:
+//   while (1) {
+//       ui_begin();
+//       ui_title("My App");
+//       ui_text("Count: 5");
+//       ui_button("Inc", 1);   // id=1
+//       ui_button("Dec", 2);   // id=2
+//       ui_end();              // renders frame; host handles focus highlight
+//       int ev = ui_wait_event();
+//       if (ev == EV_BACK) break;
+//       if (ev == 1) count++;
+//       if (ev == 2) count--;
+//   }
+//
+// ui_begin/end flip the host to Gui mode on first call (same as canvas_*).
+// Button ids must be > 0 (positive integers of your choice).
+
+#define EV_NONE  0    // ui_poll_event: no event ready
+#define EV_BACK -1    // Back/Cancel pressed
+
+NEMA_IMPORT("ui", "ui_begin")
+extern void ui_begin(void);
+
+NEMA_IMPORT("ui", "ui_title")
+extern void ui_title(const char* msg);
+
+NEMA_IMPORT("ui", "ui_text")
+extern void ui_text(const char* msg);
+
+// Add a focusable button. id must be > 0; returned by ui_wait_event on activate.
+NEMA_IMPORT("ui", "ui_button")
+extern void ui_button(const char* label, int id);
+
+NEMA_IMPORT("ui", "ui_row_begin")
+extern void ui_row_begin(void);
+
+NEMA_IMPORT("ui", "ui_row_end")
+extern void ui_row_end(void);
+
+NEMA_IMPORT("ui", "ui_col_begin")
+extern void ui_col_begin(void);
+
+NEMA_IMPORT("ui", "ui_col_end")
+extern void ui_col_end(void);
+
+// Commit the frame and render it. Call after all ui_* element calls.
+NEMA_IMPORT("ui", "ui_end")
+extern void ui_end(void);
+
+// Block until an event: returns button id (>0), EV_BACK (-1).
+NEMA_IMPORT("ui", "ui_wait_event")
+extern int ui_wait_event(void);
+
+// Non-blocking poll: returns button id, EV_BACK, or EV_NONE (0).
+NEMA_IMPORT("ui", "ui_poll_event")
+extern int ui_poll_event(void);
+
 // ── Minimal libc substitutes ─────────────────────────────────────────────────
 // Basic string/number utilities that do NOT pull in WASI libc.
 // Only what WASM apps actually need.

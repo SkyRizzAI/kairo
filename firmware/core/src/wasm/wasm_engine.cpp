@@ -56,9 +56,11 @@ int WasmEngine::runStart(ProcessContext& ctx, const char* appId, ISurface* surfa
     // Link imports FIRST: m3_FindFunction triggers lazy compilation of the
     // module, which resolves import references. Unlinked imports at that point
     // fail compilation with "missing import" (Plan 57 Fase 2).
+    resetUiState();
     linkWasiImports(mod_);
     linkNemaImports(mod_);
     linkCanvasImports(mod_);
+    linkUiImports(mod_);
 
     IM3Function startFn;
     M3Result res;
