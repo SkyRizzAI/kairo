@@ -249,6 +249,103 @@ static inline void* nema_memset(void* dst, int c, int n) {
     char* d = (char*)dst; while (n--) *d++ = (char)c; return dst;
 }
 
+// ── printf shim (Plan 86 Fase 5) ──────────────────────────────────────────────
+// Minimal varargs printf → buffer → nema_print. No WASI libc needed.
+// Supports: %d %i %u %x %X %s %c %% (no width/precision beyond basic %0d).
+// Buffer is 256 bytes. Long strings are truncated at 255 chars + NUL.
+// Use this instead of stdio printf which requires WASI libc linkage.
+
+#ifndef NEMA_NO_PRINTF
+
+#ifdef __cplusplus
+#include <cstdarg>
+#else
+#include <stdarg.h>
+#endif
+
+static inline void printf(const char* fmt, ...) {
+    char buf[256];
+    int  out = 0;
+    va_list ap;
+    va_start(ap, fmt);
+    for (const char* p = fmt; *p && out < 254; p++) {
+        if (*p != '%') { buf[out++] = *p; continue; }
+        p++;
+        if (*p == '\0') break;
+        if (*p == '%') { buf[out++] = '%'; continue; }
+        if (*p == 'c') {
+            buf[out++] = (char)va_arg(ap, int);
+            continue;
+        }
+        if (*p == 's') {
+            const char* s = va_arg(ap, const char*);
+            if (!s) s = "(null)";
+            while (*s && out < 254) buf[out++] = *s++;
+            continue;
+        }
+        // Numeric: handle optional leading zero + width digit before specifier
+        int zero = 0, width = 0;
+        if (*p == '0') { zero = 1; p++; }
+        while (*p >= '1' && *p <= '9') { width = width * 10 + (*p - '0'); p++; }
+        if (*p == 'd' || *p == 'i') {
+            int v = va_arg(ap, int);
+            char tmp[12]; char* t = tmp + 12; *--t = '\0';
+            int neg = (v < 0); unsigned uv = neg ? (unsigned)(-v) : (unsigned)v;
+            if (uv == 0) *--t = '0';
+            while (uv) { *--t = '0' + (uv % 10); uv /= 10; }
+            if (neg) *--t = '-';
+            int len = (int)(tmp + 11 - t);
+            if (width > len) {
+                char pad = zero ? '0' : ' ';
+                while (width-- > len && out < 254) buf[out++] = pad;
+            }
+            while (*t && out < 254) buf[out++] = *t++;
+        } else if (*p == 'u') {
+            unsigned v = va_arg(ap, unsigned);
+            char tmp[12]; char* t = tmp + 12; *--t = '\0';
+            if (v == 0) *--t = '0';
+            while (v) { *--t = '0' + (v % 10); v /= 10; }
+            int len = (int)(tmp + 11 - t);
+            if (width > len) {
+                char pad = zero ? '0' : ' ';
+                while (width-- > len && out < 254) buf[out++] = pad;
+            }
+            while (*t && out < 254) buf[out++] = *t++;
+        } else if (*p == 'x' || *p == 'X') {
+            unsigned v = va_arg(ap, unsigned);
+            const char* hex = (*p == 'x') ? "0123456789abcdef" : "0123456789ABCDEF";
+            char tmp[12]; char* t = tmp + 12; *--t = '\0';
+            if (v == 0) *--t = '0';
+            while (v) { *--t = hex[v & 0xF]; v >>= 4; }
+            int len = (int)(tmp + 11 - t);
+            if (width > len) {
+                char pad = zero ? '0' : ' ';
+                while (width-- > len && out < 254) buf[out++] = pad;
+            }
+            while (*t && out < 254) buf[out++] = *t++;
+        } else {
+            buf[out++] = '%'; buf[out++] = *p;  // pass through unknown
+        }
+    }
+    va_end(ap);
+    buf[out] = '\0';
+    nema_print(buf);
+}
+
+#endif // NEMA_NO_PRINTF
+
+// ── display_* ergonomic aliases (Plan 86 Fase 5) ──────────────────────────────
+// AkiraOS-style short names. Map directly to canvas_* — zero overhead.
+#define display_width()              canvas_width()
+#define display_height()             canvas_height()
+#define display_clear(color)         canvas_clear(color)
+#define display_pixel(x,y,c)         canvas_pixel(x,y,c)
+#define display_fill_rect(x,y,w,h,c) canvas_fill_rect(x,y,w,h,c)
+#define display_rect(x,y,w,h,c)      canvas_rect(x,y,w,h,c)
+#define display_line(x0,y0,x1,y1,c)  canvas_line(x0,y0,x1,y1,c)
+#define display_text(x,y,msg,c)       canvas_text(x,y,msg,c)
+#define display_flush()              canvas_flush()
+
 #ifdef __cplusplus
 }
 #endif
