@@ -106,6 +106,89 @@ static JSValue marshalTuple(JSContext* ctx, const std::tuple<Ts...>&) {
 
 // ── Generated function wrappers ───────────────────────────
 
+// view.view-begin
+static JSValue nema_view_view_begin(JSContext* ctx, JSValueConst, int argc, JSValueConst* argv) {
+    (void)argc; (void)argv;
+    auto* e = engineOf(ctx);
+    auto* host = e->hostApi();
+    if (!host) return JS_UNDEFINED;
+
+    std::string direction = jsToString(ctx, argv[0]);
+    auto __ret = host->view_view_begin(direction);
+    return JS_NewInt32(ctx, __ret);
+}
+
+// view.view-end
+static JSValue nema_view_view_end(JSContext* ctx, JSValueConst, int argc, JSValueConst* argv) {
+    (void)argc; (void)argv;
+    auto* e = engineOf(ctx);
+    auto* host = e->hostApi();
+    if (!host) return JS_UNDEFINED;
+
+    host->view_view_end();
+    return JS_UNDEFINED;
+}
+
+// text.label
+static JSValue nema_text_label(JSContext* ctx, JSValueConst, int argc, JSValueConst* argv) {
+    (void)argc; (void)argv;
+    auto* e = engineOf(ctx);
+    auto* host = e->hostApi();
+    if (!host) return JS_UNDEFINED;
+
+    std::string content = jsToString(ctx, argv[0]);
+    auto __ret = host->text_label(content);
+    return JS_NewInt32(ctx, __ret);
+}
+
+// text.styled
+static JSValue nema_text_styled(JSContext* ctx, JSValueConst, int argc, JSValueConst* argv) {
+    (void)argc; (void)argv;
+    auto* e = engineOf(ctx);
+    auto* host = e->hostApi();
+    if (!host) return JS_UNDEFINED;
+
+    std::string content = jsToString(ctx, argv[0]);
+    std::string variant = jsToString(ctx, argv[1]);
+    auto __ret = host->text_styled(content, variant);
+    return JS_NewInt32(ctx, __ret);
+}
+
+// interactive.button
+static JSValue nema_interactive_button(JSContext* ctx, JSValueConst, int argc, JSValueConst* argv) {
+    (void)argc; (void)argv;
+    auto* e = engineOf(ctx);
+    auto* host = e->hostApi();
+    if (!host) return JS_UNDEFINED;
+
+    std::string label = jsToString(ctx, argv[0]);
+    auto on_press = jsToI32(ctx, argv[1]);
+    auto __ret = host->interactive_button(label, on_press);
+    return JS_NewInt32(ctx, __ret);
+}
+
+// scroll.scroll-begin
+static JSValue nema_scroll_scroll_begin(JSContext* ctx, JSValueConst, int argc, JSValueConst* argv) {
+    (void)argc; (void)argv;
+    auto* e = engineOf(ctx);
+    auto* host = e->hostApi();
+    if (!host) return JS_UNDEFINED;
+
+    auto __ret = host->scroll_scroll_begin();
+    return JS_NewInt32(ctx, __ret);
+}
+
+// scroll.scroll-end
+static JSValue nema_scroll_scroll_end(JSContext* ctx, JSValueConst, int argc, JSValueConst* argv) {
+    (void)argc; (void)argv;
+    auto* e = engineOf(ctx);
+    auto* host = e->hostApi();
+    if (!host) return JS_UNDEFINED;
+
+    host->scroll_scroll_end();
+    return JS_UNDEFINED;
+}
+
 // ble.enable
 // @blocking — dispatched via TaskRunner (the host wraps as async).
 static JSValue nema_ble_enable(JSContext* ctx, JSValueConst, int argc, JSValueConst* argv) {
@@ -413,6 +496,65 @@ static JSValue nema_kv_remove(JSContext* ctx, JSValueConst, int argc, JSValueCon
     return JS_NewBool(ctx, __ret);
 }
 
+// fs.read-file
+static JSValue nema_fs_read_file(JSContext* ctx, JSValueConst, int argc, JSValueConst* argv) {
+    (void)argc; (void)argv;
+    auto* e = engineOf(ctx);
+    auto* host = e->hostApi();
+    if (!host) return JS_UNDEFINED;
+
+    std::string name = jsToString(ctx, argv[0]);
+    auto __ret = host->fs_read_file(name);
+    return marshalOption(ctx, __ret, [ctx](JSContext* c, auto& v) { (void)c; return JS_NewString(ctx, v.c_str()); });
+}
+
+// fs.write-file
+static JSValue nema_fs_write_file(JSContext* ctx, JSValueConst, int argc, JSValueConst* argv) {
+    (void)argc; (void)argv;
+    auto* e = engineOf(ctx);
+    auto* host = e->hostApi();
+    if (!host) return JS_UNDEFINED;
+
+    std::string name = jsToString(ctx, argv[0]);
+    std::string data = jsToString(ctx, argv[1]);
+    auto __ret = host->fs_write_file(name, data);
+    return JS_NewBool(ctx, __ret);
+}
+
+// fs.list-files
+static JSValue nema_fs_list_files(JSContext* ctx, JSValueConst, int argc, JSValueConst* argv) {
+    (void)argc; (void)argv;
+    auto* e = engineOf(ctx);
+    auto* host = e->hostApi();
+    if (!host) return JS_UNDEFINED;
+
+    auto __ret = host->fs_list_files();
+    return marshalList(ctx, __ret, [ctx](JSContext* c, auto& v) { (void)c; return JS_NewString(ctx, v.c_str()); });
+}
+
+// fs.remove-file
+static JSValue nema_fs_remove_file(JSContext* ctx, JSValueConst, int argc, JSValueConst* argv) {
+    (void)argc; (void)argv;
+    auto* e = engineOf(ctx);
+    auto* host = e->hostApi();
+    if (!host) return JS_UNDEFINED;
+
+    std::string name = jsToString(ctx, argv[0]);
+    auto __ret = host->fs_remove_file(name);
+    return JS_NewBool(ctx, __ret);
+}
+
+// fs.bytes-used
+static JSValue nema_fs_bytes_used(JSContext* ctx, JSValueConst, int argc, JSValueConst* argv) {
+    (void)argc; (void)argv;
+    auto* e = engineOf(ctx);
+    auto* host = e->hostApi();
+    if (!host) return JS_UNDEFINED;
+
+    auto __ret = host->fs_bytes_used();
+    return JS_NewInt64(ctx, __ret);
+}
+
 // log.log
 static JSValue nema_log_log(JSContext* ctx, JSValueConst, int argc, JSValueConst* argv) {
     (void)argc; (void)argv;
@@ -580,7 +722,7 @@ void installNemaApi(JSContext* ctx, HostApi* host, nema::CapabilityRegistry& cap
     }
     setFn(ctx, bt_ble, "enable", nema_ble_enable, 0);
     setFn(ctx, bt_ble, "disable", nema_ble_disable, 0);
-    setFn(ctx, bt_ble, "is-enabled", nema_ble_is_enabled, 0);
+    setFn(ctx, bt_ble, "isEnabled", nema_ble_is_enabled, 0);
 
     JSValue media = JS_NewObject(ctx);
     JS_SetPropertyStr(ctx, nema, "media", media);
@@ -616,7 +758,7 @@ void installNemaApi(JSContext* ctx, HostApi* host, nema::CapabilityRegistry& cap
     if (caps.has(nema::caps::NetWifi)) {
         JS_SetPropertyStr(ctx, net, "wifi", net_wifi);
     }
-    setFn(ctx, net_wifi, "is-connected", nema_wifi_is_connected, 0);
+    setFn(ctx, net_wifi, "isConnected", nema_wifi_is_connected, 0);
     setFn(ctx, net_wifi, "ssid", nema_wifi_ssid, 0);
     setFn(ctx, net_wifi, "ip", nema_wifi_ip, 0);
     setFn(ctx, net_wifi, "scan", nema_wifi_scan, 0);
@@ -629,9 +771,17 @@ void installNemaApi(JSContext* ctx, HostApi* host, nema::CapabilityRegistry& cap
     JS_SetPropertyStr(ctx, storage, "kv", storage_kv);
     setFn(ctx, storage_kv, "get", nema_kv_get, 1);
     setFn(ctx, storage_kv, "set", nema_kv_set, 2);
-    setFn(ctx, storage_kv, "get-int", nema_kv_get_int, 1);
-    setFn(ctx, storage_kv, "set-int", nema_kv_set_int, 2);
+    setFn(ctx, storage_kv, "getInt", nema_kv_get_int, 1);
+    setFn(ctx, storage_kv, "setInt", nema_kv_set_int, 2);
     setFn(ctx, storage_kv, "remove", nema_kv_remove, 1);
+
+    JSValue storage_fs = JS_NewObject(ctx);
+    JS_SetPropertyStr(ctx, storage, "fs", storage_fs);
+    setFn(ctx, storage_fs, "readFile", nema_fs_read_file, 1);
+    setFn(ctx, storage_fs, "writeFile", nema_fs_write_file, 2);
+    setFn(ctx, storage_fs, "listFiles", nema_fs_list_files, 0);
+    setFn(ctx, storage_fs, "removeFile", nema_fs_remove_file, 1);
+    setFn(ctx, storage_fs, "bytesUsed", nema_fs_bytes_used, 0);
 
     JSValue sys = JS_NewObject(ctx);
     JS_SetPropertyStr(ctx, nema, "sys", sys);

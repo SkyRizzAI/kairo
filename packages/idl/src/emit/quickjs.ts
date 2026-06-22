@@ -174,6 +174,7 @@ function emitRegistration(ast: PidlAst): string {
   // the bug where we added storage.fs to the PIDL but forgot to wire it here.
   const built = new Set<string>();
   for (const pkg of ast.packages) {
+    if (pkg.name.startsWith("palanu:")) continue; // TS-only wire protocol, not device JS API
     const domain = pkg.name.split(":")[1] || pkg.name;
     for (const iface of pkg.interfaces) {
       const path = `${domain}.${iface.name}`;
@@ -182,7 +183,7 @@ function emitRegistration(ast: PidlAst): string {
       if (!info) {
         // ui.* is handled by the aether display server, not the nema global.
         // input.input and profile.profile use a different wiring path.
-        const knownExclusions = new Set(["ui.view","ui.text","ui.interactive","ui.scroll","input.input","profile.profile"]);
+        const knownExclusions = new Set(["ui.view","ui.text","ui.interactive","ui.scroll","input.input","profile.profile","plp.channels","plp.control_ops","plp.file_ops","plp.ext_ops","plp.ota_ops","plp.system_ops"]);
         if (!knownExclusions.has(path))
           console.warn(`[quickjs] WARNING: interface '${path}' not in tree map — it will NOT be exposed to JS! Add it to the tree.`);
         continue;
@@ -390,6 +391,7 @@ export function emitQuickJS(ast: PidlAst): string {
 
   // Emit all function wrappers
   for (const pkg of ast.packages) {
+    if (pkg.name.startsWith("palanu:")) continue; // TS-only wire protocol, not device JS API
     for (const iface of pkg.interfaces) {
       for (const fn of iface.functions) {
         lines.push(emitFuncWrapper(fn, iface.name));

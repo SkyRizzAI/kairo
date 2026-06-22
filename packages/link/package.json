@@ -1,0 +1,21 @@
+{
+	"name": "@palanu/link",
+	"private": true,
+	"version": "1.0.0",
+	"type": "module",
+	"exports": {
+		".": "./src/index.ts",
+		"./codec": "./src/codec.ts",
+		"./transport": "./src/transport.ts",
+		"./uuids": "./src/uuids.ts",
+		"./session": "./src/session.ts",
+		"./tokens": "./src/tokens.ts",
+		"./types": "./src/types.ts"
+	},
+	"scripts": {
+		"test": "bun test"
+	},
+	"devDependencies": {
+		"@types/bun": "^1.3.14"
+	}
+}

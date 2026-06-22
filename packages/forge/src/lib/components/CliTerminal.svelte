@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { tick } from 'svelte';
-	import type { CliChunk } from '$lib/RemoteSession';
+	import type { CliChunk } from '@palanu/link';
 
 	// Flipper-style terminal over the PLP CLI channel. Transport-agnostic: the
 	// parent wires `send` (host→device command line) and `subscribe` (device→host

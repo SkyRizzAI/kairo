@@ -23,6 +23,7 @@ export function emitDts(ast: PidlAst): string {
   // Group interfaces by domain
   const domains = new Map<string, PidlInterface[]>();
   for (const pkg of ast.packages) {
+    if (pkg.name.startsWith("palanu:")) continue; // TS-only wire protocol, not device JS API
     const domain = pkg.name.split(":")[1] || pkg.name;
     if (!domains.has(domain)) domains.set(domain, []);
     for (const iface of pkg.interfaces) {

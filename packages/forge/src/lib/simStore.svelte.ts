@@ -1,5 +1,5 @@
 import { wasmSession } from './wasmSim';
-import type { ScreenFrame, LogEntry, EventEntry, BoardProfile, CliChunk } from './RemoteSession';
+import type { ScreenFrame, LogEntry, EventEntry, BoardProfile, CliChunk } from '@palanu/link';
 
 // Reactive WASM simulator store — wraps the shared wasmSession() and exposes the
 // firmware's telemetry (screen / logs / events / services) + control commands.

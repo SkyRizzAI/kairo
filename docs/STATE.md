@@ -4,7 +4,7 @@
 > Detail per-stage ada di [`plans/`](plans/00-overview.md). Master plan: [`concept_plan.md`](concept_plan.md).
 > Reference arsitektur per-subsistem: [`architecture/`](architecture/README.md).
 >
-> **Last updated:** 2026-06-22 (Plan 84 complete — app runtime parity: CLI/UI/Hybrid dispatch, WASM headless, launcher icon pipeline, BadUsbApp → ComponentApp)
+> **Last updated:** 2026-06-22 (Plan 77 + 78 — `@palanu/link` shared lib + `@palanu/forge-cli` CLI)
 
 ---
 
@@ -171,8 +171,8 @@ packages/forge/          SvelteKit web client: /simulator (WASM), /remote, /flas
 3. **[74](plans/74-remote-access-auth.md)** — 🔴 **DITUNDA** (kode keamanan tak diburu): tier channel + Settings→Remote + auth password + BLE bond-as-cache. _Goal konek WiFi/BLE sudah jalan tanpa auth di observation tier._
 4. **[75](plans/75-network-link-transport.md)** — ✅ **CODE DONE (build skyrizz + forge typecheck)**: `Esp32WsTransport` (WS `/plp@8477`) + mux + lifecycle gating + mDNS; Forge web `WebSocketTransport` + opsi "Network (Wi-Fi)" di `/remote`. → **Forge web bisa remote via WiFi**. _HW-verify = user._
 5. **[76](plans/76-app-service-daemon-model.md)** — Model App vs Service/daemon headless + autostart + deploy (pakai persist [38](plans/38-storage-filesystem-hal.md)). _(nunggu 38, 74)_
-6. **[77](plans/77-palanu-link-shared-lib.md)** — `@palanu/link`: ekstrak codec+session+auth shared (Forge web ⇄ CLI). _(nunggu 74)_
-7. **[78](plans/78-forge-cli.md)** — Forge CLI (`palanu`): cli/logs/deploy/ota/fs over USB/BLE/TCP. _(nunggu 77, 75, 76)_
+6. **[77](plans/77-palanu-link-shared-lib.md)** — ✅ **DONE**: `@palanu/link` package — PLP codec + `RemoteSession` + `ITokenStore` + IDL-generated PLP types. Forge web refactored to consume shared lib (browser transports stay, import `ILinkTransport` from `@palanu/link`). 7 codec tests pass, `tsc` clean, `forge:build` green.
+7. **[78](plans/78-forge-cli.md)** — ✅ **DONE**: `@palanu/forge-cli` (`palanu` binary) — 7 commands (`add`/`list`/`connect`/`disconnect`/`remove`/`shell`/`cp`). Node transports: `NodeSerialTransport` (serialport) + `NodeWebSocketTransport` (ws). Device registry `~/.palanu/config.json`. 4 tests pass, `tsc` clean. BLE + `deploy`/`ota`/`service`/`logs` = fase berikutnya.
 
 > Persistence app = **plan 38** (sudah ada, dipakai oleh 76). Urutan kritis-path:
 > 72→73→74→75 (network), lalu 76+77 paralel, lalu 78.

@@ -1,4 +1,4 @@
-import type { ILinkTransport } from '$lib/plp/transport';
+import type { ILinkTransport } from '@palanu/link';
 
 // SerialTransport — PLP over Web Serial / USB-CDC (Plan 35). Connects to a Palanu
 // device exposing a CDC data port (Plan 34 USB). PLP frames are self-delimiting

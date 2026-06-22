@@ -1,4 +1,4 @@
-import type { RemoteSession } from './RemoteSession';
+import type { RemoteSession } from '@palanu/link';
 
 // The active remote session — module-level so it survives SvelteKit page
 // navigation. Without this, leaving /remote orphaned the connected session: its

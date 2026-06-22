@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
 	import { Button } from '$lib/components/ui/button';
-	import { Key, type BoardProfile, type ScreenFrame } from '$lib/RemoteSession';
+	import { Key, type BoardProfile, type ScreenFrame } from '@palanu/link';
 
 	// Shared virtual-device renderer: draws the board bezel, its components at the
 	// device's real (profile) layout, and the 1-bit framebuffer into the LCD with

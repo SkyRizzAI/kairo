@@ -448,7 +448,7 @@ describe("idl parser — snapshot: nema-api.json", () => {
     expect(net.interfaces.map((i: any) => i.name)).toContain("wifi");
   });
 
-  test("all 13 interfaces from 7 packages present", async () => {
+  test("all 24 interfaces from 9 packages present", async () => {
     const path = join(import.meta.dir, "..", "..", "..", "api", "build", "nema-api.json");
     const raw = await readFile(path, "utf-8");
     const ast = JSON.parse(raw);
@@ -463,6 +463,10 @@ describe("idl parser — snapshot: nema-api.json", () => {
     }
 
     expect(allInterfaces.sort()).toEqual([
+      "aether:ui/interactive",
+      "aether:ui/scroll",
+      "aether:ui/text",
+      "aether:ui/view",
       "nema:bt/ble",
       "nema:input/input",
       "nema:media/audio-input",
@@ -471,12 +475,19 @@ describe("idl parser — snapshot: nema-api.json", () => {
       "nema:net/http",
       "nema:net/wifi",
       "nema:profile/profile",
+      "nema:storage/fs",
       "nema:storage/kv",
       "nema:sys/device",
       "nema:sys/events",
       "nema:sys/log",
       "nema:sys/tasks",
+      "palanu:plp/channels",
+      "palanu:plp/control_ops",
+      "palanu:plp/ext_ops",
+      "palanu:plp/file_ops",
+      "palanu:plp/ota_ops",
+      "palanu:plp/system_ops",
     ]);
-    expect(totalRecords).toBe(3); // http-response, wifi-ap, field
+    expect(totalRecords).toBe(4); // http-response, wifi-ap, field, frame_flags
   });
 });

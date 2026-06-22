@@ -5,7 +5,7 @@
 	// it never clutters, and Logs/Events/Services on the right.
 	import { onMount } from 'svelte';
 	import { simStore } from '$lib/simStore.svelte';
-	import { Key, Power, KEY_MAP, frameDims } from '$lib/RemoteSession';
+	import { Key, Power, KEY_MAP, frameDims } from '@palanu/link';
 	import { Button } from '$lib/components/ui/button';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Input } from '$lib/components/ui/input';

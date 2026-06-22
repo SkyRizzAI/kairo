@@ -5,10 +5,17 @@
 
 ## Coverage
 
-**Total functions:** 38
+**Total functions:** 50
 
 | Interface | Function | Host C++ | QuickJS | WASM .h | JS .d.ts | Docs | Impl |
 |---|---|---|---|---|---|---|---|
+| `aether:ui/view` | `view-begin` | — | — | — | — | ✅ | — |
+| `aether:ui/view` | `view-end` | — | — | — | — | ✅ | — |
+| `aether:ui/text` | `label` | — | — | — | — | ✅ | — |
+| `aether:ui/text` | `styled` | — | — | — | — | ✅ | — |
+| `aether:ui/interactive` | `button` | — | — | — | — | ✅ | — |
+| `aether:ui/scroll` | `scroll-begin` | — | — | — | — | ✅ | — |
+| `aether:ui/scroll` | `scroll-end` | — | — | — | — | ✅ | — |
 | `nema:bt/ble` | `enable` 🔒 | — | — | — | — | ✅ | — |
 | `nema:bt/ble` | `disable` | — | — | — | — | ✅ | — |
 | `nema:bt/ble` | `is-enabled` | — | — | — | — | ✅ | — |
@@ -35,6 +42,11 @@
 | `nema:storage/kv` | `get-int` | — | — | — | — | ✅ | — |
 | `nema:storage/kv` | `set-int` | — | — | — | — | ✅ | — |
 | `nema:storage/kv` | `remove` | — | — | — | — | ✅ | — |
+| `nema:storage/fs` | `read-file` | — | — | — | — | ✅ | — |
+| `nema:storage/fs` | `write-file` | — | — | — | — | ✅ | — |
+| `nema:storage/fs` | `list-files` | — | — | — | — | ✅ | — |
+| `nema:storage/fs` | `remove-file` | — | — | — | — | ✅ | — |
+| `nema:storage/fs` | `bytes-used` | — | — | — | — | ✅ | — |
 | `nema:sys/log` | `log` | — | — | — | — | ✅ | — |
 | `nema:sys/device` | `name` | — | — | — | — | ✅ | — |
 | `nema:sys/device` | `caps` | — | — | — | — | ✅ | — |

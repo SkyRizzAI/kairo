@@ -1,56 +1,29 @@
-import { Channel, Flags, encodeFrame, FrameParser, rleDecode } from '$lib/plp/codec';
-import type { ILinkTransport } from '$lib/plp/transport';
+// RemoteSession — transport-agnostic client of a Palanu device (WASM sim or real
+// hardware) over PLP. Multi-listener so /simulator and /remote can both observe
+// the SAME device without clobbering each other.
+//
+// Plan 77: extracted from packages/forge/src/lib/RemoteSession.ts.
+// Refactored: localStorage → ITokenStore (injected via constructor) so this
+// module is isomorphic (works in both browser and Node).
 
-export interface ScreenFrame {
-	w: number;
-	h: number;
-	px: Uint8Array; // w*h, 0/1
-}
-export interface LogEntry {
-	level: number;
-	component: string;
-	message: string;
-}
-export interface EventEntry {
-	name: string;
-	fields: Record<string, string>;
-}
-// CLI output chunk. `text` is a line of output; `done` marks end-of-command (the
-// device sent EOT) so the terminal can re-enable its prompt; `prompt` carries the
-// device's current working directory (Plan 44) for a shell-like prompt.
-export interface CliChunk {
-	sid?: number; // session id (Plan 45) — terminals filter to their own session
-	text?: string;
-	done?: boolean;
-	prompt?: string;
-}
-// One directory entry from the FILE channel (mirrors firmware FsEntry).
-export interface FileEntry {
-	name: string;
-	isDir: boolean;
-	size: number;
-}
+import { Channel, Flags, encodeFrame, FrameParser, rleDecode } from './codec';
+import type { ILinkTransport } from './transport';
+import type {
+	ScreenFrame,
+	LogEntry,
+	EventEntry,
+	CliChunk,
+	FileEntry,
+	BoardProfile,
+	BoardComponent
+} from './types';
+import { Power, Key, KEY_MAP, frameDims } from './types';
+import type { ITokenStore } from './tokens';
+import { LocalStorageTokenStore, DEFAULT_TOKEN_KEY } from './tokens';
 
-// Board profile — the device's physical layout (SYSTEM GetInfo reply, Plan 33).
-// Mirrors firmware BoardProfile/ComponentDef; coordinates are normalized 0–1
-// over the board rect, `w`/`h` on the profile are the physical aspect (mm).
-export interface BoardComponent {
-	id: number;
-	label: string;
-	type: 'display' | 'button' | 'led' | 'sensor' | 'speaker' | 'mic' | 'camera' | 'port' | 'other';
-	key?: number; // input Key to send when this (button) is pressed remotely
-	x: number;
-	y: number;
-	w: number;
-	h: number;
-}
-export interface BoardProfile {
-	id: string;
-	name: string;
-	w: number;
-	h: number;
-	components: BoardComponent[];
-}
+// Re-export so consumers can import everything from @palanu/link/session.
+export type { ScreenFrame, LogEntry, EventEntry, CliChunk, FileEntry, BoardProfile, BoardComponent };
+export { Power, Key, KEY_MAP, frameDims };
 
 const HELLO = 0x01;
 const ACK = 0x02;
@@ -61,7 +34,6 @@ const AUTH_RESPONSE = 0x21;
 const AUTH_OK = 0x22;
 const AUTH_FAIL = 0x23;
 const AUTH_REQUIRED = 0x24;
-const TOKEN_KEY = 'palanu.remote.token';
 const GET_INFO = 0x01; // SYSTEM channel opcode
 
 // SHA-256 hex via Web Crypto (browser + Node). Mirrors the device's hexSha256.
@@ -70,30 +42,16 @@ async function sha256hex(s: string): Promise<string> {
 	return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, '0')).join('');
 }
 
-export const Power = { Restart: 0x10, Sleep: 0x11, Shutdown: 0x12 } as const;
-export const Key = { Up: 1, Down: 2, Left: 3, Right: 4, Select: 5, Cancel: 6, Menu: 7 } as const;
-
-// Browser keyboard → Palanu Key. Shared by every view that forwards keystrokes to
-// a device (/remote SessionView, /simulator) so the mapping lives in one place.
-export const KEY_MAP: Record<string, number> = {
-	ArrowUp: Key.Up,
-	ArrowDown: Key.Down,
-	ArrowLeft: Key.Left,
-	ArrowRight: Key.Right,
-	Enter: Key.Select,
-	' ': Key.Select,
-	Escape: Key.Cancel,
-	Backspace: Key.Cancel
-};
-
-// "WxH" of a screen frame, or "—" before the first frame. Shared by the headers
-// of /remote and /simulator so the formatting stays identical.
-export function frameDims(frame: ScreenFrame | null): string {
-	return frame ? `${frame.w}×${frame.h}` : '—';
-}
 const ExtOp = { InjectEvent: 0x01, WifiSetNetworks: 0x02, AppInstall: 0x03, AppScan: 0x04 } as const;
-const FileOp = { List: 0x01, Read: 0x03, Write: 0x04, Mkdir: 0x05, Remove: 0x06,
-                 Rename: 0x07, Copy: 0x08 } as const;
+const FileOp = {
+	List: 0x01,
+	Read: 0x03,
+	Write: 0x04,
+	Mkdir: 0x05,
+	Remove: 0x06,
+	Rename: 0x07,
+	Copy: 0x08
+} as const;
 
 type Listeners = {
 	screen: Set<(f: ScreenFrame) => void>;
@@ -109,9 +67,11 @@ type Listeners = {
 	rejected: Set<() => void>; // Remote disabled on the device
 };
 
-// RemoteSession — transport-agnostic client of a Palanu device (WASM sim or real
-// hardware) over PLP. Multi-listener so /simulator and /remote can both observe
-// the SAME device without clobbering each other.
+export interface RemoteSessionOptions {
+	tokenStore?: ITokenStore;
+	tokenKey?: string;
+}
+
 export class RemoteSession {
 	#t: ILinkTransport;
 	#parser = new FrameParser();
@@ -137,9 +97,13 @@ export class RemoteSession {
 	};
 	#pendingChallenge: { salt: string; nonce: string } | null = null;
 	#authorized = false;
+	#tokens: ITokenStore;
+	#tokenKey: string;
 
-	constructor(t: ILinkTransport) {
+	constructor(t: ILinkTransport, opts: RemoteSessionOptions = {}) {
 		this.#t = t;
+		this.#tokens = opts.tokenStore ?? new LocalStorageTokenStore();
+		this.#tokenKey = opts.tokenKey ?? DEFAULT_TOKEN_KEY;
 		t.onData((d) => this.#onBytes(d));
 		t.onState((c) => {
 			if (c) this.#hello();
@@ -223,25 +187,13 @@ export class RemoteSession {
 	}
 
 	#savedToken(): string | null {
-		try {
-			return typeof localStorage !== 'undefined' ? localStorage.getItem(TOKEN_KEY) : null;
-		} catch {
-			return null;
-		}
+		return this.#tokens.get(this.#tokenKey);
 	}
 	#saveToken(t: string) {
-		try {
-			localStorage?.setItem(TOKEN_KEY, t);
-		} catch {
-			/* ignore */
-		}
+		this.#tokens.set(this.#tokenKey, t);
 	}
 	#clearToken() {
-		try {
-			localStorage?.removeItem(TOKEN_KEY);
-		} catch {
-			/* ignore */
-		}
+		this.#tokens.remove(this.#tokenKey);
 	}
 
 	#onBytes(d: Uint8Array) {

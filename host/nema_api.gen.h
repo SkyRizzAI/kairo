@@ -52,6 +52,29 @@ struct Field {
 struct HostApi {
     virtual ~HostApi() = default;
 
+    // ── aether:ui ───────────────────────────────────────
+    // ui/view.view-begin
+    // Begin a container view (row or column flex direction). direction: "row" or "col"
+    virtual int32_t view_view_begin(std::string_view direction) = 0;
+    // ui/view.view-end
+    // End the current container. Children added after this go to the parent.
+    virtual void view_view_end() = 0;
+    // ui/text.label
+    // Simple text label (body style).
+    virtual int32_t text_label(std::string_view content) = 0;
+    // ui/text.styled
+    // Styled text. variant ∈ {"title", "subtitle", "body", "caption"}.
+    virtual int32_t text_styled(std::string_view content, std::string_view variant) = 0;
+    // ui/interactive.button
+    // Pressable button with label and on-press callback handle.
+    virtual int32_t interactive_button(std::string_view label, int32_t on_press) = 0;
+    // ui/scroll.scroll-begin
+    // Begin a vertical scroll region. Returns handle for content children.
+    virtual int32_t scroll_scroll_begin() = 0;
+    // ui/scroll.scroll-end
+    // End the scroll region.
+    virtual void scroll_scroll_end() = 0;
+
     // ── nema:bt ───────────────────────────────────────
     // bt/ble.enable [@blocking]
     // Whether the BLE controller is enabled.
@@ -141,6 +164,21 @@ struct HostApi {
     // storage/kv.remove
     // Delete a key. Returns true if the key existed.
     virtual bool kv_remove(std::string_view key) = 0;
+    // storage/fs.read-file
+    // Read a file as a UTF-8 string. Returns none if the file does not exist.
+    virtual std::optional<std::string> fs_read_file(std::string_view name) = 0;
+    // storage/fs.write-file
+    // Write (create or overwrite) a file with UTF-8 content.
+    virtual bool fs_write_file(std::string_view name, std::string_view data) = 0;
+    // storage/fs.list-files
+    // List files in the app's storage directory.
+    virtual std::vector<std::string> fs_list_files() = 0;
+    // storage/fs.remove-file
+    // Delete a file. Returns true if it existed.
+    virtual bool fs_remove_file(std::string_view name) = 0;
+    // storage/fs.bytes-used
+    // Total bytes used across all files for this app (internal + SD).
+    virtual uint64_t fs_bytes_used() = 0;
 
     // ── nema:sys ───────────────────────────────────────
     // sys/log.log

@@ -1,7 +1,7 @@
-// @ts-nocheck — validated at runtime by `bun test`, not by svelte-check.
+// @ts-nocheck — validated at runtime by `bun test`.
 import { test, expect } from 'bun:test';
-import { Channel, Flags, crc8, encodeFrame, FrameParser, rleEncode, rleDecode } from './codec';
-import { loopbackPair } from './transport';
+import { Channel, Flags, crc8, encodeFrame, FrameParser, rleEncode, rleDecode } from '../src/codec';
+import { loopbackPair } from '../src/transport';
 
 test('encode → parse roundtrip', () => {
 	const payload = new Uint8Array([1, 2, 3, 4, 5]);

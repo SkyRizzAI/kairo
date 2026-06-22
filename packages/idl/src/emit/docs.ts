@@ -87,6 +87,7 @@ function renderIndex(ast: PidlAst): string {
   lines.push("|---|---|---|---|");
 
   for (const pkg of ast.packages) {
+    if (pkg.name.startsWith("palanu:")) continue; // TS-only wire protocol, not device API docs
     for (const iface of pkg.interfaces) {
       const id = `${pkg.name}/${iface.name}`;
       const slug = id.replace(/[:/]/g, "_");
@@ -102,6 +103,7 @@ function renderIndex(ast: PidlAst): string {
   lines.push("| Record | Package | Fields |");
   lines.push("|---|---|---|");
   for (const pkg of ast.packages) {
+    if (pkg.name.startsWith("palanu:")) continue;
     for (const rec of pkg.records) {
       const fields = rec.fields.map((f) => `\`${f.name}: ${typeToString(f.type)}\``).join(", ");
       lines.push(`| \`${rec.name}\` | \`${pkg.name}\` | ${fields} |`);
@@ -119,6 +121,7 @@ export function emitDocs(ast: PidlAst): Map<string, string> {
 
   // Per-interface pages
   for (const pkg of ast.packages) {
+    if (pkg.name.startsWith("palanu:")) continue;
     for (const iface of pkg.interfaces) {
       const id = `${pkg.name}/${iface.name}`;
       const slug = id.replace(/[:/]/g, "_");

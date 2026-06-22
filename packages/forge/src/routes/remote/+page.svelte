@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { RemoteSession } from '$lib/RemoteSession';
+	import { RemoteSession } from '@palanu/link';
 	import { wasmSession } from '$lib/wasmSim';
 	import { activeRemote, setRemote, clearRemote } from '$lib/remoteLink';
 	import SessionView from '$lib/components/SessionView.svelte';

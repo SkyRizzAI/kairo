@@ -20,6 +20,7 @@ export function emitParity(ast: PidlAst): string {
   }
   const rows: Row[] = [];
   for (const pkg of ast.packages) {
+    if (pkg.name.startsWith("palanu:")) continue; // TS-only wire protocol, not device API parity
     for (const iface of pkg.interfaces) {
       for (const fn of iface.functions) {
         rows.push({

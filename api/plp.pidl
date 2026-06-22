@@ -1,0 +1,110 @@
+// palanu:plp — Palanu Link Protocol wire definitions.
+// This IDL defines the PLP transport protocol types (channels, opcodes, flags)
+// that are shared between firmware C++ and @palanu/link TypeScript.
+// Generated output: packages/link/src/types-generated.ts
+package palanu:plp@1.0
+
+/// PLP channel numbers — the wire multiplexer lanes. Each frame carries a
+/// channel byte that routes it to the correct handler on both sides.
+/// Mirrors firmware: nema::plp::Channel (plp_codec.h) and codec.ts.
+@core
+interface channels {
+    /// 0x00 — HELLO / ACK / REJECT / auth handshake
+    control: func() -> u8
+    /// 0x01 — framebuffer (1-bit, optionally RLE)
+    screen: func() -> u8
+    /// 0x02 — action / pointer
+    input: func() -> u8
+    /// 0x03 — log entries
+    log: func() -> u8
+    /// 0x04 — device info, power (restart/sleep/shutdown)
+    system: func() -> u8
+    /// 0x05 — firmware update chunks
+    ota: func() -> u8
+    /// 0x06 — host→device sim-control commands
+    ext: func() -> u8
+    /// 0x07 — device→host EventBus stream
+    event: func() -> u8
+    /// 0x08 — terminal: host sends command, device streams text + EOT
+    cli: func() -> u8
+    /// 0x09 — filesystem request/response
+    file: func() -> u8
+}
+
+/// Control channel opcodes (Channel 0x00).
+@core
+interface control_ops {
+    /// 0x01 — host→device: start handshake
+    hello: func() -> u8
+    /// 0x02 — device→host: handshake accepted
+    ack: func() -> u8
+    /// 0x03 — device→host: remote disabled
+    reject: func() -> u8
+    /// 0x20 — device→host: "salt:nonce" challenge
+    auth_challenge: func() -> u8
+    /// 0x21 — host→device: HMAC response or token
+    auth_response: func() -> u8
+    /// 0x22 — device→host: authorized + token
+    auth_ok: func() -> u8
+    /// 0x23 — device→host: bad credentials
+    auth_fail: func() -> u8
+    /// 0x24 — device→host: need auth for privileged channel
+    auth_required: func() -> u8
+}
+
+/// File channel opcodes (Channel 0x09).
+@core
+interface file_ops {
+    /// 0x01 — list directory
+    list: func() -> u8
+    /// 0x03 — read file
+    read: func() -> u8
+    /// 0x04 — write file
+    write: func() -> u8
+    /// 0x05 — make directory
+    mkdir: func() -> u8
+    /// 0x06 — remove file/dir
+    remove: func() -> u8
+    /// 0x07 — rename
+    rename: func() -> u8
+    /// 0x08 — copy
+    copy: func() -> u8
+}
+
+/// Ext channel opcodes (Channel 0x06).
+@core
+interface ext_ops {
+    /// 0x01 — inject EventBus event
+    inject_event: func() -> u8
+    /// 0x02 — sim WiFi router config
+    wifi_set_networks: func() -> u8
+    /// 0x03 — install .papp live
+    app_install: func() -> u8
+    /// 0x04 — rescan /system/apps/
+    app_scan: func() -> u8
+}
+
+/// OTA channel opcodes (Channel 0x05).
+@core
+interface ota_ops {
+    /// 0x01 — start OTA with image size
+    begin: func() -> u8
+    /// 0x02 — chunk at offset (idempotent)
+    data: func() -> u8
+    /// 0x03 — finalize upload
+    end: func() -> u8
+}
+
+/// System channel opcodes (Channel 0x04).
+@core
+interface system_ops {
+    /// 0x01 — request board profile JSON
+    get_info: func() -> u8
+}
+
+/// Frame flags — bitmask in the PLP frame header.
+record frame_flags {
+    none: u8,
+    frag_more: u8,
+    compressed: u8,
+}

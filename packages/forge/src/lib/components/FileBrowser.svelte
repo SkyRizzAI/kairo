@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { FileEntry } from '$lib/RemoteSession';
+	import type { FileEntry } from '@palanu/link';
 	import { unzipSync } from 'fflate';
 	import { Button } from '$lib/components/ui/button';
 	import {

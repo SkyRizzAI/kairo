@@ -1,4 +1,4 @@
-// PLP transport abstraction (Forge side).
+// PLP transport abstraction.
 //
 // The remote protocol (PLP) is ALWAYS the same. What changes per connection is
 // the transport — the "cable". A physical device uses BLE or USB; the WASM

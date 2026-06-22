@@ -1,4 +1,4 @@
-import type { ILinkTransport } from '$lib/plp/transport';
+import type { ILinkTransport } from '@palanu/link';
 
 // VirtualCableTransport — the simulator "cable" (Plan 35). Loads the CLASSIC
 // emscripten build (nema.js) via a <script> tag so Vite never transforms it

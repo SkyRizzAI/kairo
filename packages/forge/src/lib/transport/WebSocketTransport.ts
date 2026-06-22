@@ -1,4 +1,4 @@
-import type { ILinkTransport } from '$lib/plp/transport';
+import type { ILinkTransport } from '@palanu/link';
 
 // WebSocketTransport — PLP over WebSocket (Plan 75). Connects to a Palanu device
 // running the esp_http_server WS endpoint at ws://<host>:8477/plp over WiFi, so

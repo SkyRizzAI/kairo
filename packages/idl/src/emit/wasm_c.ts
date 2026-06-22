@@ -99,6 +99,7 @@ export function emitWasmC(ast: PidlAst): string {
   lines.push("");
 
   for (const pkg of ast.packages) {
+    if (pkg.name.startsWith("palanu:")) continue; // TS-only wire protocol, not WASM C API
     if (pkg.interfaces.length === 0) continue;
     lines.push(`/* ── ${pkg.name} ${"─".repeat(Math.max(0, 52 - pkg.name.length))} */`);
     for (const iface of pkg.interfaces) {

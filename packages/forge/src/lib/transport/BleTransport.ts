@@ -1,5 +1,5 @@
-import type { ILinkTransport } from '$lib/plp/transport';
-import { PLP_SERVICE, PLP_CHAR_TX, PLP_CHAR_RX } from '$lib/plp/uuids';
+import type { ILinkTransport } from '@palanu/link';
+import { PLP_SERVICE, PLP_CHAR_TX, PLP_CHAR_RX } from '@palanu/link';
 
 // BleTransport — PLP over Web Bluetooth (Plan 35). Connects to a Palanu device
 // that advertises the PLP GATT service (Plan 34). Same ILinkTransport interface

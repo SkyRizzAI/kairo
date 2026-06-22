@@ -129,8 +129,9 @@ export function emitHostCpp(ast: PidlAst): string {
   lines.push(emitResultStruct());
   lines.push("");
 
-  // Emit all record structs
+  // Emit all record structs (skip palanu:plp — TS-only wire protocol, not C++ host API)
   for (const pkg of ast.packages) {
+    if (pkg.name.startsWith("palanu:")) continue;
     if (pkg.records.length > 0) {
       lines.push(`// Records from ${pkg.name}`);
       lines.push(emitRecords(pkg.records, pkg.name));
@@ -145,6 +146,7 @@ export function emitHostCpp(ast: PidlAst): string {
   lines.push("");
 
   for (const pkg of ast.packages) {
+    if (pkg.name.startsWith("palanu:")) continue; // TS-only wire protocol, not C++ host API
     if (pkg.interfaces.length === 0) continue;
     const domain = pkg.name.split(":")[1] || pkg.name;
     lines.push(`    // ── ${pkg.name} ───────────────────────────────────────`);
