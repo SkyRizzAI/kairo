@@ -22,7 +22,7 @@ public:
     const char* id()       const override { return "com.palanu.badusb"; }
     const char* name()     const override { return "BadUSB"; }
     const char* category() const override { return "System"; }
-    bool fullscreen()      const override { return true; }
+    bool fullscreen()      const override { return false; }
 
 protected:
     void onStart(AppContext& ctx) override;
@@ -34,7 +34,7 @@ protected:
     size_t arenaCapacity()    const override { return 512; }
 
 private:
-    enum State { kMain, kScriptList, kRunning };
+    enum State { kMain, kScriptList, kRunning, kError };
 
     void scanScripts(IFileSystem* fs);
     void startExecution(IFileSystem* fs, Runtime& rt);
@@ -63,6 +63,8 @@ private:
     aether::ui::ScrollState scrollScripts_;
     char scriptCountBuf_[16] = {};
     char runProgressBuf_[32] = {};
+    char errorMsg_[64]       = {};
+    bool suppressNext_ = false;
 };
 
 } // namespace nema

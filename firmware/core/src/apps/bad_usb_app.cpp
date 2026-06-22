@@ -17,7 +17,9 @@ void BadUsbApp::onStart(AppContext& ctx) {
     hid_      = ctx.runtime().container().resolve<IUsbHid>();
     running_  = false;
     selected_ = 0;
-    state_    = kMain;
+    state_        = kMain;
+    suppressNext_ = true;
+    errorMsg_[0]  = '\0';
     scrollMain_.scrollMain    = 0;
     scrollScripts_.scrollMain = 0;
     scanScripts(ctx.runtime().fs());
@@ -56,15 +58,14 @@ bool BadUsbApp::onKey(Key k, AppContext& ctx) {
         }
         return true;  // swallow all input while running
     }
-    if (state_ == kScriptList && k == Key::Cancel) {
-        state_ = kMain;
-        return true;
-    }
+    if (state_ == kScriptList && k == Key::Cancel) { state_ = kMain;       return true; }
+    if (state_ == kError      && k == Key::Cancel) { state_ = kScriptList; return true; }
     return false;
 }
 
 void BadUsbApp::cbRunScript(void* u) {
     auto* self = static_cast<BadUsbApp*>(u);
+    if (self->suppressNext_) { self->suppressNext_ = false; return; }
     self->state_ = kScriptList;
     self->scrollScripts_.scrollMain = 0;
 }
@@ -72,11 +73,23 @@ void BadUsbApp::cbRunScript(void* u) {
 void BadUsbApp::cbSelectScript(void* u) {
     auto* r    = static_cast<ScriptRow*>(u);
     auto* self = r->self;
-    if (!self->hid_ || !self->hid_->isReady()) return;
     self->selected_ = r->index;
+
+    if (!self->hid_ || !self->hid_->isReady()) {
+        std::snprintf(self->errorMsg_, sizeof(self->errorMsg_),
+                      "USB HID not enabled.\nEnable TinyUSB mode in\nCMakeLists.txt");
+        self->state_ = kError;
+        return;
+    }
+
     auto& rt = self->ctx_->runtime();
     self->startExecution(rt.fs(), rt);
-    if (self->running_) self->state_ = kRunning;
+    if (self->running_) {
+        self->state_ = kRunning;
+    } else {
+        std::snprintf(self->errorMsg_, sizeof(self->errorMsg_), "Failed to load script");
+        self->state_ = kError;
+    }
 }
 
 aether::ui::UiNode* BadUsbApp::build(NodeArena& arena, AppContext& ctx) {
@@ -88,25 +101,35 @@ aether::ui::UiNode* BadUsbApp::build(NodeArena& arena, AppContext& ctx) {
         return ListItemRow(arena, e);
     };
 
+    // ── Error ────────────────────────────────────────────────────────────────
+    if (state_ == kError) {
+        return View(arena, root, {
+            ListContainer(arena, scrollMain_, {
+                ListSection(arena, "Cannot Run"),
+                info("Reason", errorMsg_),
+                info("Back",   "cancel"),
+            }),
+        });
+    }
+
     // ── Running ──────────────────────────────────────────────────────────────
     if (state_ == kRunning) {
         const char* scriptName = (selected_ >= 0 && selected_ < (int)scripts_.size())
             ? scripts_[(size_t)selected_].name.c_str() : "?";
         std::snprintf(runProgressBuf_, sizeof(runProgressBuf_),
-                      "%zu / %zu cmds", cmdIndex_, cmdTotal_);
+                      "%zu cmds", cmdTotal_);
         return View(arena, root, {
             ListContainer(arena, scrollMain_, {
-                ListSection(arena, "Running"),
-                info(scriptName,  runProgressBuf_),
-                info("Back",      "cancel"),
+                ListSection(arena, "Injecting"),
+                info("Script",   scriptName),
+                info("Commands", runProgressBuf_),
+                info("Back",     "cancel"),
             }),
         });
     }
 
     // ── Script list ──────────────────────────────────────────────────────────
     if (state_ == kScriptList) {
-        bool canRun = hid_ && hid_->isReady();
-
         scriptRows_.clear();
         for (size_t i = 0; i < scripts_.size(); i++)
             scriptRows_.push_back({this, (int)i});
@@ -127,8 +150,8 @@ aether::ui::UiNode* BadUsbApp::build(NodeArena& arena, AppContext& ctx) {
             for (size_t i = 0; i < scripts_.size(); i++) {
                 ListEntry e;
                 e.label   = scripts_[i].name.c_str();
-                e.chevron = canRun;
-                e.onPress = canRun ? cbSelectScript : nullptr;
+                e.chevron = true;
+                e.onPress = cbSelectScript;   // HID check is inside cbSelectScript
                 e.user    = &scriptRows_[i];
                 addRow(ListItemRow(arena, e));
             }
