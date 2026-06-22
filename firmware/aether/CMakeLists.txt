@@ -65,6 +65,7 @@ set(AETHER_SRCS
     ${CMAKE_CURRENT_SOURCE_DIR}/../core/src/shell/desktop_livewall.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../core/src/shell/shell_factory.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../core/src/shell/launcher_compact.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../core/src/shell/launcher_flipper.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../core/src/shell/launcher_playstation.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../core/src/shell/launcher_wii.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../core/src/screens/app_list_screen.cpp
@@ -82,6 +83,7 @@ set(AETHER_SRCS
     ${CMAKE_CURRENT_SOURCE_DIR}/../core/src/screens/lock_screen.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../core/src/screens/close_and_open_modal.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../core/src/screens/sleep_settings_screen.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../core/src/screens/appearances_settings_screen.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../core/src/screens/controls_screen.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../core/src/screens/touch_settings_screen.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../core/src/screens/sounds_settings_screen.cpp

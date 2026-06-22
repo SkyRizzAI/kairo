@@ -1,18 +1,22 @@
-// Compact / Coverflow launcher skin ("compact").
+// Compact / 3D-card-stack launcher skin ("compact").
 //
-// A pennant carousel (Flipper-Zero Momentum "Compact"). The focused entry is a
-// rounded SQUARE in the centre; its neighbours are EQUAL-HEIGHT banners whose
-// INNER edge tapers to a chevron point aimed at the centre, like cards tucked
-// behind one another (the tips converge on the middle):  > > | < <
+// The focused card is a flat square in the centre.  Its neighbours are drawn as
+// the SIDE FACE of a 3D card tucked behind the centre — an isometric hexagon with
+// a straight outer edge (full height) and a shorter inner edge trimmed by a skew
+// amount, joined by two diagonal slants:
 //
-//      ____    ____    ______________    ____    ____
-//   \ |    \ |    \ |              | /    | /    | /
-//    >| ic  >| ic  >|   CENTRE     |<  ic |<  ic |<     ← all the same height;
-//   / |____/ |____/ |   square     | \____| \____|        the POINT faces centre
-//                   |______________|                     (NOT a shrinking lens).
+//     +---     +------------------+     ---+
+//     |   \    |                  |    /   |
+//     |    \   |                  |   /    |
+//     |     |  |    CENTRE CARD   |  |     |
+//     |     |  |                  |  |     |
+//     |    /   |                  |   \    |
+//     |   /    |                  |    \   |
+//     +---     +------------------+     ---+
 //
-// App name is centred below the focused card; a horizontal position bar sits at
-// the very bottom, matching the other skins.
+// Icons on side cards are drawn with a per-column vertical shear so they appear
+// painted on the tilted face.  App name is centred below the focused card;
+// a horizontal position bar sits at the very bottom.
 #include "aether/shell/launcher_compact.h"
 #include "aether/shell/blit.h"
 #include "nema/ui/canvas.h"
@@ -25,35 +29,66 @@ namespace nema::shell {
 
 using namespace aether::ui;
 
-// Draw one side pennant. The rectangular body is [bodyX0, bodyX1] × [yt, yb]; the
-// edge FACING the centre collapses to a chevron point at `tipX` on the centre line
-// `cy`. The opposite (outer) edge stays a straight vertical. tipX outside the body
-// on the left → a `<`-tip (right-side cards); on the right → a `>`-tip (left side).
-static void drawPennant(nema::Canvas& c, uint16_t bodyX0, uint16_t bodyX1,
-                        uint16_t yt, uint16_t yb, uint16_t cy, uint16_t tipX,
-                        const LauncherEntry& e) {
-    bool     tipLeft   = tipX <= bodyX0;
-    uint16_t straightX = tipLeft ? bodyX1 : bodyX0;   // outer, away from centre
-    uint16_t nearX     = tipLeft ? bodyX0 : bodyX1;   // body edge nearest the tip
+// 1-bit row-major bitmap helper (shared bit layout with blitScaledMask).
+static inline bool srcBit(const uint8_t* bits, int sw, int sx, int sy) {
+    uint32_t idx = (uint32_t)sy * sw + sx;
+    return (bits[idx / 8] >> (7 - idx % 8)) & 1;
+}
 
-    // Outer straight vertical edge.
-    c.drawLine(straightX, yt, straightX, yb, true);
-    // Flat top & bottom edges (straight edge → near-body edge).
-    c.drawLine(straightX, yt, nearX, yt, true);
-    c.drawLine(straightX, yb, nearX, yb, true);
-    // Two slants converging on the inward-facing tip.
-    c.drawLine(nearX, yt, tipX, cy, true);
-    c.drawLine(nearX, yb, tipX, cy, true);
+// Draw the isometric side-face of one card.
+//
+//   outerX  — x of the outer (away-from-centre) vertical edge (full height yt..yb)
+//   innerX  — x of the inner (near-centre) vertical edge (shorter: (yt+skew)..(yb-skew))
+//   leftCard — true when the card sits to the LEFT of the centre (outerX < innerX)
+//
+// The icon is rendered with a column-wise vertical shear that matches the face tilt:
+//   left card  → columns shift DOWN as x increases toward centre
+//   right card → columns shift DOWN as x decreases toward centre
+static void drawSideCard(nema::Canvas& c,
+                         uint16_t outerX, uint16_t innerX,
+                         uint16_t yt, uint16_t yb,
+                         uint16_t skew, bool leftCard,
+                         const LauncherEntry& e) {
+    uint16_t innerYt = (uint16_t)(yt + skew);
+    uint16_t innerYb = (uint16_t)(yb > skew ? yb - skew : yt + 2);
+    if (innerYb <= innerYt) return;
 
-    // Icon — centred in the rectangular body, ~half the banner height.
-    uint16_t bodyW = (uint16_t)(bodyX1 - bodyX0);
-    uint16_t cardH = (uint16_t)(yb - yt);
-    if (e.icon && e.iconW && e.iconH && bodyW > 5 && cardH > 6) {
-        uint16_t isz = (uint16_t)((bodyW < cardH ? bodyW : cardH) * 11 / 20);
-        if (isz < 2) isz = 2;
-        uint16_t ix = (uint16_t)(bodyX0 + (bodyW > isz ? (bodyW - isz) / 2 : 0));
-        uint16_t iy = (uint16_t)(cy - isz / 2);
-        blitScaledMask(c, e.icon, e.iconW, e.iconH, ix, iy, isz, isz, true);
+    // Hexagon outline
+    c.drawLine(outerX, yt,      outerX, yb,      true);   // outer full-height edge
+    c.drawLine(innerX, innerYt, innerX, innerYb,  true);   // inner shorter edge
+    c.drawLine(outerX, yt,      innerX, innerYt,  true);   // top slant
+    c.drawLine(outerX, yb,      innerX, innerYb,  true);   // bottom slant
+
+    // Icon centred in the face, with per-column vertical shear
+    uint16_t faceLeft  = leftCard ? outerX : innerX;
+    uint16_t faceRight = leftCard ? innerX : outerX;
+    uint16_t faceW     = (uint16_t)(faceRight - faceLeft);
+    uint16_t innerH    = (uint16_t)(innerYb - innerYt);
+
+    if (!e.icon || !e.iconW || !e.iconH || faceW < 5 || innerH < 5) return;
+
+    uint16_t isz = (uint16_t)((faceW < innerH ? faceW : innerH) * 3 / 5);
+    if (isz < 2) return;
+
+    uint16_t iconX = (uint16_t)(faceLeft + (faceW - isz) / 2);
+    uint16_t midY  = (uint16_t)((innerYt + innerYb) / 2);
+    uint16_t iconY = (uint16_t)(midY > isz / 2 ? midY - isz / 2 : 0);
+
+    for (uint16_t dx = 0; dx < isz; dx++) {
+        int sx = (int)(dx * e.iconW / isz);
+        // Shear amount for this column — matches the face's diagonal taper.
+        int16_t shear = leftCard
+            ? (int16_t)((int32_t)dx * skew / isz)          // left card: rightward → down
+            : (int16_t)((int32_t)(isz - 1 - dx) * skew / isz); // right card: leftward → down
+
+        for (uint16_t dy = 0; dy < isz; dy++) {
+            int sy = (int)(dy * e.iconH / isz);
+            if (srcBit(e.icon, e.iconW, sx, sy)) {
+                c.drawPixel((uint16_t)(iconX + dx),
+                            (uint16_t)(iconY + dy + (uint16_t)shear),
+                            true);
+            }
+        }
     }
 }
 
@@ -64,59 +99,55 @@ void CompactLauncher::draw(nema::Canvas& c, const LauncherModel& m, int cursor) 
     if (cursor < 0) cursor = 0; else if (cursor >= n) cursor = n - 1;
 
     const aether::StyleTokens& t = aether::theme();
-    uint16_t top    = nema::display::contentY();        // below the status bar
+    uint16_t top    = nema::display::contentY();        // below status bar
     uint16_t sbH    = (uint16_t)t.space.sm;             // bottom scrollbar strip
-    uint16_t labelH = measureTextH(TextRole::Subhead);  // app-name line
+    uint16_t labelH = measureTextH(TextRole::Subhead);  // app-name label
 
-    uint16_t botY   = (uint16_t)(H - sbH - labelH - 2);
-    uint16_t bandH  = (botY > top) ? (uint16_t)(botY - top) : 0;
+    uint16_t botY  = (uint16_t)(H - sbH - labelH - 2);
+    uint16_t bandH = (botY > top) ? (uint16_t)(botY - top) : 0;
     if (bandH < 8) return;
 
-    // Centre card = SQUARE; all cards share this height (no lens taper).
-    uint16_t s = bandH;
+    // Centre card: square, capped at 2/5 of display width.
+    uint16_t s    = bandH;
     uint16_t maxS = (uint16_t)(W * 2 / 5);
     if (s > maxS) s = maxS;
 
-    uint16_t cy = (uint16_t)(top + bandH / 2);
     uint16_t cX = (uint16_t)((W - s) / 2);
-    uint16_t cY = (uint16_t)(cy - s / 2);
+    uint16_t cY = (uint16_t)(top + (bandH - s) / 2);
     uint16_t yt = cY, yb = (uint16_t)(cY + s);
 
-    uint16_t sw     = (uint16_t)(s * 50 / 100);         // side-banner body width
-    uint16_t tipLen = (uint16_t)(sw * 45 / 100);        // chevron depth
+    // Side-card geometry: face width + skew (inner-edge compression at top/bottom).
+    uint16_t sw   = (uint16_t)(s * 40 / 100);   // face width of each side card
+    uint16_t skew = (uint16_t)(s * 25 / 100);   // top/bottom taper on inner edge
 
-    // ── right pennants: tips point LEFT (`<`), toward the centre ──────────────
+    // ── right side cards (drawn first so centre paints over them) ─────────────
     {
-        uint16_t x = (uint16_t)(cX + s);                // tip boundary = centre edge
+        uint16_t innerX = (uint16_t)(cX + s);
         for (int i = cursor + 1; i < n; i++) {
-            uint16_t tipX   = x;
-            uint16_t bodyX0 = (uint16_t)(x + tipLen);
-            uint16_t bodyX1 = (uint16_t)(bodyX0 + sw);
-            if (bodyX0 >= (uint16_t)(W - 2)) break;
-            if (bodyX1 > (uint16_t)(W - 1)) bodyX1 = (uint16_t)(W - 1);
-            if (bodyX1 - bodyX0 < 4) break;
-            drawPennant(c, bodyX0, bodyX1, yt, yb, cy, tipX, m.items[i]);
-            x = bodyX1;
+            if (innerX >= W - 2) break;
+            uint16_t outerX = (uint16_t)(innerX + sw);
+            if (outerX > W - 1) outerX = (uint16_t)(W - 1);
+            if (outerX - innerX < 4) break;
+            drawSideCard(c, outerX, innerX, yt, yb, skew, false, m.items[i]);
+            innerX = outerX;
         }
     }
 
-    // ── left pennants: tips point RIGHT (`>`), toward the centre ──────────────
+    // ── left side cards ───────────────────────────────────────────────────────
     {
-        uint16_t x = cX;                                // tip boundary = centre edge
+        uint16_t innerX = cX;
         for (int i = cursor - 1; i >= 0; i--) {
-            if (x < (uint16_t)(tipLen + 5)) break;
-            uint16_t tipX   = x;
-            uint16_t bodyX1 = (uint16_t)(x - tipLen);
-            uint16_t bodyX0 = (bodyX1 > sw) ? (uint16_t)(bodyX1 - sw) : 0;
-            if (bodyX1 - bodyX0 < 4) break;
-            drawPennant(c, bodyX0, bodyX1, yt, yb, cy, tipX, m.items[i]);
-            x = bodyX0;
+            if (innerX < sw + 2) break;
+            uint16_t outerX = (uint16_t)(innerX - sw);
+            if (innerX - outerX < 4) break;
+            drawSideCard(c, outerX, innerX, yt, yb, skew, true, m.items[i]);
+            innerX = outerX;
         }
     }
 
-    // ── centre card (rounded square, painted last so it sits on top) ──────────
-    c.fillRect(cX, cY, s, s, false);
-    draw::box_rounded(c, cX, cY, s, s, false);
+    // ── centre card (painted last — covers any side-card overlap) ─────────────
+    c.fillRect(cX, cY, s, s, false);           // erase interior to black
+    draw::box_rounded(c, cX, cY, s, s, false); // white outline, rounded corners
     {
         const LauncherEntry& e = m.items[cursor];
         if (e.icon && e.iconW && e.iconH && s > 6) {
@@ -127,7 +158,7 @@ void CompactLauncher::draw(nema::Canvas& c, const LauncherModel& m, int cursor) 
         }
     }
 
-    // ── app name (centred below the focused card) ─────────────────────────────
+    // ── app name centred below the focused card ───────────────────────────────
     {
         FontSpec    fs = fontForRole(TextRole::Subhead);
         c.setFont(fs.handle);
@@ -139,7 +170,7 @@ void CompactLauncher::draw(nema::Canvas& c, const LauncherModel& m, int cursor) 
         else               c.drawTextScaled(lx, ly, nm, fs.scale, true);
     }
 
-    // ── position scrollbar ───────────────────────────────────────────────────
+    // ── position scrollbar ────────────────────────────────────────────────────
     draw::scrollbar(c, 2, (uint16_t)(H - sbH), (uint16_t)(W - 4),
                     (uint16_t)cursor, 1, (uint16_t)n, true);
 }

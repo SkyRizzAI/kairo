@@ -1,6 +1,7 @@
 #pragma once
 #include "nema/app/component_app.h"
 #include "nema/apps/badusb_parser.h"
+#include "nema/ui/widgets.h"
 #include <string>
 #include <vector>
 
@@ -9,10 +10,13 @@ namespace nema {
 class  Runtime;
 struct IFileSystem;
 struct IUsbHid;
+class  AppContext;
 
-// BadUSB BadUSB script executor — runs as a proper app on its own thread
-// (Plan 84 Fase 3). Each launch gets a fresh onStart(); execution state is
-// confined to the app thread so there are no GUI-thread data races.
+// BadUSB script executor — runs as a proper app on its own thread (Plan 84 Fase 3).
+// UI state machine:
+//   kMain       — settings overview + "Run Script" nav row
+//   kScriptList — scrollable list of .dd scripts; select one to execute
+//   kRunning    — progress while the script executes; Back cancels
 class BadUsbApp : public ComponentApp {
 public:
     const char* id()       const override { return "com.palanu.badusb"; }
@@ -26,23 +30,38 @@ protected:
     bool onKey(Key k, AppContext& ctx) override;
     bool onTick(AppContext& ctx) override;
     uint32_t tickIntervalMs() const override { return running_ ? 20u : 0u; }
-    bool capturesInput() const override { return true; }
+    bool capturesInput()      const override { return running_; }
+    size_t arenaCapacity()    const override { return 512; }
 
 private:
+    enum State { kMain, kScriptList, kRunning };
+
     void scanScripts(IFileSystem* fs);
     void startExecution(IFileSystem* fs, Runtime& rt);
     void execNextCommand();
 
-    struct ScriptEntry { std::string path; std::string name; };
-    std::vector<ScriptEntry> scripts_;
-    int selected_ = 0;
+    static void cbRunScript   (void* u);
+    static void cbSelectScript(void* u);
 
-    bool running_ = false;
+    struct ScriptEntry { std::string path; std::string name; };
+    struct ScriptRow   { BadUsbApp* self; int index; };
+
+    std::vector<ScriptEntry>          scripts_;
+    std::vector<ScriptRow>            scriptRows_;
+    AppContext*                       ctx_      = nullptr;
+    int                               selected_ = 0;
+    State                             state_    = kMain;
+
+    bool           running_     = false;
     badusb::Script parsedScript_;
-    size_t cmdIndex_ = 0;
-    size_t cmdTotal_ = 0;
+    size_t         cmdIndex_    = 0;
+    size_t         cmdTotal_    = 0;
 
     IUsbHid* hid_ = nullptr;
+
+    aether::ui::ScrollState scrollMain_;
+    aether::ui::ScrollState scrollScripts_;
+    char runProgressBuf_[32] = {};
 };
 
 } // namespace nema

@@ -3,6 +3,7 @@
 #include "aether/shell/shell_factory.h"
 #include "aether/shell/desktop_livewall.h"
 #include "aether/shell/launcher_compact.h"
+#include "aether/shell/launcher_flipper.h"
 #include "aether/shell/launcher_playstation.h"
 #include "aether/shell/launcher_wii.h"
 #include <cstring>
@@ -18,6 +19,7 @@ std::unique_ptr<IDesktopTheme> makeDesktop(const char* name, nema::Runtime& rt) 
 std::unique_ptr<ILauncherTheme> makeLauncher(const char* name) {
     if (name && std::strcmp(name, "wii")     == 0) return std::make_unique<WiiLauncher>();
     if (name && std::strcmp(name, "compact") == 0) return std::make_unique<CompactLauncher>();
+    if (name && std::strcmp(name, "flipper") == 0) return std::make_unique<FlipperLauncher>();
     return std::make_unique<PlayStationLauncher>();   // default
 }
 

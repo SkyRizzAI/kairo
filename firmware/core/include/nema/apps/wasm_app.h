@@ -40,6 +40,10 @@ public:
 #endif
     }
 
+    // Capture all input so onKey() receives every keypress (Select, Cancel, etc.)
+    // rather than the default nav dispatch that would ignore them.
+    bool capturesInput() const override { return true; }
+
     // UI path (mode=ui): runs WASM synchronously in onStart() then shows
     // captured output on screen. Any key press exits after WASM completes.
     void onStart(AppContext& ctx) override;
@@ -73,6 +77,8 @@ private:
     // Terminal output (UI path only). Populated by nema_print() via printHook.
     std::vector<std::string> outputLines_;
     std::atomic<bool>        done_{false};
+    bool                     displayed_{false};
+    int                      ignoreKeys_{1};     // discard the launch-Select that opened this app
     aether::ui::ScrollState  scrollSt_;
 };
 

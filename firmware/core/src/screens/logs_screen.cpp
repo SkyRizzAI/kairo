@@ -1,7 +1,6 @@
 // Plan 60 — LogsScreen: dense log view with level tags + auto-scroll.
 #include "nema/screens/logs_screen.h"
 #include "nema/runtime.h"
-#include "nema/ui/style_tokens.h"
 #include "nema/log/log_entry.h"
 #include "nema/clock.h"
 #include <cstdio>
@@ -14,7 +13,17 @@ LogsScreen::LogsScreen(Runtime& rt) : ComponentScreen(rt, 256) {}
 
 void LogsScreen::onResume() {
     scroll_.scrollMain = 0x7FFF;   // renderer clamps to bottom → show newest
+    lastSec_ = 0xFFFFFFFFu;        // force header refresh on first tick
     ComponentScreen::onResume();
+}
+
+void LogsScreen::tick(uint64_t nowMs) {
+    ComponentScreen::tick(nowMs);
+    uint32_t sec = (uint32_t)(nowMs / 1000);
+    if (sec != lastSec_) {
+        lastSec_ = sec;
+        requestRedraw();
+    }
 }
 
 static char levelTag(LogLevel l) {
@@ -46,22 +55,20 @@ UiNode* LogsScreen::build(NodeArena& a, Runtime& rt) {
     rows_.clear();
 
     uint64_t ms = rt.clock().millis();
-    uint32_t s = (uint32_t)(ms / 1000) % 60, m = (uint32_t)(ms / 60000) % 60,
+    uint32_t s = (uint32_t)(ms / 1000) % 60,
+             m = (uint32_t)(ms / 60000) % 60,
              h = (uint32_t)(ms / 3600000);
     if (h > 0) std::snprintf(header_, sizeof(header_), "up %uh%um%us  %u logs",
                              (unsigned)h, (unsigned)m, (unsigned)s,
                              (unsigned)rt.logCount());
     else       std::snprintf(header_, sizeof(header_), "up %um%us  %u logs",
-                             (unsigned)m, (unsigned)s, (unsigned)rt.logCount());
+                             (unsigned)m, (unsigned)s,
+                             (unsigned)rt.logCount());
 
     rt.logForEach(&LogsScreen::collect, this);
     if (rows_.empty()) rows_.emplace_back("(no log entries)");
 
-    uint8_t pad = aether::theme().space.sm;
-    uint8_t gap = aether::theme().space.xs;
-
-    Style root; root.dir = FlexDir::Col; root.flexGrow = 1; root.padding = pad; root.gap = gap;
-    root.align = Align::Stretch;
+    Style root; root.dir = FlexDir::Col; root.flexGrow = 1; root.align = Align::Stretch;
     Style sv;   sv.dir = FlexDir::Col; sv.gap = 1;
 
     UiNode* list = ScrollView(a, scroll_, sv, {});
@@ -74,7 +81,6 @@ UiNode* LogsScreen::build(NodeArena& a, Runtime& rt) {
     }
 
     return View(a, root, {
-        TitleBar(a, "LOGS"),
         Text(a, header_, TextRole::Caption),
         list,
     });

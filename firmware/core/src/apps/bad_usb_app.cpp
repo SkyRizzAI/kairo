@@ -2,7 +2,6 @@
 #include "nema/hal/filesystem.h"
 #include "nema/hal/usb_hid.h"
 #include "nema/ui/widgets.h"
-#include "nema/ui/style_tokens.h"
 #include "nema/app/app_context.h"
 #include "nema/runtime.h"
 #include "nema/log/logger.h"
@@ -15,9 +14,12 @@ namespace nema {
 using namespace aether::ui;
 
 void BadUsbApp::onStart(AppContext& ctx) {
-    hid_     = ctx.runtime().container().resolve<IUsbHid>();
+    hid_      = ctx.runtime().container().resolve<IUsbHid>();
     running_  = false;
     selected_ = 0;
+    state_    = kMain;
+    scrollMain_.scrollMain    = 0;
+    scrollScripts_.scrollMain = 0;
     scanScripts(ctx.runtime().fs());
 }
 
@@ -38,90 +40,113 @@ bool BadUsbApp::onTick(AppContext& ctx) {
     (void)ctx;
     if (running_ && hid_) {
         execNextCommand();
+        if (!running_) state_ = kScriptList;
         return true;
     }
     return false;
 }
 
 bool BadUsbApp::onKey(Key k, AppContext& ctx) {
+    (void)ctx;
     if (running_) {
         if (k == Key::Cancel) {
             running_ = false;
             if (hid_) hid_->releaseAll();
-            return true;
+            state_ = kScriptList;
         }
-        return false;
+        return true;  // swallow all input while running
     }
-    switch (k) {
-        case Key::Up:
-        case Key::Left:
-            if (selected_ > 0) { selected_--; return true; }
-            return false;
-        case Key::Down:
-        case Key::Right:
-            if (selected_ < (int)scripts_.size() - 1) { selected_++; return true; }
-            return false;
-        case Key::Select:
-            if (!scripts_.empty() && hid_) {
-                startExecution(ctx.runtime().fs(), ctx.runtime());
-                return true;
-            }
-            return false;
-        case Key::Cancel:
-            return false;  // base handles: requestExit()
-        default:
-            return false;
+    if (state_ == kScriptList && k == Key::Cancel) {
+        state_ = kMain;
+        return true;
     }
+    return false;
 }
 
-aether::ui::UiNode* BadUsbApp::build(aether::ui::NodeArena& arena, AppContext&) {
-    Style root; root.dir = FlexDir::Col; root.flexGrow = 1;
-    root.padding = aether::theme().space.sm; root.gap = aether::theme().space.sm;
-    root.align = Align::Stretch;
-    Style menu; menu.dir = FlexDir::Col; menu.align = Align::Stretch; menu.gap = 1;
+void BadUsbApp::cbRunScript(void* u) {
+    auto* self = static_cast<BadUsbApp*>(u);
+    self->state_ = kScriptList;
+    self->scrollScripts_.scrollMain = 0;
+}
 
-    if (running_) {
-        char prog[48];
-        std::snprintf(prog, sizeof(prog), "%zu/%zu", cmdIndex_ + 1, cmdTotal_);
+void BadUsbApp::cbSelectScript(void* u) {
+    auto* r    = static_cast<ScriptRow*>(u);
+    auto* self = r->self;
+    if (!self->hid_ || !self->hid_->isReady()) return;
+    self->selected_ = r->index;
+    auto& rt = self->ctx_->runtime();
+    self->startExecution(rt.fs(), rt);
+    if (self->running_) self->state_ = kRunning;
+}
+
+aether::ui::UiNode* BadUsbApp::build(NodeArena& arena, AppContext& ctx) {
+    ctx_ = &ctx;
+    Style root; root.dir = FlexDir::Col; root.flexGrow = 1; root.align = Align::Stretch;
+
+    auto info = [&](const char* label, const char* value) {
+        ListEntry e; e.label = label; e.value = value;
+        return ListItemRow(arena, e);
+    };
+
+    // ── Running ──────────────────────────────────────────────────────────────
+    if (state_ == kRunning) {
+        const char* scriptName = (selected_ >= 0 && selected_ < (int)scripts_.size())
+            ? scripts_[(size_t)selected_].name.c_str() : "?";
+        std::snprintf(runProgressBuf_, sizeof(runProgressBuf_),
+                      "%zu / %zu cmds", cmdIndex_, cmdTotal_);
         return View(arena, root, {
-            TitleBar(arena, "BadUSB"),
-            SmartLabel(arena, "Running..."),
-            SmartLabel(arena, prog),
-            SmartLabel(arena, "Back: stop"),
+            ListContainer(arena, scrollMain_, {
+                ListSection(arena, "Running"),
+                info(scriptName,  runProgressBuf_),
+                info("Back",      "cancel"),
+            }),
         });
     }
 
-    if (scripts_.empty()) {
-        return View(arena, root, {
-            TitleBar(arena, "BadUSB"),
-            SmartLabel(arena, "No scripts in /badusb/"),
-            SmartLabel(arena, "Upload .dd via Forge"),
-        });
+    // ── Script list ──────────────────────────────────────────────────────────
+    if (state_ == kScriptList) {
+        bool canRun = hid_ && hid_->isReady();
+
+        scriptRows_.clear();
+        for (size_t i = 0; i < scripts_.size(); i++)
+            scriptRows_.push_back({this, (int)i});
+
+        UiNode* list = ListContainer(arena, scrollScripts_, {});
+        UiNode* prev = nullptr;
+
+        auto addRow = [&](UiNode* row) {
+            if (!row) return;
+            if (!prev) list->firstChild = row; else prev->nextSibling = row;
+            prev = row;
+        };
+
+        if (scripts_.empty()) {
+            ListEntry e; e.label = "(empty)";
+            addRow(ListItemRow(arena, e));
+        } else {
+            for (size_t i = 0; i < scripts_.size(); i++) {
+                ListEntry e;
+                e.label   = scripts_[i].name.c_str();
+                e.chevron = canRun;
+                e.onPress = canRun ? cbSelectScript : nullptr;
+                e.user    = &scriptRows_[i];
+                addRow(ListItemRow(arena, e));
+            }
+        }
+
+        return View(arena, root, { list });
     }
 
-    char count[32];
-    std::snprintf(count, sizeof(count), "%d/%d",
-                  selected_ + 1, (int)scripts_.size());
-    const char* selectedName = scripts_[(size_t)selected_].name.c_str();
-
-    if (!hid_ || !hid_->isReady()) {
-        return View(arena, root, {
-            TitleBar(arena, "BadUSB"),
-            SmartLabel(arena, "Script:"),
-            SmartLabel(arena, selectedName),
-            SmartLabel(arena, count),
-            SmartLabel(arena, "USB HID not enabled"),
-            SmartLabel(arena, "(TinyUSB mode required)"),
-        });
-    }
+    // ── Main ─────────────────────────────────────────────────────────────────
+    ListEntry runRow;
+    runRow.label   = "Run Script";
+    runRow.chevron = true;
+    runRow.onPress = cbRunScript;
+    runRow.user    = this;
 
     return View(arena, root, {
-        TitleBar(arena, "BadUSB"),
-        Col(arena, menu, {
-            SmartLabel(arena, "Script:"),
-            SmartLabel(arena, selectedName),
-            SmartLabel(arena, count),
-            SmartLabel(arena, "OK: run   Up/Dn: select"),
+        ListContainer(arena, scrollMain_, {
+            ListItemRow(arena, runRow),
         }),
     });
 }
@@ -133,10 +158,10 @@ void BadUsbApp::startExecution(IFileSystem* fs, Runtime& rt) {
     parsedScript_ = badusb::parse((const char*)data.data(), data.size());
     cmdIndex_ = 0;
     cmdTotal_ = parsedScript_.size();
-    running_ = (cmdTotal_ > 0);
+    running_  = (cmdTotal_ > 0);
     rt.log().info("BadUsbApp", "executing",
         {{"script", scripts_[selected_].name},
-         {"cmds", std::to_string(cmdTotal_)}});
+         {"cmds",   std::to_string(cmdTotal_)}});
 }
 
 void BadUsbApp::execNextCommand() {
@@ -144,15 +169,9 @@ void BadUsbApp::execNextCommand() {
         auto& cmd = parsedScript_[cmdIndex_];
         cmdIndex_++;
         switch (cmd.type) {
-            case badusb::Command::Key:
-                hid_->sendKey(cmd.modifier, cmd.keycode);
-                break;
-            case badusb::Command::String:
-                hid_->sendString(cmd.text.c_str(), cmd.delayMs);
-                break;
-            case badusb::Command::Delay:
-                hid_->delay(cmd.delayMs);
-                break;
+            case badusb::Command::Key:    hid_->sendKey(cmd.modifier, cmd.keycode);         break;
+            case badusb::Command::String: hid_->sendString(cmd.text.c_str(), cmd.delayMs); break;
+            case badusb::Command::Delay:  hid_->delay(cmd.delayMs);                        break;
             default: break;
         }
     }

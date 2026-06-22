@@ -10,7 +10,7 @@ namespace nema {
 using namespace aether::ui;
 
 SettingsScreen::SettingsScreen(Runtime& rt)
-    : ComponentScreen(rt, 160), about_(rt), sleepSettings_(rt), wifiSettings_(rt),
+    : ComponentScreen(rt, 160), about_(rt), sleepSettings_(rt), appearances_(rt), wifiSettings_(rt),
       btSettings_(rt), remoteSettings_(rt), controls_(rt), touchSettings_(rt), sounds_(rt),
       cameraSettings_(rt), developer_(rt), profileSettings_(rt), storageSettings_(rt) {}
 
@@ -28,7 +28,8 @@ void SettingsScreen::onSelect(void* u) {
 void SettingsScreen::launch(Kind k) {
     switch (k) {
         case About:      rt_.view().navigate(about_);          break;
-        case Display:    rt_.view().navigate(sleepSettings_);  break;
+        case Display:     rt_.view().navigate(sleepSettings_); break;
+        case Appearances: rt_.view().navigate(appearances_);  break;
         case Wifi:       rt_.view().navigate(wifiSettings_);   break;
         case Bluetooth:  rt_.view().navigate(btSettings_);     break;
         case Remote:     rt_.view().navigate(remoteSettings_); break;
@@ -45,7 +46,8 @@ void SettingsScreen::launch(Kind k) {
 UiNode* SettingsScreen::build(NodeArena& a, Runtime& rt) {
     items_.clear();
     auto& caps = rt.capabilities();
-    items_.push_back({this, Display,  "Display & Appearances"});
+    items_.push_back({this, Display,     "Display"});
+    items_.push_back({this, Appearances, "Appearances"});
     items_.push_back({this, Controls, "Controls"});
     if (caps.has(caps::NetWifi))
         items_.push_back({this, Wifi,      "Wi-Fi"});

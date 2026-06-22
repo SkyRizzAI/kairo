@@ -72,6 +72,13 @@ void WasmApp::runWasm(ProcessContext& ctx) {
 // ── UI path (mode=ui) ─────────────────────────────────────────────────────
 
 void WasmApp::onStart(AppContext& ctx) {
+    // Reset per-run state — the WasmApp object is reused across launches.
+    outputLines_.clear();
+    done_        = false;
+    displayed_   = false;
+    ignoreKeys_  = 1;
+    scrollSt_    = {};
+
     // Run WASM synchronously before the event loop starts. Fast apps (<1ms)
     // complete here; the first build() call will see all output immediately.
     runWasm(ctx);
@@ -86,6 +93,7 @@ void WasmApp::runProcess(ProcessContext& ctx) {
 // ── Terminal UI ────────────────────────────────────────────────────────────
 
 UiNode* WasmApp::build(NodeArena& arena, AppContext&) {
+    displayed_ = true;
     Style rootSt;
     rootSt.dir      = FlexDir::Col;
     rootSt.flexGrow = 1;
@@ -115,10 +123,8 @@ UiNode* WasmApp::build(NodeArena& arena, AppContext&) {
 }
 
 bool WasmApp::onKey(Key /*k*/, AppContext& ctx) {
-    if (done_) {
-        ctx.requestExit(0);
-        return true;
-    }
+    if (ignoreKeys_ > 0) { ignoreKeys_--; return false; }
+    if (done_ && displayed_) { ctx.requestExit(0); return true; }
     return false;
 }
 
