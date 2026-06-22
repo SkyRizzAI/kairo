@@ -11,6 +11,7 @@
 #include "nema/service/service_container.h"
 #include "nema/config/config_store.h"
 #include "nema/fs/app_storage.h"
+#include "nema/app/app_context.h"
 #include "nema/hal/http_client.h"
 #include "nema/services/profile_service.h"
 #include "nema/ui/aether_abi.h"
@@ -33,8 +34,8 @@ static std::string nvsNs(const std::string& bundleId) {
 
 class NemaHostImpl : public HostApi {
 public:
-    NemaHostImpl(nema::Runtime& rt, std::string appId)
-        : rt_(rt), appId_(std::move(appId)), ns_(nvsNs(appId_)) {}
+    NemaHostImpl(nema::Runtime& rt, std::string appId, nema::AppContext* ctx = nullptr)
+        : rt_(rt), appId_(std::move(appId)), ns_(nvsNs(appId_)), appCtx_(ctx) {}
 
     // ── nema:sys/log ──────────────────────────────────────────────────
 
@@ -112,9 +113,8 @@ public:
     // ── nema:storage/fs ───────────────────────────────────────────────
 
     std::optional<std::string> fs_read_file(std::string_view name) override {
-        nema::AppStorage stor(appId_, rt_.fs(), rt_.config(), false);
         std::vector<uint8_t> buf;
-        bool ok = stor.read(std::string(name).c_str(), buf);
+        bool ok = storRef().read(std::string(name).c_str(), buf);
         rt_.log().info("AppStorage", ok ? "read ok" : "read miss",
                        {{"app", appId_}, {"file", std::string(name)}});
         if (!ok) return std::nullopt;
@@ -122,27 +122,23 @@ public:
     }
 
     bool fs_write_file(std::string_view name, std::string_view data) override {
-        nema::AppStorage stor(appId_, rt_.fs(), rt_.config(), false);
-        bool ok = stor.write(std::string(name).c_str(),
-                             reinterpret_cast<const uint8_t*>(data.data()), data.size());
+        bool ok = storRef().write(std::string(name).c_str(),
+                                  reinterpret_cast<const uint8_t*>(data.data()), data.size());
         rt_.log().info("AppStorage", ok ? "write ok" : "write FAIL",
                        {{"app", appId_}, {"file", std::string(name)}, {"bytes", std::to_string(data.size())}});
         return ok;
     }
 
     std::vector<std::string> fs_list_files() override {
-        nema::AppStorage stor(appId_, rt_.fs(), rt_.config(), false);
-        return stor.list();
+        return storRef().list();
     }
 
     bool fs_remove_file(std::string_view name) override {
-        nema::AppStorage stor(appId_, rt_.fs(), rt_.config(), false);
-        return stor.remove(std::string(name).c_str());
+        return storRef().remove(std::string(name).c_str());
     }
 
     uint64_t fs_bytes_used() override {
-        nema::AppStorage stor(appId_, rt_.fs(), rt_.config(), false);
-        return static_cast<uint64_t>(stor.usedBytes());
+        return static_cast<uint64_t>(storRef().usedBytes());
     }
 
     // ── nema:net/http ─────────────────────────────────────────────────
@@ -246,6 +242,18 @@ private:
     nema::Runtime& rt_;
     std::string    appId_;
     std::string    ns_;    // 8-char djb2 hash of appId_ — fits NVS 15-char namespace limit
+
+    // When set (UI app path), storage() is pre-warmed on the GUI thread and safe
+    // to call from PSRAM-stacked app threads. When null (CLI path), stor() lazily
+    // constructs an AppStorage on the spot (CLI threads use internal-RAM stacks).
+    nema::AppContext*              appCtx_ = nullptr;
+    std::optional<nema::AppStorage> stor_;
+
+    nema::AppStorage& storRef() {
+        if (appCtx_) return appCtx_->storage();
+        if (!stor_)  stor_.emplace(appId_, rt_.fs(), rt_.config(), false);
+        return *stor_;
+    }
 };
 
 } // anon namespace
@@ -254,4 +262,8 @@ private:
 
 HostApi* createNemaHost(nema::Runtime& rt, std::string appId) {
     return new NemaHostImpl(rt, std::move(appId));
+}
+
+HostApi* createNemaHost(nema::Runtime& rt, std::string appId, nema::AppContext* ctx) {
+    return new NemaHostImpl(rt, std::move(appId), ctx);
 }

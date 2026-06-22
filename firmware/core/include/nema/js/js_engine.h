@@ -12,7 +12,7 @@
 // dispatches onPress/onChange handlers back into JS. quickjs.h leaks only to the
 // JS-layer .cpp files (js_engine/js_app include it); the rest of the firmware
 // forward-declares JsEngine.
-namespace nema { class Runtime; class CapabilityRegistry; class ProcessContext; }
+namespace nema { class Runtime; class CapabilityRegistry; class ProcessContext; class AppContext; }
 namespace aether::ui { struct UiNode; class NodeArena; struct ScrollState; }
 struct HostApi;  // generated/host/nema_api.gen.h (Plan 49)
 
@@ -64,6 +64,7 @@ public:
     // API: log/device/storage/http…). Call before loadApp(). (Plan 37 Fase 4.)
     // Also creates a NemaHostImpl to back the generated QuickJS bindings (Plan 49).
     void setHost(nema::Runtime* rt, std::string appId);
+    void setHost(nema::AppContext& ctx);   // UI-app path: uses pre-warmed ctx.storage()
     nema::Runtime*    host()  const { return host_; }
     const std::string& appId() const { return appId_; }
 

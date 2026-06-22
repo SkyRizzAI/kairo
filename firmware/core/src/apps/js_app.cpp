@@ -58,7 +58,7 @@ void JsApp::onStart(AppContext& ctx) {
     // too-deep script throws a clean error → the error card renders, OS survives.
     eng_->setMaxStackSize(stackBytes() * 3 / 4);
     eng_->setDeadlineMs(5000);               // runaway guard per JS turn (time)
-    eng_->setHost(&ctx.runtime(), id_);      // capability-gated nema.* system API
+    eng_->setHost(ctx);   // UI-app path: uses pre-warmed ctx.storage() (PSRAM-safe)
 
     // Plan 50 — validate UI SDK availability against the active display server.
     if (const IDisplayServer* srv = ctx.runtime().displayServer()) {

@@ -4,7 +4,8 @@
   "type": "module",
   "private": true,
   "workspaces": [
-    "packages/*"
+    "packages/*",
+    "examples/*"
   ],
   "scripts": {
     "test": "cmake -S firmware -B firmware/build -G \"Unix Makefiles\" && cmake --build firmware/build -j && ctest --test-dir firmware/build --output-on-failure",

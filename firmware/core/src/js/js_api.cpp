@@ -8,6 +8,7 @@
 
 #include "nema/js/js_engine.h"
 #include "nema/proc/process_context.h"
+#include "nema/app/app_context.h"
 #include "nema/runtime.h"
 #include "host/nema_api.gen.h"
 #include <cstring>
@@ -16,8 +17,9 @@
 // Defined in the generated file alongside all the function wrappers.
 void installNemaApi(JSContext* ctx, HostApi* host, nema::CapabilityRegistry& caps);
 
-// Forward declaration from nema_host_impl.cpp (hand-written).
+// Forward declarations from nema_host_impl.cpp (hand-written).
 HostApi* createNemaHost(nema::Runtime& rt, std::string appId);
+HostApi* createNemaHost(nema::Runtime& rt, std::string appId, nema::AppContext* ctx);
 
 // ── Convenience shortcuts ─────────────────────────────────────────────────────
 // The generated API uses deep paths (nema.storage.kv.get, nema.sys.device.name).
@@ -120,6 +122,19 @@ void JsEngine::setHost(nema::Runtime* rt, std::string appId) {
     installNemaApi(static_cast<JSContext*>(ctx_), hostApi_, rt->capabilities());
 
     // Add flat convenience shortcuts on top of the generated namespaced API.
+    installNemaApiShims(static_cast<JSContext*>(ctx_), hostApi_);
+}
+
+// UI-app overload: passes AppContext so NemaHostImpl can call ctx.storage()
+// instead of constructing AppStorage itself. AppContext::storage() is pre-warmed
+// by AppHost::onResume() on the GUI (internal-RAM) thread before the PSRAM-stacked
+// app thread starts — keeping NVS reads off the PSRAM thread entirely.
+void JsEngine::setHost(nema::AppContext& ctx) {
+    host_  = &ctx.runtime();
+    appId_ = ctx.bundleId();
+    if (!ok()) return;
+    setHostApi(createNemaHost(*host_, appId_, &ctx));
+    installNemaApi(static_cast<JSContext*>(ctx_), hostApi_, host_->capabilities());
     installNemaApiShims(static_cast<JSContext*>(ctx_), hostApi_);
 }
 

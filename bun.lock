@@ -11,6 +11,30 @@
         "typescript": "^5",
       },
     },
+    "examples/counter": {
+      "name": "@palanu-examples/counter",
+      "devDependencies": {
+        "@palanu/app-sdk": "workspace:*",
+      },
+    },
+    "examples/deauth": {
+      "name": "@palanu-apps/deauth",
+      "dependencies": {
+        "@palanu/app-sdk": "workspace:*",
+      },
+    },
+    "examples/hello": {
+      "name": "@palanu-apps/hello",
+      "devDependencies": {
+        "@palanu/app-sdk": "workspace:*",
+      },
+    },
+    "examples/sysinfo": {
+      "name": "@palanu-examples/sysinfo",
+      "devDependencies": {
+        "@palanu/app-sdk": "workspace:*",
+      },
+    },
     "packages/app-sdk": {
       "name": "@palanu/app-sdk",
       "version": "0.1.0",
@@ -135,6 +159,14 @@
     "@napi-rs/wasm-runtime": ["@napi-rs/wasm-runtime@1.1.4", "", { "dependencies": { "@tybys/wasm-util": "^0.10.1" }, "peerDependencies": { "@emnapi/core": "^1.7.1", "@emnapi/runtime": "^1.7.1" } }, "sha512-3NQNNgA1YSlJb/kMH1ildASP9HW7/7kYnRI2szWJaofaS1hWmbGI4H+d3+22aGzXXN9IJ+n+GiFVcGipJP18ow=="],
 
     "@oxc-project/types": ["@oxc-project/types@0.133.0", "", {}, "sha512-KzkdCd6Uxqnf6l3HOw1xfatAlUURA0g14cvBYFyJ5SaNOQbOUvBr9PKArcPcrNIeRsBdgcUzOGrhKveVpvOIGA=="],
+
+    "@palanu-apps/deauth": ["@palanu-apps/deauth@workspace:examples/deauth"],
+
+    "@palanu-apps/hello": ["@palanu-apps/hello@workspace:examples/hello"],
+
+    "@palanu-examples/counter": ["@palanu-examples/counter@workspace:examples/counter"],
+
+    "@palanu-examples/sysinfo": ["@palanu-examples/sysinfo@workspace:examples/sysinfo"],
 
     "@palanu/app-sdk": ["@palanu/app-sdk@workspace:packages/app-sdk"],
 
