@@ -8,6 +8,7 @@
 #include "nema/board.h"
 #include "nema/hal/display.h"
 #include "nema/hal/wifi.h"
+#include "nema/hal/radio_wifi.h"
 #include "nema/config/config_store.h"
 #include "nema/event/event_bus.h"
 #include "nema/apps/js_app_store.h"
@@ -44,6 +45,11 @@ void WasmPlatform::registerDrivers(Runtime& rt) {
     rt.container().registerAs<IWifiDriver>(&wifi_);
     rt.hardware().add({"wifi", DriverKind::Wifi, "virtual"});
     rt.capabilities().add(caps::NetWifi);
+
+    // Raw radio driver — backs nema:wifi/radio ABI (Plan 87 Fase 4).
+    wifiRadio_.init(rt);
+    rt.container().registerService(&wifiRadio_);
+    rt.container().registerAs<IRadioWifi>(&wifiRadio_);
 
     authStore_.init(config_);                         // session auth (Plan 74)
     rt.container().registerService(&authStore_);

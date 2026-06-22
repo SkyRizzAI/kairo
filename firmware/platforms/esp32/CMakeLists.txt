@@ -12,6 +12,7 @@ idf_component_register(
         "src/nvs_config_store.cpp"
         "src/littlefs_filesystem.cpp"
         "src/sd_fat_filesystem.cpp"
+        "src/esp32_wifi_radio.cpp"
     INCLUDE_DIRS "include"
     REQUIRES
         core

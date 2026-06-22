@@ -5,6 +5,7 @@ add_library(nema_platform_wasm STATIC
     # WiFi app + the Forge WiFi panel can inject networks. Moved here from the old
     # native sim platform, which was removed — the simulator is WASM now.
     src/sim_wifi_driver.cpp
+    src/sim_wifi_radio.cpp    # raw radio HAL (Plan 87 Fase 4)
 )
 
 target_include_directories(nema_platform_wasm PUBLIC
