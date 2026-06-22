@@ -1,5 +1,28 @@
 # Changelog
 
+## [1.2.0](https://github.com/SkyRizzAI/kairo/compare/palanu-v1.1.0...palanu-v1.2.0) (2026-06-22)
+
+
+### Features
+
+* **app:** WiFi Marauder WASM + wifi.* host bindings (plan 87 fase 8) ([a807aba](https://github.com/SkyRizzAI/kairo/commit/a807abad3e16013cbf1b8149671ed491e0df4c71))
+* **broker:** system WiFi coordination + exclusivity groups (plan 87 fase 3) ([bc3a670](https://github.com/SkyRizzAI/kairo/commit/bc3a670a7b39fc6f0dd58ea13bf7c5f5463cad4c))
+* **fonts:** add IBM Plex Mono font pack ([a8b7c44](https://github.com/SkyRizzAI/kairo/commit/a8b7c444800523c14141ef0aaa53deb5518c7653))
+* **plan87/fase0:** IDL @capability/@tier/[@lease](https://github.com/lease) annotations + gating codegen ([d17d8ee](https://github.com/SkyRizzAI/kairo/commit/d17d8eece369a0058a51fb4ae4d9c0b238ed3e38))
+* **plan87/fase1:** PermissionService + PermissionScreen + perm.request/status wiring ([11d7704](https://github.com/SkyRizzAI/kairo/commit/11d77049d51b40d8c0ed5bffd62684a7e519d4d1))
+* **plan87/fase2:** ResourceBroker — exclusive HW leases + auto-release on exit ([a1f3171](https://github.com/SkyRizzAI/kairo/commit/a1f3171b2c1bd79af68ad2f42831e9dab8030460))
+* **radio:** IRadioWifi HAL + SimWifiRadio + Esp32WifiRadio (plan 87 fase 4) ([e0ffdfe](https://github.com/SkyRizzAI/kairo/commit/e0ffdfe2eda279e932110d400ee6172436dd9d40))
+* **radio:** monitor mode + raw inject — Fase 5 (plan 87) ([9229999](https://github.com/SkyRizzAI/kairo/commit/9229999c41546ad1cfba649ae2eff7f71b58ec6b))
+* **settings:** App detail screen + permission revoke (plan 87 fase 7) ([817a926](https://github.com/SkyRizzAI/kairo/commit/817a926d50e9e8f56b21bb1f81da3123caa780e8))
+* **watchdog:** WASM abort hook + memoryLimit + forceQuit (plan 87 fase 6) ([bcdf730](https://github.com/SkyRizzAI/kairo/commit/bcdf730d2f9ad31e6b7947335f7322612f4f961e))
+
+
+### Bug Fixes
+
+* **build:** resolve WASM build errors from plan 87 (plan 87 post) ([5fb3fa3](https://github.com/SkyRizzAI/kairo/commit/5fb3fa3d638803155e63556bd467965e7e9317e1))
+* **ci:** add submodules:true to release workflow checkouts ([20cd677](https://github.com/SkyRizzAI/kairo/commit/20cd677af17e5cbea302f0bca9e6038edc0731b4))
+* **wasm:** WASM OOB trap + ESP32 NVS crash from PSRAM-stack task ([ba46dfc](https://github.com/SkyRizzAI/kairo/commit/ba46dfcc20706dce1318648fbbb8a8c2bba0b883))
+
 ## [1.1.0](https://github.com/SkyRizzAI/kairo/compare/palanu-v1.0.0...palanu-v1.1.0) (2026-06-22)
 
 
