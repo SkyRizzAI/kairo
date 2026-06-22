@@ -18,7 +18,8 @@ JsAppStore& JsAppStore::instance() {
 
 bool JsAppStore::installApp(Runtime& rt, std::string id, std::string name,
                             std::string version, std::string js,
-                            std::string displayServer, AppMode mode,
+                            std::string displayServer,
+                            std::vector<std::string> args,
                             std::vector<uint8_t> iconData) {
     if (id.empty() || js.empty()) return false;
     for (auto& p : apps_) if (id == p->id()) return false;   // already installed
@@ -37,7 +38,7 @@ bool JsAppStore::installApp(Runtime& rt, std::string id, std::string name,
     m.version       = app.version();
     m.runtimeTier   = RuntimeTier::Js;
     m.displayServer = app.displayServer();   // nullptr if not set
-    m.mode          = mode;
+    m.args          = std::move(args);
     m.iconBitmap    = app.iconBitmap();      // nullptr if no custom icon
     m.iconW         = app.iconW();
     m.iconH         = app.iconH();

@@ -24,7 +24,7 @@ public:
     bool installApp(Runtime& rt, std::string id, std::string name,
                     std::string version, std::vector<uint8_t> wasm,
                     std::string displayServer = "",
-                    AppMode mode = AppMode::Cli,
+                    std::vector<std::string> args = {},
                     std::vector<uint8_t> iconData = {});
 
     int count() const { return (int)apps_.size(); }

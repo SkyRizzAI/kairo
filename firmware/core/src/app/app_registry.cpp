@@ -165,12 +165,7 @@ bool AppRegistry::launch(const char* id) {
             }
         }
 
-        // CLI-only apps don't need a surface: spawn headless with ProcessContext.
-        if (m.mode == AppMode::Cli && t.app) {
-            return launchProcess(id);
-        }
-
-        if (t.app)    { rt_.appHost().launch(*t.app); return true; }  // own thread (UI)
+        if (t.app)    { rt_.appHost().launch(*t.app); return true; }  // own thread
         if (t.screen) { rt_.view().push(*t.screen);   return true; }  // UI-thread view
         // Services aren't launchable — they're already running in background.
         rt_.log().warn("AppRegistry", std::string("launch: ") + id + " is a service");

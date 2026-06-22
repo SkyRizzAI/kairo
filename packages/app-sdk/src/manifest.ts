@@ -43,6 +43,14 @@ export interface PappManifest {
   runtime?: RuntimeTier;
 
   /**
+   * Default argv injected when this app is launched from the icon (Plan 86).
+   * Analogous to the Exec= args in a Linux .desktop shortcut.
+   * e.g. ["--ui"] → argv = [id, "--ui"] when user taps the icon.
+   * When launched from CLI (`run <app> args…`), the shell argv is used instead.
+   */
+  args?: string[];
+
+  /**
    * Preferred display server (Plan 51/59).
    * The loader switches to this server before launching the app.
    * null or absent = accept whichever server is active.

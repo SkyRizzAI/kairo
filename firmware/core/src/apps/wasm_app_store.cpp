@@ -15,7 +15,8 @@ WasmAppStore& WasmAppStore::instance() {
 
 bool WasmAppStore::installApp(Runtime& rt, std::string id, std::string name,
                               std::string version, std::vector<uint8_t> wasm,
-                              std::string displayServer, AppMode mode,
+                              std::string displayServer,
+                              std::vector<std::string> args,
                               std::vector<uint8_t> iconData) {
     if (id.empty() || wasm.empty()) return false;
     for (auto& p : apps_) if (id == p->id()) return false;   // already installed
@@ -34,7 +35,7 @@ bool WasmAppStore::installApp(Runtime& rt, std::string id, std::string name,
     m.version       = app.version();
     m.runtimeTier   = RuntimeTier::Wasm;
     m.displayServer = app.displayServer();
-    m.mode          = mode;
+    m.args          = std::move(args);
     m.iconBitmap    = app.iconBitmap();
     m.iconW         = app.iconW();
     m.iconH         = app.iconH();

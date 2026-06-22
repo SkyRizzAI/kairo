@@ -1,6 +1,8 @@
 #pragma once
 #include "nema/app/runtime_tier.h"
 #include <cstdint>
+#include <string>
+#include <vector>
 
 namespace nema {
 
@@ -17,12 +19,6 @@ enum class AppKind { BuiltIn, Custom };
 // when installed while running) and ticked by the ServiceManager. Mirrors
 // Flipper's apptype=APP/SERVICE — both live in the same manifest table.
 enum class AppType { App, Service };
-
-// Plan 59 — app execution mode (orthogonal to runtime tier and display server).
-//   Cli    — stdio only; no surface needed; pipe-able.
-//   Ui     — requires a surface (display server must be available).
-//   Hybrid — can run headless or lift a UI window, decided at runtime.
-enum class AppMode { Cli, Ui, Hybrid };
 
 // AppManifest — an installed entry's header: the metadata the launcher and
 // system need without touching the entry's code. For built-ins it's derived
@@ -49,8 +45,10 @@ struct AppManifest {
     // Plan 59 — extended manifest fields (parsed from papp.json for custom apps;
     // defaults for built-ins).
 
-    // cli | ui | hybrid (default Ui for display-server apps, Cli for headless).
-    AppMode mode = AppMode::Ui;
+    // Default argv injected when this app is launched from the icon (Plan 86).
+    // Analogous to the Exec= args in a Linux .desktop shortcut.
+    // e.g. ["--ui"] means argv = [id, "--ui"] when user taps the icon.
+    std::vector<std::string> args = {};
 
     // Launcher group label (default "Apps").
     const char* category = "Apps";

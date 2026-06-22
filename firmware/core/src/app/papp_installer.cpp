@@ -104,21 +104,22 @@ static bool installFromDir(Runtime& rt, IFileSystem* fs,
     std::string version = mj.value("version", "1.0.0");
     std::string dsrv    = mj.value("display_server", "");
     std::string rtStr   = mj.value("runtime", "js");
-    std::string modeStr = mj.value("mode", "ui");
 
     if (id.empty()) return false;
     if (name.empty()) name = id;
 
     const bool isWasm = (rtStr == "wasm");
 
-    // Mode default: both JS and WASM apps default to Ui (terminal screen for WASM).
-    // Explicit "mode":"cli" in manifest overrides to headless for background tasks.
-    AppMode mode = AppMode::Ui;
-    if      (modeStr == "cli")    mode = AppMode::Cli;
-    else if (modeStr == "hybrid") mode = AppMode::Hybrid;
-    else if (modeStr == "ui")     mode = AppMode::Ui;
+    // Plan 86 — default argv injected when launched from icon (analogous to
+    // Exec= args in a Linux .desktop shortcut). "mode" field is ignored.
+    std::vector<std::string> args;
+    if (mj.contains("args") && mj["args"].is_array()) {
+        for (const auto& a : mj["args"]) {
+            if (a.is_string()) args.push_back(a.get<std::string>());
+        }
+    }
 
-    (void)isWasm;  // both runtimes use the same mode logic now
+    (void)isWasm;  // both runtimes use the same process-first model now
 
     // Load icon.raw if the manifest declares one (common to both runtimes).
     // Format: 4-byte header (width u16le, height u16le) + 1-bit packed pixels.
@@ -158,7 +159,8 @@ static bool installFromDir(Runtime& rt, IFileSystem* fs,
                        {"bytes", std::to_string(wasm.size())},
                        {"icon", iconData.empty() ? "none" : iconFile}});
         return WasmAppStore::instance().installApp(rt, id, name, version,
-                                                   std::move(wasm), dsrv, mode,
+                                                   std::move(wasm), dsrv,
+                                                   std::move(args),
                                                    std::move(iconData));
     }
 
@@ -175,10 +177,10 @@ static bool installFromDir(Runtime& rt, IFileSystem* fs,
     std::string js(code.begin(), code.end());
 
     rt.log().info("PappInstaller", "install",
-                  {{"id", id}, {"name", name}, {"mode", modeStr},
+                  {{"id", id}, {"name", name}, {"runtime", "js"},
                    {"icon", iconData.empty() ? "none" : iconFile}});
-    return JsAppStore::instance().installApp(rt, id, name, version, js, dsrv, mode,
-                                             std::move(iconData));
+    return JsAppStore::instance().installApp(rt, id, name, version, js, dsrv,
+                                             std::move(args), std::move(iconData));
 }
 
 // Install from a single-file .papp FILE.

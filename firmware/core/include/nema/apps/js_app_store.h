@@ -32,7 +32,7 @@ public:
     bool installApp(Runtime& rt, std::string id, std::string name,
                     std::string version, std::string js,
                     std::string displayServer = "",
-                    AppMode mode = AppMode::Ui,
+                    std::vector<std::string> args = {},
                     std::vector<uint8_t> iconData = {});
 
     // Install from a single-file PAPP1 container (Plan 59):

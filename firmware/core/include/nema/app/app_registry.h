@@ -63,13 +63,12 @@ public:
     // Flat list of installed apps for the launcher (insertion order).
     const std::vector<AppManifest>& list() const { return manifests_; }
 
-    // Launch an installed app on its own thread. Returns false if id is unknown.
-    // For AppMode::Cli apps, this routes to launchProcess() automatically.
+    // Launch an installed app on its own thread (process-first: terminal by
+    // default, GUI on first canvas/ui call). Returns false if id is unknown.
     bool launch(const char* id);
 
-    // Spawn an app in CLI (headless) mode: gives it a ProcessContext with
-    // stdout routed to rt.log(). For AppMode::Hybrid apps explicitly launched
-    // from the shell (as opposed to the launcher).
+    // Spawn an app headless (no surface): ProcessContext only, stdout→log.
+    // Used by CliService for piped shell commands.
     bool launchProcess(const char* id, std::vector<std::string> argv = {});
 
     // Look up an app by id. Returns nullptr if not found (Plan 54).
