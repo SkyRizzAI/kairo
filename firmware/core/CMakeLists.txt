@@ -44,7 +44,6 @@ src/input/gesture.cpp
     src/app/app_host.cpp
     src/app/app_host_manager.cpp
     src/app/papp_package.cpp
-    src/app/papp_installer.cpp
     src/ui/canvas.cpp
     src/ui/font_registry.cpp
     src/ui/font_5x8.cpp

@@ -46,6 +46,7 @@ set(AETHER_SRCS
     ${CMAKE_CURRENT_SOURCE_DIR}/../core/src/apps/hello_app.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../core/src/apps/js_app.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../core/src/apps/js_app_store.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../core/src/app/papp_installer.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../core/src/apps/wasm_app.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../core/src/apps/wasm_app_store.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../core/src/apps/bad_usb_app.cpp
