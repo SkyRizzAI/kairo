@@ -8,6 +8,7 @@
 
 #include "nema/wasm/wasm_engine.h"
 #include "nema/proc/process_context.h"
+#include "nema/app/app_context.h"
 #include "nema/runtime.h"
 #include "nema/log/logger.h"
 #include "nema/system/capability_registry.h"
@@ -54,6 +55,27 @@ static int writeBuf(IM3Runtime rt, uint32_t off, int cap, const std::string& src
     std::memcpy(base + off, src.data(), (size_t)n);
     base[off + n] = 0;
     return n;
+}
+
+// ── nema.print(msg) — bare-metal printf replacement (Plan 85) ───────────────
+// Routes to rt.log() info with the app id as tag. WASM apps use this instead
+// of printf (which requires WASI libc). Strip trailing newline for cleaner log.
+
+m3ApiRawFunction(nema_print) {
+    m3ApiGetArg(uint32_t, msgOff);
+
+    WasmHostCtx* h = hostOf(runtime);
+    if (!h || !h->ctx) m3ApiSuccess();
+
+    std::string msg;
+    if (!readCStr(runtime, msgOff, msg)) m3ApiSuccess();
+
+    // Strip trailing newline — the logger adds its own line break.
+    if (!msg.empty() && msg.back() == '\n') msg.pop_back();
+    if (!msg.empty() && msg.back() == '\r') msg.pop_back();
+
+    h->ctx->runtime().log().info(h->appId.c_str(), msg.c_str());
+    m3ApiSuccess();
 }
 
 // ── nema.log(level, tag, msg) ──────────────────────────────────────────────
@@ -170,6 +192,7 @@ void linkNemaImports(IM3Module mod) {
         m3_LinkRawFunction(mod, "nema", fn, sig, trampoline);
     };
 
+    link("print",                  "v(*)",    &nema_print);
     link("log",                   "v(***)",  &nema_log);
     link("device_name",           "i(*i)",   &nema_device_name);
     link("device_caps",           "i(*i)",   &nema_device_caps);

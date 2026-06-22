@@ -1,54 +1,52 @@
-// Sys Info — WASM/C version (Plan 84 Fase 4).
-// CLI mode: print device name, capabilities, dan uptime ke stdout.
+// Sys Info — WASM bare-metal (Plan 85)
+// Print device name and capabilities. No stdio.h — all I/O via nema_api.h.
 //
-// Build: wasi-sdk clang --target=wasm32-wasi -o sysinfo.wasm main.c
-// Usage: sysinfo-wasm [--json]
+// Build: bun run app:build:sysinfo-wasm
+// Usage: sysinfo-wasm
 
-#include <stdio.h>
-#include <string.h>
+#include "nema_api.h"
 
-#ifdef __wasm__
-#  define NEMA_IMPORT(mod, name) __attribute__((import_module(mod), import_name(name)))
-#else
-#  define NEMA_IMPORT(mod, name)
-#endif
+NEMA_EXPORT int main(int argc, char* argv[]) {
+    (void)argc; (void)argv;
 
-NEMA_IMPORT("nema", "device_name")
-extern int nema_device_name(char* out, int len);
-
-NEMA_IMPORT("nema", "device_caps")
-extern int nema_device_caps(char* out, int len);  // newline-separated list
-
-NEMA_IMPORT("nema", "log")
-extern void nema_log(const char* level, const char* tag, const char* msg);
-
-int main(int argc, char* argv[]) {
-    int json = (argc > 1 && strcmp(argv[1], "--json") == 0);
-
-    char name[64] = {0};
+    char name[64];
+    nema_memset(name, 0, sizeof(name));
     nema_device_name(name, sizeof(name));
 
-    char caps[512] = {0};
-    nema_device_caps(caps, sizeof(caps));
+    char msg[128];
+    // "Device: <name>"
+    int i = 0, j = 0;
+    const char* prefix = "Device: ";
+    while (prefix[i]) msg[j++] = prefix[i++];
+    i = 0; while (name[i]) msg[j++] = name[i++];
+    msg[j] = '\0';
+    nema_print(msg);
 
-    if (json) {
-        printf("{\"device\":\"%s\",\"caps\":[", name);
-        int first = 1;
-        char* tok = strtok(caps, "\n");
-        while (tok) {
-            if (!first) printf(",");
-            printf("\"%s\"", tok);
-            first = 0;
-            tok = strtok(NULL, "\n");
-        }
-        printf("]}\n");
-    } else {
-        printf("Device: %s\n", name);
-        printf("Capabilities:\n");
-        char* tok = strtok(caps, "\n");
-        while (tok) {
-            printf("  - %s\n", tok);
-            tok = strtok(NULL, "\n");
+    // Print each capability on its own line
+    char caps[512];
+    nema_memset(caps, 0, sizeof(caps));
+    int n = nema_device_caps(caps, sizeof(caps) - 1);
+    if (n > 0) {
+        nema_print("Capabilities:");
+        // Walk newline-separated list
+        char line[64];
+        int ci = 0, li = 0;
+        while (ci <= n) {
+            char ch = (ci < n) ? caps[ci] : '\n';
+            if (ch == '\n' || ch == '\0') {
+                if (li > 0) {
+                    line[li] = '\0';
+                    char out[72] = "  ";
+                    int oi = 2, k = 0;
+                    while (line[k]) out[oi++] = line[k++];
+                    out[oi] = '\0';
+                    nema_print(out);
+                }
+                li = 0;
+            } else if (li < (int)sizeof(line) - 1) {
+                line[li++] = ch;
+            }
+            ci++;
         }
     }
 

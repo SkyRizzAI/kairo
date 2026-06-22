@@ -58,12 +58,19 @@ int WasmEngine::runStart(ProcessContext& ctx, const char* appId) {
     linkNemaImports(mod_);
 
     IM3Function startFn;
-    M3Result res = m3_FindFunction(&startFn, rt_, "_start");
-    if (res) { err_ = res; return -1; }
-
-    res = m3_CallV(startFn);
-    // A guest that calls proc_exit unwinds via m3Err_trapExit — that's a normal
-    // exit, not an error. The exit code is already recorded in ProcessContext.
+    M3Result res;
+    bool isBare = (m3_FindFunction(&startFn, rt_, "main") == m3Err_none);
+    if (isBare) {
+        // Bare-metal app (Plan 85): main(int argc, char* argv[]) — call with
+        // no args (argc=0, argv=NULL). Apps check argc>1 before using argv.
+        res = m3_CallV(startFn, (uint32_t)0, (uint32_t)0);
+    } else {
+        // Legacy WASI app: _start() — no args, unwinds via proc_exit trap.
+        res = m3_FindFunction(&startFn, rt_, "_start");
+        if (res) { err_ = res; return -1; }
+        res = m3_CallV(startFn);
+    }
+    // proc_exit() in WASI apps unwinds via m3Err_trapExit — that's normal.
     if (res && res != m3Err_trapExit) { err_ = res; return -1; }
 
     return ctx.shouldExit() ? ctx.exitCode() : 0;

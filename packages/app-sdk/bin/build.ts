@@ -55,12 +55,29 @@ if (manifest.runtime === "wasm") {
     console.error("  https://github.com/WebAssembly/wasi-sdk/releases");
     process.exit(1);
   }
+  // nema_api.h location — relative to this script's package
+  const sdkInclude = resolve(import.meta.dir, "../include");
   const srcFile = join(appDir, "main.c");
   const outWasm = join(outDir, entryFile);
-  const proc = Bun.spawn(
-    [clang, "--target=wasm32-wasi", "-O2", "-o", outWasm, srcFile],
-    { stdout: "inherit", stderr: "inherit" }
-  );
+  // Bare-metal target (Plan 85): no WASI libc, all I/O via nema_* host imports.
+  // -Wl,--allow-undefined: nema_* symbols resolved by wasm3 at runtime.
+  // Bare-metal wasm32-unknown-unknown flags (Plan 85):
+  //   -fvisibility=hidden: only symbols with export_name() attr reach the host
+  //   -Wl,--no-entry: no _start / _initialize; main is called directly by wasm3
+  //   -Wl,--allow-undefined: nema_* imports resolved by wasm3 at link time
+  const proc = Bun.spawn([
+    clang,
+    "--target=wasm32-unknown-unknown",
+    "-nostdlib",
+    "-O2",
+    "-fvisibility=hidden",
+    `-I${sdkInclude}`,
+    "-Wl,--no-entry",
+    "-Wl,--allow-undefined",
+    "-Wl,--strip-all",
+    "-o", outWasm,
+    srcFile,
+  ], { stdout: "inherit", stderr: "inherit" });
   const code = await proc.exited;
   if (code !== 0) { console.error("clang failed"); process.exit(code ?? 1); }
   console.log(`  ${entryFile}  (${Bun.file(outWasm).size}B)`);

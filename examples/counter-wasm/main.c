@@ -1,70 +1,50 @@
-// Counter — WASM/C version (Plan 84 Fase 4).
-// CLI mode: same logic as examples/counter/App.tsx tapi di C, jalan headless.
+// Counter — WASM bare-metal (Plan 85)
+// Storage-backed counter. CLI args: inc | dec | reset (default: print current).
+// No stdio.h / libc — all I/O via nema_api.h host imports.
 //
-// Build (setelah Plan 84 Fase 4 selesai):
-//   wasi-sdk: clang --target=wasm32-wasi -o counter.wasm main.c
-//   Emscripten: emcc -o counter.wasm main.c -s STANDALONE_WASM
-//
-// Usage dari CLI:
-//   counter-wasm         → print "Count: N"
-//   counter-wasm inc     → increment, print "Count: N+1"
-//   counter-wasm dec     → decrement, print "Count: N-1"
-//   counter-wasm reset   → reset ke 0, print "Count: 0"
-//
-// nema.* host imports disediakan oleh firmware saat WASM diload.
-// Lihat: Plan 84 Fase 4 — WASM nema API bridge.
+// Build: bun run app:build:counter-wasm
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
-// ── nema host imports (akan disediakan oleh WasmEngine) ──────────────────────
-// Deklarasi ini match dengan import table yang di-emit IDL generator.
-
-#ifdef __wasm__
-#  define NEMA_IMPORT(mod, name) __attribute__((import_module(mod), import_name(name)))
-#else
-#  define NEMA_IMPORT(mod, name)  // host build: no-op, for IDE/lint only
-#endif
-
-NEMA_IMPORT("nema", "storage_fs_read_file")
-extern int nema_storage_fs_read_file(const char* name, char* out_buf, int buf_len);
-
-NEMA_IMPORT("nema", "storage_fs_write_file")
-extern int nema_storage_fs_write_file(const char* name, const char* data, int data_len);
-
-NEMA_IMPORT("nema", "log")
-extern void nema_log(const char* level, const char* tag, const char* msg);
-
-// ── counter logic ─────────────────────────────────────────────────────────────
+#include "nema_api.h"
 
 #define STORAGE_FILE "count.txt"
-#define BUF_SIZE 32
+#define BUF_SIZE 16
 
 static int read_count(void) {
-    char buf[BUF_SIZE] = {0};
-    int n = nema_storage_fs_read_file(STORAGE_FILE, buf, sizeof(buf) - 1);
+    char buf[BUF_SIZE];
+    nema_memset(buf, 0, BUF_SIZE);
+    int n = nema_storage_fs_read_file(STORAGE_FILE, buf, BUF_SIZE - 1);
     if (n <= 0) return 0;
-    return atoi(buf);
+    return nema_atoi(buf);
 }
 
 static void write_count(int n) {
     char buf[BUF_SIZE];
-    snprintf(buf, sizeof(buf), "%d", n);
-    nema_storage_fs_write_file(STORAGE_FILE, buf, (int)strlen(buf));
+    nema_itoa(n, buf);
+    nema_storage_fs_write_file(STORAGE_FILE, buf, nema_strlen(buf));
 }
 
-int main(int argc, char* argv[]) {
+static int streq(const char* a, const char* b) {
+    while (*a && *b) { if (*a != *b) return 0; a++; b++; }
+    return *a == *b;
+}
+
+NEMA_EXPORT int main(int argc, char* argv[]) {
     int n = read_count();
 
     if (argc > 1) {
-        if (strcmp(argv[1], "inc") == 0)   n++;
-        else if (strcmp(argv[1], "dec") == 0)   n--;
-        else if (strcmp(argv[1], "reset") == 0) n = 0;
+        if      (streq(argv[1], "inc"))   n++;
+        else if (streq(argv[1], "dec"))   n--;
+        else if (streq(argv[1], "reset")) n = 0;
         write_count(n);
         nema_log("info", "counter-wasm", "count updated");
     }
 
-    printf("Count: %d\n", n);
+    char num[12];
+    nema_itoa(n, num);
+    char msg[32] = "Count: ";
+    int i = 7, j = 0;
+    while (num[j]) msg[i++] = num[j++];
+    msg[i] = '\0';
+    nema_print(msg);
     return 0;
 }
