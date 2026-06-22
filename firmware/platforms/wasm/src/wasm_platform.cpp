@@ -16,6 +16,7 @@
 #include "nema/assets/anims/dolphin_sleep_panim.h"
 #include "nema/assets/fonts/iosk_mono_pack.h"
 #include "nema/assets/fonts/iosk_cond_pack.h"
+#include "nema/assets/fonts/ibm_plex_mono_pack.h"
 #include <string>
 #include <vector>
 #include <cstdlib>
@@ -105,6 +106,13 @@ void WasmPlatform::registerDrivers(Runtime& rt) {
     rootFs_.write("/system/assets/fonts/IoskeleyMono-Condensed/bold10.bmf", kIoskCondBold10, kIoskCondBold10Len);
     rootFs_.write("/system/assets/fonts/IoskeleyMono-Condensed/reg12.bmf",  kIoskCondReg12,  kIoskCondReg12Len);
     rootFs_.write("/system/assets/fonts/IoskeleyMono-Condensed/bold12.bmf", kIoskCondBold12, kIoskCondBold12Len);
+    rootFs_.mkdir("/system/assets/fonts/IBMPlexMono");
+    rootFs_.write("/system/assets/fonts/IBMPlexMono/reg8.bmf",   kIbmPlexMonoReg8,   kIbmPlexMonoReg8Len);
+    rootFs_.write("/system/assets/fonts/IBMPlexMono/bold8.bmf",  kIbmPlexMonoBold8,  kIbmPlexMonoBold8Len);
+    rootFs_.write("/system/assets/fonts/IBMPlexMono/reg10.bmf",  kIbmPlexMonoReg10,  kIbmPlexMonoReg10Len);
+    rootFs_.write("/system/assets/fonts/IBMPlexMono/bold10.bmf", kIbmPlexMonoBold10, kIbmPlexMonoBold10Len);
+    rootFs_.write("/system/assets/fonts/IBMPlexMono/reg12.bmf",  kIbmPlexMonoReg12,  kIbmPlexMonoReg12Len);
+    rootFs_.write("/system/assets/fonts/IBMPlexMono/bold12.bmf", kIbmPlexMonoBold12, kIbmPlexMonoBold12Len);
     // Create empty scan + data roots
     rootFs_.mkdir("/system/apps");
     rootFs_.mkdir("/system/data");
