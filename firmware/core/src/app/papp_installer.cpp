@@ -143,10 +143,17 @@ static bool installFromDir(Runtime& rt, IFileSystem* fs,
     // ── WASM: load the .wasm module and install via WasmAppStore ────────────
     if (isWasm) {
         std::vector<uint8_t> wasm;
-        const char* entry = nullptr;
-        for (const char* c : {"main.wasm", "app.wasm"}) {
-            if (fs->read(dir + "/" + c, wasm)) { entry = c; break; }
+        std::string entryName;
+        // Prefer the manifest's "entry" field, fall back to conventional names.
+        std::string manifestEntry = mj.value("entry", "");
+        std::vector<std::string> candidates;
+        if (!manifestEntry.empty()) candidates.push_back(manifestEntry);
+        candidates.push_back("main.wasm");
+        candidates.push_back("app.wasm");
+        for (const auto& c : candidates) {
+            if (fs->read(dir + "/" + c, wasm)) { entryName = c; break; }
         }
+        const char* entry = entryName.empty() ? nullptr : entryName.c_str();
         if (!entry || wasm.empty()) {
             rt.log().error("PappInstaller", "WASM bundle has no .wasm entry",
                            {{"id", id}});
