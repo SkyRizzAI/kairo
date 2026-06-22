@@ -1,5 +1,6 @@
 #pragma once
 #include "nema/app/component_app.h"
+#include "nema/ui/surface.h"
 #include <atomic>
 #include <cstdint>
 #include <string>
@@ -64,7 +65,7 @@ protected:
     size_t arenaCapacity() const override { return 512; }
 
 private:
-    void runWasm(ProcessContext& ctx);   // shared impl for both paths
+    void runWasm(ProcessContext& ctx, ISurface* surface = nullptr);   // shared impl
 
     std::string          id_, name_, version_, displayServer_;
     std::vector<uint8_t> wasm_;

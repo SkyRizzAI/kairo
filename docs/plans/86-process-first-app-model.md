@@ -1,6 +1,6 @@
 # Plan 86 — Process-First App Model (Node/Electron-style)
 
-> **Status:** PLANNING — belum mulai implementasi.
+> **Status:** IN PROGRESS — Fase 0–2 done.
 > **Last updated:** 2026-06-22
 
 ---
@@ -401,9 +401,9 @@ Plus regресi: **13/13 host test** (`firmware/tests/`) tetap pass tiap fase.
 
 ## 9. Checklist
 
-- [ ] Fase 0 — `mode` dihapus, `args` ditambah, `docs/feats/app-model.md`
-- [ ] Fase 1 — Unified host: terminal-default + argv + Terminal↔Gui
-- [ ] Fase 2 — Raw canvas ABI (`wasm_canvas.cpp`) + flip Gui
+- [x] Fase 0 — `mode` dihapus, `args` ditambah, `docs/feats/app-model.md`
+- [x] Fase 1 — Unified host: terminal-default + argv + Terminal↔Gui
+- [x] Fase 2 — Raw canvas ABI (`wasm_canvas.cpp`) + flip Gui + `nema_api.h` canvas section
 - [ ] Fase 3 — Retained UI ABI (`wasm_ui.cpp`) + `ui_wait_event`
 - [ ] Fase 4 — Input/timing (`input_*`, `delay`)
 - [ ] Fase 5 — SDK DX: `printf` shim + header bersih

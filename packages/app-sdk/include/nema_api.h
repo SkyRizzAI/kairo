@@ -78,6 +78,53 @@ extern int nema_storage_fs_read_file(const char* name, char* out, int cap);
 NEMA_IMPORT("nema", "storage_fs_write_file")
 extern int nema_storage_fs_write_file(const char* name, const char* data, int len);
 
+// ── Raw canvas ABI (Plan 86 Fase 2) ──────────────────────────────────────────
+// Drawing calls flip the host into Gui mode on first use (irreversible per run).
+// canvas_flush() publishes the drawn frame — call at the end of each frame.
+//
+// Color: 0 = background (black on mono displays), 1 = foreground (white/lit).
+// All coordinates are LOGICAL pixels. Use canvas_width()/canvas_height() — never
+// hardcode display dimensions.
+
+#define COLOR_BLACK 0
+#define COLOR_WHITE 1
+#define COLOR_BG    0
+#define COLOR_FG    1
+
+NEMA_IMPORT("canvas", "canvas_width")
+extern int canvas_width(void);
+
+NEMA_IMPORT("canvas", "canvas_height")
+extern int canvas_height(void);
+
+// Fill the entire canvas with color (0=clear, 1=fill).
+NEMA_IMPORT("canvas", "canvas_clear")
+extern void canvas_clear(int color);
+
+// Set one pixel at (x, y).
+NEMA_IMPORT("canvas", "canvas_pixel")
+extern void canvas_pixel(int x, int y, int color);
+
+// Filled rectangle at (x, y) with width w and height h.
+NEMA_IMPORT("canvas", "canvas_fill_rect")
+extern void canvas_fill_rect(int x, int y, int w, int h, int color);
+
+// Outline rectangle (1px border) at (x, y) with width w and height h.
+NEMA_IMPORT("canvas", "canvas_rect")
+extern void canvas_rect(int x, int y, int w, int h, int color);
+
+// Draw a line from (x0, y0) to (x1, y1).
+NEMA_IMPORT("canvas", "canvas_line")
+extern void canvas_line(int x0, int y0, int x1, int y1, int color);
+
+// Draw NUL-terminated text string at (x, y).
+NEMA_IMPORT("canvas", "canvas_text")
+extern void canvas_text(int x, int y, const char* msg, int color);
+
+// Publish the current frame. Call after drawing is complete.
+NEMA_IMPORT("canvas", "canvas_flush")
+extern void canvas_flush(void);
+
 // ── Minimal libc substitutes ─────────────────────────────────────────────────
 // Basic string/number utilities that do NOT pull in WASI libc.
 // Only what WASM apps actually need.

@@ -45,7 +45,7 @@ public:
     // Flip from Terminal to Gui mode (called by canvas_* / ui_* ABI, Plan 86 Fase 2).
     // Irreversible for this run. After the flip, build() rendering is suppressed so
     // the app can control the canvas directly.
-    void enterGuiMode();
+    void enterGuiMode() override;
     HostMode hostMode() const { return hostMode_; }
 
     // Lines captured from app stdout (fd_write / nema_print routed via out()).

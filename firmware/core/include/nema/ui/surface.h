@@ -37,6 +37,10 @@ public:
 
     // Block up to timeoutMs for an input event. Returns false on timeout.
     virtual bool waitInput(InputEvent& out, uint32_t timeoutMs) = 0;
+
+    // Plan 86 Fase 2 — flip from Terminal to Gui mode. Called by the first
+    // canvas_* or ui_* WASM import. No-op by default (ProcessHost has no mode).
+    virtual void enterGuiMode() {}
 };
 
 } // namespace nema

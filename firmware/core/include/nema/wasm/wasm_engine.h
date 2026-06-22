@@ -1,4 +1,5 @@
 #pragma once
+#include "nema/ui/surface.h"
 #include <cstddef>
 #include <cstdint>
 #include <functional>
@@ -22,7 +23,11 @@ class ProcessContext;
 // namespace AppStorage — it must NOT be derived from argv (a CLI invocation
 // could override argv[0] and cross app-storage boundaries).
 struct WasmHostCtx {
-    ProcessContext* ctx   = nullptr;
+    ProcessContext* ctx     = nullptr;
+    // Optional surface for canvas_*/ui_* ABI (Plan 86 Fase 2/3). Null for
+    // headless (ProcessHost) runs. Set by WasmEngine::runStart with the
+    // ISurface& provided by the caller (AppContext is ISurface + ProcessContext).
+    ISurface*       surface = nullptr;
     std::string     appId;
     // Optional hook called by nema_print() in addition to rt.log().
     // Used by WasmApp to capture terminal output for the UI screen.
@@ -43,10 +48,12 @@ public:
     // Parse + load a .wasm module.
     bool load(const uint8_t* wasm, size_t len);
 
-    // Find and call the "_start" function (WASI entry point). Links WASI + nema
-    // imports first. appId namespaces this app's storage; nullptr/"" disables it.
+    // Find and call the "_start" / "main" function. Links WASI + nema imports
+    // first. appId namespaces this app's storage; nullptr/"" disables it.
+    // surface: optional ISurface for canvas_*/ui_* ABI (Plan 86 Fase 2/3).
     // Returns the process exit code, or -1 on error.
-    int  runStart(ProcessContext& ctx, const char* appId = nullptr);
+    int  runStart(ProcessContext& ctx, const char* appId = nullptr,
+                  ISurface* surface = nullptr);
 
     // Optional hook: called by nema_print() with each printed line, in addition
     // to the normal rt.log() output. Set before calling runStart().
@@ -71,9 +78,11 @@ private:
 
 // Link host imports to the WasmHostCtx already set as the runtime userdata.
 // Called by WasmEngine::runStart() before executing the guest.
-//   wasi: minimal WASI surface (fd 0/1/2, argv, exit).
-//   nema: system API (log, device info, app storage).
+//   wasi:   minimal WASI surface (fd 0/1/2, argv, exit).
+//   nema:   system API (log, device info, app storage, argv).
+//   canvas: raw drawing surface (Plan 86 Fase 2).
 void linkWasiImports(struct M3Module* mod);
 void linkNemaImports(struct M3Module* mod);
+void linkCanvasImports(struct M3Module* mod);
 
 } // namespace nema

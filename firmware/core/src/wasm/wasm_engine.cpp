@@ -42,12 +42,13 @@ bool WasmEngine::load(const uint8_t* wasm, size_t len) {
     return true;
 }
 
-int WasmEngine::runStart(ProcessContext& ctx, const char* appId) {
+int WasmEngine::runStart(ProcessContext& ctx, const char* appId, ISurface* surface) {
     if (!rt_ || !mod_) { err_ = "not loaded"; return -1; }
 
     // Attach the host context to the runtime so import trampolines can reach the
     // kernel. host_ is a member, so it outlives this call.
     host_.ctx       = &ctx;
+    host_.surface   = surface;
     host_.appId     = appId ? appId : "";
     host_.printHook = printHook_;
     rt_->userdata   = &host_;
@@ -57,6 +58,7 @@ int WasmEngine::runStart(ProcessContext& ctx, const char* appId) {
     // fail compilation with "missing import" (Plan 57 Fase 2).
     linkWasiImports(mod_);
     linkNemaImports(mod_);
+    linkCanvasImports(mod_);
 
     IM3Function startFn;
     M3Result res;

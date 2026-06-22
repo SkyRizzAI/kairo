@@ -28,7 +28,7 @@ void WasmApp::setIcon(std::vector<uint8_t> data) {
 
 // ── Shared WASM execution ──────────────────────────────────────────────────
 
-void WasmApp::runWasm(ProcessContext& ctx) {
+void WasmApp::runWasm(ProcessContext& ctx, ISurface* surface) {
     if (wasm_.empty()) {
         outputLines_.push_back("[error: empty module]");
         ctx.runtime().log().error("WasmApp", "empty module", {{"app", id_}});
@@ -59,7 +59,7 @@ void WasmApp::runWasm(ProcessContext& ctx) {
         return;
     }
 
-    int code = engine.runStart(ctx, id_.c_str());
+    int code = engine.runStart(ctx, id_.c_str(), surface);
     if (code != 0 && !ctx.shouldExit()) {
         std::string e = "[exit " + engine.lastError() + "]";
         outputLines_.push_back(e);
@@ -81,7 +81,9 @@ void WasmApp::onStart(AppContext& ctx) {
 
     // Run WASM synchronously before the event loop starts. Fast apps (<1ms)
     // complete here; the first build() call will see all output immediately.
-    runWasm(ctx);
+    // Pass &ctx as surface: AppContext is ISurface, so canvas_* imports can
+    // reach canvas()/present()/enterGuiMode() on the AppHost (Plan 86 Fase 2).
+    runWasm(ctx, &ctx);
 }
 
 // ── Headless path (mode=cli) ─────────────────────────────────────────────
