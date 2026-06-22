@@ -14,12 +14,13 @@ class Runtime;
 class FileOpsModal : public ComponentScreen {
 public:
     struct Callbacks {
-        void (*onView)  (void* u) = nullptr;  // nullptr = hide "View" item
-        void (*onCopy)  (void* u) = nullptr;
-        void (*onCut)   (void* u) = nullptr;
-        void (*onPaste) (void* u) = nullptr;  // nullptr = hide "Paste" item
-        void (*onRename)(void* u) = nullptr;
-        void (*onDelete)(void* u) = nullptr;
+        void (*onView)     (void* u) = nullptr;  // nullptr = hide item
+        void (*onCopy)     (void* u) = nullptr;
+        void (*onCut)      (void* u) = nullptr;
+        void (*onPaste)    (void* u) = nullptr;  // nullptr = hide item
+        void (*onRename)   (void* u) = nullptr;
+        void (*onDelete)   (void* u) = nullptr;
+        void (*onNewFolder)(void* u) = nullptr;  // nullptr = hide item
         void* user = nullptr;
     };
 
@@ -48,6 +49,7 @@ private:
     static void sRename      (void* u);
     static void sDelete      (void* u);
     static void sDeleteConfirm(void* u);
+    static void sNewFolder   (void* u);
     static void sBack        (void* u);
 };
 

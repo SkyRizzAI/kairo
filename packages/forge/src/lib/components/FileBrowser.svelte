@@ -16,7 +16,8 @@
 		Copy,
 		Scissors,
 		ClipboardPaste,
-		Check
+		Check,
+		Loader2
 	} from '@lucide/svelte';
 
 	// Transport-agnostic file browser over the PLP FILE channel. Both RemoteSession
@@ -47,15 +48,30 @@
 	let fileInput: HTMLInputElement;
 
 	// Rename state: which entry is being renamed inline
-	let renaming = $state<string | null>(null);  // entry.name being renamed
+	let renaming = $state<string | null>(null);
 	let renameVal = $state('');
 
-	// Clipboard: { op, srcPath, name } — populated by cut/copy
-	type Clip = { op: 'cut' | 'copy'; srcPath: string; name: string };
+	// Clipboard: { op, srcPath, name, isDir } — populated by cut/copy
+	type Clip = { op: 'cut' | 'copy'; srcPath: string; name: string; isDir: boolean };
 	let clip = $state<Clip | null>(null);
+
+	// Busy overlay: shown during long async ops (paste, upload, delete)
+	let busy = $state(false);
+	let busyMsg = $state('');
 
 	const join = (dir: string, name: string) => (dir === '/' ? '/' + name : dir + '/' + name);
 	const parent = (p: string) => (p === '/' ? '/' : p.slice(0, p.lastIndexOf('/')) || '/');
+
+	async function withBusy<T>(msg: string, fn: () => Promise<T>): Promise<T> {
+		busy = true;
+		busyMsg = msg;
+		try {
+			return await fn();
+		} finally {
+			busy = false;
+			busyMsg = '';
+		}
+	}
 
 	async function refresh() {
 		if (!ready) return;
@@ -107,8 +123,10 @@
 	}
 
 	async function del(e: FileEntry) {
-		await fs.removeAll(join(cwd, e.name));
-		await refresh();
+		await withBusy(`Deleting ${e.name}…`, async () => {
+			await fs.removeAll(join(cwd, e.name));
+			await refresh();
+		});
 	}
 
 	async function makeDir() {
@@ -120,29 +138,49 @@
 		await refresh();
 	}
 
+	// Recursive copy: fs.copyFile only handles files; this handles dirs too.
+	async function copyRecursive(src: string, dst: string): Promise<void> {
+		const children = await fs.listDir(src);
+		if (children !== null) {
+			await fs.mkdir(dst);
+			for (const c of children) {
+				const s = join(src, c.name);
+				const d = join(dst, c.name);
+				await copyRecursive(s, d);
+			}
+		} else {
+			const data = await fs.readFile(src);
+			if (data) await fs.writeFile(dst, data);
+		}
+	}
+
 	async function onUpload(ev: Event) {
 		const f = (ev.target as HTMLInputElement).files?.[0];
 		if (!f) return;
 		(ev.target as HTMLInputElement).value = '';
 
-		// .papp.zip: unzip client-side → write to /system/apps/<id>.papp/ (Plan 86 Fase 6)
+		// .papp.zip: unzip client-side → write to <cwd>/<id>.papp/ (Plan 86 Fase 6)
 		if (f.name.endsWith('.papp.zip')) {
-			const id = f.name.slice(0, -'.papp.zip'.length);  // strip .papp.zip suffix
-			const zipData = new Uint8Array(await f.arrayBuffer());
-			const entries = unzipSync(zipData);
-			const destDir = `/system/apps/${id}.papp`;
-			await fs.mkdir(destDir);
-			for (const [name, data] of Object.entries(entries)) {
-				await fs.writeFile(`${destDir}/${name}`, data);
-			}
-			onPappInstall?.();
-			await refresh();
+			const id = f.name.slice(0, -'.papp.zip'.length);
+			await withBusy(`Installing ${id}…`, async () => {
+				const zipData = new Uint8Array(await f.arrayBuffer());
+				const zipped = unzipSync(zipData);
+				const destDir = join(cwd, `${id}.papp`);
+				await fs.mkdir(destDir);
+				for (const [name, data] of Object.entries(zipped)) {
+					await fs.writeFile(join(destDir, name), data);
+				}
+				onPappInstall?.();
+				await refresh();
+			});
 			return;
 		}
 
-		const data = new Uint8Array(await f.arrayBuffer());
-		await fs.writeFile(join(cwd, f.name), data);
-		await refresh();
+		await withBusy(`Uploading ${f.name}…`, async () => {
+			const data = new Uint8Array(await f.arrayBuffer());
+			await fs.writeFile(join(cwd, f.name), data);
+			await refresh();
+		});
 	}
 
 	function startRename(e: FileEntry, ev: MouseEvent) {
@@ -166,30 +204,41 @@
 
 	function cutEntry(e: FileEntry, ev: MouseEvent) {
 		ev.stopPropagation();
-		clip = { op: 'cut', srcPath: join(cwd, e.name), name: e.name };
+		clip = { op: 'cut', srcPath: join(cwd, e.name), name: e.name, isDir: e.isDir };
 	}
 
 	function copyEntry(e: FileEntry, ev: MouseEvent) {
 		ev.stopPropagation();
-		clip = { op: 'copy', srcPath: join(cwd, e.name), name: e.name };
+		clip = { op: 'copy', srcPath: join(cwd, e.name), name: e.name, isDir: e.isDir };
 	}
 
 	async function paste() {
 		if (!clip) return;
 		const dst = join(cwd, clip.name);
-		if (clip.op === 'cut') {
-			await fs.renameFile(clip.srcPath, dst);
-			clip = null;
-		} else {
-			await fs.copyFile(clip.srcPath, dst);
-		}
-		await refresh();
+		const c = clip;
+		await withBusy(`${c.op === 'cut' ? 'Moving' : 'Copying'} ${c.name}…`, async () => {
+			if (c.op === 'cut') {
+				await fs.renameFile(c.srcPath, dst);
+				clip = null;
+			} else {
+				await copyRecursive(c.srcPath, dst);
+			}
+			await refresh();
+		});
 	}
 
 	const fmtSize = (n: number) => (n < 1024 ? `${n} B` : `${(n / 1024).toFixed(1)} KB`);
 </script>
 
-<div class="flex h-full flex-col bg-black/20 text-xs">
+<div class="relative flex h-full flex-col bg-black/20 text-xs">
+	<!-- busy overlay -->
+	{#if busy}
+		<div class="absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 bg-black/60 backdrop-blur-sm">
+			<Loader2 class="size-5 animate-spin text-sky-400" />
+			<span class="text-sm text-zinc-200">{busyMsg}</span>
+		</div>
+	{/if}
+
 	<!-- toolbar -->
 	<div class="border-border flex items-center gap-1 border-b px-2 py-1.5">
 		<Button

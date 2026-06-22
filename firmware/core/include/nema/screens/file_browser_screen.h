@@ -4,8 +4,7 @@
 // Activate on a folder → navigate into it.
 // Activate on a file   → open raw text viewer.
 // Action::Menu (hold select) → context menu: View / Copy / Cut / Paste /
-//   Rename / Delete. Paste is shown only when the in-memory clipboard has
-//   content. Delete shows an inline confirmation before executing.
+//   Rename / Delete / New Folder. On ".." → dir menu: Paste / New Folder.
 // Back → go up one level, exit to Home at root.
 #include "nema/ui/component_screen.h"
 #include "nema/ui/virtual_keyboard.h"
@@ -42,6 +41,7 @@ private:
     void openEntry(int entryIndex);
     void goUp();
     void showOpsMenu(int focused);
+    void showDirMenu();           // for ".." row — paste + new folder
 
     static void onRowPress(void* u);
 
@@ -54,29 +54,33 @@ private:
     void doPaste();
     void doDelete();
 
-    // ── rename (VirtualKeyboard overlay) ─────────────────────────────────
+    // ── keyboard overlay (rename + new folder) ────────────────────────────
     void startRenameKeyboard();
     void applyRename(bool done, bool cancel);
+    void startNewFolderKeyboard();
+    void applyNewFolder(bool done, bool cancel);
 
     aether::ui::VirtualKeyboard kbd_;
-    bool  renaming_    = false;
-    bool  swallowCode_ = false;
+    bool  renaming_     = false;
+    bool  newFoldering_ = false;
+    bool  swallowCode_  = false;
     char  renamePrompt_[64] = {};
 
     // ── deferred ops (set before goBack on modal, consumed in onResume/tick)
-    enum class PendingOp { None, View, StartRename };
+    enum class PendingOp { None, View, StartRename, StartNewFolder };
     PendingOp   pendingOp_  = PendingOp::None;
     std::string pendingPath_;
     std::string pendingName_;
     bool        pendingIsDir_ = false;
 
     // ── FileOpsModal callbacks ────────────────────────────────────────────
-    static void cbView  (void* u);
-    static void cbCopy  (void* u);
-    static void cbCut   (void* u);
-    static void cbPaste (void* u);
-    static void cbRename(void* u);
-    static void cbDelete(void* u);
+    static void cbView     (void* u);
+    static void cbCopy     (void* u);
+    static void cbCut      (void* u);
+    static void cbPaste    (void* u);
+    static void cbRename   (void* u);
+    static void cbDelete   (void* u);
+    static void cbNewFolder(void* u);
 
     // ── sub-screens (owned, stable addresses) ────────────────────────────
     FileOpsModal      opsModal_;

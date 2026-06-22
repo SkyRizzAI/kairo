@@ -62,6 +62,11 @@ void FileOpsModal::sDeleteConfirm(void* u) {
     if (s->cb_.onDelete) s->cb_.onDelete(s->cb_.user);
     s->rt_.view().goBack();
 }
+void FileOpsModal::sNewFolder(void* u) {
+    auto* s = static_cast<FileOpsModal*>(u);
+    if (s->cb_.onNewFolder) s->cb_.onNewFolder(s->cb_.user);
+    s->rt_.view().goBack();
+}
 void FileOpsModal::sBack(void* u) {
     auto* s = static_cast<FileOpsModal*>(u);
     if (s->st_ == St::ConfirmDelete) {
@@ -99,11 +104,12 @@ aether::ui::UiNode* FileOpsModal::build(NodeArena& a, Runtime&) {
     }
 
     if (!isDir_) row("View",   sView);
-    row("Copy",   sCopy);
-    row("Cut",    sCut);
-    if (cb_.onPaste) row("Paste", sPaste);
-    row("Rename", sRename);
-    row("Delete", sDelete);
+    if (cb_.onCopy)      row("Copy",       sCopy);
+    if (cb_.onCut)       row("Cut",        sCut);
+    if (cb_.onPaste)     row("Paste",      sPaste);
+    if (cb_.onRename)    row("Rename",     sRename);
+    if (cb_.onDelete)    row("Delete",     sDelete);
+    if (cb_.onNewFolder) row("New Folder", sNewFolder);
     row("Cancel", sBack);
 
     return View(a, root, {
