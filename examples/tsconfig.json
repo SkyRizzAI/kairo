@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "skipLibCheck": true,
+    "jsx": "react-jsx",
+    "jsxImportSource": "nema",
+    "paths": {
+      "nema": ["../packages/app-sdk/src/index.ts"],
+      "nema/jsx-runtime": ["../packages/app-sdk/src/jsx-runtime.ts"],
+      "nema/jsx-dev-runtime": ["../packages/app-sdk/src/jsx-runtime.ts"]
+    }
+  }
+}
