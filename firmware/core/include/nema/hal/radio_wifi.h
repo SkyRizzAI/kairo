@@ -19,7 +19,7 @@ struct RadioScanResult {
     char    auth[16]  = {};  // "open" | "wpa" | "wpa2" | "wpa3"
 };
 
-// IRadioWifi — raw and thick WiFi radio access (Plan 87 Fase 4).
+// IRadioWifi — raw and thick WiFi radio access (Plan 87 Fase 4 + 5).
 //
 // This is NOT the cooked STA driver (IWifiDriver). It exposes the radio chip
 // directly: passive scan, monitor mode, frame injection, and thick attack
@@ -29,16 +29,17 @@ struct RadioScanResult {
 // Access control (enforced by generated host gating prologues):
 //   scan()        — @tier(benign)    — no exclusive lease
 //   deauth/beacon — @tier(sensitive) — net.wifi.inject lease
-//   monitor_*     — @tier(sensitive) — net.wifi.monitor lease (Fase 5)
-//   inject()      — @tier(sensitive) — net.wifi.inject lease (Fase 5)
+//   monitor_*     — @tier(sensitive) — net.wifi.monitor lease
+//   inject()      — @tier(sensitive) — net.wifi.inject lease
 //
-// Threading: scan() and waitEvent() are blocking — call from TaskRunner worker.
-// All other methods are non-blocking. The native loop (deauthLoop / beaconLoop)
-// runs on a Thread pinned to Core 0 (ESP32) and never touches the WASM sandbox.
+// Threading: scan() and monitorRead() are blocking — call from TaskRunner worker.
+// All other methods are non-blocking. Native loops (deauth, beacon, promiscuous
+// RX) run on a Thread pinned to Core 0 (ESP32) and never touch the WASM sandbox.
 //
-// Event queue: native loops push events via pushEvent(); the app's blocking
-// waitEvent() drains them. The queue is bounded (64 slots) — drops on full so
-// a slow app can never stall the radio.
+// Two bounded queues (both shared by all subclasses):
+//   monitorQ_  (128 slots) — raw 802.11 frames; producer = native RX callback,
+//                            consumer = monitorRead(). Full → frame dropped.
+//   eventQ_    (64 slots)  — matured JSON events from thick loops; consumer = waitEvent().
 struct IRadioWifi : IDriver {
     virtual ~IRadioWifi() = default;
 
@@ -46,29 +47,44 @@ struct IRadioWifi : IDriver {
     // Blocking — runs on TaskRunner worker. Returns empty on error.
     virtual std::vector<RadioScanResult> scan() = 0;
 
-    // ── Monitor mode (net.wifi.monitor lease — Fase 5) ────────────────────────
-    virtual bool monitorOpen(uint8_t /*channel*/)                                { return false; }
-    virtual void monitorClose()                                                  {}
-    // Blocking read from ring buffer, up to max bytes, with timeout (ms).
-    virtual int  monitorRead(uint8_t* /*out*/, uint32_t /*max*/,
-                             uint32_t /*timeoutMs*/)                             { return 0; }
+    // ── Monitor mode (net.wifi.monitor lease) ─────────────────────────────────
+    // monitorOpen: set channel + enable promiscuous capture.
+    virtual bool monitorOpen(uint8_t /*channel*/) { return false; }
+    virtual void monitorClose() {}
 
-    // ── Frame injection (net.wifi.inject lease — Fase 5) ──────────────────────
+    // monitorRead: drain one raw 802.11 frame (up to max bytes) from the ring.
+    // Blocks up to timeoutMs. Returns byte count written; 0 on timeout or error.
+    // Subclasses push frames via pushFrame() — no need to override monitorRead.
+    virtual int monitorRead(uint8_t* out, uint32_t max, uint32_t timeoutMs) {
+        std::vector<uint8_t> frame;
+        if (!monitorQ_.receive(frame, timeoutMs == 0 ? 1 : timeoutMs)) return 0;
+        uint32_t n = frame.size() < max ? static_cast<uint32_t>(frame.size()) : max;
+        std::memcpy(out, frame.data(), n);
+        return static_cast<int>(n);
+    }
+
+    // ── Frame injection (net.wifi.inject lease) ────────────────────────────────
     virtual bool inject(uint8_t /*ch*/, const uint8_t* /*frame*/, size_t /*len*/) { return false; }
 
     // ── Thick primitives — loop runs natively (net.wifi.inject lease) ─────────
-    // Start continuous deauth: firmware sends deauth frames at ~10 Hz on Core 0.
-    // App receives events via waitEvent(); never touches the sandbox timing loop.
-    virtual bool deauthStart(std::string_view /*bssid*/, uint8_t /*channel*/)   { return false; }
-    virtual bool deauthStop()                                                    { return true; }
+    // Start continuous deauth at ~10 Hz (firmware Core 0). App gets events via waitEvent().
+    virtual bool deauthStart(std::string_view /*bssid*/, uint8_t /*channel*/) { return false; }
+    virtual bool deauthStop()                                                  { return true; }
 
-    // Start beacon spam: firmware broadcasts fake AP beacons for each SSID.
-    virtual bool beaconSpamStart(const std::vector<std::string>& /*ssids*/)     { return false; }
-    virtual bool beaconSpamStop()                                                { return true; }
+    // Start beacon spam (multiple fake SSIDs, firmware-native loop).
+    virtual bool beaconSpamStart(const std::vector<std::string>& /*ssids*/) { return false; }
+    virtual bool beaconSpamStop()                                            { return true; }
 
-    // ── Event queue ───────────────────────────────────────────────────────────
-    // waitEvent: block up to timeoutMs for the next radio event.
-    // Returns JSON bytes: {"type":"deauth_sent","data":{...}}
+    // ── Monitor frame ring (Fase 5) ───────────────────────────────────────────
+    // pushFrame: called by promiscuous RX callbacks to enqueue raw frames.
+    // Thread-safe and non-blocking. Drops the frame if the ring is full.
+    void pushFrame(const uint8_t* data, size_t len) {
+        if (len == 0 || len > 2500) return;  // sanity-clamp
+        monitorQ_.send(std::vector<uint8_t>(data, data + len));
+    }
+
+    // ── Matured event queue (thick loops → app) ────────────────────────────────
+    // waitEvent: block up to timeoutMs for next JSON event from deauth/beacon loops.
     // Returns empty on timeout. Call from TaskRunner worker — never the UI thread.
     virtual std::vector<uint8_t> waitEvent(uint32_t timeoutMs) {
         std::vector<uint8_t> out;
@@ -76,8 +92,7 @@ struct IRadioWifi : IDriver {
         return out;
     }
 
-    // pushEvent: called by native loops on Core 0 to post events to the queue.
-    // Thread-safe (MessageQueue is mutex-backed). Non-blocking — drops if full.
+    // pushEvent: called by native loops on Core 0. Thread-safe; drops if full.
     virtual void pushEvent(const char* type, const char* data = "{}") {
         std::string s;
         s.reserve(32 + std::strlen(type) + std::strlen(data));
@@ -86,6 +101,8 @@ struct IRadioWifi : IDriver {
     }
 
 private:
+    // 128 raw-frame slots — full → frame dropped, radio never stalls.
+    MessageQueue<std::vector<uint8_t>> monitorQ_{128};
     MessageQueue<std::vector<uint8_t>> eventQ_{64};
 };
 

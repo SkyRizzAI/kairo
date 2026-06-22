@@ -11,13 +11,17 @@ namespace nema {
 
 class Runtime;
 
-// SimWifiRadio — WASM/sim implementation of IRadioWifi (Plan 87 Fase 4).
+// SimWifiRadio — WASM/sim implementation of IRadioWifi (Plan 87 Fase 4+5).
 //
-// scan()        — delegates to the live IWifiDriver (SimWifiDriver), synthesises
-//                 fake BSSIDs so the sim scan result looks realistic.
-// deauthStart() — starts a sim loop thread that pushes "deauth_sent" events at
-//                 ~10 Hz; the app consumes them via waitEvent().
-// beaconSpamStart() — similar; pushes "beacon_sent" events for each fake SSID.
+// scan()           — delegates to the live IWifiDriver (SimWifiDriver), synthesises
+//                    fake BSSIDs so the sim scan result looks realistic.
+// deauthStart()    — starts a sim loop thread that pushes "deauth_sent" events at
+//                    ~10 Hz; the app consumes them via waitEvent().
+// beaconSpamStart()— similar; pushes "beacon_sent" events for each fake SSID.
+// monitorOpen()    — enables a simulated promiscuous mode: the loop thread starts
+//                    generating fake 802.11 beacon frames and pushing them via
+//                    pushFrame() into the base-class ring buffer.
+// inject()         — logs a "frame_injected" event (no real radio in sim).
 //
 // The loop thread runs independently of the app WASM sandbox (same architecture
 // as the ESP32 Core 0 native loop), keeping the UI responsive.
@@ -27,6 +31,9 @@ public:
 
     // ── IRadioWifi ────────────────────────────────────────────────────────────
     std::vector<RadioScanResult> scan() override;
+    bool monitorOpen(uint8_t ch)  override;
+    void monitorClose()           override;
+    bool inject(uint8_t ch, const uint8_t* frame, size_t len) override;
     bool deauthStart(std::string_view bssid, uint8_t channel) override;
     bool deauthStop()  override;
     bool beaconSpamStart(const std::vector<std::string>& ssids) override;
@@ -46,8 +53,10 @@ private:
     std::mutex               mu_;
     std::atomic<bool>        doDeauth_{false};
     std::atomic<bool>        doBeacon_{false};
+    std::atomic<bool>        doMonitor_{false};
     std::string              deauthBssid_;
-    uint8_t                  deauthChannel_ = 0;
+    uint8_t                  deauthChannel_  = 0;
+    uint8_t                  monitorChannel_ = 1;
     std::vector<std::string> beaconSsids_;
 };
 

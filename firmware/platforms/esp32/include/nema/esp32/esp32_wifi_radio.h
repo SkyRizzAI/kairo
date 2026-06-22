@@ -10,24 +10,29 @@
 
 namespace nema {
 
-// Esp32WifiRadio — ESP32 hardware implementation of IRadioWifi (Plan 87 Fase 4).
+// Esp32WifiRadio — ESP32 hardware implementation of IRadioWifi (Plan 87 Fase 4+5).
 //
-// scan()         — esp_wifi_scan_start (blocking) → returns real BSSIDs/RSSIs.
-// deauthStart()  — spawns a FreeRTOS thread pinned to Core 0 that calls
-//                  esp_wifi_80211_tx every 100ms with a crafted deauth frame.
-// beaconSpamStart() — same, sends beacon frames for each fake SSID.
+// scan()           — esp_wifi_scan_start (blocking) → returns real BSSIDs/RSSIs.
+// deauthStart()    — spawns a FreeRTOS thread pinned to Core 0 that calls
+//                    esp_wifi_80211_tx every 100ms with a crafted deauth frame.
+// beaconSpamStart()— same, sends beacon frames for each fake SSID.
+// monitorOpen()    — enables WiFi promiscuous mode; raw frames from the RX
+//                    callback are pushed into the base-class ring buffer via
+//                    pushFrame(). App drains frames with monitorRead().
+// monitorClose()   — disables promiscuous mode.
+// inject()         — esp_wifi_80211_tx (raw frame injection).
 //
 // The native loop (Core 0) is never in the app WASM sandbox (Core 1). UI stays
 // responsive regardless of frame transmission rate.
-//
-// Requires net.wifi.inject lease (enforced by host gating prologue generated
-// from @lease annotation in api/wifi.pidl).
 class Esp32WifiRadio : public IRadioWifi, public IService {
 public:
     void init(Runtime& rt);
 
     // ── IRadioWifi ────────────────────────────────────────────────────────────
     std::vector<RadioScanResult> scan() override;
+    bool monitorOpen(uint8_t ch)  override;
+    void monitorClose()           override;
+    bool inject(uint8_t ch, const uint8_t* frame, size_t len) override;
     bool deauthStart(std::string_view bssid, uint8_t channel) override;
     bool deauthStop()  override;
     bool beaconSpamStart(const std::vector<std::string>& ssids) override;

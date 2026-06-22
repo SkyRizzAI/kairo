@@ -46,6 +46,25 @@ std::vector<RadioScanResult> SimWifiRadio::scan() {
     return out;
 }
 
+bool SimWifiRadio::monitorOpen(uint8_t ch) {
+    monitorChannel_ = ch;
+    doDeauth_  = false;
+    doBeacon_  = false;
+    doMonitor_ = true;
+    return true;
+}
+
+void SimWifiRadio::monitorClose() {
+    doMonitor_ = false;
+}
+
+bool SimWifiRadio::inject(uint8_t ch, const uint8_t* /*frame*/, size_t len) {
+    char buf[64];
+    std::snprintf(buf, sizeof(buf), "{\"channel\":%d,\"len\":%zu}", (int)ch, len);
+    pushEvent("frame_injected", buf);
+    return true;
+}
+
 bool SimWifiRadio::deauthStart(std::string_view bssid, uint8_t channel) {
     std::lock_guard<std::mutex> g(mu_);
     deauthBssid_   = std::string(bssid);
@@ -107,6 +126,30 @@ void SimWifiRadio::loopFn() {
                 pushEvent("beacon_sent", buf);
             }
             Thread::sleepMs(100);
+
+        } else if (doMonitor_) {
+            // Generate a minimal fake 802.11 beacon frame so the app gets real
+            // non-empty data from monitorRead() without real hardware.
+            uint8_t ch;
+            { std::lock_guard<std::mutex> g(mu_); ch = monitorChannel_; }
+
+            static const uint8_t kFakeBeacon[32] = {
+                0x80, 0x00,                          // FC: beacon
+                0x00, 0x00,                          // Duration
+                0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,  // DA: broadcast
+                0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0x01, // SA: sim AP
+                0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0x01, // BSSID
+                0x00, 0x00,                          // Seq ctrl
+                0x00, 0x00, 0x00, 0x00,              // Timestamp (low)
+                0x00, 0x00, 0x00, 0x00,              // Timestamp (high)
+            };
+            // Patch channel hint into last byte so callers can identify it.
+            uint8_t frame[32];
+            std::memcpy(frame, kFakeBeacon, sizeof(frame));
+            frame[23] = ch;  // overload seq-ctrl[1] as channel hint
+            pushFrame(frame, sizeof(frame));
+
+            Thread::sleepMs(200);  // ~5 fake frames/sec
 
         } else {
             Thread::sleepMs(10);

@@ -37,6 +37,17 @@ static const uint8_t kBeaconTemplate[38] = {
     0x00, 0x00,
 };
 
+// ── Monitor mode: promiscuous RX ──────────────────────────────────────────────
+// The promiscuous callback runs outside the WASM sandbox; it pushes raw frames
+// into the base-class bounded ring via pushFrame(). Full ring → frame dropped.
+static Esp32WifiRadio* s_radio = nullptr;
+
+static void promiscRxCb(void* buf, wifi_promiscuous_pkt_type_t /*type*/) {
+    if (!s_radio) return;
+    auto* pkt = static_cast<wifi_promiscuous_pkt_t*>(buf);
+    s_radio->pushFrame(pkt->payload, pkt->rx_ctrl.sig_len);
+}
+
 // ──────────────────────────────────────────────────────────────────────────────
 
 void Esp32WifiRadio::init(Runtime& rt) {
@@ -45,6 +56,7 @@ void Esp32WifiRadio::init(Runtime& rt) {
 }
 
 void Esp32WifiRadio::stop() {
+    monitorClose();   // disable promiscuous before thread exits
     doDeauth_ = false;
     doBeacon_ = false;
     loopThread_.requestStop();
@@ -95,6 +107,26 @@ std::vector<RadioScanResult> Esp32WifiRadio::scan() {
         out.push_back(res);
     }
     return out;
+}
+
+bool Esp32WifiRadio::monitorOpen(uint8_t ch) {
+    s_radio = this;
+    esp_wifi_set_channel(ch, WIFI_SECOND_CHAN_NONE);
+    esp_wifi_set_promiscuous_rx_cb(promiscRxCb);
+    esp_wifi_set_promiscuous(true);
+    return true;
+}
+
+void Esp32WifiRadio::monitorClose() {
+    esp_wifi_set_promiscuous(false);
+    esp_wifi_set_promiscuous_rx_cb(nullptr);
+    s_radio = nullptr;
+}
+
+bool Esp32WifiRadio::inject(uint8_t ch, const uint8_t* frame, size_t len) {
+    if (!frame || len == 0 || len > 2500) return false;
+    esp_wifi_set_channel(ch, WIFI_SECOND_CHAN_NONE);
+    return esp_wifi_80211_tx(WIFI_IF_STA, frame, static_cast<int>(len), false) == ESP_OK;
 }
 
 bool Esp32WifiRadio::deauthStart(std::string_view bssid, uint8_t channel) {
