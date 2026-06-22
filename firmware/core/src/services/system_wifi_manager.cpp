@@ -1,6 +1,8 @@
 #include "nema/services/system_wifi_manager.h"
 #include "nema/runtime.h"
+#include "nema/event/event_bus.h"
 #include "nema/event/event.h"
+#include "nema/service/service_container.h"
 #include "nema/services/resource_broker.h"
 #include "nema/hal/wifi.h"
 #include <string>

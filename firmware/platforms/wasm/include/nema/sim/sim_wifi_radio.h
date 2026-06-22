@@ -40,7 +40,8 @@ public:
     bool beaconSpamStop() override;
 
     // ── IService ──────────────────────────────────────────────────────────────
-    const char* name() const override { return "SimWifiRadio"; }
+    const char*  name() const override { return "SimWifiRadio"; }
+    DriverKind   kind() const override { return DriverKind::Wifi; }
     void start() override {}
     void stop()  override;
 

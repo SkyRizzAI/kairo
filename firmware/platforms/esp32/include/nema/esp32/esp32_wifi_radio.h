@@ -39,7 +39,8 @@ public:
     bool beaconSpamStop() override;
 
     // ── IService ──────────────────────────────────────────────────────────────
-    const char* name() const override { return "Esp32WifiRadio"; }
+    const char*  name() const override { return "Esp32WifiRadio"; }
+    DriverKind   kind() const override { return DriverKind::Wifi; }
     void start() override {}
     void stop()  override;
 
