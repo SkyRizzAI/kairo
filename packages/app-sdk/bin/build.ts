@@ -37,35 +37,56 @@ if (!manifest.id)          manifest.id = "com.palanu.app";
 const entryFile = manifest.entry ?? "App.tsx";
 const entry = join(appDir, entryFile);
 
-// ── Build JS ───────────────────────────────────────────────────────────────
-
-console.log(`  building ${manifest.name} (${manifest.id})...`);
-
-const result = await Bun.build({
-  entrypoints: [entry],
-  target: "browser",
-  format: "esm",
-  minify: true,
-  external: ["nema", "nema/jsx-runtime", "nema/jsx-dev-runtime"],
-  loader: { ".tsx": "tsx", ".ts": "ts", ".jsx": "jsx" },
-});
-
-if (!result.success) {
-  console.error("build failed:");
-  for (const log of result.logs) console.error(log);
-  process.exit(1);
-}
-
-const js = await result.outputs[0].text();
-const jsName = basename(entryFile).replace(/\.(tsx?|jsx?)$/, ".js");
-
 // ── Write .papp folder ─────────────────────────────────────────────────────
 
 const outDir = join(appDir, "dist", `${manifest.id}.papp`);
 await rm(outDir, { recursive: true, force: true });
 await mkdir(outDir, { recursive: true });
 
-await writeFile(join(outDir, jsName), js);
+console.log(`  building ${manifest.name} (${manifest.id})...`);
+
+if (manifest.runtime === "wasm") {
+  // ── Build WASM (C → .wasm via wasi-sdk) ─────────────────────────────────
+  const wasiSdk = process.env.WASI_SDK_PATH ?? "/opt/wasi-sdk";
+  const clang = join(wasiSdk, "bin", "clang");
+  const clangFile = Bun.file(clang);
+  if (!(await clangFile.exists())) {
+    console.error(`wasi-sdk not found at ${wasiSdk}`);
+    console.error("Set WASI_SDK_PATH or install to /opt/wasi-sdk:");
+    console.error("  https://github.com/WebAssembly/wasi-sdk/releases");
+    process.exit(1);
+  }
+  const srcFile = join(appDir, "main.c");
+  const outWasm = join(outDir, entryFile);  // e.g. counter.wasm
+  const proc = Bun.spawn(
+    [clang, "--target=wasm32-wasi", "-O2", "-o", outWasm, srcFile],
+    { stdout: "inherit", stderr: "inherit" }
+  );
+  const code = await proc.exited;
+  if (code !== 0) { console.error("clang failed"); process.exit(code); }
+  const { size } = Bun.file(outWasm);
+  console.log(`  ${entryFile}  (${size}B)`);
+} else {
+  // ── Build JS/TSX (via Bun bundler) ───────────────────────────────────────
+  const result = await Bun.build({
+    entrypoints: [entry],
+    target: "browser",
+    format: "esm",
+    minify: true,
+    external: ["nema", "nema/jsx-runtime", "nema/jsx-dev-runtime"],
+    loader: { ".tsx": "tsx", ".ts": "ts", ".jsx": "jsx" },
+  });
+
+  if (!result.success) {
+    console.error("build failed:");
+    for (const log of result.logs) console.error(log);
+    process.exit(1);
+  }
+
+  const js = await result.outputs[0].text();
+  const jsName = basename(entryFile).replace(/\.(tsx?|jsx?)$/, ".js");
+  await writeFile(join(outDir, jsName), js);
+}
 
 // ── Icon pipeline ──────────────────────────────────────────────────────────
 // icon.raw format: 4-byte header (width u16le, height u16le) + 1-bit packed
@@ -135,7 +156,7 @@ await writeFile(join(outDir, "manifest.json"), JSON.stringify(manifest, null, 2)
 const tier = manifest.runtime ?? "js";
 const server = manifest.display_server ?? "any";
 console.log(`✓ ${outDir}/`);
-console.log(`  manifest.json  ${jsName} (${js.length}B)`);
+console.log(`  manifest.json  ${entryFile}`);
 console.log(`  runtime=${tier}  server=${server}`);
 console.log("");
 console.log("  Install: copy this folder to /apps/ on your device");

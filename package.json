@@ -30,7 +30,14 @@
     "idl:test": "cd packages/idl && bun test",
     "app:build": "bun run packages/app-sdk/bin/build.ts",
     "app:build:hello": "bun run packages/app-sdk/bin/build.ts --dir examples/hello",
-    "app:build:deauth": "bun run packages/app-sdk/bin/build.ts --dir examples/deauth"
+    "app:build:counter": "bun run packages/app-sdk/bin/build.ts --dir examples/counter",
+    "app:build:sysinfo": "bun run packages/app-sdk/bin/build.ts --dir examples/sysinfo",
+    "app:build:deauth": "bun run packages/app-sdk/bin/build.ts --dir examples/deauth",
+    "app:build:hello-wasm": "bun run packages/app-sdk/bin/build.ts --dir examples/hello-wasm",
+    "app:build:counter-wasm": "bun run packages/app-sdk/bin/build.ts --dir examples/counter-wasm",
+    "app:build:sysinfo-wasm": "bun run packages/app-sdk/bin/build.ts --dir examples/sysinfo-wasm",
+    "app:build:all": "bun run app:build:hello && bun run app:build:counter && bun run app:build:sysinfo && bun run app:build:deauth",
+    "app:build:all-wasm": "bun run app:build:hello-wasm && bun run app:build:counter-wasm && bun run app:build:sysinfo-wasm"
   },
   "devDependencies": {
     "@types/bun": "latest"
