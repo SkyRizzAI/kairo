@@ -1,5 +1,6 @@
 #pragma once
 #include "nema/app/component_app.h"
+#include <atomic>
 #include <cstdint>
 #include <string>
 #include <vector>
@@ -39,7 +40,11 @@ public:
 #endif
     }
 
-    // Headless entry point: load module → link WASI → call _start.
+    // UI path (mode=ui): runs WASM synchronously in onStart() then shows
+    // captured output on screen. Any key press exits after WASM completes.
+    void onStart(AppContext& ctx) override;
+
+    // Headless path (mode=cli): runs WASM with no surface. Output goes to logs.
     void runProcess(ProcessContext& ctx) override;
 
     // Icon from bundle (icon.raw: 4-byte header + 1-bit pixels). Same contract
@@ -51,9 +56,12 @@ public:
 
 protected:
     aether::ui::UiNode* build(aether::ui::NodeArena& arena, AppContext& ctx) override;
-    size_t      arenaCapacity() const override { return 256; }
+    bool onKey(Key k, AppContext& ctx) override;
+    size_t arenaCapacity() const override { return 512; }
 
 private:
+    void runWasm(ProcessContext& ctx);   // shared impl for both paths
+
     std::string          id_, name_, version_, displayServer_;
     std::vector<uint8_t> wasm_;
 
@@ -61,6 +69,11 @@ private:
     const uint8_t*       iconBitmap_ = nullptr;
     uint8_t              iconW_      = 0;
     uint8_t              iconH_      = 0;
+
+    // Terminal output (UI path only). Populated by nema_print() via printHook.
+    std::vector<std::string> outputLines_;
+    std::atomic<bool>        done_{false};
+    aether::ui::ScrollState  scrollSt_;
 };
 
 } // namespace nema

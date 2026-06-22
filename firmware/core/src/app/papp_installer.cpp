@@ -111,20 +111,14 @@ static bool installFromDir(Runtime& rt, IFileSystem* fs,
 
     const bool isWasm = (rtStr == "wasm");
 
-    // Mode default differs by runtime: JS apps are UI-first; WASM apps are
-    // CLI-only today (no aether ABI bridge yet — Plan 84 Fase 4).
-    AppMode mode = isWasm ? AppMode::Cli : AppMode::Ui;
+    // Mode default: both JS and WASM apps default to Ui (terminal screen for WASM).
+    // Explicit "mode":"cli" in manifest overrides to headless for background tasks.
+    AppMode mode = AppMode::Ui;
     if      (modeStr == "cli")    mode = AppMode::Cli;
     else if (modeStr == "hybrid") mode = AppMode::Hybrid;
     else if (modeStr == "ui")     mode = AppMode::Ui;
 
-    // A WASM app launched with a surface can't render yet — warn but allow it
-    // (build() shows an explanatory card; CLI launch works fully).
-    if (isWasm && mode != AppMode::Cli) {
-        rt.log().warn("PappInstaller", "WASM UI not supported — app is CLI-only",
-                      {{"id", id}});
-        mode = AppMode::Cli;
-    }
+    (void)isWasm;  // both runtimes use the same mode logic now
 
     // Load icon.raw if the manifest declares one (common to both runtimes).
     // Format: 4-byte header (width u16le, height u16le) + 1-bit packed pixels.

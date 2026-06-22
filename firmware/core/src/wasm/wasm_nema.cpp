@@ -75,6 +75,7 @@ m3ApiRawFunction(nema_print) {
     if (!msg.empty() && msg.back() == '\r') msg.pop_back();
 
     h->ctx->runtime().log().info(h->appId.c_str(), msg.c_str());
+    if (h->printHook) h->printHook(msg);
     m3ApiSuccess();
 }
 

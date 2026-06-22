@@ -47,9 +47,10 @@ int WasmEngine::runStart(ProcessContext& ctx, const char* appId) {
 
     // Attach the host context to the runtime so import trampolines can reach the
     // kernel. host_ is a member, so it outlives this call.
-    host_.ctx   = &ctx;
-    host_.appId = appId ? appId : "";
-    rt_->userdata = &host_;
+    host_.ctx       = &ctx;
+    host_.appId     = appId ? appId : "";
+    host_.printHook = printHook_;
+    rt_->userdata   = &host_;
 
     // Link imports FIRST: m3_FindFunction triggers lazy compilation of the
     // module, which resolves import references. Unlinked imports at that point

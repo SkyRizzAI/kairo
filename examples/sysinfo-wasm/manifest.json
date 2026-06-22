@@ -3,7 +3,7 @@
   "name": "Sys Info (WASM)",
   "version": "1.0.0",
   "runtime": "wasm",
-  "mode": "cli",
+  "mode": "ui",
   "entry": "sysinfo.wasm",
   "api_version": "1.0",
   "category": "Demo"

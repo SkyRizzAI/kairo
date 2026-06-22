@@ -26,46 +26,100 @@ void WasmApp::setIcon(std::vector<uint8_t> data) {
     iconBitmap_ = iconData_.data() + 4;
 }
 
-void WasmApp::runProcess(ProcessContext& ctx) {
+// ── Shared WASM execution ──────────────────────────────────────────────────
+
+void WasmApp::runWasm(ProcessContext& ctx) {
     if (wasm_.empty()) {
+        outputLines_.push_back("[error: empty module]");
         ctx.runtime().log().error("WasmApp", "empty module", {{"app", id_}});
-        ctx.requestExit(1);
+        done_ = true;
         return;
     }
 
     WasmEngine engine;
+    engine.setPrintHook([this](const std::string& line) {
+        outputLines_.push_back(line);
+    });
+
     if (!engine.init(stackBytes() * 3 / 4)) {
+        std::string e = "[error: init: " + engine.lastError() + "]";
+        outputLines_.push_back(e);
         ctx.runtime().log().error("WasmApp", "engine init failed",
                                   {{"app", id_}, {"err", engine.lastError()}});
-        ctx.requestExit(1);
+        done_ = true;
         return;
     }
 
-    // wasm3 references wasm_ in place — the vector outlives this call, so no copy.
     if (!engine.load(wasm_.data(), wasm_.size())) {
+        std::string e = "[error: load: " + engine.lastError() + "]";
+        outputLines_.push_back(e);
         ctx.runtime().log().error("WasmApp", "module load failed",
                                   {{"app", id_}, {"err", engine.lastError()}});
-        ctx.requestExit(1);
+        done_ = true;
         return;
     }
 
-    int code = engine.runStart(ctx);
+    int code = engine.runStart(ctx, id_.c_str());
     if (code != 0 && !ctx.shouldExit()) {
-        ctx.runtime().log().error("WasmApp", "_start failed",
+        std::string e = "[exit " + engine.lastError() + "]";
+        outputLines_.push_back(e);
+        ctx.runtime().log().error("WasmApp", "runStart failed",
                                   {{"app", id_}, {"err", engine.lastError()}});
-        ctx.requestExit(code);
     }
+    done_ = true;
 }
 
-aether::ui::UiNode* WasmApp::build(NodeArena& arena, AppContext&) {
-    // WASM UI is not implemented yet (Plan 84 Fase 4). A WASM app should declare
-    // mode=cli; if it's launched with a surface, show why nothing renders.
-    Style root; root.dir = FlexDir::Col; root.flexGrow = 1;
-    root.padding = aether::theme().space.sm; root.gap = aether::theme().space.xs;
-    return View(arena, root, {
-        Text(arena, "WASM UI unsupported", TextRole::Title),
-        Text(arena, "This app runs headless (CLI).", TextRole::Caption),
-    });
+// ── UI path (mode=ui) ─────────────────────────────────────────────────────
+
+void WasmApp::onStart(AppContext& ctx) {
+    // Run WASM synchronously before the event loop starts. Fast apps (<1ms)
+    // complete here; the first build() call will see all output immediately.
+    runWasm(ctx);
+}
+
+// ── Headless path (mode=cli) ─────────────────────────────────────────────
+
+void WasmApp::runProcess(ProcessContext& ctx) {
+    runWasm(ctx);
+}
+
+// ── Terminal UI ────────────────────────────────────────────────────────────
+
+UiNode* WasmApp::build(NodeArena& arena, AppContext&) {
+    Style rootSt;
+    rootSt.dir      = FlexDir::Col;
+    rootSt.flexGrow = 1;
+    rootSt.padding  = aether::theme().space.sm;
+    rootSt.gap      = 2;
+
+    UiNode* root = View(arena, rootSt, {});
+    if (!root) return nullptr;
+
+    // App name as header
+    UiNode* title = Text(arena, name_.c_str(), TextRole::Title);
+    root->firstChild = title;
+    UiNode* prev = title;
+
+    // Output lines — Text nodes linked as siblings
+    for (const auto& line : outputLines_) {
+        UiNode* t = Text(arena, line.c_str(), TextRole::Body);
+        if (t && prev) { prev->nextSibling = t; prev = t; }
+    }
+
+    // Footer
+    const char* hint = done_ ? "Press any key to exit" : "Running\xe2\x80\xa6";
+    UiNode* footer = Text(arena, hint, TextRole::Caption);
+    if (footer && prev) prev->nextSibling = footer;
+
+    return root;
+}
+
+bool WasmApp::onKey(Key /*k*/, AppContext& ctx) {
+    if (done_) {
+        ctx.requestExit(0);
+        return true;
+    }
+    return false;
 }
 
 } // namespace nema

@@ -3,7 +3,7 @@
   "name": "Counter (WASM)",
   "version": "1.0.0",
   "runtime": "wasm",
-  "mode": "cli",
+  "mode": "ui",
   "entry": "counter.wasm",
   "api_version": "1.0",
   "category": "Demo"

@@ -1,6 +1,7 @@
 #pragma once
 #include <cstddef>
 #include <cstdint>
+#include <functional>
 #include <string>
 
 // Plan 57 — WasmEngine: thin wrapper around wasm3 interpreter.
@@ -23,6 +24,9 @@ class ProcessContext;
 struct WasmHostCtx {
     ProcessContext* ctx   = nullptr;
     std::string     appId;
+    // Optional hook called by nema_print() in addition to rt.log().
+    // Used by WasmApp to capture terminal output for the UI screen.
+    std::function<void(const std::string&)> printHook;
 };
 
 class WasmEngine {
@@ -44,6 +48,12 @@ public:
     // Returns the process exit code, or -1 on error.
     int  runStart(ProcessContext& ctx, const char* appId = nullptr);
 
+    // Optional hook: called by nema_print() with each printed line, in addition
+    // to the normal rt.log() output. Set before calling runStart().
+    void setPrintHook(std::function<void(const std::string&)> hook) {
+        printHook_ = std::move(hook);
+    }
+
     // Parse + load module and validate it. Returns nullptr on error.
     // The module is owned by the runtime after m3_LoadModule.
     bool loaded() const { return mod_ != nullptr; }
@@ -55,7 +65,8 @@ private:
     M3Runtime*     rt_  = nullptr;
     M3Module*      mod_ = nullptr;
     std::string    err_;
-    WasmHostCtx    host_;   // outlives the run; referenced by m3 userdata
+    WasmHostCtx    host_;     // outlives the run; referenced by m3 userdata
+    std::function<void(const std::string&)> printHook_;
 };
 
 // Link host imports to the WasmHostCtx already set as the runtime userdata.
