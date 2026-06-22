@@ -41,6 +41,13 @@ namespace events {
     // AppHost lifecycle — emitted when an app thread exits (clean or crash).
     // payload: {{"id","<app-id>"}, {"name","<app-name>"}, {"exitCode","<int>"}}
     inline constexpr const char* AppHostExited        = "AppHostExited";
+    // Resource lease coordination (Plan 87 Fase 3).
+    // ResourceSuspended: system yielded a cap to an exclusive app lease.
+    //   payload: {{"cap","<cap>"}, {"group","<groupId>"}, {"by","<appId>"}}
+    // ResourceRestored: all exclusive holders released; system can reclaim.
+    //   payload: {{"cap","<cap>"}, {"group","<groupId>"}}
+    inline constexpr const char* ResourceSuspended    = "ResourceSuspended";
+    inline constexpr const char* ResourceRestored     = "ResourceRestored";
     // Non-MVP (declared for future use)
     inline constexpr const char* NotificationCreated  = "NotificationCreated";
 }

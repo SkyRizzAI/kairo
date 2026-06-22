@@ -62,6 +62,8 @@ private:
     aether::ui::VirtualKeyboard      kbd_;
     std::string              pendingSsid_;
     char                     prompt_[48] = {};
+    char                     suspendedBuf_[64] = {};  // holds banner text when radio is taken
+    std::string              wifiSuspendedBy_;        // non-empty while an app holds the radio
     aether::ui::ScrollState          scroll_;
     std::vector<Row>         rows_;
     std::atomic<bool>        scanning_{false};

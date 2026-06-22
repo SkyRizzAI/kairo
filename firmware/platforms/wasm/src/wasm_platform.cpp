@@ -119,6 +119,17 @@ void WasmPlatform::registerDrivers(Runtime& rt) {
     broker_.init(rt);
     rt.container().registerService(&broker_);
 
+    // WiFi radio is exclusive: monitor/inject are mutually exclusive with managed.
+    // "system:wifi" (the normal STA connection) yields automatically to app leases.
+    broker_.addExclusivityGroup("wifi.radio",
+        {"net.wifi.managed", "net.wifi.monitor", "net.wifi.inject"},
+        "system:wifi");
+
+    // System WiFi lease coordination: acquire managed lease on connect, release on
+    // disconnect, and react to ResourceSuspended/Restored (Plan 87 Fase 3).
+    sysWifi_.init(rt);
+    rt.container().registerService(&sysWifi_);
+
     remote_.attachFs(vfs_);
 
     remote_.onReady(&WasmPlatform::readyThunk, this); // push current screen on connect (after auth)

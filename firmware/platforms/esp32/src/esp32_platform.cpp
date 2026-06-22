@@ -252,6 +252,17 @@ void Esp32Platform::postRegister(Runtime& rt) {
     broker_.init(rt);
     rt.container().registerService(&broker_);
 
+    // WiFi radio mutual exclusion: monitor/inject are exclusive with managed STA.
+    // "system:wifi" yields automatically so an app can take the radio.
+    broker_.addExclusivityGroup("wifi.radio",
+        {"net.wifi.managed", "net.wifi.monitor", "net.wifi.inject"},
+        "system:wifi");
+
+    // System WiFi lease coordination: acquire on connect, suspend/restore on
+    // exclusive app lease (Plan 87 Fase 3).
+    sysWifi_.init(rt);
+    rt.container().registerService(&sysWifi_);
+
     // microSD (FAT) — only on boards that wire an SD socket (Plan 38). Non-fatal:
     // a missing card or failed mount just means "/sd" is absent; boot continues.
     // Once mounted, the VFS auto-surfaces "sd" when listing "/", so the File

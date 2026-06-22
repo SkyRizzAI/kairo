@@ -3,6 +3,7 @@
 #include "nema/log/logger.h"
 #include "nema/event/event.h"
 #include "nema/event/event_bus.h"
+#include <algorithm>
 
 namespace nema {
 
@@ -19,47 +20,135 @@ void ResourceBroker::init(Runtime& rt) {
     });
 }
 
+void ResourceBroker::addExclusivityGroup(const std::string& id,
+                                          std::vector<std::string> caps,
+                                          const std::string& yieldableOwner) {
+    std::lock_guard<std::mutex> g(mu_);
+    ExclusivityGroup grp;
+    grp.id             = id;
+    grp.caps           = std::move(caps);
+    grp.yieldableOwner = yieldableOwner;
+    groups_.push_back(std::move(grp));
+}
+
+int ResourceBroker::findGroupIndex(const std::string& cap) const {
+    for (int i = 0; i < (int)groups_.size(); ++i)
+        for (const auto& c : groups_[i].caps)
+            if (c == cap) return i;
+    return -1;
+}
+
 NemaResult<uint32_t, LeaseError> ResourceBroker::acquire(const std::string& appId,
                                                           const std::string& cap) {
-    std::lock_guard<std::mutex> g(mu_);
+    // Collected outside the lock so we can post events after releasing mu_.
+    std::string suspendedCap;
+    std::string suspendedGroup;
+    NemaResult<uint32_t, LeaseError> result{false, 0u, {}};
 
-    auto it = leases_.find(cap);
-    if (it != leases_.end()) {
-        if (it->second.appId == appId)
-            return {true, it->second.handle, {}};  // re-entrant: same owner
-        LeaseError err{"busy", it->second.appId};
-        return {false, 0u, err};
+    {
+        std::lock_guard<std::mutex> g(mu_);
+
+        auto it = leases_.find(cap);
+        if (it != leases_.end()) {
+            if (it->second.appId == appId)
+                return {true, it->second.handle, {}};  // re-entrant: same owner
+            LeaseError err{"busy", it->second.appId};
+            return {false, 0u, err};
+        }
+
+        // Exclusivity group: check for conflicting sibling caps.
+        int gi = findGroupIndex(cap);
+        if (gi >= 0) {
+            auto& grp = groups_[gi];
+            for (const auto& sibling : grp.caps) {
+                if (sibling == cap) continue;
+                auto sit = leases_.find(sibling);
+                if (sit == leases_.end()) continue;
+                const std::string& holder = sit->second.appId;
+                if (holder == grp.yieldableOwner) {
+                    // Auto-yield the system lease so the app can proceed.
+                    auto& sibCaps = byApp_[holder];
+                    sibCaps.erase(std::remove(sibCaps.begin(), sibCaps.end(), sibling),
+                                  sibCaps.end());
+                    if (sibCaps.empty()) byApp_.erase(holder);
+                    leases_.erase(sit);
+                    grp.suspendedCap = sibling;
+                    suspendedCap     = sibling;
+                    suspendedGroup   = grp.id;
+                    break;  // only one yieldable holder expected per group
+                } else {
+                    // Non-yieldable sibling already holds the group → busy.
+                    return {false, 0u, LeaseError{"busy", holder}};
+                }
+            }
+            grp.exclusiveCount++;
+        }
+
+        uint32_t handle = nextHandle_++;
+        leases_[cap] = {appId, handle};
+        byApp_[appId].push_back(cap);
+        result = {true, handle, {}};
     }
 
-    uint32_t handle = nextHandle_++;
-    leases_[cap] = {appId, handle};
-    byApp_[appId].push_back(cap);
+    if (rt_) {
+        if (!suspendedCap.empty())
+            rt_->asyncPoster().post({events::ResourceSuspended,
+                {{"cap", suspendedCap}, {"group", suspendedGroup}, {"by", appId}}});
+        rt_->log().info("ResourceBroker", "acquired",
+            {{"app", appId}, {"cap", cap}});
+    }
 
-    if (rt_) rt_->log().info("ResourceBroker", "acquired",
-        {{"app", appId}, {"cap", cap}, {"handle", std::to_string(handle)}});
-
-    return {true, handle, {}};
+    return result;
 }
 
 NemaResult<void, std::string> ResourceBroker::release(const std::string& appId,
                                                        uint32_t handle) {
-    std::lock_guard<std::mutex> g(mu_);
+    std::string restoredCap;
+    std::string restoredGroup;
+    bool found = false;
 
-    for (auto it = leases_.begin(); it != leases_.end(); ++it) {
-        if (it->second.handle == handle && it->second.appId == appId) {
-            const std::string cap = it->first;
-            leases_.erase(it);
+    {
+        std::lock_guard<std::mutex> g(mu_);
 
-            auto& caps = byApp_[appId];
-            caps.erase(std::remove(caps.begin(), caps.end(), cap), caps.end());
-            if (caps.empty()) byApp_.erase(appId);
+        for (auto it = leases_.begin(); it != leases_.end(); ++it) {
+            if (it->second.handle == handle && it->second.appId == appId) {
+                const std::string cap = it->first;
+                leases_.erase(it);
 
-            if (rt_) rt_->log().info("ResourceBroker", "released",
-                {{"app", appId}, {"cap", cap}});
-            return {true, {}};
+                auto& caps = byApp_[appId];
+                caps.erase(std::remove(caps.begin(), caps.end(), cap), caps.end());
+                if (caps.empty()) byApp_.erase(appId);
+
+                // Group cleanup: decrement exclusive count; emit Restored if last.
+                int gi = findGroupIndex(cap);
+                if (gi >= 0) {
+                    auto& grp = groups_[gi];
+                    if (appId != grp.yieldableOwner) {
+                        grp.exclusiveCount = grp.exclusiveCount > 0
+                                             ? grp.exclusiveCount - 1 : 0;
+                        if (grp.exclusiveCount == 0 && !grp.suspendedCap.empty()) {
+                            restoredCap   = grp.suspendedCap;
+                            restoredGroup = grp.id;
+                            grp.suspendedCap.clear();
+                        }
+                    }
+                }
+
+                found = true;
+                break;
+            }
         }
     }
-    return {false, "lease not found"};
+
+    if (rt_ && found) {
+        rt_->log().info("ResourceBroker", "released", {{"app", appId}});
+        if (!restoredCap.empty())
+            rt_->asyncPoster().post({events::ResourceRestored,
+                {{"cap", restoredCap}, {"group", restoredGroup}}});
+    }
+
+    return found ? NemaResult<void, std::string>{true, {}}
+                 : NemaResult<void, std::string>{false, "lease not found"};
 }
 
 bool ResourceBroker::holdsLease(const std::string& appId,
@@ -70,18 +159,42 @@ bool ResourceBroker::holdsLease(const std::string& appId,
 }
 
 void ResourceBroker::releaseAll(const std::string& appId) {
-    std::lock_guard<std::mutex> g(mu_);
+    std::vector<std::pair<std::string, std::string>> restored;  // (cap, group)
+    size_t count = 0;
 
-    auto byIt = byApp_.find(appId);
-    if (byIt == byApp_.end()) return;
+    {
+        std::lock_guard<std::mutex> g(mu_);
 
-    size_t count = byIt->second.size();
-    for (const auto& cap : byIt->second)
-        leases_.erase(cap);
-    byApp_.erase(byIt);
+        auto byIt = byApp_.find(appId);
+        if (byIt == byApp_.end()) return;
+        count = byIt->second.size();
 
-    if (rt_ && count > 0) rt_->log().info("ResourceBroker", "auto-released",
-        {{"app", appId}, {"count", std::to_string(count)}});
+        for (const auto& cap : byIt->second) {
+            leases_.erase(cap);
+
+            int gi = findGroupIndex(cap);
+            if (gi >= 0) {
+                auto& grp = groups_[gi];
+                if (appId != grp.yieldableOwner) {
+                    grp.exclusiveCount = grp.exclusiveCount > 0
+                                         ? grp.exclusiveCount - 1 : 0;
+                    if (grp.exclusiveCount == 0 && !grp.suspendedCap.empty()) {
+                        restored.push_back({grp.suspendedCap, grp.id});
+                        grp.suspendedCap.clear();
+                    }
+                }
+            }
+        }
+        byApp_.erase(byIt);
+    }
+
+    if (rt_) {
+        if (count > 0) rt_->log().info("ResourceBroker", "auto-released",
+            {{"app", appId}, {"count", std::to_string(count)}});
+        for (const auto& [cap, grp] : restored)
+            rt_->asyncPoster().post({events::ResourceRestored,
+                {{"cap", cap}, {"group", grp}}});
+    }
 }
 
 } // namespace nema

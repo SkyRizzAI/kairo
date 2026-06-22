@@ -23,6 +23,26 @@ WifiSettingsScreen::WifiSettingsScreen(Runtime& rt)
     rt_.events().subscribe(events::WifiScanComplete,    rd);
     rt_.events().subscribe(events::NetworkConnected,    rd);
     rt_.events().subscribe(events::NetworkDisconnected, rd);
+
+    // Plan 87 Fase 3: show banner when the WiFi radio is taken by an app lease.
+    rt_.events().subscribe(events::ResourceSuspended, [this](const Event& e) {
+        std::string cap, by;
+        for (const auto& f : e.payload) {
+            if (std::string(f.key) == "cap") cap = f.value;
+            if (std::string(f.key) == "by")  by  = f.value;
+        }
+        if (cap != "net.wifi.managed") return;
+        wifiSuspendedBy_ = by;
+        redraw();
+    });
+    rt_.events().subscribe(events::ResourceRestored, [this](const Event& e) {
+        std::string cap;
+        for (const auto& f : e.payload)
+            if (std::string(f.key) == "cap") { cap = f.value; break; }
+        if (cap != "net.wifi.managed") return;
+        wifiSuspendedBy_.clear();
+        redraw();
+    });
 }
 
 void WifiSettingsScreen::redraw() { dirty_ = true; requestRedraw(); }
@@ -181,6 +201,12 @@ UiNode* WifiSettingsScreen::build(NodeArena& a, Runtime& rt) {
 
     bool on = d->isEnabled();
     append(Toggle(a, "Wi-Fi", on, cbToggleWifi, this));
+
+    if (!wifiSuspendedBy_.empty()) {
+        std::snprintf(suspendedBuf_, sizeof(suspendedBuf_),
+                      "Radio in use by: %s", wifiSuspendedBy_.c_str());
+        append(ListSection(a, suspendedBuf_));
+    }
 
     if (!on)
         return View(a, root, { list });

@@ -20,6 +20,7 @@
 #include "nema/services/storage_service.h"
 #include "nema/services/permission_service.h"
 #include "nema/services/resource_broker.h"
+#include "nema/services/system_wifi_manager.h"
 #include "nema/fs/mem_filesystem.h"
 #include "nema/fs/vfs.h"
 #include "nema/esp32/littlefs_filesystem.h"
@@ -74,6 +75,7 @@ private:
     StorageService     storage_;   // app data routing + management (Plan 83)
     PermissionService  permSvc_;   // per-app capability grants (Plan 87)
     ResourceBroker     broker_;    // exclusive HW leases + auto-release (Plan 87)
+    SystemWifiManager  sysWifi_;   // system WiFi lease + suspend/restore (Plan 87)
     Vfs                vfs_;       // mount table
     LittleFsFileSystem rootFs_;    // "/"   — persistent (internal flash)
     MemFileSystem      tmpFs_;     // "/tmp" — volatile scratch (RAM)
