@@ -28,20 +28,31 @@ namespace nema {
 void GuiService::start() {
     // Plan 70: register built-in fonts with the FontRegistry (nema::display).
     auto& fontReg = nema::display::FontRegistry::instance();
-    // Explicit size/weight handles (proportional Helvetica, Plan 79).
+    // Default: proportional Helvetica family (Plan 79, generated from u8g2 BDFs).
+    // User can override via Settings > Appearances > Font (saved to config "aether"/"font").
     fontReg.registerFont(nema::display::Fonts::Reg8,   &nema::display::FONT_REG8,   "reg8");
     fontReg.registerFont(nema::display::Fonts::Bold8,  &nema::display::FONT_BOLD8,  "bold8");
     fontReg.registerFont(nema::display::Fonts::Reg10,  &nema::display::FONT_REG10,  "reg10");
     fontReg.registerFont(nema::display::Fonts::Bold10, &nema::display::FONT_BOLD10, "bold10");
     fontReg.registerFont(nema::display::Fonts::Reg12,  &nema::display::FONT_REG12,  "reg12");
     fontReg.registerFont(nema::display::Fonts::Bold12, &nema::display::FONT_BOLD12, "bold12");
-    // Role handles map onto the family: titles/subheaders bold-10, body regular-8,
-    // tiny regular-8, big numbers bold-12, mono stays the 6×8 fixed-width font.
     fontReg.registerFont(nema::display::Fonts::Primary,   &nema::display::FONT_BOLD10, "primary");
     fontReg.registerFont(nema::display::Fonts::Secondary, &nema::display::FONT_REG8,   "secondary");
     fontReg.registerFont(nema::display::Fonts::Mono,      &nema::display::FONT_6X8,    "mono");
     fontReg.registerFont(nema::display::Fonts::Tiny,      &nema::display::FONT_REG8,   "tiny");
     fontReg.registerFont(nema::display::Fonts::BigNum,    &nema::display::FONT_BOLD12, "bignum");
+
+    // Apply user-selected font pack if configured (overrides compiled-in defaults).
+    {
+        std::string fontPack = rt_.config().getString("aether", "font", "");
+        if (!fontPack.empty() && fontPack != "Helvetica") {
+            std::string packPath = "/system/assets/fonts/" + fontPack;
+            if (!fontReg.applyFontPack(rt_.fs(), packPath.c_str())) {
+                // Try SD card
+                fontReg.applyFontPack(rt_.fs(), ("/ext/assets/fonts/" + fontPack).c_str());
+            }
+        }
+    }
 
     display_ = rt_.container().resolve<IDisplayDriver>();
 
@@ -159,15 +170,17 @@ void GuiService::loop() {
         rt_.tasks().drainCompletions();
 
         // 5. Plan 70: Tick animations. If any frame advanced, we need a redraw.
-        if (anim::AnimationManager::instance().tickAll((uint32_t)now))
+        // Skip while display is off (Sleep or Locked-before-wake) — avoids updating
+        // LCD GRAM with animation frames that would flash briefly on backlight-on.
+        if (!dpm.isDisplayOff() && anim::AnimationManager::instance().tickAll((uint32_t)now))
             vd.requestRedraw();
 
-        // 6. Render — skip while sleeping; flush one blank frame on sleep entry.
+        // 6. Render — skip while display is off; flush one blank frame on sleep entry.
         if (hasDisplay && server) {
             if (dpm.isSleeping() && dpm.takeEnteredSleep()) {
                 rt_.canvas().clear(false);
                 rt_.canvas().flush();
-            } else if (!dpm.isSleeping() && vd.takeRedraw()) {
+            } else if (!dpm.isDisplayOff() && vd.takeRedraw()) {
                 aether::ui::setRenderTick((uint32_t)now);
                 // Theme is applied by the server itself in renderFrame (ADR 0002).
                 // GuiService only drives the shared canvas scale (neutral).

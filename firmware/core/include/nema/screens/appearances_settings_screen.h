@@ -26,6 +26,8 @@ private:
     static const char*  kAssetNames[];
     static constexpr int kAssetCount = 1;
 
+    static constexpr int kMaxFontPacks = 8;
+
     int  findThemeIdx() const;
     int  findNameIdx(const char* ns, const char* key, const char* const* names,
                      int count, const char* def) const;
@@ -34,18 +36,29 @@ private:
     void cycleDesktop(int dir);
     void cycleLauncher(int dir);
     void cycleAsset(int dir);
+    void cycleFont(int dir);
+    void applyFont(const char* name);
     void openDesktopSetting();
+    void scanFontPacks();
 
     static void themeAdj       (void* u, int dir);
     static void desktopAdj     (void* u, int dir);
     static void launcherAdj    (void* u, int dir);
     static void assetAdj       (void* u, int dir);
+    static void fontAdj        (void* u, int dir);
     static void onDesktopSetting(void* u);
 
     DesktopSettingScreen    desktopSetting_;
     aether::ui::ScrollState scroll_;
     int themeIdx_ = 0;
     int desktopIdx_ = 0, launcherIdx_ = 0, assetIdx_ = 0;
+
+    // Font pack cycling
+    char fontName_[48]                       = "builtin";
+    char fontPackNames_[kMaxFontPacks][48]   = {};
+    char fontPackPaths_[kMaxFontPacks][96]   = {};
+    int  fontPackCount_                      = 0;
+    int  fontPackIdx_                        = 0;
 };
 
 } // namespace nema

@@ -1,7 +1,12 @@
 #pragma once
 #include <cstdint>
 
+namespace nema {
+struct IFileSystem;
+}
+
 namespace nema::display { struct BitmapFont; }   // defined in canvas.h
+namespace nema::display { struct LoadedFont; }   // defined in bmf_loader.h
 
 namespace nema::display {
 
@@ -52,6 +57,21 @@ public:
     bool has(FontHandle handle) const;
     const char* nameOf(FontHandle handle) const;
 
+    // Dynamic font loading — load a .bmf file from the filesystem and register
+    // it at the given handle. FontRegistry takes ownership of the LoadedFont.
+    bool loadFontFile(FontHandle h, nema::IFileSystem* fs, const char* path, const char* name);
+
+    // Load a complete 6-file font pack (reg8/bold8/reg10/bold10/reg12/bold12)
+    // from dirPath and re-register the role handles (Primary, Secondary, etc.).
+    // Returns true if at least one font loaded successfully.
+    bool applyFontPack(nema::IFileSystem* fs, const char* dirPath);
+
+    // Enumerate available font packs under basePath (subdirectory names).
+    // Returns the number of packs found (up to maxPacks).
+    // outNames[][48] receives the pack name; outPaths[][96] receives full path.
+    int scanFontPacks(nema::IFileSystem* fs, const char* basePath,
+                      char outNames[][48], char outPaths[][96], int maxPacks);
+
 private:
     FontRegistry() = default;
 
@@ -59,7 +79,8 @@ private:
         const BitmapFont* font = nullptr;
         const char*       name = nullptr;
     };
-    Entry entries_[Fonts::MAX];
+    Entry      entries_[Fonts::MAX];
+    LoadedFont* owned_[Fonts::MAX] = {};  // owns heap fonts; nullptr = not owned
     FontHandle nextCustom_ = Fonts::CUSTOM_BASE;
 };
 

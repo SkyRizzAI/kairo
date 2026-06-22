@@ -52,8 +52,16 @@ extern const BitmapFont FONT_REG10;
 extern const BitmapFont FONT_BOLD10;
 extern const BitmapFont FONT_REG12;
 extern const BitmapFont FONT_BOLD12;
+// IoskeleyMono family — regular + bold at 8/10/12px. Generated from TTF via
+// tools/fonts/ttf_encode.py. Replaces Helvetica at UI roles Reg*/Bold*.
+extern const BitmapFont FONT_IOSK_REG8;
+extern const BitmapFont FONT_IOSK_BOLD8;
+extern const BitmapFont FONT_IOSK_REG10;
+extern const BitmapFont FONT_IOSK_BOLD10;
+extern const BitmapFont FONT_IOSK_REG12;
+extern const BitmapFont FONT_IOSK_BOLD12;
 
-}  // namespace aether
+}  // namespace nema::display
 
 namespace nema {
 

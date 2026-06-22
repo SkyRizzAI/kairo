@@ -46,6 +46,7 @@ src/input/gesture.cpp
     src/app/papp_package.cpp
     src/ui/canvas.cpp
     src/ui/font_registry.cpp
+    src/ui/bmf_loader.cpp
     src/ui/font_5x8.cpp
     src/ui/font_6x8.cpp
     src/ui/font_reg8.cpp
@@ -54,6 +55,12 @@ src/input/gesture.cpp
     src/ui/font_bold10.cpp
     src/ui/font_reg12.cpp
     src/ui/font_bold12.cpp
+    src/ui/font_iosk_reg8.cpp
+    src/ui/font_iosk_bold8.cpp
+    src/ui/font_iosk_reg10.cpp
+    src/ui/font_iosk_bold10.cpp
+    src/ui/font_iosk_reg12.cpp
+    src/ui/font_iosk_bold12.cpp
     src/ui/view_dispatcher.cpp
     src/services/storage_service.cpp
     src/services/display_power_manager.cpp

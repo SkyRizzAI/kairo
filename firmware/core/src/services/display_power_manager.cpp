@@ -33,7 +33,7 @@ bool DisplayPowerManager::deliverKey(Key k, uint64_t nowMs) {
             // First press while locked: wake display and reveal lock screen.
             // This key is consumed as the "wake" tap — not forwarded as an unlock gesture.
             if (display_) display_->wake();
-            if (vd_ && lockScreen_) { vd_->push(*lockScreen_); vd_->requestRedraw(); }
+            if (vd_ && lockScreen_) { vd_->push(*lockScreen_); }
             lockScreenShown_ = true;
             return true;
         }
@@ -66,9 +66,15 @@ void DisplayPowerManager::unlock() {
     if (vd_) vd_->requestRedraw();
 }
 
-bool DisplayPowerManager::isActive()   const { return state_ == State::Active; }
-bool DisplayPowerManager::isSleeping() const { return state_ == State::Sleep;  }
-bool DisplayPowerManager::isLocked()   const { return state_ == State::Locked; }
+bool DisplayPowerManager::isActive()     const { return state_ == State::Active; }
+bool DisplayPowerManager::isSleeping()   const { return state_ == State::Sleep;  }
+bool DisplayPowerManager::isLocked()     const { return state_ == State::Locked; }
+bool DisplayPowerManager::isDisplayOff() const {
+    // Backlight is off during Sleep, and during Locked before the first keypress
+    // reveals the LockScreen (lockScreenShown_ flips to true when display wakes).
+    return state_ == State::Sleep ||
+           (state_ == State::Locked && !lockScreenShown_);
+}
 
 bool DisplayPowerManager::takeEnteredSleep() {
     bool v = enteredSleepFlag_;

@@ -4,7 +4,7 @@
 > Detail per-stage ada di [`plans/`](plans/00-overview.md). Master plan: [`concept_plan.md`](concept_plan.md).
 > Reference arsitektur per-subsistem: [`architecture/`](architecture/README.md).
 >
-> **Last updated:** 2026-06-22 (Plan 77 + 78 — `@palanu/link` shared lib + `@palanu/forge-cli` CLI)
+> **Last updated:** 2026-06-22 (font pack system + DPM render-gate fix)
 
 ---
 
@@ -42,6 +42,8 @@ Palanu = platform handheld bergaya Flipper Zero, **1-bit retro/pixel UI**, denga
 | **Ticker app** (BTC/USD via Binance, fetch di worker, UI tak freeze) | ✅ build | sim ✓ (HW pending) |
 | **Sim WiFi "router"** interaktif (network list, password, RSSI, online toggle) | ✅ | web panel + 4-skenario ✓ |
 | **Secure element HAL** (`ISecureElement`, `caps::Secure`; backend SE050 skyrizz + sim) | 🟡 scaffold | build host+wasm+esp32 ✓; ops crypto TODO (ADR 0005) — fondasi crypto wallet |
+| **Font pack system** (dynamic `.bmf` load from VFS; Settings→Font cycles packs; IoskeleyMono + IoskeleyMono-Condensed seeded) | ✅ build | sim ✓ (font cycling + rendering) |
+| **Sleep/lock render gate** (`isDisplayOff()` di DPM — blok render + anim tick saat backlight mati, termasuk Locked state pre-wake) | ✅ build | fix animation flash on wake |
 
 **Pilar arsitektur "tidak pernah freeze" terbukti:** scan WiFi (1-3s) dan HTTP fetch (1-3s) jalan di `TaskRunner` worker thread sementara UI tetap render & responsif. Reference firmware-nya sendiri komentar "freezes UI during fetch" — Palanu tidak.
 
@@ -144,6 +146,9 @@ packages/forge/          SvelteKit web client: /simulator (WASM), /remote, /flas
 - [0001](decisions/0001-usb-jtag-remote-uses-hwcdc.md) — Forge remote over USB
   Serial/JTAG drives HWCDC directly (not Arduino `Serial`); branch on the **value** of
   `ARDUINO_USB_CDC_ON_BOOT` with `#if`, never `#ifdef`.
+- [0007](decisions/0007-isDisplayOff-render-gate.md) — `isDisplayOff()` predicate gates
+  render loop and animation ticks; covers both Sleep and Locked-before-first-key so LCD
+  GRAM is never dirtied while the backlight is off.
 
 ---
 

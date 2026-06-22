@@ -13,6 +13,8 @@
 #include "nema/apps/js_app_store.h"
 #include "nema/app/papp_installer.h"
 #include "nema/assets/anims/dolphin_sleep_panim.h"
+#include "nema/assets/fonts/iosk_mono_pack.h"
+#include "nema/assets/fonts/iosk_cond_pack.h"
 #include <string>
 #include <vector>
 #include <cstdlib>
@@ -81,6 +83,22 @@ void WasmPlatform::registerDrivers(Runtime& rt) {
     rootFs_.mkdir("/system/assets");
     rootFs_.mkdir("/system/assets/anims");
     rootFs_.write("/system/assets/anims/laptop.panim", kDolphinSleepPanim, kDolphinSleepPanimLen);
+    // Font packs — seeded so Settings > Appearances > Font can discover them.
+    rootFs_.mkdir("/system/assets/fonts");
+    rootFs_.mkdir("/system/assets/fonts/IoskeleyMono");
+    rootFs_.write("/system/assets/fonts/IoskeleyMono/reg8.bmf",   kIoskMonoReg8,   kIoskMonoReg8Len);
+    rootFs_.write("/system/assets/fonts/IoskeleyMono/bold8.bmf",  kIoskMonoBold8,  kIoskMonoBold8Len);
+    rootFs_.write("/system/assets/fonts/IoskeleyMono/reg10.bmf",  kIoskMonoReg10,  kIoskMonoReg10Len);
+    rootFs_.write("/system/assets/fonts/IoskeleyMono/bold10.bmf", kIoskMonoBold10, kIoskMonoBold10Len);
+    rootFs_.write("/system/assets/fonts/IoskeleyMono/reg12.bmf",  kIoskMonoReg12,  kIoskMonoReg12Len);
+    rootFs_.write("/system/assets/fonts/IoskeleyMono/bold12.bmf", kIoskMonoBold12, kIoskMonoBold12Len);
+    rootFs_.mkdir("/system/assets/fonts/IoskeleyMono-Condensed");
+    rootFs_.write("/system/assets/fonts/IoskeleyMono-Condensed/reg8.bmf",   kIoskCondReg8,   kIoskCondReg8Len);
+    rootFs_.write("/system/assets/fonts/IoskeleyMono-Condensed/bold8.bmf",  kIoskCondBold8,  kIoskCondBold8Len);
+    rootFs_.write("/system/assets/fonts/IoskeleyMono-Condensed/reg10.bmf",  kIoskCondReg10,  kIoskCondReg10Len);
+    rootFs_.write("/system/assets/fonts/IoskeleyMono-Condensed/bold10.bmf", kIoskCondBold10, kIoskCondBold10Len);
+    rootFs_.write("/system/assets/fonts/IoskeleyMono-Condensed/reg12.bmf",  kIoskCondReg12,  kIoskCondReg12Len);
+    rootFs_.write("/system/assets/fonts/IoskeleyMono-Condensed/bold12.bmf", kIoskCondBold12, kIoskCondBold12Len);
     // Create empty scan + data roots
     rootFs_.mkdir("/system/apps");
     rootFs_.mkdir("/system/data");

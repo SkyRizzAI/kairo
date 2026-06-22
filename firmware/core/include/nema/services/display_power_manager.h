@@ -29,6 +29,9 @@ public:
     bool isActive()        const;
     bool isSleeping()      const;
     bool isLocked()        const;
+    // True when the display backlight is physically off and no content is visible.
+    // Use this (not isSleeping) to gate rendering and animation ticks.
+    bool isDisplayOff()    const;
     bool takeEnteredSleep();  // one-shot: true the first frame after sleep entry
 
     uint64_t sleepMs() const { return sleepTimeoutMs_; }
