@@ -15,6 +15,7 @@
 #include "nema/hal/http_client.h"
 #include "nema/services/profile_service.h"
 #include "nema/services/permission_service.h"
+#include "nema/services/resource_broker.h"
 #include "nema/ui/aether_abi.h"
 #include <string>
 #include <utility>
@@ -88,13 +89,23 @@ public:
     }
 
     // ── nema:sys/lease ────────────────────────────────────────────────
-    // @future Fase 2: replace with ResourceBroker calls.
 
-    NemaResult<uint32_t, LeaseError> lease_acquire(std::string_view) override {
-        return {true, 0u, {}};  // stub: always grant, handle=0
+    NemaResult<uint32_t, LeaseError> lease_acquire(std::string_view cap) override {
+        auto* broker = rt_.container().resolve<nema::ResourceBroker>();
+        if (!broker) return {true, 0u, {}};  // no broker = dev mode, dummy handle
+        return broker->acquire(appId_, std::string(cap));
     }
-    NemaResult<void, std::string> lease_release(uint32_t) override {
-        return {true, {}};
+
+    NemaResult<void, std::string> lease_release(uint32_t handle) override {
+        auto* broker = rt_.container().resolve<nema::ResourceBroker>();
+        if (!broker) return {true, {}};
+        return broker->release(appId_, handle);
+    }
+
+    bool lease_check(std::string_view /*app_id*/, std::string_view cap) override {
+        auto* broker = rt_.container().resolve<nema::ResourceBroker>();
+        if (!broker) return true;
+        return broker->holdsLease(appId_, std::string(cap));
     }
 
     // ── nema:sys/events ───────────────────────────────────────────────

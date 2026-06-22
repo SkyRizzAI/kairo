@@ -212,12 +212,12 @@ void AppHost::threadEntry(void* self) {
             {{"app", h->app_.name()}});
         exitCode = 1;
     }
-    if (exitCode != 0) {
-        h->rt_.asyncPoster().post({events::AppHostExited, {
-            {"id", std::string(h->app_.id())},
-            {"name", h->app_.name()},
-            {"exitCode", std::to_string(exitCode)}}});
-    }
+    // Always emit so lease/resource holders can auto-release on any exit type.
+    // AppHostManager::onAppExited already handles exitCode==0 cleanly (erases crash map).
+    h->rt_.asyncPoster().post({events::AppHostExited, {
+        {"id",       std::string(h->app_.id())},
+        {"name",     h->app_.name()},
+        {"exitCode", std::to_string(exitCode)}}});
 }
 
 Canvas& AppHost::canvas() { return *appCanvas_; }

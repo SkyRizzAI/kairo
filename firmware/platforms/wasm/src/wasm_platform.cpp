@@ -115,6 +115,10 @@ void WasmPlatform::registerDrivers(Runtime& rt) {
     permSvc_.init(rt);
     rt.container().registerService(&permSvc_);
 
+    // Exclusive HW leases + auto-release on exit (Plan 87 Fase 2).
+    broker_.init(rt);
+    rt.container().registerService(&broker_);
+
     remote_.attachFs(vfs_);
 
     remote_.onReady(&WasmPlatform::readyThunk, this); // push current screen on connect (after auth)

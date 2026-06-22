@@ -248,6 +248,10 @@ void Esp32Platform::postRegister(Runtime& rt) {
     permSvc_.init(rt);
     rt.container().registerService(&permSvc_);
 
+    // Exclusive HW leases + auto-release on exit (Plan 87 Fase 2).
+    broker_.init(rt);
+    rt.container().registerService(&broker_);
+
     // microSD (FAT) — only on boards that wire an SD socket (Plan 38). Non-fatal:
     // a missing card or failed mount just means "/sd" is absent; boot continues.
     // Once mounted, the VFS auto-surfaces "sd" when listing "/", so the File

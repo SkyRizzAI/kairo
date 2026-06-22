@@ -64,6 +64,7 @@ src/input/gesture.cpp
     src/ui/view_dispatcher.cpp
     src/services/storage_service.cpp
     src/services/permission_service.cpp
+    src/services/resource_broker.cpp
     src/services/display_power_manager.cpp
     src/services/audio_service.cpp
     src/services/camera_service.cpp
