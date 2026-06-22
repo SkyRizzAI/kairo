@@ -138,6 +138,9 @@ aether::ui::UiNode* BadUsbApp::build(NodeArena& arena, AppContext& ctx) {
     }
 
     // ── Main ─────────────────────────────────────────────────────────────────
+    bool hidReady = hid_ && hid_->isReady();
+    std::snprintf(scriptCountBuf_, sizeof(scriptCountBuf_), "%d", (int)scripts_.size());
+
     ListEntry runRow;
     runRow.label   = "Run Script";
     runRow.chevron = true;
@@ -147,6 +150,9 @@ aether::ui::UiNode* BadUsbApp::build(NodeArena& arena, AppContext& ctx) {
     return View(arena, root, {
         ListContainer(arena, scrollMain_, {
             ListItemRow(arena, runRow),
+            ListSection(arena, "Info"),
+            info("HID",     hidReady ? "Enabled" : "Disabled"),
+            info("Scripts", scriptCountBuf_),
         }),
     });
 }

@@ -61,6 +61,7 @@ private:
 
     aether::ui::ScrollState scrollMain_;
     aether::ui::ScrollState scrollScripts_;
+    char scriptCountBuf_[16] = {};
     char runProgressBuf_[32] = {};
 };
 
