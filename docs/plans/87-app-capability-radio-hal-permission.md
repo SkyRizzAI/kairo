@@ -1,6 +1,6 @@
 # Plan 87 — App Capability, Radio HAL & Permission (Hybrid Raw Access + Crash Isolation)
 
-> Status: **IN PROGRESS** (builder). Fase 0–7 ✅ — Fase 8 berikutnya.
+> Status: **DONE** (builder). Fase 0–8 ✅ — Plan 87 selesai.
 > Prasyarat: Plan 84 (app runtime parity) ✅, Plan 85 (WASM bare-metal SDK) ✅,
 > Plan 86 (process-first app model) ✅. Plan ini memberi app **akses hardware
 > tingkat-rendah (radio raw)** dengan aman, lewat satu kontrak API yang
@@ -396,7 +396,7 @@ interface lease {
 - [x] Fase 5 — WiFi raw escape (monitor ring + inject + backpressure)
 - [x] Fase 6 — Crash-safety (WASM watchdog, invariant doc, lease cleanup verify)
 - [x] Fase 7 — Settings Apps→detail + relokasi storage
-- [ ] Fase 8 — Example Marauder-equivalent + verifikasi G1–G8
+- [x] Fase 8 — Example Marauder-equivalent + verifikasi G1–G8
 - [ ] ADR 0007 — Hybrid raw radio access + lease/permission model
 
 ---

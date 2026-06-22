@@ -1,0 +1,17 @@
+{
+  "id": "com.palanu.wifi-marauder",
+  "name": "WiFi Marauder",
+  "version": "1.0.0",
+  "runtime": "wasm",
+  "mode": "ui",
+  "entry": "wifi-marauder.wasm",
+  "api_version": "1.0",
+  "category": "WiFi",
+  "icon": "feature.subghz",
+  "needs": [
+    "net.wifi.scan",
+    "net.wifi.monitor",
+    "net.wifi.inject"
+  ],
+  "description": "WiFi audit tool: AP scan, deauth flood, beacon spam, monitor mode. Requires net.wifi.* permissions."
+}

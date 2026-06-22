@@ -339,6 +339,62 @@ static inline void printf(const char* fmt, ...) {
 
 #endif // NEMA_NO_PRINTF
 
+// ── WiFi radio ABI (Plan 87 Fase 8) ───────────────────────────────────────────
+// Raw and thick WiFi access for WASM apps.  Requires manifest "needs" entries:
+//   "net.wifi.scan"    — passive AP scan (auto-grant, benign)
+//   "net.wifi.monitor" — monitor mode + raw frame capture (user-grant, sensitive)
+//   "net.wifi.inject"  — deauth / beacon spam / raw inject (user-grant, sensitive)
+//
+// Scan result buffer: newline-separated, pipe-delimited:
+//   "BSSID|SSID|channel|rssi|auth\n"  (e.g. "AA:BB:CC:DD:EE:FF|Home|6|-65|wpa2\n")
+//
+// Beacon spam ssids_buf: NUL-separated SSIDs, count = number of SSIDs.
+//   e.g. "FakeNet1\0FakeNet2\0"  count=2
+//
+// Monitor/event read: returns raw bytes; 0 = timeout.
+
+// Scan for visible APs (blocking). Returns bytes written, -1 on error.
+NEMA_IMPORT("wifi", "wifi_scan")
+extern int wifi_scan(char* out, int cap);
+
+// Start deauth flood on bssid (AA:BB:CC:DD:EE:FF) at channel. 0=ok/-1=err.
+NEMA_IMPORT("wifi", "wifi_deauth_start")
+extern int wifi_deauth_start(const char* bssid, int channel);
+
+// Stop the running deauth loop.
+NEMA_IMPORT("wifi", "wifi_deauth_stop")
+extern int wifi_deauth_stop(void);
+
+// Start beacon spam. ssids_buf is NUL-separated, count = number of SSIDs.
+NEMA_IMPORT("wifi", "wifi_beacon_spam_start")
+extern int wifi_beacon_spam_start(const char* ssids_buf, int count);
+
+// Stop the running beacon spam loop.
+NEMA_IMPORT("wifi", "wifi_beacon_spam_stop")
+extern int wifi_beacon_spam_stop(void);
+
+// Open monitor (promiscuous) mode on channel. 0=ok/-1=not supported.
+NEMA_IMPORT("wifi", "wifi_monitor_open")
+extern int wifi_monitor_open(int channel);
+
+// Read one raw 802.11 frame into out (up to max bytes). timeout_ms=0 → 1ms.
+// Returns bytes read; 0 = timeout or ring empty.
+NEMA_IMPORT("wifi", "wifi_monitor_read")
+extern int wifi_monitor_read(unsigned char* out, int max, int timeout_ms);
+
+// Close monitor mode.
+NEMA_IMPORT("wifi", "wifi_monitor_close")
+extern void wifi_monitor_close(void);
+
+// Inject a raw 802.11 frame on channel. 0=ok/-1=err.
+NEMA_IMPORT("wifi", "wifi_inject")
+extern int wifi_inject(int channel, const unsigned char* frame, int len);
+
+// Block until next thick-loop event (deauth/beacon tick).
+// JSON bytes written into out; 0 = timeout.
+NEMA_IMPORT("wifi", "wifi_wait_event")
+extern int wifi_wait_event(char* out, int max, int timeout_ms);
+
 // ── display_* ergonomic aliases (Plan 86 Fase 5) ──────────────────────────────
 // AkiraOS-style short names. Map directly to canvas_* — zero overhead.
 #define display_width()              canvas_width()
