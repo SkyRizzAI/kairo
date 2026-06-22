@@ -79,6 +79,10 @@ void PermissionService::guiTick(ViewDispatcher& vd) {
     factory_(req, vd);
 }
 
+void PermissionService::revoke(const std::string& appId, const std::string& cap) {
+    persist(appId, cap, 2);  // denied — app will be refused until user re-grants
+}
+
 void PermissionService::persist(const std::string& appId,
                                  const std::string& cap, uint8_t val) {
     if (!rt_) return;

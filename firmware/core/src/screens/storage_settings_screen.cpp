@@ -1,4 +1,5 @@
-// Plan 83 Fase 5 — StorageSettingsScreen: volume overview + per-app list + move.
+// Plan 83 Fase 5 — StorageSettingsScreen: volume overview only.
+// Per-app detail (permissions + move + uninstall) moved to AppDetailScreen (Plan 87 Fase 7).
 #include "nema/screens/storage_settings_screen.h"
 #include "nema/runtime.h"
 #include "nema/service/service_container.h"
@@ -15,8 +16,6 @@ StorageSettingsScreen::StorageSettingsScreen(Runtime& rt)
 void StorageSettingsScreen::onResume() {
     scroll_.scrollMain = 0;
     state_.focus.focused = 0;
-    apps_.clear();
-    items_.clear();
     vals_.clear();
     rt_.view().requestRedraw();
 }
@@ -32,27 +31,8 @@ std::string StorageSettingsScreen::fmtBytes(size_t bytes) {
     return buf;
 }
 
-void StorageSettingsScreen::onSelect(void* u) {
-    auto* it = static_cast<AppItem*>(u);
-    it->self->moveApp(it->idx);
-}
-
-void StorageSettingsScreen::moveApp(size_t idx) {
-    auto* svc = rt_.container().resolve<StorageService>();
-    if (!svc || idx >= apps_.size()) return;
-    auto& app = apps_[idx];
-    if (!app.movable) return;
-    StorageLocation target = (app.location == StorageLocation::External)
-                                 ? StorageLocation::Internal
-                                 : StorageLocation::External;
-    svc->move(app.bundleId.c_str(), target);
-    rt_.view().requestRedraw();
-}
 
 aether::ui::UiNode* StorageSettingsScreen::build(NodeArena& a, Runtime& rt) {
-    apps_.clear();
-    items_.clear();
-
     auto* svc = rt.container().resolve<StorageService>();
 
     Style root; root.dir = FlexDir::Col; root.flexGrow = 1; root.align = Align::Stretch;
@@ -102,30 +82,7 @@ aether::ui::UiNode* StorageSettingsScreen::build(NodeArena& a, Runtime& rt) {
         append(ListItemRow(a, e));
     }
 
-    // ── Per-app list ─────────────────────────────────────────────────────────
-    apps_ = svc->allApps();
-    if (!apps_.empty()) {
-        bool hasExt = svc->hasExternal();
-        append(ListSection(a, "Apps"));
-        for (size_t i = 0; i < apps_.size(); ++i) {
-            auto& app = apps_[i];
-            size_t total = app.internalBytes + app.externalBytes;
-            const char* locStr = (app.location == StorageLocation::External)
-                                     ? "SD" : "Int";
-            std::string v = fmtBytes(total) + " / " + locStr;
-
-            items_.push_back({this, i});
-            ListEntry e;
-            e.label   = app.displayName.c_str();
-            e.value   = pushVal(v);
-            e.chevron = app.movable && hasExt;
-            if (app.movable && hasExt) {
-                e.onPress = onSelect;
-                e.user    = &items_.back();
-            }
-            append(ListItemRow(a, e));
-        }
-    }
+    // Per-app storage + permissions → Settings → Apps → [app] (AppDetailScreen).
 
     return View(a, root, { list });
 }

@@ -8,9 +8,10 @@ namespace nema {
 
 class Runtime;
 
-// Settings → Storage (Plan 83 Fase 5).
-// Shows Internal/SD volume usage and per-app storage info.
-// Selecting a movable app toggles its storage location (internal ↔ SD).
+// Settings → Storage (Plan 83 Fase 5, updated Plan 87 Fase 7).
+// Shows Internal/SD volume usage only.
+// Per-app detail (permissions + move + uninstall) lives in AppDetailScreen,
+// reached via Settings → Apps → [app].
 class StorageSettingsScreen : public ComponentScreen {
 public:
     explicit StorageSettingsScreen(Runtime& rt);
@@ -18,19 +19,10 @@ public:
     aether::ui::UiNode* build(aether::ui::NodeArena& a, Runtime& rt) override;
 
 private:
-    struct AppItem {
-        StorageSettingsScreen*     self;
-        size_t                     idx;   // index into apps_
-    };
-
-    static void onSelect(void* u);
-    void        moveApp(size_t idx);
     static std::string fmtBytes(size_t bytes);
 
-    aether::ui::ScrollState           scroll_;
-    std::vector<StorageService::AppStorageInfo> apps_;
-    std::vector<AppItem>              items_;
-    std::vector<std::string>          vals_;   // owns formatted value strings (const char* safety)
+    aether::ui::ScrollState  scroll_;
+    std::vector<std::string> vals_;   // owns formatted value strings (const char* safety)
 };
 
 } // namespace nema

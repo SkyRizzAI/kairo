@@ -1,12 +1,14 @@
 // Plan 60 — AppListScreen: standardised-UI list of installed apps.
 // Plan 52/53 — per-app icon from icon_pack or bundled bitmap (Plan 84).
 #include "nema/screens/app_list_screen.h"
+#include "nema/screens/app_detail_screen.h"
 #include "nema/runtime.h"
 #include "nema/ui/widgets.h"
 #include "nema/ui/icon_pack.h"
 #include "nema/app/app_registry.h"
 #include "nema/app/app_manifest.h"
 #include "nema/app/papp_installer.h"
+#include "nema/ui/view_dispatcher.h"
 #include <cstring>
 
 namespace nema {
@@ -43,6 +45,20 @@ void AppListScreen::onLaunch(void* u) {
         r->self->rt_.apps().launch(ids[r->index].c_str());
 }
 
+void AppListScreen::onOpenDetail(void* u) {
+    auto* r    = static_cast<Row*>(u);
+    auto* self = r->self;
+    int   i    = r->index;
+    if (i < 0 || i >= (int)self->ids_.size()) return;
+    auto* detail = self->detailScreen_;
+    if (!detail) return;
+
+    const auto& ci = self->customIcons_[i];
+    detail->setApp(self->ids_[i], self->names_[i],
+                   ci.bitmap, ci.w, ci.h);
+    self->rt_.view().push(*detail);
+}
+
 UiNode* AppListScreen::build(NodeArena& a, Runtime& rt) {
     names_.clear(); ids_.clear(); icons_.clear(); customIcons_.clear(); rows_.clear();
 
@@ -77,10 +93,11 @@ UiNode* AppListScreen::build(NodeArena& a, Runtime& rt) {
     for (size_t i = 0; i < names_.size(); i++) {
         rows_[i] = {this, (int)i};
 
+        bool selectable = !empty;
         ListEntry e;
         e.label   = names_[i].c_str();
-        e.chevron = !empty;
-        e.onPress = empty ? nullptr : onLaunch;
+        e.chevron = selectable;
+        e.onPress = selectable ? (detailScreen_ ? onOpenDetail : onLaunch) : nullptr;
         e.user    = &rows_[i];
 
         const auto& ci = customIcons_[i];

@@ -59,6 +59,10 @@ public:
     // responds to the permission screen. Returns 1=granted, 2=denied.
     uint8_t request(const std::string& appId, const std::string& cap);
 
+    // Revoke a previously granted permission (set to denied=2, persisted).
+    // Called from AppDetailScreen → user toggled a capability off.
+    void revoke(const std::string& appId, const std::string& cap);
+
     // ── GUI-thread API ───────────────────────────────────────────────────────
 
     // Call from GuiService loop each frame. Invokes the ScreenFactory when a

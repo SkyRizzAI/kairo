@@ -13,6 +13,8 @@
 #include "nema/screens/developer_screen.h"
 #include "nema/screens/profile_settings_screen.h"
 #include "nema/screens/storage_settings_screen.h"
+#include "nema/screens/app_list_screen.h"
+#include "nema/screens/app_detail_screen.h"
 #include <memory>
 #include <vector>
 
@@ -29,7 +31,7 @@ public:
     aether::ui::UiNode* build(aether::ui::NodeArena& a, Runtime& rt) override;
 
 private:
-    enum Kind { Display, Appearances, Controls, Wifi, Bluetooth, Remote, Touch, Sounds, Camera, Developer, About, Profile, Storage };
+    enum Kind { Display, Appearances, Controls, Wifi, Bluetooth, Remote, Touch, Sounds, Camera, Developer, About, Profile, Storage, Apps };
     struct Item { SettingsScreen* self; Kind kind; const char* label; };
 
     AboutScreen          about_;
@@ -45,6 +47,8 @@ private:
     DeveloperScreen      developer_;
     ProfileSettingsScreen profileSettings_;
     StorageSettingsScreen storageSettings_;
+    AppDetailScreen       appDetail_;
+    AppListScreen         appsSettings_;   // settings-context list → opens appDetail_
 
     aether::ui::ScrollState   scroll_;
     std::vector<Item> items_;
