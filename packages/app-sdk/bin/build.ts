@@ -46,26 +46,47 @@ await mkdir(outDir, { recursive: true });
 console.log(`  building ${manifest.name} (${manifest.id})...`);
 
 if (manifest.runtime === "wasm") {
-  // ── Build WASM (C → .wasm via wasi-sdk) ─────────────────────────────────
-  const wasiSdk = process.env.WASI_SDK_PATH ?? "/opt/wasi-sdk";
-  const clang = join(wasiSdk, "bin", "clang");
-  const clangFile = Bun.file(clang);
-  if (!(await clangFile.exists())) {
-    console.error(`wasi-sdk not found at ${wasiSdk}`);
-    console.error("Set WASI_SDK_PATH or install to /opt/wasi-sdk:");
-    console.error("  https://github.com/WebAssembly/wasi-sdk/releases");
-    process.exit(1);
-  }
+  // ── Build WASM (C → .wasm via wasi-sdk or Docker) ────────────────────────
+  // outDir is always inside appDir, so mounting appDir:/work covers both src
+  // and output. outWasm is relative to appDir for the Docker command.
   const srcFile = join(appDir, "main.c");
   const outWasm = join(outDir, entryFile);  // e.g. counter.wasm
-  const proc = Bun.spawn(
-    [clang, "--target=wasm32-wasi", "-O2", "-o", outWasm, srcFile],
-    { stdout: "inherit", stderr: "inherit" }
-  );
+
+  const wasiSdk = process.env.WASI_SDK_PATH ?? "/opt/wasi-sdk";
+  const clang = join(wasiSdk, "bin", "clang");
+  const hasLocal = await Bun.file(clang).exists();
+
+  let cmd: string[];
+  if (hasLocal) {
+    cmd = [clang, "--target=wasm32-wasi", "-O2", "-o", outWasm, srcFile];
+  } else {
+    // Fall back to Docker (--rm so the container is deleted after the run).
+    const dockerProbe = Bun.spawn(["docker", "version"], { stdout: "ignore", stderr: "ignore" });
+    if (await dockerProbe.exited !== 0) {
+      console.error("wasi-sdk not found and Docker is not available.");
+      console.error(`  local:  set WASI_SDK_PATH or install to /opt/wasi-sdk`);
+      console.error(`  docker: https://docs.docker.com/get-docker/`);
+      process.exit(1);
+    }
+    // Paths inside the container: mount appDir as /work (read-write so the
+    // compiled .wasm lands in /work/dist/<id>.papp/ which maps back to outDir).
+    const relOut = outWasm.replace(appDir, "/work");
+    const relSrc = srcFile.replace(appDir, "/work");
+    console.log("  (using Docker wasi-sdk — container removed after build)");
+    cmd = [
+      "docker", "run", "--rm",
+      "-v", `${appDir}:/work`,
+      "ghcr.io/webassembly/wasi-sdk:wasi-sdk-25",
+      "/opt/wasi-sdk/bin/clang", "--target=wasm32-wasi", "-O2",
+      "-o", relOut, relSrc,
+    ];
+  }
+
+  const proc = Bun.spawn(cmd, { stdout: "inherit", stderr: "inherit" });
   const code = await proc.exited;
-  if (code !== 0) { console.error("clang failed"); process.exit(code); }
-  const { size } = Bun.file(outWasm);
-  console.log(`  ${entryFile}  (${size}B)`);
+  if (code !== 0) { console.error("clang failed"); process.exit(code ?? 1); }
+  const wasmFile = Bun.file(outWasm);
+  console.log(`  ${entryFile}  (${wasmFile.size}B)`);
 } else {
   // ── Build JS/TSX (via Bun bundler) ───────────────────────────────────────
   const result = await Bun.build({
