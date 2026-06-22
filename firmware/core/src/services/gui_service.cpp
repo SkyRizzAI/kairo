@@ -15,6 +15,7 @@
 #include "nema/ui/view_dispatcher.h"
 #include "nema/services/input_service.h"
 #include "nema/app/app_host_manager.h"
+#include "nema/services/permission_service.h"
 #include "nema/input/input_action.h"
 #include "nema/system/capability_registry.h"
 #include "nema/event/event_bus.h"
@@ -84,6 +85,15 @@ void GuiService::start() {
 
     rt_.dpm().init(rt_.view(), display_, rt_.clock(), lockScreen_, sleepMs, lockMs);
     lockScreen_.setDpm(rt_.dpm());
+
+    // Plan 87 Fase 1: register PermissionScreen factory so the service can push
+    // the modal from the GUI thread without a core→aether link dependency.
+    if (auto* perm = rt_.container().resolve<PermissionService>()) {
+        perm->setScreenFactory([this](auto req, auto& vd) {
+            permScreen_.prepare(req);
+            vd.navigate(permScreen_);
+        });
+    }
     rt_.view().requestRedraw();   // paint the boot backend immediately (esp. fbcon)
     // UI thread on core 1 (Arduino loop also core 1 but now near-idle).
     // Priority above the near-idle main loop so input/render stay snappy.
@@ -164,6 +174,11 @@ void GuiService::loop() {
         // 3. Status bar + screen tick.
         refreshStatus(now);
         vd.tick(now);
+
+        // 3.5. Permission screen injection (Plan 87 Fase 1): push PermissionScreen
+        //      when an app is blocking on perm.request() for a sensitive cap.
+        if (auto* perm = rt_.container().resolve<PermissionService>())
+            perm->guiTick(vd);
 
         // 4. Background job completions — run on THIS (UI) thread, so callbacks
         //    can safely touch screen/app UI state.

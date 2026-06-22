@@ -111,6 +111,10 @@ void WasmPlatform::registerDrivers(Runtime& rt) {
     storage_.init(rt);
     rt.container().registerService(&storage_);
 
+    // Permission grants (Plan 87 Fase 1) — init after config is registered.
+    permSvc_.init(rt);
+    rt.container().registerService(&permSvc_);
+
     remote_.attachFs(vfs_);
 
     remote_.onReady(&WasmPlatform::readyThunk, this); // push current screen on connect (after auth)

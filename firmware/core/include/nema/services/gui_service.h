@@ -2,6 +2,7 @@
 #include "nema/thread.h"
 #include "nema/ui/status_bar.h"
 #include "nema/screens/lock_screen.h"
+#include "nema/screens/permission_screen.h"
 #include <cstdint>
 
 namespace nema {
@@ -28,7 +29,7 @@ struct IDisplayDriver;
 //   tick animations → render active server if redraw pending → flush
 class GuiService {
 public:
-    explicit GuiService(Runtime& rt) : rt_(rt), lockScreen_(rt) {}
+    explicit GuiService(Runtime& rt) : rt_(rt), lockScreen_(rt), permScreen_(rt) {}
 
     void start();   // register fonts, init DPM, spawn UI thread
     void stop();    // stop & join
@@ -42,8 +43,9 @@ private:
     nema::Thread    thread_;
     StatusBarData   status_;
     uint64_t        lastStatusMs_ = 0;
-    LockScreen      lockScreen_;     // the lock screen pushed by the DPM (an IScreen)
-    IDisplayDriver* display_ = nullptr;
+    LockScreen       lockScreen_;   // pushed by the DPM on inactivity
+    PermissionScreen permScreen_;  // pushed by PermissionService on perm.request()
+    IDisplayDriver*  display_ = nullptr;
 };
 
 } // namespace nema

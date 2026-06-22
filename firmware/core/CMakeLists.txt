@@ -63,6 +63,7 @@ src/input/gesture.cpp
     src/ui/font_iosk_bold12.cpp
     src/ui/view_dispatcher.cpp
     src/services/storage_service.cpp
+    src/services/permission_service.cpp
     src/services/display_power_manager.cpp
     src/services/audio_service.cpp
     src/services/camera_service.cpp

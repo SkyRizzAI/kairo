@@ -14,6 +14,7 @@
 #include "nema/app/app_context.h"
 #include "nema/hal/http_client.h"
 #include "nema/services/profile_service.h"
+#include "nema/services/permission_service.h"
 #include "nema/ui/aether_abi.h"
 #include <string>
 #include <utility>
@@ -68,10 +69,23 @@ public:
     }
 
     // ── nema:sys/perm ─────────────────────────────────────────────────
-    // @future Fase 1: replace with PermissionService calls.
 
-    uint8_t perm_status(std::string_view) override { return 0; }   // 0=not_asked
-    uint8_t perm_request(std::string_view) override { return 1; }  // 1=granted (stub)
+    uint8_t perm_status(std::string_view cap) override {
+        auto* perm = rt_.container().resolve<nema::PermissionService>();
+        return perm ? perm->status(appId_, std::string(cap)) : 0;
+    }
+
+    uint8_t perm_request(std::string_view cap) override {
+        auto* perm = rt_.container().resolve<nema::PermissionService>();
+        if (!perm) return 1;  // no service = dev/headless mode, always grant
+        return perm->request(appId_, std::string(cap));
+    }
+
+    bool perm_check(std::string_view /*app_id*/, std::string_view cap) override {
+        auto* perm = rt_.container().resolve<nema::PermissionService>();
+        if (!perm) return true;
+        return perm->status(appId_, std::string(cap)) == 1;
+    }
 
     // ── nema:sys/lease ────────────────────────────────────────────────
     // @future Fase 2: replace with ResourceBroker calls.

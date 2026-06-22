@@ -18,6 +18,7 @@
 #include "nema/services/cli_service.h"
 #include "nema/services/profile_service.h"
 #include "nema/services/storage_service.h"
+#include "nema/services/permission_service.h"
 #include "nema/fs/mem_filesystem.h"
 #include "nema/fs/vfs.h"
 #include "nema/esp32/littlefs_filesystem.h"
@@ -70,6 +71,7 @@ private:
     CliService         cli_;
     ProfileService     profile_;   // owner identity (Plan 40)
     StorageService     storage_;   // app data routing + management (Plan 83)
+    PermissionService  permSvc_;   // per-app capability grants (Plan 87)
     Vfs                vfs_;       // mount table
     LittleFsFileSystem rootFs_;    // "/"   — persistent (internal flash)
     MemFileSystem      tmpFs_;     // "/tmp" — volatile scratch (RAM)
