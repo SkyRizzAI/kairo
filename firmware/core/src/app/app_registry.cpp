@@ -165,7 +165,17 @@ bool AppRegistry::launch(const char* id) {
             }
         }
 
-        if (t.app)    { rt_.appHost().launch(*t.app); return true; }  // own thread
+        if (t.app) {
+            // Plan 86: argv = [id] + manifest.args (icon launch analogy to .desktop Exec=).
+            std::vector<std::string> argv;
+            argv.reserve(1 + m.args.size());
+            argv.push_back(id);
+            for (const auto& a : m.args) argv.push_back(a);
+            rt_.log().info("AppRegistry", "launch",
+                {{"id", id}, {"argc", std::to_string(argv.size())}});
+            rt_.appHost().launch(*t.app, std::move(argv));
+            return true;
+        }
         if (t.screen) { rt_.view().push(*t.screen);   return true; }  // UI-thread view
         // Services aren't launchable — they're already running in background.
         rt_.log().warn("AppRegistry", std::string("launch: ") + id + " is a service");

@@ -29,9 +29,9 @@ public:
     // Init crash-recovery subscriptions (called after EventBus is ready).
     void initCrashRecovery();
 
-    // Launch an app. If another app is paused, shows the "Close & Open?" modal
-    // instead (single-slot policy); otherwise launches immediately.
-    void launch(IApp& app);
+    // Launch an app with optional argv (Plan 86: [id] + manifest.args).
+    // If another app is paused, shows the "Close & Open?" modal instead.
+    void launch(IApp& app, std::vector<std::string> argv = {});
 
     // Pause the foreground app → park its thread, pop it, keep it alive.
     void pauseForeground();
@@ -46,7 +46,7 @@ public:
     const char* foregroundName() const;   // running app name, "" if none (Plan 46)
 
     // Unconditional launch — used by the modal after killing the paused app.
-    void doLaunch(IApp& app);
+    void doLaunch(IApp& app, std::vector<std::string> argv = {});
 
     // Plan 80: the app-switch transition ("Close & Open?" modal) is a presentation
     // screen owned by the display server (aether), not the kernel. The display

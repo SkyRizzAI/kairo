@@ -57,6 +57,34 @@ static int writeBuf(IM3Runtime rt, uint32_t off, int cap, const std::string& src
     return n;
 }
 
+// ── nema.argc() → i32  (Plan 86) ──────────────────────────────────────────────
+// Returns the number of argv strings available to the app (at least 1: the id).
+
+m3ApiRawFunction(nema_argc) {
+    m3ApiReturnType(int32_t);
+    WasmHostCtx* h = hostOf(runtime);
+    if (!h || !h->ctx) m3ApiReturn(0);
+    m3ApiReturn((int32_t)h->ctx->args().size());
+}
+
+// ── nema.argv_get(i, buf, cap) → bytes written, -1 on out-of-range/bounds ───
+// Copies argv[i] into buf (NUL-terminated), up to cap bytes. Returns the number
+// of bytes written (excluding NUL), or -1 on error.
+
+m3ApiRawFunction(nema_argv_get) {
+    m3ApiReturnType(int32_t);
+    m3ApiGetArg(int32_t, idx);
+    m3ApiGetArg(uint32_t, outOff);
+    m3ApiGetArg(int32_t, cap);
+
+    WasmHostCtx* h = hostOf(runtime);
+    if (!h || !h->ctx) m3ApiReturn(-1);
+
+    const auto& args = h->ctx->args();
+    if (idx < 0 || (size_t)idx >= args.size()) m3ApiReturn(-1);
+    m3ApiReturn(writeBuf(runtime, outOff, cap, args[(size_t)idx]));
+}
+
 // ── nema.print(msg) — bare-metal printf replacement (Plan 85) ───────────────
 // Routes to rt.log() info with the app id as tag. WASM apps use this instead
 // of printf (which requires WASI libc). Strip trailing newline for cleaner log.
@@ -76,6 +104,9 @@ m3ApiRawFunction(nema_print) {
 
     h->ctx->runtime().log().info(h->appId.c_str(), msg.c_str());
     if (h->printHook) h->printHook(msg);
+    // Also route to ctx->out() so AppHost's terminal buffer captures it.
+    h->ctx->out().writeStr(msg + "\n");
+    h->ctx->out().flush();
     m3ApiSuccess();
 }
 
@@ -193,6 +224,8 @@ void linkNemaImports(IM3Module mod) {
         m3_LinkRawFunction(mod, "nema", fn, sig, trampoline);
     };
 
+    link("argc",                   "i()",     &nema_argc);
+    link("argv_get",               "i(i*i)",  &nema_argv_get);
     link("print",                  "v(*)",    &nema_print);
     link("log",                   "v(***)",  &nema_log);
     link("device_name",           "i(*i)",   &nema_device_name);

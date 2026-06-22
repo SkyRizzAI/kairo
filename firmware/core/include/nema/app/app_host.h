@@ -20,6 +20,11 @@ class Canvas;
 class BufferDisplay;
 struct IDisplayDriver;
 
+// Plan 86 — host execution mode (flipped once by first canvas_* or ui_* call).
+// Terminal: stdout auto-renders to a terminal screen.
+// Gui:      app owns the canvas; host stops auto-rendering terminal.
+enum class HostMode { Terminal, Gui };
+
 // AppHost — bridges an IApp (running on its own thread) into the ViewDispatcher.
 //
 // To the GUI thread it is just an IScreen (Fullscreen): draw() blits the latest
@@ -33,8 +38,19 @@ struct IDisplayDriver;
 // frameMtx_) and the input queue (already thread-safe). No shared model → no race.
 class AppHost : public IScreen, public AppContext {
 public:
-    AppHost(Runtime& rt, IApp& app);
+    // args = default argv when launched from icon (Plan 86: [id] + manifest.args).
+    AppHost(Runtime& rt, IApp& app, std::vector<std::string> args = {});
     ~AppHost() override;
+
+    // Flip from Terminal to Gui mode (called by canvas_* / ui_* ABI, Plan 86 Fase 2).
+    // Irreversible for this run. After the flip, build() rendering is suppressed so
+    // the app can control the canvas directly.
+    void enterGuiMode();
+    HostMode hostMode() const { return hostMode_; }
+
+    // Lines captured from app stdout (fd_write / nema_print routed via out()).
+    // Used by TerminalSurface to render the terminal screen (Plan 86 Fase 2).
+    const std::vector<std::string>& terminalLines() const { return terminalLines_; }
 
     // IScreen (GUI thread). mode follows the app: fullscreen apps take the whole
     // screen; otherwise Normal so GuiService draws the status bar above the app.
@@ -112,11 +128,18 @@ private:
     uint32_t                 dbgPresent_ = 0;  // diagnostic: count first presents
     uint32_t                 dbgDraw_    = 0;  // diagnostic: count first draws
 
-    // Plan 54 — ProcessContext default values for UI apps (no shell args/stdio)
+    // Plan 86 — host mode + terminal output buffer
+    HostMode                 hostMode_ = HostMode::Terminal;
+    std::vector<std::string> terminalLines_;
+
+    // Plan 54 — ProcessContext default values for UI apps
     std::vector<std::string> args_;
     std::string              cwd_ = "/";
     NullInputStream          nullIn_;
-    StringOutputStream       nullOut_;
+    // out()/err() are LineOutputStreams initialized in the constructor
+    // (need to capture `this`, so they can't be in-place initialized).
+    std::unique_ptr<LineOutputStream> termOut_;
+    std::unique_ptr<LineOutputStream> termErr_;
     int                      exitCode_ = 0;
 };
 

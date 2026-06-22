@@ -21,24 +21,25 @@ void AppHostManager::initCrashRecovery() {
         [this](const Event& e) { onClockTick(e); });
 }
 
-void AppHostManager::doLaunch(IApp& app) {
+void AppHostManager::doLaunch(IApp& app, std::vector<std::string> argv) {
     foreground_.reset();   // free the previous (now-finished) host
-    foreground_ = std::make_unique<AppHost>(rt_, app);
+    foreground_ = std::make_unique<AppHost>(rt_, app, std::move(argv));
     rt_.log().info("AppHostManager", "launch", {{"app", app.name()}});
     rt_.view().push(*foreground_);
 }
 
-void AppHostManager::launch(IApp& app) {
+void AppHostManager::launch(IApp& app, std::vector<std::string> argv) {
     if (paused_) {
         if (modalFactory_) {
             // Display server installed a transition modal ("Close & Open?").
+            // Note: argv is captured so doLaunch gets it after modal confirms.
             modal_ = modalFactory_(rt_, *this, app);
             if (modal_) { rt_.view().push(*modal_); return; }
         }
         // Headless / no transition UI: enforce the single-slot policy directly.
         killPaused();
     }
-    doLaunch(app);
+    doLaunch(app, std::move(argv));
 }
 
 void AppHostManager::pauseForeground() {

@@ -43,7 +43,18 @@ static void freeBuf(uint8_t* p) {
 #endif
 }
 
-AppHost::AppHost(Runtime& rt, IApp& app) : rt_(rt), app_(app) {}
+AppHost::AppHost(Runtime& rt, IApp& app, std::vector<std::string> args)
+    : rt_(rt), app_(app), args_(std::move(args))
+{
+    termOut_ = std::make_unique<LineOutputStream>([this](const std::string& line) {
+        terminalLines_.push_back(line);
+        if (hostMode_ == HostMode::Terminal) rt_.view().requestRedraw();
+    });
+    termErr_ = std::make_unique<LineOutputStream>([this](const std::string& line) {
+        terminalLines_.push_back("[err] " + line);
+        if (hostMode_ == HostMode::Terminal) rt_.view().requestRedraw();
+    });
+}
 
 AppHost::~AppHost() {
     delete appCanvas_;
@@ -252,9 +263,16 @@ const char* AppHost::appName() const { return app_.name(); }
 const std::vector<std::string>& AppHost::args() const { return args_; }
 const std::string&              AppHost::cwd()  const { return cwd_; }
 const char*                     AppHost::env(const char*) const { return nullptr; }
-IInputStream&                   AppHost::in()   { return nullIn_; }
-IOutputStream&                  AppHost::out()  { return nullOut_; }
-IOutputStream&                  AppHost::err()  { return nullOut_; }
+IInputStream&  AppHost::in()  { return nullIn_; }
+IOutputStream& AppHost::out() { return *termOut_; }
+IOutputStream& AppHost::err() { return *termErr_; }
+
+void AppHost::enterGuiMode() {
+    if (hostMode_ != HostMode::Gui) {
+        hostMode_ = HostMode::Gui;
+        rt_.log().info("AppHost", "gui mode", {{"app", app_.name()}});
+    }
+}
 
 void AppHost::requestExit(int code) {
     exitCode_ = code;

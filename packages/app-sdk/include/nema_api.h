@@ -33,6 +33,18 @@ extern "C" {
 #  define NEMA_EXPORT
 #endif
 
+// ── Process argv (Plan 86) ────────────────────────────────────────────────────
+// Apps can read their argv (set from manifest.args or from the CLI call).
+// argv[0] is always the app bundle id.
+
+NEMA_IMPORT("nema", "argc")
+extern int nema_argc(void);
+
+// Copy argv[i] into buf (NUL-terminated), up to cap bytes.
+// Returns bytes written (excluding NUL), or -1 if i is out of range.
+NEMA_IMPORT("nema", "argv_get")
+extern int nema_argv_get(int i, char* buf, int cap);
+
 // ── Logging ───────────────────────────────────────────────────────────────────
 // Levels: "trace" "debug" "info" "warn" "error" "fatal"
 
