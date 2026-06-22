@@ -283,15 +283,32 @@ engine.load(reinterpret_cast<const uint8_t*>(bundle), bundleSize);
 Template minimal: C app dengan `main(int argc, char* argv[])` yang bisa
 call `nema_log()`, `nema_storage_write()`, dll via imported functions.
 
-**Checklist Fase 4:**
-- [ ] IDL generator emit WASM import table (baru, extend `packages/idl/src/emit/`)
-- [ ] `WasmEngine` expose nema.* imports saat load
-- [ ] `WasmRuntime::runUi()` implementasi: feed frame dari WASM ke AppHost
-- [ ] Fix bundle size hardcode (trivial, fix dulu)
-- [ ] `installFromDir()` route `runtime: "wasm"` ke `WasmRuntime` bukan `JsAppStore`
-- [ ] `packages/app-sdk` tambah WASM build template
-- [ ] Test: WASM app headless jalan dengan storage API
-- [ ] Test: WASM app UI muncul di launcher
+**Fase 4 dipecah: 4a headless DONE, 4b UI deferred.**
+
+Catatan arsitektur: `IAppRuntime`/`WasmRuntime` (Plan 56/57) ternyata **dead code** —
+dispatch sebenarnya lewat `IApp` (seperti `JsApp`), bukan tier adapter. Jadi WASM
+diberi `WasmApp : ComponentApp` + `WasmAppStore`, mirror persis `JsApp`/`JsAppStore`.
+`WasmApp` yang own byte modul, jadi hardcode size 1024 hilang otomatis (pass
+`wasm_.size()`). `wasm_runtime.cpp` dibiarkan (dead, tidak dipakai).
+
+**Checklist Fase 4a — headless WASM (DONE):**
+- [x] `WasmApp : ComponentApp` — runProcess() load modul → link WASI+nema → `_start`
+- [x] `WasmAppStore` — install + register ke AppRegistry sebagai Custom (muncul di launcher)
+- [x] `installFromDir()` route `runtime: "wasm"` ke `WasmAppStore` (baca `main.wasm`/`app.wasm`)
+- [x] WASM default mode = `cli`; UI ditolak ke CLI dengan warning (build() kasih error card)
+- [x] `WasmEngine` expose nema.* imports (`wasm_nema.cpp`): log, device_name, device_caps, storage_fs_read/write
+- [x] Fix bundle size hardcode (WasmApp own bytes → pass actual size)
+- [x] Fix double-free di `WasmEngine::~WasmEngine` (runtime own modul setelah load)
+- [x] Fix import link order: link SEBELUM m3_FindFunction (lazy compile resolve imports)
+- [x] WASM icon.raw didukung (sama seperti JS, via WasmApp::setIcon)
+- [x] Test: `wasm_test.cpp` — hand-assembled `_start`→proc_exit, validasi exit code + load fail
+- [ ] Test di device: WASM CLI app dgn storage API (butuh wasi-sdk untuk build .wasm — tidak ada di host ini)
+
+**Checklist Fase 4b — WASM UI (deferred, butuh effort besar):**
+- [ ] IDL generator emit WASM import table untuk aether ABI (extend `packages/idl/src/emit/`)
+- [ ] `WasmApp` UI path: feed frame dari WASM ke component tree via aether imports
+- [ ] `packages/app-sdk` tambah WASM build template (wasi-sdk toolchain)
+- [ ] Test: WASM app UI render di launcher
 
 ---
 
@@ -305,10 +322,14 @@ call `nema_log()`, `nema_storage_write()`, dll via imported functions.
 | `firmware/core/src/js/nema_host_impl.cpp` | 1 | Wire `process.argv` dan `process.stdout.write` ke ProcessContext |
 | `firmware/core/include/nema/apps/js_app_store.h` | 3 | `apps_` → `std::list` |
 | `firmware/core/include/nema/apps/bad_usb_app.h` | 3 | Migrate ke `ComponentApp` |
-| `firmware/core/src/wasm/wasm_runtime.cpp` | 4 | Fix bundle size; implement `runUi()` |
-| `firmware/core/src/app/app_list_screen.cpp` | 2 | Tampilkan icon |
-| `packages/idl/src/emit/` | 4 | Tambah WASM import emitter |
-| `packages/app-sdk/bin/build.ts` | 2 | Icon PNG → raw RGB565 |
+| `firmware/core/include/nema/apps/wasm_app.{h,cpp}` | 4a | `WasmApp : ComponentApp` — headless WASM app |
+| `firmware/core/include/nema/apps/wasm_app_store.{h,cpp}` | 4a | `WasmAppStore` — install + register WASM apps |
+| `firmware/core/src/wasm/wasm_nema.cpp` | 4a | nema.* host imports untuk WASM (log/device/storage) |
+| `firmware/core/src/wasm/wasm_engine.cpp` | 4a | Fix double-free + import link order; `runStart(ctx, appId)` |
+| `firmware/core/src/app/papp_installer.cpp` | 1,3,4a | Baca `mode`/`runtime`; route WASM ke WasmAppStore |
+| `firmware/core/src/screens/app_list_screen.cpp` | 2 | Tampilkan icon |
+| `packages/idl/src/emit/` | 4b | Tambah WASM import emitter (UI) |
+| `packages/app-sdk/bin/build.ts` | 2 | Icon PNG → raw 1-bit |
 
 ---
 
@@ -319,4 +340,5 @@ call `nema_log()`, `nema_storage_write()`, dll via imported functions.
 | Fase 1 — CLI + UI dispatch | `[x]` done (kecuali test di device) |
 | Fase 2 — Launcher icon | `[x]` done (kecuali test di device) |
 | Fase 3 — Bug fixes aktif | `[x]` done (kecuali test di device) |
-| Fase 4 — WASM parity | `[ ]` not started |
+| Fase 4a — WASM headless | `[x]` done (test di device butuh wasi-sdk) |
+| Fase 4b — WASM UI | `[ ]` not started (effort besar) |

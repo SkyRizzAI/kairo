@@ -66,6 +66,7 @@ src/input/gesture.cpp
     src/proc/pipe.cpp
     src/wasm/wasm_engine.cpp
     src/wasm/wasm_wasi.cpp
+    src/wasm/wasm_nema.cpp
     src/wasm/wasm_runtime.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../../generated/host/nema_api_quickjs.gen.cpp
 )

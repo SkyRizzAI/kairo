@@ -10,7 +10,11 @@ namespace nema {
 WasmEngine::WasmEngine() = default;
 
 WasmEngine::~WasmEngine() {
-    if (mod_) { m3_FreeModule(mod_); mod_ = nullptr; }
+    // After m3_LoadModule succeeds the runtime OWNS the module — m3_FreeRuntime
+    // frees it. Calling m3_FreeModule here too would double-free. A module that
+    // failed to load is already freed+nulled in load(), so mod_ here is either
+    // null or runtime-owned: never free it directly.
+    mod_ = nullptr;
     if (rt_)  { m3_FreeRuntime(rt_); rt_ = nullptr; }
     if (env_) { m3_FreeEnvironment(env_); env_ = nullptr; }
 }
@@ -38,25 +42,31 @@ bool WasmEngine::load(const uint8_t* wasm, size_t len) {
     return true;
 }
 
-int WasmEngine::runStart(ProcessContext& ctx) {
+int WasmEngine::runStart(ProcessContext& ctx, const char* appId) {
     if (!rt_ || !mod_) { err_ = "not loaded"; return -1; }
 
-    // Find the _start function
+    // Attach the host context to the runtime so import trampolines can reach the
+    // kernel. host_ is a member, so it outlives this call.
+    host_.ctx   = &ctx;
+    host_.appId = appId ? appId : "";
+    rt_->userdata = &host_;
+
+    // Link imports FIRST: m3_FindFunction triggers lazy compilation of the
+    // module, which resolves import references. Unlinked imports at that point
+    // fail compilation with "missing import" (Plan 57 Fase 2).
+    linkWasiImports(mod_);
+    linkNemaImports(mod_);
+
     IM3Function startFn;
     M3Result res = m3_FindFunction(&startFn, rt_, "_start");
-    if (res) {
-        // No _start — try a simple call with no args
-        err_ = res;
-        return -1;
-    }
-
-    // Link WASI imports before calling _start (Plan 57 Fase 2)
-    linkWasiImports(mod_, ctx);
-
-    res = m3_CallV(startFn);
     if (res) { err_ = res; return -1; }
 
-    return 0;
+    res = m3_CallV(startFn);
+    // A guest that calls proc_exit unwinds via m3Err_trapExit — that's a normal
+    // exit, not an error. The exit code is already recorded in ProcessContext.
+    if (res && res != m3Err_trapExit) { err_ = res; return -1; }
+
+    return ctx.shouldExit() ? ctx.exitCode() : 0;
 }
 
 } // namespace nema

@@ -15,7 +15,8 @@ namespace {
 // ── Helpers ────────────────────────────────────────────────────────────────
 
 static ProcessContext* ctxOf(IM3Runtime rt) {
-    return static_cast<ProcessContext*>(m3_GetUserData(rt));
+    auto* h = static_cast<WasmHostCtx*>(m3_GetUserData(rt));
+    return h ? h->ctx : nullptr;
 }
 
 static bool boundsOk(IM3Runtime rt, uintptr_t off, uint32_t len) {
@@ -158,10 +159,8 @@ m3ApiRawFunction(wasi_proc_exit) {
 
 // ── Public API ─────────────────────────────────────────────────────────────
 
-void linkWasiImports(IM3Module mod, ProcessContext& ctx) {
-    IM3Runtime rt = m3_GetModuleRuntime(mod);
-    rt->userdata = &ctx;
-
+void linkWasiImports(IM3Module mod) {
+    // Userdata is set by WasmEngine::runStart() before this is called.
     auto link = [mod](const char* fn, const char* sig, M3RawCall trampoline) {
         m3_LinkRawFunction(mod, "wasi_snapshot_preview1", fn, sig, trampoline);
     };

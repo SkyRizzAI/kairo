@@ -9,6 +9,7 @@
 #include "nema/app/papp_package.h"
 #include "nema/app/app_manifest.h"
 #include "nema/apps/js_app_store.h"
+#include "nema/apps/wasm_app_store.h"
 #include "nema/app/app_registry.h"
 #include "nema/runtime.h"
 #include "nema/log/logger.h"
@@ -108,30 +109,24 @@ static bool installFromDir(Runtime& rt, IFileSystem* fs,
     if (id.empty()) return false;
     if (name.empty()) name = id;
 
-    // WASM runtime not yet supported for UI — toolchain + host API bridge
-    // pending Plan 84 Fase 4. Reject with a clear error instead of crashing.
-    if (rtStr == "wasm") {
-        rt.log().error("PappInstaller", "WASM runtime not yet supported — rejected",
-                       {{"id", id}});
-        return false;
-    }
+    const bool isWasm = (rtStr == "wasm");
 
-    AppMode mode = AppMode::Ui;
-    if (modeStr == "cli")    mode = AppMode::Cli;
+    // Mode default differs by runtime: JS apps are UI-first; WASM apps are
+    // CLI-only today (no aether ABI bridge yet — Plan 84 Fase 4).
+    AppMode mode = isWasm ? AppMode::Cli : AppMode::Ui;
+    if      (modeStr == "cli")    mode = AppMode::Cli;
     else if (modeStr == "hybrid") mode = AppMode::Hybrid;
+    else if (modeStr == "ui")     mode = AppMode::Ui;
 
-    std::string entryPath;
-    for (const char* c : {"app.js", "main.js"}) {
-        std::vector<uint8_t> d;
-        if (fs->read(dir + "/" + c, d)) { entryPath = c; break; }
+    // A WASM app launched with a surface can't render yet — warn but allow it
+    // (build() shows an explanatory card; CLI launch works fully).
+    if (isWasm && mode != AppMode::Cli) {
+        rt.log().warn("PappInstaller", "WASM UI not supported — app is CLI-only",
+                      {{"id", id}});
+        mode = AppMode::Cli;
     }
-    if (entryPath.empty()) return false;
 
-    std::vector<uint8_t> code;
-    if (!fs->read(dir + "/" + entryPath, code)) return false;
-    std::string js(code.begin(), code.end());
-
-    // Load icon.raw if the manifest declares one.
+    // Load icon.raw if the manifest declares one (common to both runtimes).
     // Format: 4-byte header (width u16le, height u16le) + 1-bit packed pixels.
     std::vector<uint8_t> iconData;
     std::string iconFile = mj.value("icon", "");
@@ -144,6 +139,39 @@ static bool installFromDir(Runtime& rt, IFileSystem* fs,
                           {{"id", id}, {"icon", iconFile}});
         }
     }
+
+    // ── WASM: load the .wasm module and install via WasmAppStore ────────────
+    if (isWasm) {
+        std::vector<uint8_t> wasm;
+        const char* entry = nullptr;
+        for (const char* c : {"main.wasm", "app.wasm"}) {
+            if (fs->read(dir + "/" + c, wasm)) { entry = c; break; }
+        }
+        if (!entry || wasm.empty()) {
+            rt.log().error("PappInstaller", "WASM bundle has no .wasm entry",
+                           {{"id", id}});
+            return false;
+        }
+        rt.log().info("PappInstaller", "install",
+                      {{"id", id}, {"name", name}, {"runtime", "wasm"},
+                       {"bytes", std::to_string(wasm.size())},
+                       {"icon", iconData.empty() ? "none" : iconFile}});
+        return WasmAppStore::instance().installApp(rt, id, name, version,
+                                                   std::move(wasm), dsrv, mode,
+                                                   std::move(iconData));
+    }
+
+    // ── JS: load the bundle and install via JsAppStore ─────────────────────
+    std::string entryPath;
+    for (const char* c : {"app.js", "main.js"}) {
+        std::vector<uint8_t> d;
+        if (fs->read(dir + "/" + c, d)) { entryPath = c; break; }
+    }
+    if (entryPath.empty()) return false;
+
+    std::vector<uint8_t> code;
+    if (!fs->read(dir + "/" + entryPath, code)) return false;
+    std::string js(code.begin(), code.end());
 
     rt.log().info("PappInstaller", "install",
                   {{"id", id}, {"name", name}, {"mode", modeStr},

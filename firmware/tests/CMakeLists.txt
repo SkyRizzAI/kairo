@@ -48,3 +48,7 @@ add_test(NAME asset_test COMMAND asset_test)
 add_executable(wifi_contract_test wifi_contract_test.cpp)
 target_link_libraries(wifi_contract_test PRIVATE nema_core aether)
 add_test(NAME wifi_contract_test COMMAND wifi_contract_test)
+
+add_executable(wasm_test wasm_test.cpp)
+target_link_libraries(wasm_test PRIVATE nema_core aether)
+add_test(NAME wasm_test COMMAND wasm_test)

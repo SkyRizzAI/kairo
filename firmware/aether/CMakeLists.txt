@@ -46,6 +46,8 @@ set(AETHER_SRCS
     ${CMAKE_CURRENT_SOURCE_DIR}/../core/src/apps/hello_app.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../core/src/apps/js_app.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../core/src/apps/js_app_store.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../core/src/apps/wasm_app.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../core/src/apps/wasm_app_store.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../core/src/apps/bad_usb_app.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../core/src/apps/badusb_parser.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../core/src/apps/dolphin_app.cpp
@@ -61,6 +63,7 @@ set(AETHER_SRCS
     ${CMAKE_CURRENT_SOURCE_DIR}/../core/src/shell/blit.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../core/src/shell/desktop_livewall.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../core/src/shell/shell_factory.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../core/src/shell/launcher_compact.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../core/src/shell/launcher_playstation.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../core/src/shell/launcher_wii.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../core/src/screens/app_list_screen.cpp
