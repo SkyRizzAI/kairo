@@ -224,7 +224,7 @@
 					Files (PLP · VFS)
 				</div>
 				<div class="min-h-0 flex-1">
-					<FileBrowser fs={session} ready={connected} />
+					<FileBrowser fs={session} ready={connected} onPappInstall={() => session.appScan()} />
 				</div>
 			</aside>
 		{/if}

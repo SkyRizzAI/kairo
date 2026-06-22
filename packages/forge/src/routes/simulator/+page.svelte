@@ -334,7 +334,7 @@
 					Files (PLP · VFS)
 				</div>
 				<div class="h-[calc(100%-2rem)]">
-					<FileBrowser fs={simStore} ready={simStore.power === 'on'} />
+					<FileBrowser fs={simStore} ready={simStore.power === 'on'} onPappInstall={() => simStore.appScan()} />
 				</div>
 			</aside>
 		{/if}

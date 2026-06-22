@@ -91,7 +91,7 @@ export const KEY_MAP: Record<string, number> = {
 export function frameDims(frame: ScreenFrame | null): string {
 	return frame ? `${frame.w}×${frame.h}` : '—';
 }
-const ExtOp = { InjectEvent: 0x01, WifiSetNetworks: 0x02, AppInstall: 0x03 } as const;
+const ExtOp = { InjectEvent: 0x01, WifiSetNetworks: 0x02, AppInstall: 0x03, AppScan: 0x04 } as const;
 const FileOp = { List: 0x01, Read: 0x03, Write: 0x04, Mkdir: 0x05, Remove: 0x06,
                  Rename: 0x07, Copy: 0x08 } as const;
 
@@ -640,6 +640,13 @@ export class RemoteSession {
 		const p = new Uint8Array(1 + body.length);
 		p[0] = ExtOp.AppInstall;
 		p.set(body, 1);
+		this.#t.send(encodeFrame(Channel.Ext, p));
+	}
+
+	// Trigger /system/apps/ rescan after writing .papp files to VFS. Plan 86 Fase 6.
+	appScan() {
+		const p = new Uint8Array(1);
+		p[0] = ExtOp.AppScan;
 		this.#t.send(encodeFrame(Channel.Ext, p));
 	}
 }

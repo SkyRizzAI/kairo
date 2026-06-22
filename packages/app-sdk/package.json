@@ -17,6 +17,7 @@
     "verify": "bun run scripts/verify.ts"
   },
   "dependencies": {
+    "fflate": "^0.8.3",
     "sharp": "^0.33.0"
   }
 }

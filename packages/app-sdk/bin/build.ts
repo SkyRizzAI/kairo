@@ -8,7 +8,8 @@
 // Output: dist/<id>.papp/   (macOS .app-style folder ready to install)
 
 import { resolve, join, basename } from "path";
-import { mkdir, writeFile, rm, access } from "node:fs/promises";
+import { mkdir, writeFile, rm, access, readdir, readFile } from "node:fs/promises";
+import { zipSync } from "fflate";
 import type sharp from "sharp";
 import type { PappManifest } from "../src/manifest";
 
@@ -168,10 +169,22 @@ if (iconBytes) {
 // Re-write manifest now that icon field may have been added.
 await writeFile(join(outDir, "manifest.json"), JSON.stringify(manifest, null, 2));
 
+// ── Zip the .papp folder into .papp.zip (Plan 86 Fase 6) ──────────────────
+// fflate zipSync: { 'filename': Uint8Array } → Uint8Array (deflate-compressed)
+const zipPath = join(appDir, "dist", `${manifest.id}.papp.zip`);
+{
+  const files: Record<string, Uint8Array> = {};
+  for (const entry of await readdir(outDir)) {
+    files[entry] = new Uint8Array(await readFile(join(outDir, entry)));
+  }
+  await writeFile(zipPath, zipSync(files, { level: 6 }));
+}
+
 const tier = manifest.runtime ?? "js";
 const server = manifest.display_server ?? "any";
 console.log(`✓ ${outDir}/`);
 console.log(`  manifest.json  ${entryFile}`);
 console.log(`  runtime=${tier}  server=${server}`);
+console.log(`✓ ${basename(zipPath)}  (${Bun.file(zipPath).size}B)`);
 console.log("");
-console.log("  Install: copy this folder to /apps/ on your device");
+console.log("  Install via Forge: upload the .papp.zip");

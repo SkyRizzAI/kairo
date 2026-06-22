@@ -52,6 +52,7 @@ namespace ExtOp {
         InjectEvent     = 0x01,
         WifiSetNetworks = 0x02,
         AppInstall      = 0x03,   // payload = raw .papp bytes → JsAppStore (Plan 37)
+        AppScan         = 0x04,   // rescan /system/apps/ and reload registry (Plan 86 Fase 6)
     };
 }
 

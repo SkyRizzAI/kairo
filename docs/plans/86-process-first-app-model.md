@@ -1,6 +1,6 @@
 # Plan 86 — Process-First App Model (Node/Electron-style)
 
-> **Status:** IN PROGRESS — Fase 0–5 done.
+> **Status:** IN PROGRESS — Fase 0–6 done.
 > **Last updated:** 2026-06-22
 
 ---
@@ -407,7 +407,7 @@ Plus regресi: **13/13 host test** (`firmware/tests/`) tetap pass tiap fase.
 - [x] Fase 3 — Retained UI ABI (`wasm_ui.cpp`) + `ui_wait_event` + `EV_*` + `nema_api.h` ui section
 - [x] Fase 4 — Input/timing (`wasm_input.cpp`): `input_poll`, `input_wait`, `delay` + `ACT_*`
 - [x] Fase 5 — SDK DX: `printf` shim (`%d %u %x %s %c %%`) + `display_*` aliases
-- [ ] Fase 6 — `.papp.zip` build + Forge auto-unpack
+- [x] Fase 6 — `.papp.zip` build + Forge auto-unpack
 - [ ] Fase 7 — Examples + verifikasi G1–G9
 - [ ] Fase 8 — Konvergensi JS/TSX + built-in (doc + no-regression)
 

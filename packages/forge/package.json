@@ -41,6 +41,7 @@
 		"@trpc/client": "^11.17.0",
 		"@trpc/server": "^11.17.0",
 		"esptool-js": "^0.6.0",
+		"fflate": "^0.8.3",
 		"zod": "^4.4.3"
 	}
 }

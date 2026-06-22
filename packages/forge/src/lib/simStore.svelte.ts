@@ -64,6 +64,9 @@ class SimStore {
 	wifiSetNetworks(nets: { ssid: string; password: string; rssi: number; online: boolean }[]) {
 		this.#s.wifiSetNetworks(nets);
 	}
+	appScan() {
+		this.#s.appScan();
+	}
 	// CLI terminal passthrough (same PLP channel as /remote).
 	sendCli(sid: number, line: string) {
 		this.#s.sendCli(sid, line);

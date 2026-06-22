@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { FileEntry } from '$lib/RemoteSession';
+	import { unzipSync } from 'fflate';
 	import { Button } from '$lib/components/ui/button';
 	import {
 		Folder,
@@ -30,7 +31,11 @@
 		renameFile(src: string, dst: string): Promise<boolean>;
 		copyFile(src: string, dst: string): Promise<boolean>;
 	}
-	let { fs, ready = true }: { fs: Fs; ready?: boolean } = $props();
+	let {
+		fs,
+		ready = true,
+		onPappInstall
+	}: { fs: Fs; ready?: boolean; onPappInstall?: () => void } = $props();
 
 	let cwd = $state('/');
 	let entries = $state<FileEntry[]>([]);
@@ -118,9 +123,25 @@
 	async function onUpload(ev: Event) {
 		const f = (ev.target as HTMLInputElement).files?.[0];
 		if (!f) return;
+		(ev.target as HTMLInputElement).value = '';
+
+		// .papp.zip: unzip client-side → write to /system/apps/<id>.papp/ (Plan 86 Fase 6)
+		if (f.name.endsWith('.papp.zip')) {
+			const id = f.name.slice(0, -'.papp.zip'.length);  // strip .papp.zip suffix
+			const zipData = new Uint8Array(await f.arrayBuffer());
+			const entries = unzipSync(zipData);
+			const destDir = `/system/apps/${id}.papp`;
+			await fs.mkdir(destDir);
+			for (const [name, data] of Object.entries(entries)) {
+				await fs.writeFile(`${destDir}/${name}`, data);
+			}
+			onPappInstall?.();
+			await refresh();
+			return;
+		}
+
 		const data = new Uint8Array(await f.arrayBuffer());
 		await fs.writeFile(join(cwd, f.name), data);
-		(ev.target as HTMLInputElement).value = '';
 		await refresh();
 	}
 

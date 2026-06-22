@@ -11,6 +11,7 @@
 #include "nema/config/config_store.h"
 #include "nema/event/event_bus.h"
 #include "nema/apps/js_app_store.h"
+#include "nema/app/papp_installer.h"
 #include "nema/assets/anims/dolphin_sleep_panim.h"
 #include <string>
 #include <vector>
@@ -112,6 +113,10 @@ void WasmPlatform::controlThunk(void* user, uint8_t op, const uint8_t* data, siz
     auto* s = static_cast<WasmPlatform*>(user);
     if (op == ExtOp::AppInstall) {   // OTA: Forge pushed a .papp → install live (Plan 37)
         if (s->rt_) JsAppStore::instance().installPappBytes(*s->rt_, (const char*)data, len);
+        return;
+    }
+    if (op == ExtOp::AppScan) {      // Plan 86 Fase 6: rescan VFS after zip install
+        if (s->rt_) loadInstalledPapps(*s->rt_);
         return;
     }
     if (op != ExtOp::WifiSetNetworks) return;
