@@ -1,5 +1,6 @@
 #pragma once
 #include "nema/app/app_manifest.h"
+#include <string>
 #include <vector>
 
 namespace nema {
