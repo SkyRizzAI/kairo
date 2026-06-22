@@ -86,6 +86,7 @@ void linkWasiImports(struct M3Module* mod);
 void linkNemaImports(struct M3Module* mod);
 void linkCanvasImports(struct M3Module* mod);
 void linkUiImports(struct M3Module* mod);
+void linkInputImports(struct M3Module* mod);
 
 // Reset per-run UI state between WASM runs (call before each new run).
 void resetUiState();

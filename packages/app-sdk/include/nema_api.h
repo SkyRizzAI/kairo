@@ -185,6 +185,35 @@ extern int ui_wait_event(void);
 NEMA_IMPORT("ui", "ui_poll_event")
 extern int ui_poll_event(void);
 
+// ── Input + timing ABI (Plan 86 Fase 4) ──────────────────────────────────────
+// For raw-canvas apps that manage their own render loop.
+// Retained-UI apps should use ui_wait_event() instead.
+//
+// Only Press events are returned; Release and Repeat are filtered by the host.
+// The host maps physical keys → Action via the board's keymap (no hardcoded keys).
+
+// Action constants — same values as input::Action enum in firmware.
+#define ACT_NONE     0   // no action / timeout
+#define ACT_PREV     1   // navigate backward  (Prev button)
+#define ACT_NEXT     2   // navigate forward   (Next button)
+#define ACT_ACTIVATE 3   // confirm / select   (Activate button)
+#define ACT_BACK     4   // go back / escape   (Back button)
+#define ACT_UP       5   // AdjustUp   (optional; may be absent on some boards)
+#define ACT_DOWN     6   // AdjustDown (optional; may be absent on some boards)
+
+// Non-blocking poll. Returns ACT_* constant, or ACT_NONE if mailbox is empty.
+NEMA_IMPORT("input", "input_poll")
+extern int input_poll(void);
+
+// Block until input arrives or timeout_ms elapses.
+// Returns ACT_* constant, or ACT_NONE on timeout. Pass 0 to wait forever.
+NEMA_IMPORT("input", "input_wait")
+extern int input_wait(int timeout_ms);
+
+// Yield the app thread for ms milliseconds. The GUI thread stays responsive.
+NEMA_IMPORT("input", "delay")
+extern void delay(int ms);
+
 // ── Minimal libc substitutes ─────────────────────────────────────────────────
 // Basic string/number utilities that do NOT pull in WASI libc.
 // Only what WASM apps actually need.
