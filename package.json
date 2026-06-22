@@ -37,7 +37,8 @@
     "app:build:counter-wasm": "bun run packages/app-sdk/bin/build.ts --dir examples/counter-wasm",
     "app:build:sysinfo-wasm": "bun run packages/app-sdk/bin/build.ts --dir examples/sysinfo-wasm",
     "app:build:all": "bun run app:build:hello && bun run app:build:counter && bun run app:build:sysinfo && bun run app:build:deauth",
-    "app:build:all-wasm": "bun run app:build:hello-wasm && bun run app:build:counter-wasm && bun run app:build:sysinfo-wasm"
+    "app:build:canvas-demo-wasm": "bun run packages/app-sdk/bin/build.ts --dir examples/canvas-demo-wasm",
+    "app:build:all-wasm": "bun run app:build:hello-wasm && bun run app:build:counter-wasm && bun run app:build:sysinfo-wasm && bun run app:build:canvas-demo-wasm"
   },
   "devDependencies": {
     "@types/bun": "latest"

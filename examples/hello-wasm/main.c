@@ -1,33 +1,20 @@
-// Hello — WASM bare-metal (Plan 85)
-// Greet and print device info. No stdio.h — all I/O via nema_api.h.
-//
-// Build: bun run app:build:hello-wasm
-// Usage: hello-wasm [name]
-
+// hello-wasm — Plan 86 Example (G1/G2/G3/G6)
+// CLI-only app (no UI calls) — runs as terminal screen.
+// Usage: run hello-wasm [name]
+//   no args  → "Hello, World!"
+//   run hello-wasm Budi → "Hello, Budi!"
 #include "nema_api.h"
 
-static void strcat2(char* dst, int cap, const char* a, const char* b) {
-    int i = 0;
-    while (*a && i < cap - 1) dst[i++] = *a++;
-    while (*b && i < cap - 1) dst[i++] = *b++;
-    dst[i] = '\0';
-}
+NEMA_EXPORT int main(void) {
+    char name[64] = "World";
+    if (nema_argc() > 1) {
+        nema_argv_get(1, name, sizeof(name));
+    }
 
-NEMA_EXPORT int main(int argc, char* argv[]) {
-    char device[64];
-    nema_memset(device, 0, sizeof(device));
+    char device[64] = "";
     nema_device_name(device, sizeof(device));
 
-    const char* who = (argc > 1) ? argv[1] : "World";
-
-    char msg[128];
-    strcat2(msg, sizeof(msg), "Hello, ", who);
-    nema_print(msg);
-
-    char info[128];
-    strcat2(info, sizeof(info), "Running on ", device);
-    nema_print(info);
-
-    nema_log("info", "hello-wasm", "done");
+    printf("Hello, %s!\n", name);
+    printf("Running on %s\n", device);
     return 0;
 }

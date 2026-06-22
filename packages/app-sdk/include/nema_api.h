@@ -232,6 +232,11 @@ static inline char* nema_itoa(int n, char* buf) {
     buf[j] = '\0'; return buf;
 }
 
+static inline int nema_strcmp(const char* a, const char* b) {
+    while (*a && *a == *b) { a++; b++; }
+    return (unsigned char)*a - (unsigned char)*b;
+}
+
 // Minimal atoi (no negative, no whitespace skip needed for our use cases)
 static inline int nema_atoi(const char* s) {
     int n = 0;

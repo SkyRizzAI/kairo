@@ -1,0 +1,9 @@
+{
+  "id": "com.palanu.example.canvas-demo-wasm",
+  "name": "Canvas Demo",
+  "version": "1.0.0",
+  "runtime": "wasm",
+  "entry": "canvas.wasm",
+  "api_version": "1.0",
+  "category": "Demo"
+}
