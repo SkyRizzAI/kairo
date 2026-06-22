@@ -4,7 +4,7 @@
 > Detail per-stage ada di [`plans/`](plans/00-overview.md). Master plan: [`concept_plan.md`](concept_plan.md).
 > Reference arsitektur per-subsistem: [`architecture/`](architecture/README.md).
 >
-> **Last updated:** 2026-06-21 (Plan 83 complete — storage architecture: VFS restructure, AppStorage, StorageService, NVS fix, BadUSB migration, JS SDK fs bindings, Storage Settings screen)
+> **Last updated:** 2026-06-22 (Plan 84 complete — app runtime parity: CLI/UI/Hybrid dispatch, WASM headless, launcher icon pipeline, BadUsbApp → ComponentApp)
 
 ---
 
@@ -20,6 +20,7 @@ Palanu = platform handheld bergaya Flipper Zero, **1-bit retro/pixel UI**, denga
 
 | Area | Status | Bukti |
 |---|---|---|
+| **App runtime parity (Plan 84)** | ✅ build (host) | CLI/UI/Hybrid dispatch dari `AppMode`; `launchProcess()` spawn thread untuk mode Cli; WASM headless via `WasmApp:ComponentApp` + `WasmAppStore`; `wasm_nema.cpp` bridge (log/device/storage); icon pipeline `icon.raw` (1-bit) di launcher; `BadUsbApp` → `ComponentApp` (thread sendiri); `JsAppStore::apps_` → `std::list` (stable pointers) |
 | **Storage architecture (Plan 83)** | ✅ build (host) | VFS: `/system/assets/anims/`, `/data/<bundle-id>/`, `/sd/data/<bundle-id>/`; `AppStorage` (namespaced I/O); `StorageService` (routing+move+usage); `ctx.storage()` di `AppContext`; NVS 15-char limit fixed (djb2); BadUSB migrasi `/badusb/`→`/data/com.palanu.badusb/`; JS SDK `nema.storage.fs.*`; Storage Settings screen (volume + per-app list + move) |
 | **Asset architecture (Plan 82)** | ✅ build (host+wasm) | T1 system icons (status bar), T2 launcher icon anims, T3 `.panim` (VFS); toolchain `tools/asset_gen/`; `dolphin_showcase.cpp` 895 KB removed; BadUSB → category="System"; battery icon 16×8 (proportional); WiFi icon state-gated (`available()`); animation consolidated to `laptop.panim`; LittleFS 512 KB |
 | **Canvas scaling (non-integer)** | ✅ build | `fillRect`/`invertRect`/`drawPixel` pakai floor-edge formula — tidak ada gap/double-invert artifact di scale 1.75× / 1.5× |
