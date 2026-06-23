@@ -17,9 +17,10 @@ void PermissionScreen::prepare(std::shared_ptr<PermissionService::PermRequest> r
 
 void PermissionScreen::onStop() {
     // Safety fallback: if the screen is dismissed without a button click (e.g.
-    // a hardware Back action on a board that doesn't block it for modals), treat
-    // it as Deny so the blocked app thread always unblocks.
-    if (req_ && !req_->done) req_->resolve(2);
+    // Back on a board that doesn't block it for modals), resolve with 0 ("skip").
+    // Result 0 is NOT persisted by PermissionService, so the dialog appears again
+    // on the next request() — Back means "not now", not "never".
+    if (req_ && !req_->done) req_->resolve(0);
     req_.reset();
 }
 

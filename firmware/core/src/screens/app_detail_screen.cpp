@@ -17,12 +17,14 @@ using namespace aether::ui;
 // All @tier(sensitive) capabilities in the system. AppDetailScreen checks
 // each one and shows a toggle for any that the app has ever been asked about.
 static const char* const kSensitiveCaps[] = {
+    "net.wifi.scan",
     "net.wifi.monitor",
     "net.wifi.inject",
     nullptr  // sentinel
 };
 
 static const char* capLabel(const char* cap) {
+    if (cap == std::string_view("net.wifi.scan"))    return "Wi-Fi Scan";
     if (cap == std::string_view("net.wifi.monitor")) return "Wi-Fi Monitor";
     if (cap == std::string_view("net.wifi.inject"))  return "Wi-Fi Inject / Deauth";
     return cap;
@@ -87,9 +89,12 @@ void AppDetailScreen::onCapToggle(void* u) {
     auto* cr   = static_cast<CapRow*>(u);
     auto* perm = cr->self->rt_.container().resolve<PermissionService>();
     if (!perm) return;
-    // Only revoke — re-granting happens organically when the app next requests.
-    if (perm->status(cr->self->appId_, cr->cap) == 1)
-        perm->revoke(cr->self->appId_, cr->cap);
+    uint8_t cur = perm->status(cr->self->appId_, cr->cap);
+    if (cur == 1)
+        perm->revoke(cr->self->appId_, cr->cap);  // granted → revoke (resets to not-asked)
+    else
+        perm->grant(cr->self->appId_, cr->cap);   // denied → grant directly from Settings
+    cr->self->dirty_ = true;
     cr->self->rt_.view().requestRedraw();
 }
 

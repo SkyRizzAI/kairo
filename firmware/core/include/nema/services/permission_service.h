@@ -57,11 +57,16 @@ public:
 
     // If already decided, returns immediately. Otherwise blocks until the user
     // responds to the permission screen. Returns 1=granted, 2=denied.
+    // A "skip" result (0, from pressing Back on the dialog) is NOT persisted —
+    // the next request() call will show the dialog again.
     uint8_t request(const std::string& appId, const std::string& cap);
 
-    // Revoke a previously granted permission (set to denied=2, persisted).
-    // Called from AppDetailScreen → user toggled a capability off.
+    // Revoke a previously granted permission — resets to 0 (not_asked) so
+    // the next request() will show the dialog again rather than auto-deny.
     void revoke(const std::string& appId, const std::string& cap);
+
+    // Grant a capability directly (e.g. from Settings toggle when status==denied).
+    void grant(const std::string& appId, const std::string& cap);
 
     // ── GUI-thread API ───────────────────────────────────────────────────────
 

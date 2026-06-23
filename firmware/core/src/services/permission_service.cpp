@@ -50,7 +50,9 @@ uint8_t PermissionService::request(const std::string& appId,
     std::unique_lock<std::mutex> lock(req->mu);
     req->cv.wait(lock, [&req] { return req->done; });
 
-    persist(appId, cap, req->result);
+    // result==0 means "skipped / Back pressed" — don't persist, so the dialog
+    // shows again on the next request(). Only persist explicit allow (1) or deny (2).
+    if (req->result != 0) persist(appId, cap, req->result);
 
     {
         std::lock_guard<std::mutex> g(mu_);
@@ -80,7 +82,11 @@ void PermissionService::guiTick(ViewDispatcher& vd) {
 }
 
 void PermissionService::revoke(const std::string& appId, const std::string& cap) {
-    persist(appId, cap, 2);  // denied — app will be refused until user re-grants
+    persist(appId, cap, 0);  // reset to not_asked; next request() shows dialog again
+}
+
+void PermissionService::grant(const std::string& appId, const std::string& cap) {
+    persist(appId, cap, 1);
 }
 
 void PermissionService::persist(const std::string& appId,
