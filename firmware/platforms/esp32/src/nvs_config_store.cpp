@@ -59,14 +59,18 @@ static void initNvsWorker() {
 }
 
 // Run fn(ctx) on the internal-RAM NVS worker. Blocks until fn returns.
-// Lazily creates the worker if start() was not called before the first write.
-static void dispatchNvsWrite(void (*fn)(void*), void* ctx) {
+// All NVS calls (read AND write) go through here: esp_flash_read/write both
+// call spi_flash_disable_interrupts_caches_and_other_cpu(), which asserts
+// that the calling task's stack is in internal SRAM — not PSRAM.
+// Lazily creates the worker if start() was not called before the first access.
+static void dispatchNvs(void (*fn)(void*), void* ctx) {
     if (!s_nvsQ) {
         initNvsWorker();
     }
     if (!s_nvsQ) {
-        // initNvsWorker failed (e.g. called from ISR context) — drop the write
-        // rather than crashing from a PSRAM-stack task.
+        // Absolute fallback (worker creation failed) — run inline and hope
+        // the calling task has an internal-SRAM stack.
+        fn(ctx);
         return;
     }
     NvsJob job{fn, ctx};
@@ -92,31 +96,39 @@ void NvsConfigStore::start() {
     initNvsWorker();
 }
 
-// ── Reads (NVS_READONLY does NOT disable cache — safe from any stack) ─────────
+// ── Reads — also dispatched to the worker (esp_flash_read disables cache too) ──
 
 bool NvsConfigStore::getString(const char* ns, const char* key, std::string& out) const {
-    nvs_handle_t h;
-    if (nvs_open(ns, NVS_READONLY, &h) != ESP_OK) return false;
-
-    size_t len = 0;
-    esp_err_t err = nvs_get_str(h, key, nullptr, &len);
-    if (err != ESP_OK) { nvs_close(h); return false; }
-
-    out.resize(len);
-    err = nvs_get_str(h, key, &out[0], &len);
-    nvs_close(h);
-
-    if (err != ESP_OK) return false;
-    if (!out.empty() && out.back() == '\0') out.pop_back();
-    return true;
+    struct Ctx { const char* ns; const char* key; std::string* out; bool result; };
+    Ctx ctx{ns, key, &out, false};
+    dispatchNvs([](void* p) {
+        auto* x = static_cast<Ctx*>(p);
+        nvs_handle_t h;
+        if (nvs_open(x->ns, NVS_READONLY, &h) != ESP_OK) return;
+        size_t len = 0;
+        if (nvs_get_str(h, x->key, nullptr, &len) != ESP_OK) { nvs_close(h); return; }
+        x->out->resize(len);
+        esp_err_t err = nvs_get_str(h, x->key, &(*x->out)[0], &len);
+        nvs_close(h);
+        if (err != ESP_OK) return;
+        if (!x->out->empty() && x->out->back() == '\0') x->out->pop_back();
+        x->result = true;
+    }, &ctx);
+    return ctx.result;
 }
 
 bool NvsConfigStore::getInt(const char* ns, const char* key, int64_t& out) const {
-    nvs_handle_t h;
-    if (nvs_open(ns, NVS_READONLY, &h) != ESP_OK) return false;
-    esp_err_t err = nvs_get_i64(h, key, &out);
-    nvs_close(h);
-    return err == ESP_OK;
+    struct Ctx { const char* ns; const char* key; int64_t* out; bool result; };
+    Ctx ctx{ns, key, &out, false};
+    dispatchNvs([](void* p) {
+        auto* x = static_cast<Ctx*>(p);
+        nvs_handle_t h;
+        if (nvs_open(x->ns, NVS_READONLY, &h) != ESP_OK) return;
+        esp_err_t err = nvs_get_i64(h, x->key, x->out);
+        nvs_close(h);
+        x->result = (err == ESP_OK);
+    }, &ctx);
+    return ctx.result;
 }
 
 // ── Writes — dispatched to the internal-RAM NVS worker task ──────────────────
@@ -124,7 +136,7 @@ bool NvsConfigStore::getInt(const char* ns, const char* key, int64_t& out) const
 void NvsConfigStore::setString(const char* ns, const char* key, const std::string& val) {
     struct Ctx { const char* ns; const char* key; const char* val; };
     Ctx ctx{ns, key, val.c_str()};
-    dispatchNvsWrite([](void* p) {
+    dispatchNvs([](void* p) {
         auto* x = static_cast<Ctx*>(p);
         nvs_handle_t h;
         if (nvs_open(x->ns, NVS_READWRITE, &h) != ESP_OK) return;
@@ -137,7 +149,7 @@ void NvsConfigStore::setString(const char* ns, const char* key, const std::strin
 void NvsConfigStore::setInt(const char* ns, const char* key, int64_t val) {
     struct Ctx { const char* ns; const char* key; int64_t val; };
     Ctx ctx{ns, key, val};
-    dispatchNvsWrite([](void* p) {
+    dispatchNvs([](void* p) {
         auto* x = static_cast<Ctx*>(p);
         nvs_handle_t h;
         if (nvs_open(x->ns, NVS_READWRITE, &h) != ESP_OK) return;
@@ -150,7 +162,7 @@ void NvsConfigStore::setInt(const char* ns, const char* key, int64_t val) {
 bool NvsConfigStore::remove(const char* ns, const char* key) {
     struct Ctx { const char* ns; const char* key; bool result; };
     Ctx ctx{ns, key, false};
-    dispatchNvsWrite([](void* p) {
+    dispatchNvs([](void* p) {
         auto* x = static_cast<Ctx*>(p);
         nvs_handle_t h;
         if (nvs_open(x->ns, NVS_READWRITE, &h) != ESP_OK) return;
