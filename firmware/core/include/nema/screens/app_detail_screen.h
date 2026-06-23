@@ -2,6 +2,7 @@
 #include "nema/ui/component_screen.h"
 #include "nema/services/storage_service.h"
 #include <string>
+#include <vector>
 #include <cstdint>
 
 namespace nema {
@@ -46,6 +47,7 @@ private:
     aether::ui::ScrollState            scroll_;
     StorageService::AppStorageInfo     storageInfo_;
     bool                               hasStorageInfo_ = false;
+    std::vector<std::string>           vals_;   // owns formatted value strings (const char* safety)
 
     // CapRow entries for Toggle callbacks (indices match kSensitiveCaps order).
     CapRow       capRows_[8];

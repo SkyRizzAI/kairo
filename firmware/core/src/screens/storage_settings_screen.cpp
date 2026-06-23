@@ -17,6 +17,7 @@ void StorageSettingsScreen::onResume() {
     scroll_.scrollMain = 0;
     state_.focus.focused = 0;
     vals_.clear();
+    dirty_ = true;
     rt_.view().requestRedraw();
 }
 

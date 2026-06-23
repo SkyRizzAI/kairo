@@ -191,6 +191,7 @@ m3ApiRawFunction(wasm_ui_begin) {
     aether::ui::Style rootSt;
     rootSt.dir      = aether::ui::FlexDir::Col;
     rootSt.flexGrow = 1;
+    rootSt.align    = aether::ui::Align::Stretch;   // children fill full width
     st.root = aether::ui::View(st.arena, rootSt);
     if (!st.root) m3ApiSuccess();
 

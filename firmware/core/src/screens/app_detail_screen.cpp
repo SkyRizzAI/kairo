@@ -53,6 +53,7 @@ void AppDetailScreen::onResume() {
             }
         }
     }
+    dirty_ = true;
     rt_.view().requestRedraw();
 }
 
@@ -134,15 +135,19 @@ UiNode* AppDetailScreen::build(NodeArena& a, Runtime& rt) {
 
     // ── Storage ───────────────────────────────────────────────────────────────
     append(ListSection(a, "Storage"));
+    vals_.clear();
+    auto pushVal = [this](const std::string& s) -> const char* {
+        vals_.push_back(s);
+        return vals_.back().c_str();
+    };
     if (hasStorageInfo_) {
         auto* svc = rt.container().resolve<StorageService>();
         bool hasExt = svc && svc->hasExternal();
         size_t total = storageInfo_.internalBytes + storageInfo_.externalBytes;
         const char* locStr = (storageInfo_.location == StorageLocation::External)
                              ? "SD" : "Internal";
-        std::string used = fmtBytes(total) + " / " + locStr;
         {
-            ListEntry e; e.label = "Used"; e.value = used.c_str();
+            ListEntry e; e.label = "Used"; e.value = pushVal(fmtBytes(total) + " / " + locStr);
             append(ListItemRow(a, e));
         }
         if (storageInfo_.movable && hasExt) {
