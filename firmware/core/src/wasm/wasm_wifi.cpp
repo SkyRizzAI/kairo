@@ -19,6 +19,7 @@
 #include "nema/runtime.h"
 #include "nema/hal/radio_wifi.h"
 #include "nema/service/service_container.h"
+#include "nema/services/permission_service.h"
 #include "wasm3.h"
 #include "m3_env.h"
 #include <cstring>
@@ -73,6 +74,19 @@ static IRadioWifi* radio(IM3Runtime rt) {
     return h->ctx->runtime().container().resolve<IRadioWifi>();
 }
 
+// Request a sensitive capability on behalf of the running WASM app.
+// Blocks the app thread until the user allows or denies (GUI thread pushes
+// PermissionScreen). Returns 1=granted, 2=denied. If no PermissionService
+// is registered (e.g. dev build without one), falls through as granted.
+static uint8_t checkPerm(IM3Runtime rt, const char* cap) {
+    WasmHostCtx* h = hostOf(rt);
+    if (!h || !h->ctx) return 2;
+    auto& svc = h->ctx->runtime().container();
+    auto* perm = svc.resolve<PermissionService>();
+    if (!perm) return 1;
+    return perm->request(h->appId, cap);
+}
+
 // ── wifi_scan(out, cap) → bytes written (newline-sep lines) ─────────────────
 // Blocking — calls IRadioWifi::scan() synchronously on the app thread.
 
@@ -81,6 +95,7 @@ m3ApiRawFunction(wasm_wifi_scan) {
     m3ApiGetArg(uint32_t, outOff);
     m3ApiGetArg(int32_t,  cap);
 
+    if (checkPerm(runtime, "net.wifi.scan") != 1) m3ApiReturn(-1);
     IRadioWifi* r = radio(runtime);
     if (!r) m3ApiReturn(-1);
 
@@ -115,6 +130,7 @@ m3ApiRawFunction(wasm_wifi_deauth_start) {
     m3ApiGetArg(uint32_t, bssidOff);
     m3ApiGetArg(int32_t,  ch);
 
+    if (checkPerm(runtime, "net.wifi.inject") != 1) m3ApiReturn(-1);
     IRadioWifi* r = radio(runtime);
     if (!r) m3ApiReturn(-1);
 
@@ -141,6 +157,7 @@ m3ApiRawFunction(wasm_wifi_beacon_spam_start) {
     m3ApiGetArg(uint32_t, bufsOff);
     m3ApiGetArg(int32_t,  count);
 
+    if (checkPerm(runtime, "net.wifi.inject") != 1) m3ApiReturn(-1);
     IRadioWifi* r = radio(runtime);
     if (!r || count <= 0) m3ApiReturn(-1);
 
@@ -177,6 +194,7 @@ m3ApiRawFunction(wasm_wifi_monitor_open) {
     m3ApiReturnType(int32_t);
     m3ApiGetArg(int32_t, ch);
 
+    if (checkPerm(runtime, "net.wifi.monitor") != 1) m3ApiReturn(-1);
     IRadioWifi* r = radio(runtime);
     if (!r) m3ApiReturn(-1);
     m3ApiReturn(r->monitorOpen((uint8_t)ch) ? 0 : -1);
@@ -221,7 +239,7 @@ m3ApiRawFunction(wasm_wifi_inject) {
     m3ApiGetArg(int32_t,  len);
 
     if (len <= 0) m3ApiReturn(-1);
-
+    if (checkPerm(runtime, "net.wifi.inject") != 1) m3ApiReturn(-1);
     IRadioWifi* r = radio(runtime);
     if (!r) m3ApiReturn(-1);
 
