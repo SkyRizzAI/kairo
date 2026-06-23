@@ -8,10 +8,9 @@ namespace nema {
 
 class Runtime;
 
-// Settings → Storage (Plan 83 Fase 5, updated Plan 87 Fase 7).
-// Shows Internal/SD volume usage only.
-// Per-app detail (permissions + move + uninstall) lives in AppDetailScreen,
-// reached via Settings → Apps → [app].
+// Settings → Storage (Plan 83 Fase 5, updated Plan 89).
+// Shows Internal/SD volume usage. Data is loaded asynchronously in onResume()
+// via TaskRunner so the screen is never blocked on a VFS scan.
 class StorageSettingsScreen : public ComponentScreen {
 public:
     explicit StorageSettingsScreen(Runtime& rt);
@@ -20,9 +19,21 @@ public:
 
 private:
     static std::string fmtBytes(size_t bytes);
+    static void onEjectSd(void* u);
+
+    // Cached data loaded asynchronously. `ready` is set by the done callback
+    // (UI thread), never by the worker — so build() may safely read all fields
+    // once ready == true.
+    struct StorageData {
+        StorageService::VolumeInfo  intVol;
+        StorageService::VolumeInfo  extVol;
+        StorageService::SdCardInfo  sdInfo;
+        bool ready = false;
+    };
 
     aether::ui::ScrollState  scroll_;
-    std::vector<std::string> vals_;   // owns formatted value strings (const char* safety)
+    std::vector<std::string> vals_;
+    StorageData              cached_;
 };
 
 } // namespace nema

@@ -47,6 +47,7 @@ private:
     aether::ui::ScrollState            scroll_;
     StorageService::AppStorageInfo     storageInfo_;
     bool                               hasStorageInfo_ = false;
+    bool                               loadingStorage_ = false;
     std::vector<std::string>           vals_;   // owns formatted value strings (const char* safety)
 
     // CapRow entries for Toggle callbacks (indices match kSensitiveCaps order).

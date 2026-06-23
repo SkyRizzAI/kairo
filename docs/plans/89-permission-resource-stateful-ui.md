@@ -6,7 +6,7 @@
 > Plan ini menutup gap yang ditemukan selama testing WiFi Marauder: permission dialog
 > tidak muncul, chip WiFi tidak dilepas ke app, dan storage screen stale.
 
-- Status: 🔲 Planning
+- Status: ✅ Done
 - Milestone: M10 (App Platform maturity)
 - Depends on: **87** (permission infra), **86** (process model), **88** (remote v2)
 - Target: skyrizz-e32 (ESP32-S3) + WASM simulator
@@ -85,13 +85,13 @@ Kalau belum ada, tambahkan di `WasmHostCtx` saat WASM app diload (ambil dari man
 
 ### 1.4 Checklist Fase 1
 
-- [ ] Verifikasi `WasmHostCtx` punya akses ke `bundleId` / `appId`
-- [ ] Tambah `checkPerm()` helper di `wasm_wifi.cpp`
-- [ ] Guard `wifi_scan` dengan `net.wifi.scan`
-- [ ] Guard `wifi_monitor_open` dengan `net.wifi.monitor`
-- [ ] Guard `wifi_deauth_start`, `wifi_inject`, `wifi_beacon_spam_start` dengan `net.wifi.inject`
-- [ ] Test di simulator: permission dialog muncul pertama kali, tidak muncul lagi setelah grant
-- [ ] Test di device: Settings → Apps → WiFi Marauder menampilkan permission toggles setelah grant
+- [x] Verifikasi `WasmHostCtx` punya akses ke `bundleId` / `appId`
+- [x] Tambah `checkPerm()` helper di `wasm_wifi.cpp`
+- [x] Guard `wifi_scan` dengan `net.wifi.scan`
+- [x] Guard `wifi_monitor_open` dengan `net.wifi.monitor`
+- [x] Guard `wifi_deauth_start`, `wifi_inject`, `wifi_beacon_spam_start` dengan `net.wifi.inject`
+- [x] Test di simulator: permission dialog muncul pertama kali, tidak muncul lagi setelah grant
+- [x] Test di device: Settings → Apps → WiFi Marauder menampilkan permission toggles setelah grant
 
 ---
 
@@ -177,13 +177,13 @@ public:
 
 ### 2.4 Checklist Fase 2
 
-- [ ] Buat `ILeasable` interface (`firmware/core/include/nema/system/leasable.h`)
-- [ ] Buat `ResourceBroker` service (`firmware/core/include/nema/system/resource_broker.h`, `.cpp`)
-- [ ] `WifiService` implement `ILeasable` (pause/resume reconnect loop)
-- [ ] Register `ResourceBroker` di Runtime (atau inject via ServiceContainer)
-- [ ] `wifi_monitor_open` → acquire lease `"net.wifi.raw"`; `wifi_monitor_close` → release
-- [ ] Lease auto-release di `WasmHostCtx` destructor
-- [ ] Test: buka Monitor Mode → sistem WiFi pause → tutup Monitor → reconnect
+- [x] Buat `ILeasable` interface (`firmware/core/include/nema/system/leasable.h`)
+- [x] Buat `ResourceBroker` service (`firmware/core/include/nema/system/resource_broker.h`, `.cpp`)
+- [x] `WifiService` implement `ILeasable` (pause/resume reconnect loop)
+- [x] Register `ResourceBroker` di Runtime (atau inject via ServiceContainer)
+- [x] `wifi_monitor_open` → acquire lease `"net.wifi.raw"`; `wifi_monitor_close` → release
+- [x] Lease auto-release di `WasmHostCtx` destructor
+- [x] Test: buka Monitor Mode → sistem WiFi pause → tutup Monitor → reconnect
 
 ---
 
@@ -216,12 +216,12 @@ itu scope terpisah (Plan 90 kalau diperlukan).
 
 ### 3.3 Checklist Fase 3
 
-- [ ] Tambah `loadAsync()` di `StorageSettingsScreen::onResume()` — kick `TaskRunner` job
-- [ ] `TaskRunner` job: scan `/system/data` + `/sd/data` → store result
-- [ ] Saat done: `asyncPoster_.post({events::StorageStatsReady, ...})`
-- [ ] `StorageSettingsScreen` subscribe `StorageStatsReady` → `dirty_ = true` + redraw
-- [ ] Sama untuk `AppDetailScreen` — `allApps()` bisa lambat di device
-- [ ] Test: buka Storage screen → angka muncul tanpa perlu tekan tombol
+- [x] Tambah `loadAsync()` di `StorageSettingsScreen::onResume()` — kick `TaskRunner` job
+- [x] `TaskRunner` job: scan `/system/data` + `/sd/data` → store result
+- [x] Saat done: `asyncPoster_.post({events::StorageStatsReady, ...})`
+- [x] `StorageSettingsScreen` subscribe `StorageStatsReady` → `dirty_ = true` + redraw
+- [x] Sama untuk `AppDetailScreen` — `allApps()` bisa lambat di device
+- [x] Test: buka Storage screen → angka muncul tanpa perlu tekan tombol
 
 ---
 
@@ -257,10 +257,10 @@ service yang punya file handle harus flush dan close.
 
 ### 4.3 Checklist Fase 4
 
-- [ ] Extend `StorageService` dengan `sdCardInfo()` → baca CID dari SDSPI driver
-- [ ] Extend `StorageService` dengan `ejectSd()` → `vfs_->unmount("/sd")`
-- [ ] Update `StorageSettingsScreen` — tampilkan info SD + eject button
-- [ ] Test eject: SD unmount sukses, re-insert dideteksi (kalau ada hotplug event)
+- [x] Extend `StorageService` dengan `sdCardInfo()` → baca CID dari SDSPI driver
+- [x] Extend `StorageService` dengan `ejectSd()` → `vfs_->unmount("/sd")`
+- [x] Update `StorageSettingsScreen` — tampilkan info SD + eject button
+- [x] Test eject: SD unmount sukses, re-insert dideteksi (kalau ada hotplug event)
 
 ---
 
@@ -280,14 +280,14 @@ quality improvements.
 
 ## 6. Definition of Done
 
-- [ ] WiFi Marauder: dialog permission muncul pertama kali app coba scan/monitor
-- [ ] WiFi Marauder: Settings → Apps → WiFi Marauder menampilkan permission toggles
-- [ ] WiFi Marauder: Monitor Mode → sistem WiFi pause; kembali ke main → resume
-- [ ] Storage settings: angka muncul tanpa perlu tekan tombol
-- [ ] Storage settings: SD card info + eject option tersedia
-- [ ] Test semua di skyrizz-e32 + WASM simulator
-- [ ] Update `docs/STATE.md`
-- [ ] Commit konvensional
+- [x] WiFi Marauder: dialog permission muncul pertama kali app coba scan/monitor
+- [x] WiFi Marauder: Settings → Apps → WiFi Marauder menampilkan permission toggles
+- [x] WiFi Marauder: Monitor Mode → sistem WiFi pause; kembali ke main → resume
+- [x] Storage settings: angka muncul tanpa perlu tekan tombol
+- [x] Storage settings: SD card info + eject option tersedia
+- [x] Test semua di skyrizz-e32 + WASM simulator
+- [x] Update `docs/STATE.md`
+- [x] Commit konvensional
 
 ---
 

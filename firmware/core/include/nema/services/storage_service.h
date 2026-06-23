@@ -70,6 +70,20 @@ public:
     VolumeInfo externalVolume() const;
     bool       hasExternal()   const;
 
+    // SD card info: mounted state + capacity from the FAT filesystem.
+    // totalBytes / freeBytes are 0 on backends that don't support statvfs.
+    struct SdCardInfo {
+        bool     mounted    = false;
+        uint64_t totalBytes = 0;
+        uint64_t freeBytes  = 0;
+    };
+    SdCardInfo sdCardInfo() const;
+
+    // Software-eject the SD card: flushes streams and removes it from the VFS
+    // router so subsequent file operations fail cleanly. The user can then
+    // physically remove the card. Returns false if no SD is mounted.
+    bool ejectSd();
+
     // ── IService ─────────────────────────────────────────────────────────────
 
     const char* name() const override { return "StorageService"; }

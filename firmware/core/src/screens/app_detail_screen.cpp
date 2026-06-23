@@ -1,4 +1,5 @@
 // Plan 87 Fase 7 — AppDetailScreen: per-app permission + storage + uninstall.
+// Plan 89 Fase 3: storage info loaded asynchronously via TaskRunner.
 #include "nema/screens/app_detail_screen.h"
 #include "nema/runtime.h"
 #include "nema/service/service_container.h"
@@ -43,18 +44,32 @@ void AppDetailScreen::setApp(std::string id, std::string displayName,
 void AppDetailScreen::onResume() {
     scroll_.scrollMain   = 0;
     state_.focus.focused = 0;
-    hasStorageInfo_ = false;
-    if (auto* svc = rt_.container().resolve<StorageService>()) {
-        for (const auto& info : svc->allApps()) {
-            if (info.bundleId == appId_) {
-                storageInfo_   = info;
-                hasStorageInfo_ = true;
-                break;
-            }
-        }
-    }
-    dirty_ = true;
+    hasStorageInfo_  = false;
+    loadingStorage_  = true;
+    dirty_ = true;  // show "Loading…" in Storage section immediately
     rt_.view().requestRedraw();
+
+    auto* svc = rt_.container().resolve<StorageService>();
+    if (!svc) { loadingStorage_ = false; return; }
+
+    // allApps() walks the VFS — kick it off the UI thread.
+    std::string id = appId_;  // capture by value (string is safe across threads)
+    rt_.tasks().submit(
+        [svc, id, this]() {
+            for (const auto& info : svc->allApps()) {
+                if (info.bundleId == id) {
+                    storageInfo_    = info;
+                    hasStorageInfo_ = true;
+                    break;
+                }
+            }
+        },
+        [this]() {
+            loadingStorage_ = false;
+            dirty_ = true;
+            rt_.view().requestRedraw();
+        }
+    );
 }
 
 std::string AppDetailScreen::fmtBytes(size_t bytes) {
@@ -140,7 +155,10 @@ UiNode* AppDetailScreen::build(NodeArena& a, Runtime& rt) {
         vals_.push_back(s);
         return vals_.back().c_str();
     };
-    if (hasStorageInfo_) {
+    if (loadingStorage_) {
+        ListEntry e; e.label = "Loading…";
+        append(ListItemRow(a, e));
+    } else if (hasStorageInfo_) {
         auto* svc = rt.container().resolve<StorageService>();
         bool hasExt = svc && svc->hasExternal();
         size_t total = storageInfo_.internalBytes + storageInfo_.externalBytes;

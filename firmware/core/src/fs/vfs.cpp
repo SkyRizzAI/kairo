@@ -63,6 +63,13 @@ bool Vfs::isMountPoint(const std::string& path) const {
     return false;
 }
 
+IFileSystem* Vfs::backendAt(const std::string& mountPoint) const {
+    std::string mp = norm(mountPoint);
+    for (const auto& m : mounts_)
+        if (m.point == mp) return m.fs;
+    return nullptr;
+}
+
 Vfs::Mount* Vfs::resolve(const std::string& path, std::string& sub) {
     for (auto& m : mounts_) {                 // longest-first → most specific wins
         if (under(path, m.point)) {

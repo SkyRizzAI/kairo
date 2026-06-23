@@ -2,6 +2,7 @@
 #include "nema/services/storage_service.h"
 #include "nema/app/app_registry.h"
 #include "nema/runtime.h"
+#include "nema/fs/vfs.h"
 #include <cstdio>
 #include <cstring>
 
@@ -143,6 +144,32 @@ bool StorageService::hasExternal() const {
     if (!vfs_) return false;
     std::vector<FsEntry> probe;
     return vfs_->list("/sd", probe);
+}
+
+StorageService::SdCardInfo StorageService::sdCardInfo() const {
+    SdCardInfo info;
+    info.mounted = hasExternal();
+    if (!info.mounted) return info;
+    // Resolve the SD backend and ask it for capacity data (StatVfs).
+    // backendAt() returns nullptr if the Vfs doesn't have "/sd" mounted;
+    // the default IFileSystem::statvfs() returns zeros when not implemented.
+    if (auto* vfs = dynamic_cast<Vfs*>(vfs_)) {
+        if (auto* sd = vfs->backendAt("/sd")) {
+            StatVfs sv = sd->statvfs();
+            info.totalBytes = sv.totalBytes;
+            info.freeBytes  = sv.freeBytes;
+        }
+    }
+    return info;
+}
+
+bool StorageService::ejectSd() {
+    if (!vfs_) return false;
+    auto* vfs = dynamic_cast<Vfs*>(vfs_);
+    if (!vfs) return false;
+    if (!vfs->isMountPoint("/sd")) return false;
+    vfs->unmount("/sd");
+    return true;
 }
 
 } // namespace nema

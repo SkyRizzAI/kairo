@@ -194,4 +194,11 @@ bool SdFatFileSystem::rename(const std::string& src, const std::string& dst) {
     return ::rename(rs.c_str(), rd.c_str()) == 0;
 }
 
+StatVfs SdFatFileSystem::statvfs() const {
+    if (!mounted_) return {};
+    uint64_t total = 0, free = 0;
+    if (esp_vfs_fat_info(base_.c_str(), &total, &free) != ESP_OK) return {};
+    return {total, free};
+}
+
 } // namespace nema

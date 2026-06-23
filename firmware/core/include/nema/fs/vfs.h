@@ -25,6 +25,9 @@ public:
     void unmount(const std::string& mountPoint);
     bool isMountPoint(const std::string& path) const;
 
+    // Return the IFileSystem* registered at exactly this mount point, or nullptr.
+    IFileSystem* backendAt(const std::string& mountPoint) const;
+
     const char* name() const override { return "vfs"; }
 
     bool list  (const std::string& path, std::vector<FsEntry>& out) override;

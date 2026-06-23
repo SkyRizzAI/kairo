@@ -20,6 +20,7 @@
 #include "nema/hal/radio_wifi.h"
 #include "nema/service/service_container.h"
 #include "nema/services/permission_service.h"
+#include "nema/services/resource_broker.h"
 #include "wasm3.h"
 #include "m3_env.h"
 #include <cstring>
@@ -87,6 +88,36 @@ static uint8_t checkPerm(IM3Runtime rt, const char* cap) {
     return perm->request(h->appId, cap);
 }
 
+// Lease handles — held while the WASM app owns a sensitive radio mode.
+// acquire() is re-entrant (same appId+cap returns existing handle), so stale
+// values after a prior run are harmless: releaseAll() freed the broker state.
+static uint32_t s_monitorHandle = 0;
+static uint32_t s_injectHandle  = 0;
+
+// Acquire an exclusive resource lease for `cap`. Returns true if granted or if
+// no ResourceBroker is registered (dev/permissive build).
+static bool acquireLease(IM3Runtime rt, const char* cap, uint32_t& handle) {
+    WasmHostCtx* h = hostOf(rt);
+    if (!h || !h->ctx) return false;
+    auto* broker = h->ctx->runtime().container().resolve<ResourceBroker>();
+    if (!broker) return true;  // no broker = permissive — let it through
+    auto r = broker->acquire(h->appId, cap);
+    if (!r.ok) return false;
+    handle = r.value;
+    return true;
+}
+
+// Release the lease stored in `handle` and zero it out.
+static void releaseLease(IM3Runtime rt, uint32_t& handle) {
+    if (!handle) return;
+    WasmHostCtx* h = hostOf(rt);
+    if (h && h->ctx) {
+        auto* broker = h->ctx->runtime().container().resolve<ResourceBroker>();
+        if (broker) broker->release(h->appId, handle);
+    }
+    handle = 0;
+}
+
 // ── wifi_scan(out, cap) → bytes written (newline-sep lines) ─────────────────
 // Blocking — calls IRadioWifi::scan() synchronously on the app thread.
 
@@ -131,6 +162,7 @@ m3ApiRawFunction(wasm_wifi_deauth_start) {
     m3ApiGetArg(int32_t,  ch);
 
     if (checkPerm(runtime, "net.wifi.inject") != 1) m3ApiReturn(-1);
+    if (!acquireLease(runtime, "net.wifi.inject", s_injectHandle)) m3ApiReturn(-1);
     IRadioWifi* r = radio(runtime);
     if (!r) m3ApiReturn(-1);
 
@@ -146,6 +178,7 @@ m3ApiRawFunction(wasm_wifi_deauth_stop) {
     m3ApiReturnType(int32_t);
     IRadioWifi* r = radio(runtime);
     if (r) r->deauthStop();
+    releaseLease(runtime, s_injectHandle);
     m3ApiReturn(0);
 }
 
@@ -158,6 +191,7 @@ m3ApiRawFunction(wasm_wifi_beacon_spam_start) {
     m3ApiGetArg(int32_t,  count);
 
     if (checkPerm(runtime, "net.wifi.inject") != 1) m3ApiReturn(-1);
+    if (!acquireLease(runtime, "net.wifi.inject", s_injectHandle)) m3ApiReturn(-1);
     IRadioWifi* r = radio(runtime);
     if (!r || count <= 0) m3ApiReturn(-1);
 
@@ -185,6 +219,7 @@ m3ApiRawFunction(wasm_wifi_beacon_spam_stop) {
     m3ApiReturnType(int32_t);
     IRadioWifi* r = radio(runtime);
     if (r) r->beaconSpamStop();
+    releaseLease(runtime, s_injectHandle);
     m3ApiReturn(0);
 }
 
@@ -195,6 +230,7 @@ m3ApiRawFunction(wasm_wifi_monitor_open) {
     m3ApiGetArg(int32_t, ch);
 
     if (checkPerm(runtime, "net.wifi.monitor") != 1) m3ApiReturn(-1);
+    if (!acquireLease(runtime, "net.wifi.monitor", s_monitorHandle)) m3ApiReturn(-1);
     IRadioWifi* r = radio(runtime);
     if (!r) m3ApiReturn(-1);
     m3ApiReturn(r->monitorOpen((uint8_t)ch) ? 0 : -1);
@@ -227,6 +263,7 @@ m3ApiRawFunction(wasm_wifi_monitor_read) {
 m3ApiRawFunction(wasm_wifi_monitor_close) {
     IRadioWifi* r = radio(runtime);
     if (r) r->monitorClose();
+    releaseLease(runtime, s_monitorHandle);
     m3ApiSuccess();
 }
 
@@ -240,6 +277,9 @@ m3ApiRawFunction(wasm_wifi_inject) {
 
     if (len <= 0) m3ApiReturn(-1);
     if (checkPerm(runtime, "net.wifi.inject") != 1) m3ApiReturn(-1);
+    // Acquire inject lease if not already held (e.g. deauth/spam not started yet).
+    if (!s_injectHandle && !acquireLease(runtime, "net.wifi.inject", s_injectHandle))
+        m3ApiReturn(-1);
     IRadioWifi* r = radio(runtime);
     if (!r) m3ApiReturn(-1);
 

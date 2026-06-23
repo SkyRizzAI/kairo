@@ -6,6 +6,13 @@
 
 namespace nema {
 
+// Volume capacity report returned by IFileSystem::statvfs().
+// Backends that do not support capacity reporting return a zero-filled struct.
+struct StatVfs {
+    uint64_t totalBytes = 0;
+    uint64_t freeBytes  = 0;
+};
+
 // One directory entry.
 struct FsEntry {
     std::string name;   // basename only
@@ -31,6 +38,9 @@ struct IFileSystem : IDriver {
     virtual bool mkdir (const std::string& path) = 0;
     virtual bool remove(const std::string& path) = 0;
     virtual bool rename(const std::string& src, const std::string& dst) = 0;
+
+    // Capacity report. Backends that don't support this return a zero StatVfs.
+    virtual StatVfs statvfs() const { return {}; }
 
     // Streaming write (Plan 88 R5): write a large file chunk-by-chunk straight to
     // storage, so the device never buffers the whole file in RAM (which fragmented
