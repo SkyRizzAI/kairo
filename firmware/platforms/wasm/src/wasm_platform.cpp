@@ -17,6 +17,7 @@
 #include "nema/assets/fonts/iosk_mono_pack.h"
 #include "nema/assets/fonts/iosk_cond_pack.h"
 #include "nema/assets/fonts/ibm_plex_mono_pack.h"
+#include "nema/assets/fonts/profont_pack.h"
 #include <string>
 #include <vector>
 #include <cstdlib>
@@ -113,6 +114,13 @@ void WasmPlatform::registerDrivers(Runtime& rt) {
     rootFs_.write("/system/assets/fonts/IBMPlexMono/bold10.bmf", kIbmPlexMonoBold10, kIbmPlexMonoBold10Len);
     rootFs_.write("/system/assets/fonts/IBMPlexMono/reg12.bmf",  kIbmPlexMonoReg12,  kIbmPlexMonoReg12Len);
     rootFs_.write("/system/assets/fonts/IBMPlexMono/bold12.bmf", kIbmPlexMonoBold12, kIbmPlexMonoBold12Len);
+    rootFs_.mkdir("/system/assets/fonts/ProFont");
+    rootFs_.write("/system/assets/fonts/ProFont/reg8.bmf",   kProFontReg8,   kProFontReg8Len);
+    rootFs_.write("/system/assets/fonts/ProFont/bold8.bmf",  kProFontBold8,  kProFontBold8Len);
+    rootFs_.write("/system/assets/fonts/ProFont/reg10.bmf",  kProFontReg10,  kProFontReg10Len);
+    rootFs_.write("/system/assets/fonts/ProFont/bold10.bmf", kProFontBold10, kProFontBold10Len);
+    rootFs_.write("/system/assets/fonts/ProFont/reg12.bmf",  kProFontReg12,  kProFontReg12Len);
+    rootFs_.write("/system/assets/fonts/ProFont/bold12.bmf", kProFontBold12, kProFontBold12Len);
     // Create empty scan + data roots
     rootFs_.mkdir("/system/apps");
     rootFs_.mkdir("/system/data");
