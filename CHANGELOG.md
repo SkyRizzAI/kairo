@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.3.0](https://github.com/SkyRizzAI/kairo/compare/palanu-v1.2.0...palanu-v1.3.0) (2026-06-23)
+
+
+### Features
+
+* **fonts:** add ProFont pack (Flipper Zero keyboard/terminal font) ([b4a6f13](https://github.com/SkyRizzAI/kairo/commit/b4a6f13737d1d5470d72ae3d133c737756f236ba))
+
+
+### Bug Fixes
+
+* **nvs:** call start() explicitly + lazy-init worker to fix PSRAM-stack crash ([3f7ed72](https://github.com/SkyRizzAI/kairo/commit/3f7ed72cc80bec2f7d5d84c013db64a61f677f09))
+* **nvs:** proxy all NVS ops (reads + writes) to internal-SRAM worker task ([56b9ea8](https://github.com/SkyRizzAI/kairo/commit/56b9ea8ef5bd8441097bb06f4fd94657442fa845))
+* ram usage, remote protokol, forge cli ([98114b6](https://github.com/SkyRizzAI/kairo/commit/98114b681c829a2c7ee4aabac8c50de8d526b429))
+* **wasm:** use PSRAM stack (128KB) for nema_app thread on ESP32 ([ce0117b](https://github.com/SkyRizzAI/kairo/commit/ce0117b5353e2bb072ad99f2098515e21ec3ac19))
+
 ## [1.2.0](https://github.com/SkyRizzAI/kairo/compare/palanu-v1.1.0...palanu-v1.2.0) (2026-06-22)
 
 
