@@ -33,9 +33,12 @@ public:
     const char* displayServer() const { return displayServer_.empty() ? nullptr : displayServer_.c_str(); }
 
     // wasm3's interpreter recurses; give it a comfortable native stack.
+    // On ESP32 this must be >= kPsramStackThreshold (96 KB) so thread_esp32.cpp
+    // routes it to PSRAM (xTaskCreatePinnedToCoreWithCaps + MALLOC_CAP_SPIRAM).
+    // Internal SRAM is too scarce for a 64 KB task stack alongside all other stacks.
     uint32_t stackBytes() const override {
 #ifdef ESP_PLATFORM
-        return 64 * 1024;
+        return 128 * 1024;
 #else
         return 256 * 1024;
 #endif
