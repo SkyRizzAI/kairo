@@ -38,7 +38,10 @@ void Esp32Platform::registerDrivers(Runtime& rt) {
     usbHid_.onRegister(rt);
 
     // NVS-backed config store — available to all ESP32 boards.
+    // start() must be called explicitly: NvsConfigStore inherits IConfigStore,
+    // not IService, so ServiceManager::startAll() won't call it.
     config_.init(rt.log());
+    config_.start();
     rt.container().registerService(&config_);
     rt.container().registerAs<IConfigStore>(&config_);
 

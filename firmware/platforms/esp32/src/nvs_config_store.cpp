@@ -49,6 +49,7 @@ static void nvsWorker(void*) {
 }
 
 static void initNvsWorker() {
+    if (s_nvsQ) return;  // already initialised
     s_nvsQ    = xQueueCreateStatic(1, sizeof(NvsJob),
                                    reinterpret_cast<uint8_t*>(&s_nvsQSlot), &s_nvsQBuf);
     s_nvsDone = xSemaphoreCreateBinaryStatic(&s_nvsDoneBuf);
@@ -58,11 +59,14 @@ static void initNvsWorker() {
 }
 
 // Run fn(ctx) on the internal-RAM NVS worker. Blocks until fn returns.
+// Lazily creates the worker if start() was not called before the first write.
 static void dispatchNvsWrite(void (*fn)(void*), void* ctx) {
     if (!s_nvsQ) {
-        // Worker not started (called before start() — shouldn't happen, but
-        // fall back to inline execution rather than silently dropping the write).
-        fn(ctx);
+        initNvsWorker();
+    }
+    if (!s_nvsQ) {
+        // initNvsWorker failed (e.g. called from ISR context) — drop the write
+        // rather than crashing from a PSRAM-stack task.
         return;
     }
     NvsJob job{fn, ctx};
