@@ -1,6 +1,7 @@
 #pragma once
 #include "nema/hal/filesystem.h"
 #include "nema/board.h"     // SdSpiConfig
+#include "nema/log/logger.h"
 #include <string>
 
 namespace nema {
@@ -14,7 +15,9 @@ namespace nema {
 class SdFatFileSystem : public IFileSystem {
 public:
     bool begin(const SdSpiConfig& cfg, const char* basePath = "/sdcard");
-    bool mounted() const { return mounted_; }
+    void attachLogger(Logger& log) { log_ = &log; }
+    bool mounted()  const { return mounted_; }
+    const char* basePath() const { return base_.c_str(); }
 
     const char* name() const override { return "SD (FAT)"; }
 
@@ -25,13 +28,20 @@ public:
     bool remove(const std::string& path) override;
     bool rename(const std::string& src, const std::string& dst) override;
 
+    bool writeStreamBegin(const std::string& path) override;
+    bool writeStreamChunk(uint32_t offset, const uint8_t* data, size_t len) override;
+    bool writeStreamEnd() override;
+    void writeStreamAbort() override;
+
 private:
     std::string real(const std::string& vpath) const;  // VFS path → POSIX path
     void mkdirsFor(const std::string& realPath);        // mkdir -p of ancestors
 
+    Logger*     log_     = nullptr;
     std::string base_;
     bool        mounted_ = false;
     void*       card_    = nullptr;   // sdmmc_card_t* (opaque; IDF type stays in .cpp)
+    void*       stream_  = nullptr;   // FILE* of the active streaming write (opaque)
 };
 
 } // namespace nema

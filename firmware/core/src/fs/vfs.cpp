@@ -108,6 +108,30 @@ bool Vfs::write(const std::string& path, const uint8_t* data, size_t len) {
     return m && m->fs->write(sub, data, len);
 }
 
+bool Vfs::writeStreamBegin(const std::string& path) {
+    if (streamFs_) { streamFs_->writeStreamAbort(); streamFs_ = nullptr; }
+    std::string sub;
+    Mount* m = resolve(norm(path), sub);
+    if (!m || !m->fs->writeStreamBegin(sub)) return false;
+    streamFs_ = m->fs;                       // remember for Chunk/End
+    return true;
+}
+
+bool Vfs::writeStreamChunk(uint32_t offset, const uint8_t* data, size_t len) {
+    return streamFs_ && streamFs_->writeStreamChunk(offset, data, len);
+}
+
+bool Vfs::writeStreamEnd() {
+    if (!streamFs_) return false;
+    bool ok = streamFs_->writeStreamEnd();
+    streamFs_ = nullptr;
+    return ok;
+}
+
+void Vfs::writeStreamAbort() {
+    if (streamFs_) { streamFs_->writeStreamAbort(); streamFs_ = nullptr; }
+}
+
 bool Vfs::mkdir(const std::string& path) {
     std::string p = norm(path);
     if (isMountPoint(p)) return false;        // a mount point already exists as a dir

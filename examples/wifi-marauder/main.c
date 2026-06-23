@@ -217,7 +217,6 @@ static const char* itoa_s(int n) {
 static int screen_main(void) {
     ui_begin();
     ui_title("WiFi Marauder");
-    ui_text("Palanu native WiFi audit");
     ui_button("Scan APs",    BTN_SCAN);
     ui_button("Monitor Mode",BTN_MONITOR);
     ui_button("Beacon Spam", BTN_BEACON);

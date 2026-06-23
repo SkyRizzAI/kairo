@@ -32,7 +32,8 @@
 			const t = new BleTransport();
 			await t.connect(); // opens the browser device chooser
 			label = 'Bluetooth (BLE)';
-			const s = new RemoteSession(t);
+			// Per-transport token key so one device's token can't clobber another's (F5).
+			const s = new RemoteSession(t, { tokenKey: 'palanu.remote.token.ble' });
 			setRemote(s, label);
 			session = s;
 		} catch (e) {
@@ -51,7 +52,7 @@
 			const t = new SerialTransport();
 			await t.connect();
 			label = 'USB (Serial)';
-			const s = new RemoteSession(t);
+			const s = new RemoteSession(t, { tokenKey: 'palanu.remote.token.usb' });
 			setRemote(s, label);
 			session = s;
 		} catch (e) {
@@ -71,7 +72,7 @@
 			const t = new WebSocketTransport(netHost);
 			// Construct the session first so onData/onState are wired before the socket
 			// opens; onState(true) then fires immediately and drives the PLP handshake.
-			const s = new RemoteSession(t);
+			const s = new RemoteSession(t, { tokenKey: `palanu.remote.token.net.${netHost.trim()}` });
 			await t.boot();
 			label = `Network (${netHost})`;
 			setRemote(s, label);

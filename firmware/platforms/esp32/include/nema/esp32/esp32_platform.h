@@ -1,6 +1,8 @@
 #pragma once
 #include "nema/platform.h"
+#include "nema/log/file_sink.h"
 #include "nema/esp32/esp32_clock.h"
+#include <memory>
 #include "nema/esp32/esp32_wifi_driver.h"
 #include "nema/esp32/esp32_http_client.h"
 #include "nema/esp32/esp32_ble.h"
@@ -82,6 +84,7 @@ private:
     LittleFsFileSystem rootFs_;    // "/"   — persistent (internal flash)
     MemFileSystem      tmpFs_;     // "/tmp" — volatile scratch (RAM)
     SdFatFileSystem    sdFs_;      // "/sd" — microSD (FAT), if the board wires one
+    std::unique_ptr<FileSink> fileSink_;   // /sd/logs.txt — created when SD mounts
     bool               remoteWired_ = false;
 };
 

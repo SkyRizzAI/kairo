@@ -11,9 +11,11 @@
 #include "nema/services/remote_service.h"
 #include "nema/services/cli_service.h"
 #include "nema/apps/js_app_store.h"
+#include "nema/app/papp_installer.h"   // loadInstalledPapps() — AppScan rescan (Plan 88)
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 #include <esp_system.h>
+#include <esp_timer.h>
 #include <esp_sleep.h>
 #include <driver/gpio.h>
 #include <esp_cpu.h>
@@ -26,6 +28,15 @@
 #include <string>
 #include <vector>
 #include <ctime>
+
+// FILE-channel requests run inline on cdc_reader_task (Plan 88). An earlier async
+// `file_rx` deferral (D5) was meant to keep cdc_rx free during slow SD/LittleFS I/O,
+// but at a low FreeRTOS priority that task was starved by the WiFi/GUI stack and
+// silently failed to drain its queue, so file transfers timed out. The chunked write
+// protocol makes per-frame work cheap (a memcpy; only WriteEnd/List/Read touch
+// storage), so inline handling — the same model the WASM simulator uses — is both
+// simpler and reliable. If a future need to overlap a long listing with the handshake
+// reappears, reintroduce deferral with a correctly-prioritised, core-pinned task.
 
 namespace nema {
 
@@ -278,9 +289,17 @@ void Esp32Platform::postRegister(Runtime& rt) {
     SdSpiConfig sdCfg;
     if (rt.board().sdSpi(sdCfg)) {
         if (sdFs_.begin(sdCfg)) {
+            sdFs_.attachLogger(rt.log());
             vfs_.mount("/sd", &sdFs_);
             rt.capabilities().add(caps::Storage);
             rt.log().info("Esp32Platform", "microSD mounted", {{"path", "/sd"}});
+            // Use the real ESP-IDF VFS path (sdFs_.basePath() = "/sdcard" by
+            // default), not the project Vfs path "/sd" — fopen() goes through
+            // ESP-IDF VFS, which has no "/sd" mount; it only knows "/sdcard".
+            std::string logPath = std::string(sdFs_.basePath()) + "/logs.txt";
+            fileSink_ = std::make_unique<FileSink>(logPath);
+            rt.log().addSink(*fileSink_);
+            rt.log().info("Esp32Platform", "file logging enabled", {{"path", logPath}});
         } else {
             rt.log().warn("Esp32Platform", "microSD not mounted (no card / mount failed)",
                           {{"cs", std::to_string(sdCfg.cs)}, {"sclk", std::to_string(sdCfg.sclk)}});
@@ -288,6 +307,24 @@ void Esp32Platform::postRegister(Runtime& rt) {
     }
 
     remote_.attachFs(vfs_);
+    // FILE-channel ops run inline on cdc_reader_task (Plan 88 / ADR 0009) — see the
+    // note where the async deferral helpers used to live, above.
+
+    // In-protocol liveness (Plan 88 §8): USB gives no disconnect event, so a periodic
+    // timer lets LinkService notice a host that stopped PINGing and tear the session
+    // down (reset screen-opt-in/auth, drop shell sessions). 3 s period × 2-tick grace
+    // ≈ 6 s detection; the host pings every ~3 s so a live link never trips it.
+    {
+        static esp_timer_handle_t s_liveTimer = nullptr;
+        if (!s_liveTimer) {
+            esp_timer_create_args_t a = {};
+            a.callback = [](void* arg) { static_cast<LinkService*>(arg)->livenessTick(); };
+            a.arg = &link_;
+            a.name = "plp_live";
+            if (esp_timer_create(&a, &s_liveTimer) == ESP_OK)
+                esp_timer_start_periodic(s_liveTimer, 3000000 /*µs*/);
+        }
+    }
 
     // --- DISPLAY-ONLY: mirror the screen to the host (RemoteScreenTap). Only
     // wired when the board actually has a display; otherwise the substrate above
@@ -349,8 +386,18 @@ void Esp32Platform::power(PowerAction action) {
 
 void Esp32Platform::controlThunk(void* user, uint8_t op, const uint8_t* data, size_t len) {
     auto* s = static_cast<Esp32Platform*>(user);
-    if (op == ExtOp::AppInstall && s->rt_)   // OTA: install a pushed .papp live (Plan 37)
+    if (op == ExtOp::AppInstall && s->rt_) {  // OTA: install a pushed .papp live (Plan 37)
         JsAppStore::instance().installPappBytes(*s->rt_, (const char*)data, len);
+        return;
+    }
+    if (op == ExtOp::AppScan && s->rt_) {      // rescan VFS apps after a folder/.papp.zip push
+        // Parity with WasmPlatform (Plan 86 Fase 6): Forge web/CLI pushes a .papp folder
+        // (or unzips a .papp.zip into one) under /system/apps or /sd/apps, then asks the
+        // device to (re)scan. Without this, an ESP32 device silently never installs the
+        // newly-arrived app — only AppInstall (binary PAPP1 push) was handled before.
+        loadInstalledPapps(*s->rt_);
+        return;
+    }
 }
 
 void Esp32Platform::idle() {

@@ -22,6 +22,9 @@ export function activeRemote(): ActiveRemote | null {
 }
 
 export function setRemote(session: RemoteSession, label: string, owned = true) {
+	// Close the previous owned session before replacing it, or its transport (e.g. a
+	// Web Serial port) stays OS-locked and its read loop keeps running (F4).
+	if (current?.owned && current.session !== session) current.session.close();
 	current = { session, label, owned };
 }
 

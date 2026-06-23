@@ -80,6 +80,7 @@ int WasmEngine::runStart(ProcessContext& ctx, const char* appId, ISurface* surfa
     // module, which resolves import references. Unlinked imports at that point
     // fail compilation with "missing import" (Plan 57 Fase 2).
     resetUiState();
+    linkEnvImports(mod_);   // libc memset/memcpy/memmove (apps that don't bundle them)
     linkWasiImports(mod_);
     linkNemaImports(mod_);
     linkCanvasImports(mod_);

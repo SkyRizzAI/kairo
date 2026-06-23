@@ -88,6 +88,16 @@ void WasmApp::onStart(AppContext& ctx) {
     // Pass &ctx as surface: AppContext is ISurface, so canvas_* imports can
     // reach canvas()/present()/enterGuiMode() on the AppHost (Plan 86 Fase 2).
     runWasm(ctx, &ctx);
+
+    // A GUI app that returned from main() should exit STRAIGHT to the launcher —
+    // like quitting a desktop GUI app also ends its underlying process. The
+    // "Press any key to exit" terminal screen (build()/onKey below) exists only so a
+    // CLI app's printed output stays readable. So: if the app went into Gui mode and
+    // produced no terminal output, request exit now and skip the terminal entirely.
+    // A GUI app that errored pushes an "[exit …]" line → output is non-empty → we
+    // keep the terminal up so the error is visible.
+    if (ctx.isGuiMode() && outputLines_.empty() && !ctx.shouldExit())
+        ctx.requestExit(0);
 }
 
 // ── Headless path (mode=cli) ─────────────────────────────────────────────

@@ -13,6 +13,11 @@ void LinkService::attach(ILinkTransport* t, Role role) {
 
 void LinkService::markDisconnected() {
     if (!ready_.exchange(false)) return;   // was not ready → nothing to tear down
+    screenWanted_ = false;                 // a new session must re-opt-in to the mirror
+    {
+        std::lock_guard<std::mutex> lk(recvMtx_);
+        parser_.reset();                   // discard stale bytes so the next session starts clean
+    }
     if (disconnectFn_) disconnectFn_(disconnectUser_);
 }
 
@@ -26,14 +31,31 @@ void LinkService::recvThunk(void* user, const uint8_t* d, size_t n) {
 }
 
 void LinkService::onBytes(const uint8_t* d, size_t n) {
-    for (auto& f : parser_.push(d, n)) handle(f);
+    rxSeen_ = true;   // liveness: any inbound traffic marks the peer alive this window
+    // Hold recvMtx_ only while the parser accumulates bytes into frames.
+    // Releasing before handle() means a blocking file/OTA operation (D5) cannot
+    // stall incoming HELLO frames from a reconnecting host, and MuxTransport's
+    // USB + BLE tasks can interleave without starving each other.
+    std::vector<plp::Frame> frames;
+    {
+        std::lock_guard<std::mutex> lk(recvMtx_);
+        frames = parser_.push(d, n);
+    }
+    for (auto& f : frames) handle(f);
 }
 
 void LinkService::sendControl(uint8_t op) {
+    if (!t_) return;
     uint8_t b = op;
-    std::vector<uint8_t> buf;   // local → thread-safe (send may run on any thread)
+    std::vector<uint8_t> buf;
     plp::encodeFrame(buf, (uint8_t)plp::Channel::Control, &b, 1, 0);
-    if (t_) t_->send(buf.data(), buf.size());
+    // Whole-frame transmit. Concurrent senders (GUI screen-tap, RX task acks, app
+    // threads) must not interleave bytes on the wire — that serialization now lives
+    // INSIDE the transport (e.g. the HWCDC writer holds a mutex), NOT here. A lock
+    // here deadlocked the WASM simulator: send() runs on the GUI worker and blocks on
+    // the main thread (MAIN_THREAD_EM_ASM), while the main thread blocked acquiring
+    // the same lock to send a handshake reply.
+    t_->send(buf.data(), buf.size());
 }
 
 void LinkService::handle(const plp::Frame& f) {
@@ -41,6 +63,16 @@ void LinkService::handle(const plp::Frame& f) {
         if (f.payload.empty()) return;
         switch (f.payload[0]) {
             case HELLO:                       // device side: accept + ACK
+                // Reset the parser first so stale bytes from a previous session
+                // (USB has no disconnect notification) don't corrupt this one. Under
+                // recvMtx_ — a MuxTransport feeds bytes from two tasks into one parser,
+                // so clearing buf_ must not race a concurrent push() (W2).
+                { std::lock_guard<std::mutex> lk(recvMtx_); parser_.reset(); }
+                // A fresh session starts with the screen mirror OFF — the host
+                // opts in explicitly (SysOp::ScreenStream). Keeps a file/CLI-only
+                // session from drowning the RX path in screen frames.
+                screenWanted_ = false;
+                rxSeen_ = true; missedTicks_ = 0;   // reset liveness for the new session
                 if (gate_ && !gate_(gateUser_)) {   // Remote disabled → refuse
                     sendControl(REJECT);
                     return;
@@ -75,11 +107,12 @@ void LinkService::send(plp::Channel ch, const uint8_t* data, size_t len, uint8_t
     if (ch != plp::Channel::Control && (!ready_.load() || !authorized_.load())) return;
     std::vector<uint8_t> buf;
     plp::encodeFrame(buf, (uint8_t)ch, data, len, flags);
-    // Serialize the actual transmit: the GUI thread (screen-tap), the RX task
-    // (OTA/CLI acks) and app threads (events) all send concurrently. Without this
-    // two frames can interleave on the wire (a transport may write in MTU-sized
-    // pieces) → corrupt frames → e.g. a lost OTA ack mid-upload.
-    std::lock_guard<std::mutex> lk(sendMtx_);
+    // Whole-frame transmit. Serialization against concurrent senders (GUI screen-tap,
+    // RX task OTA/CLI acks, app event threads) lives INSIDE the transport now — the
+    // HWCDC writer takes a mutex so two frames can't interleave on the wire. It must
+    // NOT be a LinkService-level lock: send() runs on the GUI worker in the WASM sim
+    // and blocks on the main thread (MAIN_THREAD_EM_ASM); a shared lock there deadlocks
+    // against the main thread sending a handshake reply (Plan 88 — sim freeze fix).
     t_->send(buf.data(), buf.size());
 }
 

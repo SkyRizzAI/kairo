@@ -39,6 +39,12 @@ public:
     // until authorized; a password-protected device shows nothing pre-auth.
     void setAuthorized(bool a) { authorized_ = a; }
     bool authorized() const { return authorized_.load(); }
+    // Plan 88: the screen mirror is opt-in per session. It is a heavy continuous
+    // stream that, left always-on, starves the inbound file/CLI path on the
+    // single USB RX task (a file-transfer CLI never wants it). Default OFF; the
+    // host enables it explicitly (SysOp::ScreenStream). Reset on each new HELLO.
+    void setScreenWanted(bool w) { screenWanted_ = w; }
+    bool screenWanted() const { return screenWanted_.load(); }
     // Plan 74: device refuses the handshake (sends REJECT) when this returns false
     // — e.g. Remote disabled. Checked on HELLO before going ready.
     void onHandshakeGate(GateFn fn, void* user) { gate_ = fn; gateUser_ = user; }
@@ -59,6 +65,19 @@ public:
     void begin();
     bool ready() const { return ready_.load(); }
 
+    // In-protocol liveness (Plan 88 §8): USB/WASM give no disconnect signal, so the
+    // host PINGs periodically and the device watches for silence. Call livenessTick()
+    // on a periodic timer. Only declares the peer dead after MANY empty windows — a
+    // GENEROUS grace, because file ops run inline on the RX task and a slow SD/LittleFS
+    // flush legitimately stops onBytes() for seconds; a tight timeout false-positived
+    // mid-transfer and killed large writes. ~20 ticks × 3 s ≈ 60 s.
+    void livenessTick() {
+        if (!ready_.load()) return;
+        if (rxSeen_.exchange(false)) { missedTicks_ = 0; return; }  // traffic → alive
+        if (missedTicks_.fetch_add(1) + 1 >= 20)                    // ~60 s silence → dead
+            markDisconnected();
+    }
+
     // Send a frame. Non-control channels are dropped until ready().
     void send(plp::Channel ch, const uint8_t* data, size_t len, uint8_t flags = 0);
 
@@ -72,6 +91,9 @@ private:
     Role              role_  = Role::Device;
     std::atomic<bool> ready_{false};
     std::atomic<bool> authorized_{true};   // Plan 74 — gates outbound app channels
+    std::atomic<bool> screenWanted_{false}; // Plan 88 — screen mirror opt-in per session
+    std::atomic<bool> rxSeen_{false};       // Plan 88 — frame seen since last livenessTick
+    std::atomic<int>  missedTicks_{0};      // consecutive empty liveness windows
     GateFn            gate_     = nullptr;
     void*             gateUser_ = nullptr;
     plp::FrameParser  parser_;
@@ -81,7 +103,12 @@ private:
     void*             readyUser_ = nullptr;
     DisconnectFn      disconnectFn_   = nullptr;
     void*             disconnectUser_ = nullptr;
-    std::mutex        sendMtx_;        // serialize concurrent send() (atomic frames)
+    // (Transmit serialization lives inside the transport now — see esp32_usb_cdc — so
+    // the WASM sim's GUI worker never blocks on the main thread while holding a lock.)
+    std::mutex        recvMtx_;        // serialize concurrent onBytes() — MuxTransport
+                                       // routes USB and WS bytes from different tasks
+                                       // into the same FrameParser; without this lock
+                                       // their bytes interleave → corrupt frames.
 };
 
 } // namespace nema

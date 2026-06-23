@@ -155,9 +155,56 @@ m3ApiRawFunction(wasi_proc_exit) {
     m3ApiTrap(m3Err_trapExit);
 }
 
+// ── env: libc bulk-memory primitives ──────────────────────────────────────
+// LLVM/clang lowers some memset/memcpy/memmove calls to imports from "env" when
+// the app doesn't statically link a libc that defines them (e.g. the sysinfo-wasm
+// build). An unlinked import fails wasm3's lazy module compilation, so the app's
+// `main`/`_start` lookup fails with "function lookup failed". Providing them here
+// makes any such app load. All three take/return a wasm offset (i32) for the dest.
+
+m3ApiRawFunction(env_memset) {
+    m3ApiReturnType(uint32_t);
+    m3ApiGetArg(uint32_t, destOff);
+    m3ApiGetArg(int32_t,  val);
+    m3ApiGetArg(uint32_t, n);
+    if (!boundsOk(runtime, destOff, n)) m3ApiTrap(m3Err_trapOutOfBoundsMemoryAccess);
+    if (n) std::memset(memPtr(runtime, destOff), val, n);
+    m3ApiReturn(destOff);
+}
+
+m3ApiRawFunction(env_memcpy) {
+    m3ApiReturnType(uint32_t);
+    m3ApiGetArg(uint32_t, destOff);
+    m3ApiGetArg(uint32_t, srcOff);
+    m3ApiGetArg(uint32_t, n);
+    if (!boundsOk(runtime, destOff, n) || !boundsOk(runtime, srcOff, n))
+        m3ApiTrap(m3Err_trapOutOfBoundsMemoryAccess);
+    if (n) std::memcpy(memPtr(runtime, destOff), memPtr(runtime, srcOff), n);
+    m3ApiReturn(destOff);
+}
+
+m3ApiRawFunction(env_memmove) {
+    m3ApiReturnType(uint32_t);
+    m3ApiGetArg(uint32_t, destOff);
+    m3ApiGetArg(uint32_t, srcOff);
+    m3ApiGetArg(uint32_t, n);
+    if (!boundsOk(runtime, destOff, n) || !boundsOk(runtime, srcOff, n))
+        m3ApiTrap(m3Err_trapOutOfBoundsMemoryAccess);
+    if (n) std::memmove(memPtr(runtime, destOff), memPtr(runtime, srcOff), n);
+    m3ApiReturn(destOff);
+}
+
 } // anon namespace
 
 // ── Public API ─────────────────────────────────────────────────────────────
+
+void linkEnvImports(IM3Module mod) {
+    // Best-effort: an app that bundles its own memset won't import these, and
+    // m3_LinkRawFunction simply no-ops for an absent import, so always linking is safe.
+    m3_LinkRawFunction(mod, "env", "memset",  "i(iii)", &env_memset);
+    m3_LinkRawFunction(mod, "env", "memcpy",  "i(iii)", &env_memcpy);
+    m3_LinkRawFunction(mod, "env", "memmove", "i(iii)", &env_memmove);
+}
 
 void linkWasiImports(IM3Module mod) {
     // Userdata is set by WasmEngine::runStart() before this is called.

@@ -68,12 +68,12 @@ std::vector<uint8_t> rleEncode(const uint8_t* px, size_t len) {
     return out;
 }
 
-std::vector<uint8_t> rleDecode(const uint8_t* data, size_t len) {
+std::vector<uint8_t> rleDecode(const uint8_t* data, size_t len, size_t maxOut) {
     std::vector<uint8_t> out;
-    for (size_t i = 0; i + 1 < len; i += 2) {
+    for (size_t i = 0; i + 1 < len && out.size() < maxOut; i += 2) {
         uint8_t run = data[i];
         uint8_t v = data[i + 1];
-        for (uint8_t j = 0; j < run; j++) out.push_back(v);
+        for (uint8_t j = 0; j < run && out.size() < maxOut; j++) out.push_back(v);
     }
     return out;
 }

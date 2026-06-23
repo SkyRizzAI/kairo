@@ -62,7 +62,10 @@ void RemoteScreenTap::flush() {
 }
 
 void RemoteScreenTap::streamFrame() {
-    if (!link_ || !link_->ready() || shadow_.empty()) return;
+    // Opt-in: only stream when the connected host actually wants the mirror
+    // (Forge web /remote does; the file/CLI tooling does not). This stops the
+    // screen flood from starving the inbound file/CLI path on the USB RX task.
+    if (!link_ || !link_->ready() || !link_->screenWanted() || shadow_.empty()) return;
     // Payload: [w:2 LE][h:2 LE][RLE 1-bit bytes...]
     auto rle = plp::rleEncode(shadow_.data(), shadow_.size());
     payload_.clear();

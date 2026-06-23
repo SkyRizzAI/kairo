@@ -26,12 +26,18 @@ public:
     bool remove(const std::string& path) override;
     bool rename(const std::string& src, const std::string& dst) override;
 
+    bool writeStreamBegin(const std::string& path) override;
+    bool writeStreamChunk(uint32_t offset, const uint8_t* data, size_t len) override;
+    bool writeStreamEnd() override;
+    void writeStreamAbort() override;
+
 private:
     std::string real(const std::string& vpath) const;  // VFS path → POSIX path
     void mkdirsFor(const std::string& realPath);        // mkdir -p of ancestors
 
     std::string base_;
     bool        mounted_ = false;
+    void*       stream_  = nullptr;   // FILE* of the active streaming write (opaque)
 };
 
 } // namespace nema

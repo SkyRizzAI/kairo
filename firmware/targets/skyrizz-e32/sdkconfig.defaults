@@ -33,8 +33,17 @@ CONFIG_SPIRAM_SPEED_80M=y
 CONFIG_SPIRAM_USE_MALLOC=y
 # Allocs ≤ 4 KB stay in fast DRAM; larger allocs (frame buffers, arenas) go to PSRAM.
 CONFIG_SPIRAM_MALLOC_ALWAYSINTERNAL=4096
-# Move WiFi/LwIP buffers to PSRAM so DRAM is free for task stacks and small allocs.
-CONFIG_SPIRAM_TRY_ALLOCATE_WIFI_LWIP=y
+# NOTE: we deliberately do NOT enable SPIRAM_TRY_ALLOCATE_WIFI_LWIP. IDF Kconfig
+# makes it mutually exclusive with ESP_WIFI_DYNAMIC_TX_BUFFER (a dynamic TX buffer
+# could land in non-DMA PSRAM): turning it on FORCES 16 static TX buffers permanently
+# into internal RAM (~26 KB). The dynamic-TX profile (below) frees far more internal
+# RAM than try-allocate saved, and it's the profile Flipper-ESP32 ships. See the WiFi
+# internal-RAM diet section.
+# CONFIG_SPIRAM_TRY_ALLOCATE_WIFI_LWIP is not set
+# Internal DMA reserve stays at the 32 KB default. (Raising it to 64 KB starved
+# WiFi/mDNS/httpd of internal RAM — they failed to allocate. The SD write NO_MEM is
+# better solved by a small persistent bounce buffer than by over-reserving.)
+CONFIG_SPIRAM_MALLOC_RESERVE_INTERNAL=32768
 
 # ── Main task stack (global C++ constructors run here) ────────────────────────
 # Default 3584 bytes is too small for the HID preloader which calls
@@ -54,6 +63,23 @@ CONFIG_BT_CONTROLLER_ENABLED=y
 # is the prerequisite for the "WiFi + BLE at the same time" goal.
 CONFIG_ESP_COEX_SW_COEXIST_ENABLE=y
 
+# ── WiFi internal-RAM diet (Plan 88 — mirrors Flipper-ESP32, but goes further) ──
+# Internal SRAM (~230 KB, the ONLY DMA-capable RAM) is shared by WiFi, SD-DMA, I2S,
+# LCD, mDNS, httpd. WiFi's STATIC buffers (TX 16×1600 + RX 16×1600 + a 16-deep block-
+# ack window) consumed ~55 KB internal, leaving only ~9 KB free → the SD DMA bounce,
+# the mDNS task, and the httpd/WS server all failed to allocate (`not enough mem`,
+# `wifi:m f null`). Fix: move WiFi TX buffers to DYNAMIC (PSRAM-backed, allocated on
+# demand instead of 16 permanent internal ones), trim static RX 16→10, shrink the BA
+# window 16→6. Frees ~35-40 KB internal. (Dynamic TX requires TRY_ALLOCATE_WIFI_LWIP
+# OFF — see the note above.) Throughput dips slightly; irrelevant for remote+files.
+# TX buffer is a Kconfig CHOICE — select the dynamic option (Kconfig then derives
+# TX_BUFFER_TYPE=1 and clears STATIC_TX_BUFFER). Setting TX_BUFFER_TYPE directly is
+# ignored (it's a derived symbol).
+CONFIG_ESP_WIFI_DYNAMIC_TX_BUFFER=y
+CONFIG_ESP_WIFI_DYNAMIC_TX_BUFFER_NUM=32
+CONFIG_ESP_WIFI_STATIC_RX_BUFFER_NUM=10
+CONFIG_ESP_WIFI_RX_BA_WIN=6
+
 # ── HTTP server WebSocket (PLP over WiFi — Plan 75) ──────────────────────────
 # Esp32WsTransport runs an esp_http_server WebSocket endpoint at /plp so Forge
 # web (browser) can remote the device over WiFi. Without this the WS handler
@@ -67,3 +93,9 @@ CONFIG_HTTPD_WS_SUPPORT=y
 CONFIG_FATFS_LFN_HEAP=y
 CONFIG_FATFS_MAX_LFN=255
 CONFIG_FATFS_SECTOR_512=y
+# FATFS work buffers stay in PSRAM (this board's internal RAM is tight — WiFi+BLE+
+# camera+audio). Moving them internal exhausted it and broke f_open. Instead, the
+# SD backend uses a persistent internal DMA bounce buffer for the PSRAM→SD copy, so
+# writes never do per-call DMA allocations that fail under fragmentation (Plan 88,
+# mirrors Flipper-ESP32). See sd_fat_filesystem.cpp.
+CONFIG_FATFS_ALLOC_PREFER_EXTRAM=y

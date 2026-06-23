@@ -123,16 +123,32 @@ export function rleEncode(px: Uint8Array): Uint8Array {
 	return new Uint8Array(out);
 }
 
+// expectedLen, when given, doubles as a hard cap on the decoded size so a
+// malformed/hostile run table can't expand without bound (a 64 KB payload could
+// otherwise inflate to ~16 MB and DoS the page).
 export function rleDecode(data: Uint8Array, expectedLen?: number): Uint8Array {
+	// Fast path: when the decoded size is known (the screen path passes w*h), preallocate
+	// the exact buffer and fill each run with the native typed-array fill(). This runs
+	// once PER SCREEN FRAME in Forge's simulator/remote view; the old number[]-push +
+	// Array→Uint8Array conversion built ~w*h elements one at a time every frame, which
+	// stalled the page on larger screens. fill() makes each run a single native memset.
+	if (expectedLen !== undefined) {
+		const out = new Uint8Array(expectedLen);
+		let pos = 0;
+		for (let i = 0; i + 1 < data.length && pos < expectedLen; i += 2) {
+			const run = Math.min(data[i], expectedLen - pos); // cap: malformed table can't overrun
+			out.fill(data[i + 1], pos, pos + run);
+			pos += run;
+		}
+		return pos === expectedLen ? out : out.subarray(0, pos);
+	}
+	// Unknown length: grow dynamically, capped to guard against a malformed stream.
+	const cap = 1 << 24;
 	const out: number[] = [];
-	for (let i = 0; i + 1 < data.length; i += 2) {
+	for (let i = 0; i + 1 < data.length && out.length < cap; i += 2) {
 		const run = data[i];
 		const v = data[i + 1];
-		for (let j = 0; j < run; j++) out.push(v);
+		for (let j = 0; j < run && out.length < cap; j++) out.push(v);
 	}
-	const arr = new Uint8Array(out);
-	if (expectedLen !== undefined && arr.length !== expectedLen) {
-		// length mismatch is a protocol error; caller may choose to ignore
-	}
-	return arr;
+	return new Uint8Array(out);
 }

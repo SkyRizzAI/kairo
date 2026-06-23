@@ -1,13 +1,26 @@
 // Device registry — persistent store of known devices in ~/.palanu/config.json.
 // Each device has an alias, target URL, optional auth token, and last-connected timestamp.
 
-import { readFile, writeFile, mkdir } from "node:fs/promises";
+import { readFile, writeFile, mkdir, rename } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { homedir } from "node:os";
 
 const CONFIG_DIR = join(homedir(), ".palanu");
 const CONFIG_PATH = join(CONFIG_DIR, "config.json");
+
+// Serialise read-modify-write of the registry. Without this, two concurrent
+// updateDevice() calls (e.g. the lastConnected stamp and the fire-and-forget token
+// save during connect) interleave their writeFile()s and corrupt config.json.
+let writeChain: Promise<unknown> = Promise.resolve();
+function withRegistryLock<T>(fn: () => Promise<T>): Promise<T> {
+	const run = writeChain.then(fn, fn);
+	writeChain = run.then(
+		() => {},
+		() => {}
+	);
+	return run;
+}
 
 export interface DeviceEntry {
 	target: string;
@@ -37,25 +50,33 @@ export async function loadRegistry(): Promise<Registry> {
 
 export async function saveRegistry(reg: Registry): Promise<void> {
 	await mkdir(CONFIG_DIR, { recursive: true });
-	await writeFile(CONFIG_PATH, JSON.stringify(reg, null, 2) + "\n", "utf-8");
+	// Atomic write: a partial/interleaved write can never leave a corrupt config —
+	// the rename is atomic, so readers see either the old or the new file whole.
+	const tmp = `${CONFIG_PATH}.${process.pid}.tmp`;
+	await writeFile(tmp, JSON.stringify(reg, null, 2) + "\n", "utf-8");
+	await rename(tmp, CONFIG_PATH);
 }
 
 export async function addDevice(name: string, target: string): Promise<void> {
-	const reg = await loadRegistry();
-	if (reg.devices[name]) {
-		throw new Error(`device "${name}" already exists. Use "remove ${name}" first.`);
-	}
-	reg.devices[name] = { target, token: null, lastConnected: null };
-	await saveRegistry(reg);
+	await withRegistryLock(async () => {
+		const reg = await loadRegistry();
+		if (reg.devices[name]) {
+			throw new Error(`device "${name}" already exists. Use "remove ${name}" first.`);
+		}
+		reg.devices[name] = { target, token: null, lastConnected: null };
+		await saveRegistry(reg);
+	});
 }
 
 export async function removeDevice(name: string): Promise<void> {
-	const reg = await loadRegistry();
-	if (!reg.devices[name]) {
-		throw new Error(`device "${name}" not found.`);
-	}
-	delete reg.devices[name];
-	await saveRegistry(reg);
+	await withRegistryLock(async () => {
+		const reg = await loadRegistry();
+		if (!reg.devices[name]) {
+			throw new Error(`device "${name}" not found.`);
+		}
+		delete reg.devices[name];
+		await saveRegistry(reg);
+	});
 }
 
 export async function getDevice(name: string): Promise<DeviceEntry> {
@@ -66,10 +87,13 @@ export async function getDevice(name: string): Promise<DeviceEntry> {
 }
 
 export async function updateDevice(name: string, updates: Partial<DeviceEntry>): Promise<void> {
-	const reg = await loadRegistry();
-	if (!reg.devices[name]) throw new Error(`device "${name}" not found.`);
-	reg.devices[name] = { ...reg.devices[name], ...updates };
-	await saveRegistry(reg);
+	// Locked: load→modify→save runs atomically vs. other concurrent updates.
+	await withRegistryLock(async () => {
+		const reg = await loadRegistry();
+		if (!reg.devices[name]) return; // device removed meanwhile — nothing to update
+		reg.devices[name] = { ...reg.devices[name], ...updates };
+		await saveRegistry(reg);
+	});
 }
 
 export async function listDevices(): Promise<Record<string, DeviceEntry>> {

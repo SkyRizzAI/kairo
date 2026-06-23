@@ -47,6 +47,7 @@ public:
     // the app can control the canvas directly.
     void enterGuiMode() override;
     HostMode hostMode() const { return hostMode_; }
+    bool isGuiMode() const override { return hostMode_ == HostMode::Gui; }
 
     // Lines captured from app stdout (fd_write / nema_print routed via out()).
     // Used by TerminalSurface to render the terminal screen (Plan 86 Fase 2).

@@ -34,9 +34,11 @@ static DRAM_ATTR StaticTask_t s_nvsTcb;
 static StaticQueue_t   s_nvsQBuf;
 static NvsJob          s_nvsQSlot;   // queue depth = 1 (NVS ops are serialised)
 static StaticSemaphore_t s_nvsDoneBuf;
+static StaticSemaphore_t s_nvsLockBuf;
 
 static QueueHandle_t     s_nvsQ    = nullptr;
 static SemaphoreHandle_t s_nvsDone = nullptr;
+static SemaphoreHandle_t s_nvsLock = nullptr;   // serialises concurrent dispatchNvs callers
 
 static void nvsWorker(void*) {
     NvsJob job;
@@ -53,6 +55,7 @@ static void initNvsWorker() {
     s_nvsQ    = xQueueCreateStatic(1, sizeof(NvsJob),
                                    reinterpret_cast<uint8_t*>(&s_nvsQSlot), &s_nvsQBuf);
     s_nvsDone = xSemaphoreCreateBinaryStatic(&s_nvsDoneBuf);
+    s_nvsLock = xSemaphoreCreateMutexStatic(&s_nvsLockBuf);
     xTaskCreateStaticPinnedToCore(nvsWorker, "nvs_w",
                                   sizeof(s_nvsStack) / sizeof(s_nvsStack[0]),
                                   nullptr, 5, s_nvsStack, &s_nvsTcb, 0);
@@ -73,9 +76,18 @@ static void dispatchNvs(void (*fn)(void*), void* ctx) {
         fn(ctx);
         return;
     }
+    // Serialise the whole send+wait. Without this, two concurrent callers race on
+    // the single shared `s_nvsDone` binary semaphore: one caller can consume the
+    // completion meant for the other and return while its job is still queued — the
+    // worker then runs that job against the caller's already-popped stack (`ctx`
+    // dangling) → memcpy into freed memory → StoreProhibited crash (Plan 88). The
+    // auth path reads NVS tokens on the RX task concurrently with other NVS users,
+    // which is exactly what triggered it on connect.
+    if (s_nvsLock) xSemaphoreTake(s_nvsLock, portMAX_DELAY);
     NvsJob job{fn, ctx};
     xQueueSend(s_nvsQ, &job, portMAX_DELAY);
     xSemaphoreTake(s_nvsDone, portMAX_DELAY);
+    if (s_nvsLock) xSemaphoreGive(s_nvsLock);
 }
 
 } // anon namespace

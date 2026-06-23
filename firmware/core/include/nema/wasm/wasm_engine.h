@@ -101,6 +101,9 @@ void linkCanvasImports(struct M3Module* mod);
 void linkUiImports(struct M3Module* mod);
 void linkInputImports(struct M3Module* mod);
 void linkWifiImports(struct M3Module* mod);
+// env:    libc bulk-memory primitives (memset/memcpy/memmove) that LLVM emits as
+//         imports when an app doesn't statically bundle them (Plan 88).
+void linkEnvImports(struct M3Module* mod);
 
 // Reset per-run UI state between WASM runs (call before each new run).
 void resetUiState();

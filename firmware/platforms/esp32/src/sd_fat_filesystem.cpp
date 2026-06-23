@@ -5,8 +5,10 @@
 #include "driver/sdmmc_host.h"
 #include "sdmmc_cmd.h"
 #include "esp_vfs_fat.h"
+#include "esp_task_wdt.h"
 #include <dirent.h>
 #include <sys/stat.h>
+#include <cerrno>
 #include <cstdio>
 #include <unistd.h>
 
@@ -71,14 +73,21 @@ bool SdFatFileSystem::list(const std::string& path, std::vector<FsEntry>& out) {
     while ((ent = readdir(d)) != nullptr) {
         const char* n = ent->d_name;
         if (n[0] == '.' && (n[1] == 0 || (n[1] == '.' && n[2] == 0))) continue;
-        struct stat st = {};
-        std::string child = rp + "/" + n;
-        bool isDir = false;
+        // Use d_type to check directory flag without a stat() call when possible.
+        // Fall back to stat() only when d_type is DT_UNKNOWN (rare on FAT).
+        bool isDir = (ent->d_type == DT_DIR);
         uint32_t size = 0;
-        if (stat(child.c_str(), &st) == 0) {
-            isDir = S_ISDIR(st.st_mode);
-            size = (uint32_t)st.st_size;
+        if (ent->d_type == DT_UNKNOWN || (!isDir)) {
+            struct stat st = {};
+            std::string child = rp + "/" + n;
+            if (stat(child.c_str(), &st) == 0) {
+                isDir = S_ISDIR(st.st_mode);
+                size  = (uint32_t)st.st_size;
+            }
         }
+        // Feed the task watchdog only if THIS task is subscribed (inline list now
+        // runs on cdc_rx, which isn't a TWDT task → avoid "task not found" spam).
+        if (esp_task_wdt_status(nullptr) == ESP_OK) esp_task_wdt_reset();
         out.push_back({std::string(n), isDir, size});
     }
     closedir(d);
@@ -102,14 +111,65 @@ bool SdFatFileSystem::read(const std::string& path, std::vector<uint8_t>& out) {
 }
 
 bool SdFatFileSystem::write(const std::string& path, const uint8_t* data, size_t len) {
-    if (!mounted_) return false;
+    if (!mounted_) {
+        if (log_) log_->warn("SdFatFS", "write: not mounted", {{"path", path}});
+        return false;
+    }
     std::string rp = real(path);
     mkdirsFor(rp);
     FILE* f = fopen(rp.c_str(), "wb");
-    if (!f) return false;
+    if (!f) {
+        if (log_) log_->warn("SdFatFS", "write: fopen failed",
+                             {{"path", rp}, {"errno", std::to_string(errno)}});
+        return false;
+    }
     size_t wrote = len ? fwrite(data, 1, len, f) : 0;
     fclose(f);
+    if (wrote != len) {
+        if (log_) log_->warn("SdFatFS", "write: partial write",
+                             {{"path", rp}, {"wrote", std::to_string(wrote)},
+                              {"expected", std::to_string(len)}, {"errno", std::to_string(errno)}});
+        return false;
+    }
+    return true;
+}
+
+// ── Streaming write (Plan 88 R5): one FILE* held open across chunks, no full-file
+//    RAM buffer. `offset` seeking makes a retried chunk overwrite in place. ──
+bool SdFatFileSystem::writeStreamBegin(const std::string& path) {
+    if (!mounted_) return false;
+    if (stream_) { fclose((FILE*)stream_); stream_ = nullptr; }   // drop a stale stream
+    std::string rp = real(path);
+    mkdirsFor(rp);
+    FILE* f = fopen(rp.c_str(), "wb");
+    if (!f) {
+        if (log_) log_->warn("SdFatFS", "stream: fopen failed",
+                             {{"path", rp}, {"errno", std::to_string(errno)}});
+        return false;
+    }
+    stream_ = f;
+    return true;
+}
+
+bool SdFatFileSystem::writeStreamChunk(uint32_t offset, const uint8_t* data, size_t len) {
+    FILE* f = (FILE*)stream_;
+    if (!f) return false;
+    if (fseek(f, (long)offset, SEEK_SET) != 0) return false;
+    size_t wrote = len ? fwrite(data, 1, len, f) : 0;
     return wrote == len;
+}
+
+bool SdFatFileSystem::writeStreamEnd() {
+    FILE* f = (FILE*)stream_;
+    if (!f) return false;
+    stream_ = nullptr;
+    bool ok = (fclose(f) == 0);
+    if (!ok && log_) log_->warn("SdFatFS", "stream: close failed", {{"errno", std::to_string(errno)}});
+    return ok;
+}
+
+void SdFatFileSystem::writeStreamAbort() {
+    if (stream_) { fclose((FILE*)stream_); stream_ = nullptr; }
 }
 
 bool SdFatFileSystem::mkdir(const std::string& path) {

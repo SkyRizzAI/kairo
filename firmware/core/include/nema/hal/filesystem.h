@@ -32,6 +32,16 @@ struct IFileSystem : IDriver {
     virtual bool remove(const std::string& path) = 0;
     virtual bool rename(const std::string& src, const std::string& dst) = 0;
 
+    // Streaming write (Plan 88 R5): write a large file chunk-by-chunk straight to
+    // storage, so the device never buffers the whole file in RAM (which fragmented
+    // the heap and wedged the device on big transfers). One stream at a time. Backends
+    // that don't support it leave the defaults (false) and the caller falls back to a
+    // single buffered write(). `offset` lets a retried chunk overwrite in place.
+    virtual bool writeStreamBegin(const std::string& /*path*/) { return false; }
+    virtual bool writeStreamChunk(uint32_t /*offset*/, const uint8_t* /*data*/, size_t /*len*/) { return false; }
+    virtual bool writeStreamEnd() { return false; }
+    virtual void writeStreamAbort() {}   // release a half-open stream (disconnect)
+
     // Recursively removes a path (file or non-empty directory).
     // Default implementation walks with list()+remove(); backends may override
     // if the underlying FS provides a native recursive-remove operation.

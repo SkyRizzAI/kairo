@@ -56,7 +56,9 @@ int main() {
     assert(device.ready());
     assert(host.ready());
 
-    // Screen streaming via the tap.
+    // Screen streaming via the tap. Plan 88: the mirror is opt-in per session, so
+    // the host must subscribe before frames flow (a file/CLI-only session does not).
+    device.setScreenWanted(true);
     DummyDisplay dummy;
     RemoteScreenTap tap;
     tap.init(dummy, device);

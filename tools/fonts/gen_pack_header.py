@@ -7,7 +7,7 @@ Usage:
 
 Example:
   python3 gen_pack_header.py \
-    ../../firmware/targets/skyrizz-e32/data/assets/fonts/IBMPlexMono \
+    packs/IBMPlexMono \
     IbmPlexMono kIbmPlexMono \
     ../../firmware/core/include/nema/assets/fonts/ibm_plex_mono_pack.h
 

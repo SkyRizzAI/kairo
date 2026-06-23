@@ -10,6 +10,13 @@ import { disconnectCommand } from "../src/commands/disconnect.js";
 import { removeCommand } from "../src/commands/remove.js";
 import { shellCommand } from "../src/commands/shell.js";
 import { cpCommand } from "../src/commands/cp.js";
+import { lsCommand } from "../src/commands/ls.js";
+import { mkdirCommand } from "../src/commands/mkdir.js";
+import { execCommand } from "../src/commands/exec.js";
+
+// Shared option: device password used as a challenge-response fallback when the
+// stored token is rejected (e.g. after the device rebooted and invalidated it).
+const PW = ["-p, --password <password>", "device password (fallback if the saved token is rejected)"] as const;
 
 const program = new Command();
 
@@ -45,9 +52,10 @@ program
 program
 	.command("connect <name>")
 	.description("connect to a device by alias")
-	.action(async (name: string) => {
+	.option(...PW)
+	.action(async (name: string, options: { password?: string }) => {
 		try {
-			await connectCommand(name);
+			await connectCommand(name, options.password);
 		} catch (e) {
 			console.error(`✗ ${(e as Error).message}`);
 			process.exit(1);
@@ -81,9 +89,24 @@ program
 program
 	.command("shell <name>")
 	.description("interactive remote CLI (REPL) — like SSH")
-	.action(async (name: string) => {
+	.option(...PW)
+	.action(async (name: string, options: { password?: string }) => {
 		try {
-			await shellCommand(name);
+			await shellCommand(name, options.password);
+		} catch (e) {
+			console.error(`✗ ${(e as Error).message}`);
+			process.exit(1);
+		}
+	});
+
+program
+	.command("exec <name> <command...>")
+	.description("run one CLI command on a device and print its output (non-interactive)")
+	.option(...PW)
+	.action(async (name: string, commandParts: string[], options: { password?: string }) => {
+		try {
+			await execCommand(name, commandParts.join(" "), { password: options.password });
+			process.exit(0);
 		} catch (e) {
 			console.error(`✗ ${(e as Error).message}`);
 			process.exit(1);
@@ -93,9 +116,39 @@ program
 program
 	.command("cp <src> <dst>")
 	.description("copy file device↔local (like scp). Use device:<name>:/path for remote. e.g. palanu cp device:mydev:/file ./local/")
-	.action(async (src: string, dst: string) => {
+	.option(...PW)
+	.action(async (src: string, dst: string, options: { password?: string }) => {
 		try {
-			await cpCommand(src, dst);
+			await cpCommand(src, dst, options.password);
+			process.exit(0);
+		} catch (e) {
+			console.error(`✗ ${(e as Error).message}`);
+			process.exit(1);
+		}
+	});
+
+program
+	.command("ls <path>")
+	.description("list files on a device. Path: device:<name>:/path e.g. palanu ls device:usb:/sd")
+	.option(...PW)
+	.action(async (path: string, options: { password?: string }) => {
+		try {
+			await lsCommand(path, options.password);
+			process.exit(0);
+		} catch (e) {
+			console.error(`✗ ${(e as Error).message}`);
+			process.exit(1);
+		}
+	});
+
+program
+	.command("mkdir <path>")
+	.description("create a directory on a device. Path: device:<name>:/path")
+	.option(...PW)
+	.action(async (path: string, options: { password?: string }) => {
+		try {
+			await mkdirCommand(path, options.password);
+			process.exit(0);
 		} catch (e) {
 			console.error(`✗ ${(e as Error).message}`);
 			process.exit(1);

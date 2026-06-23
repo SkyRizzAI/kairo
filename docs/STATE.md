@@ -4,7 +4,7 @@
 > Detail per-stage ada di [`plans/`](plans/00-overview.md). Master plan: [`concept_plan.md`](concept_plan.md).
 > Reference arsitektur per-subsistem: [`architecture/`](architecture/README.md).
 >
-> **Last updated:** 2026-06-23 (Plan 87: App Capability, Radio HAL & Permission — WiFi Marauder)
+> **Last updated:** 2026-06-23 (Plan 88: Remote Protocol v2 + **internal-SRAM diet** — WiFi dynamic-TX/RX-trim freed ~120 KB internal → SD `/sd` reliable, network/mDNS/WS-server work. NVS connect-crash + registry race fixed. ADR 0009/0010)
 
 ---
 
@@ -179,6 +179,7 @@ packages/forge/          SvelteKit web client: /simulator (WASM), /remote, /flas
 5. **[76](plans/76-app-service-daemon-model.md)** — Model App vs Service/daemon headless + autostart + deploy (pakai persist [38](plans/38-storage-filesystem-hal.md)). _(nunggu 38, 74)_
 6. **[77](plans/77-palanu-link-shared-lib.md)** — ✅ **DONE**: `@palanu/link` package — PLP codec + `RemoteSession` + `ITokenStore` + IDL-generated PLP types. Forge web refactored to consume shared lib (browser transports stay, import `ILinkTransport` from `@palanu/link`). 7 codec tests pass, `tsc` clean, `forge:build` green.
 7. **[78](plans/78-forge-cli.md)** — ✅ **DONE**: `@palanu/forge-cli` (`palanu` binary) — 7 commands (`add`/`list`/`connect`/`disconnect`/`remove`/`shell`/`cp`). Node transports: `NodeSerialTransport` (serialport) + `NodeWebSocketTransport` (ws). Device registry `~/.palanu/config.json`. 4 tests pass, `tsc` clean. BLE + `deploy`/`ota`/`service`/`logs` = fase berikutnya.
+8. **[88](plans/88-remote-protocol-v2.md)** — ✅ **Fase 1–6 DONE & HW-verified (skyrizz-e32)**: PLP FILE v2 lengkap. reqId correlation + **chunked write** (Begin/Data/End, `xferId`, ack-paced, idempotent, **streaming-to-disk** via `IFileSystem::writeStream*`) + **chunked read** (device→host) → **`cp` dua-arah byte-identik termasuk file 200 KB**, 5× berturut tanpa wedge. **`palanu exec`** (shell non-interaktif) + `--password` fallback. Auth S4 robust; heartbeat PING/PONG (longgar ~60 s); structured `FileStatus`; screen-mirror opt-in. Root-cause HW: HWCDC RX 256→4096, file-op **inline**, **`cdc_rx` stack 8→32 KB** (deep FATFS path overran → Guru Meditation). 13 host-test pass, WASM+ESP32 build hijau. _Catatan: kartu SD uji ter-korup oleh crash-test pra-fix → format ulang FAT32; kode terbukti via `/system` LittleFS._ Sisa kecil: streaming read penuh, `wss` (Plan 75).
 
 > Persistence app = **plan 38** (sudah ada, dipakai oleh 76). Urutan kritis-path:
 > 72→73→74→75 (network), lalu 76+77 paralel, lalu 78.

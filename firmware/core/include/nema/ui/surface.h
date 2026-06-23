@@ -41,6 +41,12 @@ public:
     // Plan 86 Fase 2 — flip from Terminal to Gui mode. Called by the first
     // canvas_* or ui_* WASM import. No-op by default (ProcessHost has no mode).
     virtual void enterGuiMode() {}
+
+    // True once the app has flipped to Gui mode (drew to the canvas) rather than
+    // printing terminal output. A GUI app that returns from main() should exit
+    // straight back to the launcher, not park on the "Press any key to exit"
+    // terminal screen (which is meant for CLI apps whose output you read).
+    virtual bool isGuiMode() const { return false; }
 };
 
 } // namespace nema

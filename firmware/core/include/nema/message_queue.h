@@ -33,12 +33,26 @@ public:
         return true;
     }
 
-    // Block up to timeoutMs for an item. Returns false on timeout.
+    // Sentinel: receive(out, FOREVER) blocks indefinitely (no timeout).
+    static constexpr uint32_t FOREVER = 0xFFFFFFFFu;
+
+    // Block up to timeoutMs for an item. Returns false on timeout. FOREVER blocks.
     bool receive(T& out, uint32_t timeoutMs) {
         std::unique_lock<std::mutex> lk(m_);
-        if (!cv_.wait_for(lk, std::chrono::milliseconds(timeoutMs),
-                          [this] { return !q_.empty(); }))
+        if (timeoutMs == FOREVER) {
+            // Block forever via cv.wait() — NOT wait_for(milliseconds(0xFFFFFFFF)).
+            // A ~49-day millisecond count overflows the 32-bit tick arithmetic in the
+            // ESP-IDF/libstdc++ timed-wait path, so wait_for() returns IMMEDIATELY
+            // instead of blocking. Callers that loop on the result (wasm input_wait,
+            // app event loops) then busy-spin: on hardware that starves the task
+            // watchdog (canvas-demo "freeze"); in the WASM simulator the spinning
+            // worker floods the main thread and hangs the page. cv.wait() does no
+            // deadline math, so it truly parks the thread at ~0 CPU.
+            cv_.wait(lk, [this] { return !q_.empty(); });
+        } else if (!cv_.wait_for(lk, std::chrono::milliseconds(timeoutMs),
+                                 [this] { return !q_.empty(); })) {
             return false;
+        }
         out = std::move(q_.front());
         q_.pop_front();
         return true;

@@ -60,6 +60,8 @@ private:
 // RLE for 1-bit framebuffers (w*h bytes, each 0/1): pairs of [count][value],
 // runs > 255 split. Compresses the mostly-blank monochrome UI well.
 std::vector<uint8_t> rleEncode(const uint8_t* px, size_t len);
-std::vector<uint8_t> rleDecode(const uint8_t* data, size_t len);
+// maxOut caps the decoded size so a malformed/hostile run table can't expand
+// without bound (a 64 KB payload could otherwise inflate to ~16 MB).
+std::vector<uint8_t> rleDecode(const uint8_t* data, size_t len, size_t maxOut = SIZE_MAX);
 
 } // namespace nema::plp

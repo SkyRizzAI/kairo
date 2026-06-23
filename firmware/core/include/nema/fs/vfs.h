@@ -34,6 +34,13 @@ public:
     bool remove(const std::string& path) override;
     bool rename(const std::string& src, const std::string& dst) override;
 
+    // Streaming write: resolve the backend on Begin and remember it for the
+    // subsequent Chunk/End/Abort calls (Plan 88 R5).
+    bool writeStreamBegin(const std::string& path) override;
+    bool writeStreamChunk(uint32_t offset, const uint8_t* data, size_t len) override;
+    bool writeStreamEnd() override;
+    void writeStreamAbort() override;
+
 private:
     struct Mount { std::string point; IFileSystem* fs; };
 
@@ -42,6 +49,7 @@ private:
     Mount* resolve(const std::string& path, std::string& sub);
 
     std::vector<Mount> mounts_;   // kept sorted longest-point-first for resolution
+    IFileSystem*       streamFs_ = nullptr;   // backend of the active streaming write
 };
 
 } // namespace nema

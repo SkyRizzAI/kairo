@@ -22,6 +22,7 @@ src/input/gesture.cpp
     src/log/logger.cpp
     src/log/console_sink.cpp
     src/log/memory_sink.cpp
+    src/log/file_sink.cpp
     src/event/event_bus.cpp
     src/event/async_event_poster.cpp
     src/nema/task_runner.cpp

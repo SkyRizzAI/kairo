@@ -1,5 +1,6 @@
 #include "nema/esp32/littlefs_filesystem.h"
 #include "esp_littlefs.h"
+#include "esp_task_wdt.h"
 #include <dirent.h>
 #include <sys/stat.h>
 #include <cstdio>
@@ -48,6 +49,10 @@ bool LittleFsFileSystem::list(const std::string& path, std::vector<FsEntry>& out
             isDir = S_ISDIR(st.st_mode);
             size = (uint32_t)st.st_size;
         }
+        // Feed the task watchdog only if THIS task is subscribed to it — list runs
+        // inline on cdc_rx (Plan 88), which is not a TWDT task, so an unconditional
+        // reset just logged "task not found" every entry.
+        if (esp_task_wdt_status(nullptr) == ESP_OK) esp_task_wdt_reset();
         out.push_back({std::string(n), isDir, size});
     }
     closedir(d);
@@ -79,6 +84,36 @@ bool LittleFsFileSystem::write(const std::string& path, const uint8_t* data, siz
     size_t wrote = len ? fwrite(data, 1, len, f) : 0;
     fclose(f);
     return wrote == len;
+}
+
+bool LittleFsFileSystem::writeStreamBegin(const std::string& path) {
+    if (!mounted_) return false;
+    if (stream_) { fclose((FILE*)stream_); stream_ = nullptr; }
+    std::string rp = real(path);
+    mkdirsFor(rp);
+    FILE* f = fopen(rp.c_str(), "wb");
+    if (!f) return false;
+    stream_ = f;
+    return true;
+}
+
+bool LittleFsFileSystem::writeStreamChunk(uint32_t offset, const uint8_t* data, size_t len) {
+    FILE* f = (FILE*)stream_;
+    if (!f) return false;
+    if (fseek(f, (long)offset, SEEK_SET) != 0) return false;
+    size_t wrote = len ? fwrite(data, 1, len, f) : 0;
+    return wrote == len;
+}
+
+bool LittleFsFileSystem::writeStreamEnd() {
+    FILE* f = (FILE*)stream_;
+    if (!f) return false;
+    stream_ = nullptr;
+    return fclose(f) == 0;
+}
+
+void LittleFsFileSystem::writeStreamAbort() {
+    if (stream_) { fclose((FILE*)stream_); stream_ = nullptr; }
 }
 
 bool LittleFsFileSystem::mkdir(const std::string& path) {

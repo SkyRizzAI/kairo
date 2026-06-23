@@ -8,9 +8,9 @@ import { createSession } from "../session.js";
 
 type ShellState = "connecting" | "auth" | "shell" | "closing";
 
-export async function shellCommand(name: string): Promise<void> {
+export async function shellCommand(name: string, password?: string): Promise<void> {
 	console.log(`connecting to "${name}"…`);
-	const session = await createSession(name);
+	const session = await createSession(name, { password });
 	setActiveSession(name, session);
 
 	const SID = 0;
