@@ -1,6 +1,8 @@
 #include "nema/esp32/esp32_wifi_radio.h"
 #include "nema/runtime.h"
 #include "nema/log/logger.h"
+#include "nema/event/event.h"
+#include "nema/event/event_bus.h"
 #include <esp_wifi.h>
 #include <esp_netif.h>
 #include <sys/socket.h>
@@ -75,6 +77,19 @@ static void promiscRxCb(void* buf, wifi_promiscuous_pkt_type_t /*type*/) {
 
 void Esp32WifiRadio::init(Runtime& rt) {
     rt_ = &rt;
+
+    // Lifecycle cleanup: when any app exits, stop monitor/inject modes so the
+    // radio doesn't stay in promiscuous state. Without this, SystemWifiManager's
+    // autoConnect() silently fails (radio in wrong mode), and esp_wifi_stop()
+    // panics when settings tries to toggle WiFi off.
+    rt.events().subscribe(events::AppHostExited, [this](const Event&) {
+        monitorClose();
+        std::lock_guard<std::mutex> g(mu_);
+        doDeauth_ = false;
+        doBeacon_ = false;
+        doProbe_  = false;
+    });
+
     loopThread_.start({"RadioLoop", 4096, 5, 0}, loopEntry, this);
 }
 
