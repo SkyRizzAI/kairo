@@ -1,6 +1,7 @@
 #include "nema/screens/file_browser_screen.h"
 #include "nema/runtime.h"
 #include "nema/ui/widgets.h"
+#include "nema/ui/virtual_list.h"
 #include "nema/ui/icon_pack.h"
 #include "nema/ui/view_dispatcher.h"
 #include "nema/input/input_code.h"
@@ -87,8 +88,20 @@ void FileBrowserScreen::reload() {
 
     formatPathBuf(pathBuf_, sizeof(pathBuf_), cwd_);
 
-    scroll_.scrollMain   = 0;
-    state_.focus.focused = 0;
+    // Pre-format file sizes so renderItem() can point to stable strings.
+    accStrs_.resize(entries_.size());
+    char sizeBuf[16];
+    for (size_t i = 0; i < entries_.size(); i++) {
+        if (!entries_[i].isDir) {
+            formatSize(sizeBuf, sizeof(sizeBuf), entries_[i].size);
+            accStrs_[i] = sizeBuf;
+        } else {
+            accStrs_[i].clear();
+        }
+    }
+
+    vlist_.scrollMain   = 0;
+    vlist_.focusedIndex = 0;
 }
 
 void FileBrowserScreen::goUp() {
@@ -114,11 +127,6 @@ void FileBrowserScreen::openEntry(int entryIndex) {
         viewer_.setPath(path.c_str());
         rt_.view().navigate(viewer_);
     }
-}
-
-void FileBrowserScreen::onRowPress(void* u) {
-    auto* r = static_cast<Row*>(u);
-    r->self->openEntry(r->entryIndex);
 }
 
 // ── lifecycle ─────────────────────────────────────────────────────────────────
@@ -177,11 +185,32 @@ void FileBrowserScreen::onAction(input::Action a) {
         else           applyNewFolder(done, cancel);
         return;
     }
-    if (a == input::Action::Menu) {
-        showOpsMenu(state_.focus.focused);
-        return;
+
+    const bool showUp = (cwd_ != "/");
+    const int  total  = (int)entries_.size() + (showUp ? 1 : 0);
+
+    switch (a) {
+    case input::Action::Prev:
+        if (vlist_.moveFocus(-1)) { dirty_ = true; requestRedraw(); }
+        break;
+    case input::Action::Next:
+        if (vlist_.moveFocus(+1)) { dirty_ = true; requestRedraw(); }
+        break;
+    case input::Action::Activate: {
+        int fi = vlist_.focusedIndex;
+        openEntry(showUp && fi == 0 ? -1 : fi - (showUp ? 1 : 0));
+        break;
     }
-    ComponentScreen::onAction(a);
+    case input::Action::Menu:
+        showOpsMenu(vlist_.focusedIndex);
+        break;
+    case input::Action::Back:
+        if (!onBackPressed()) rt_.view().goBack();
+        break;
+    default:
+        break;
+    }
+    (void)total;
 }
 
 void FileBrowserScreen::onCode(input::Code c) {
@@ -362,64 +391,50 @@ void FileBrowserScreen::cbNewFolder(void* u) {
     self->pendingOp_ = PendingOp::StartNewFolder;
 }
 
-// ── view ─────────────────────────────────────────────────────────────────────
+// ── VirtualList renderItem callback ───────────────────────────────────────────
+
+aether::ui::UiNode* FileBrowserScreen::renderItem(NodeArena& a, int idx,
+                                                   bool focused, void* ud) {
+    auto* self = static_cast<FileBrowserScreen*>(ud);
+    const bool     showUp    = (self->cwd_ != "/");
+    const IconDef* folderIco = findIcon("file.folder");
+    const IconDef* fileIco   = findIcon("file.file");
+
+    ListEntry e;
+    if (showUp && idx == 0) {
+        e.label = "..";
+        if (folderIco) { e.leftIcon = folderIco->bitmap; e.iconW = folderIco->w; e.iconH = folderIco->h; }
+    } else {
+        int ei = idx - (showUp ? 1 : 0);
+        if (ei < 0 || ei >= (int)self->entries_.size()) return nullptr;
+        const FsEntry& entry = self->entries_[(size_t)ei];
+        e.label   = entry.name.c_str();
+        e.chevron = entry.isDir;
+        if (!entry.isDir && (size_t)ei < self->accStrs_.size() && !self->accStrs_[ei].empty())
+            e.value = self->accStrs_[ei].c_str();
+        const IconDef* ico = entry.isDir ? folderIco : fileIco;
+        if (ico) { e.leftIcon = ico->bitmap; e.iconW = ico->w; e.iconH = ico->h; }
+    }
+
+    UiNode* row = ListItemRow(a, e);
+    if (row) row->selfHighlight = focused;
+    return row;
+}
+
+// ── build ─────────────────────────────────────────────────────────────────────
 
 aether::ui::UiNode* FileBrowserScreen::build(NodeArena& a, Runtime&) {
     Style root; root.dir = FlexDir::Col; root.flexGrow = 1; root.align = Align::Stretch;
 
-    const bool   showUp = (cwd_ != "/");
-    const size_t total  = entries_.size() + (showUp ? 1 : 0);
-    rows_.resize(total);
-    accStrs_.resize(entries_.size());
+    const bool showUp = (cwd_ != "/");
+    const int  total  = (int)entries_.size() + (showUp ? 1 : 0);
 
-    const IconDef* folderIco = findIcon("file.folder");
-    const IconDef* fileIco   = findIcon("file.file");
-
-    UiNode* list = ListContainer(a, scroll_, {});
-    UiNode* prev = nullptr;
-    size_t  ri   = 0;
-
-    char sizeBuf[16];
-
-    auto addRow = [&](const IconDef* ico, const char* name,
-                      const char* val, bool chevron, int entryIndex) -> bool {
-        rows_[ri] = { this, entryIndex };
-
-        ListEntry e;
-        e.label   = name;
-        e.value   = val;
-        e.chevron = chevron;
-        if (ico) { e.leftIcon = ico->bitmap; e.iconW = ico->w; e.iconH = ico->h; }
-        e.onPress = onRowPress;
-        e.user    = &rows_[ri];
-
-        UiNode* row = ListItemRow(a, e);
-        if (!row) return false;
-
-        if (!prev) list->firstChild = row; else prev->nextSibling = row;
-        prev = row;
-        ri++;
-        return true;
-    };
-
-    if (showUp) addRow(folderIco, "..", nullptr, false, -1);
-
-    for (size_t i = 0; i < entries_.size(); i++) {
-        const FsEntry& e = entries_[i];
-        const char* val = nullptr;
-        if (!e.isDir) {
-            formatSize(sizeBuf, sizeof(sizeBuf), e.size);
-            accStrs_[i] = sizeBuf;
-            val = accStrs_[i].c_str();
-        }
-        if (!addRow(e.isDir ? folderIco : fileIco, e.name.c_str(),
-                    val, e.isDir, (int)i))
-            break;
-    }
-
+    UiNode* list;
     if (total == 0) {
         ListEntry e; e.label = "(empty)";
-        list->firstChild = ListItemRow(a, e);
+        list = ListItemRow(a, e);
+    } else {
+        list = VirtualList(a, vlist_, total, kItemH, renderItem, this);
     }
 
     return View(a, root, {

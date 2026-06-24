@@ -693,7 +693,7 @@ yang bisa dijadikan referensi developer komunitas.
 - [x] **F6.02 — DesktopScreen** — Wallpaper uses contentY() to draw below status bar (already correct).
 - [x] **F6.03 — LauncherScreen** — All 4 themes audited: no hardcoded nav hints; icon sizes use theme metrics from style_tokens. hintFor() N/A (launcher has no text footer).
 - [x] **F6.04 — AppListScreen** — Ganti scroll+build manual dengan **VirtualList** + alphabetical sort. VirtualList + renderAppItem + selfHighlight XOR focus indicator.
-- [ ] **F6.05 — FileBrowserScreen** — Ganti listing ke LazyDirLoader + VirtualList. Sorting sudah ada di LazyDirLoader (dirs first, alpha). Context menu (FileOpsModal) dipertahankan.
+- [x] **F6.05 — FileBrowserScreen** — Migrated to VirtualList + renderItem static callback. rows_/scroll_ removed; accStrs_ populated in reload(); onAction() drives vlist_ directly; onRowPress removed. FileOpsModal + keyboard overlay retained. LazyDirLoader deferred (sync reload() sufficient for ≤128 entries).
 - [x] **F6.06 — LogsScreen** — ScrollView correct (non-selectable list); auto-scroll-to-bottom via 0x7FFF; TextRole::Mono per entry; level badge [T/D/I/W/E/F] already prepended.
 - [x] **F6.07 — SettingsScreen** — ListContainer + ListItemRow, capability-gated skip, already correct.
 

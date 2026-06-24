@@ -8,6 +8,7 @@
 // Back → go up one level, exit to Home at root.
 #include "nema/ui/component_screen.h"
 #include "nema/ui/virtual_keyboard.h"
+#include "nema/ui/virtual_list.h"
 #include "nema/ui/node.h"
 #include "nema/hal/filesystem.h"
 #include "nema/screens/file_ops_modal.h"
@@ -32,9 +33,8 @@ public:
     aether::ui::UiNode* build(aether::ui::NodeArena& a, Runtime& rt) override;
 
 private:
-    struct Row { FileBrowserScreen* self; int entryIndex; };
-
-    static constexpr size_t kMaxEntries = 128;
+    static constexpr size_t   kMaxEntries = 128;
+    static constexpr uint16_t kItemH      = 12;
 
     // ── directory navigation ──────────────────────────────────────────────
     void reload();
@@ -43,7 +43,8 @@ private:
     void showOpsMenu(int focused);
     void showDirMenu();           // for ".." row — paste + new folder
 
-    static void onRowPress(void* u);
+    static aether::ui::UiNode* renderItem(aether::ui::NodeArena& a,
+                                          int idx, bool focused, void* ud);
 
     // ── clipboard ─────────────────────────────────────────────────────────
     struct Clipboard { std::string path; bool isCut = false; bool has = false; };
@@ -87,12 +88,11 @@ private:
     TextViewerScreen  viewer_;
 
     // ── model ─────────────────────────────────────────────────────────────
-    std::string              cwd_ = "/";
-    std::vector<FsEntry>     entries_;
-    std::vector<Row>         rows_;
-    std::vector<std::string> accStrs_;
-    aether::ui::ScrollState  scroll_;
-    char                     pathBuf_[128] = "/";
+    std::string                  cwd_ = "/";
+    std::vector<FsEntry>         entries_;
+    std::vector<std::string>     accStrs_;   // formatted file sizes, indexed with entries_
+    aether::ui::VirtualListState vlist_;
+    char                         pathBuf_[128] = "/";
 };
 
 } // namespace nema
