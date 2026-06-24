@@ -8,6 +8,7 @@
 #include "nema/skyrizze32/skyrizz_e32.h"
 #include "nema/services/clock_service.h"
 #include "nema/app/app_registry.h"
+#include "nema/app/papp_installer.h"
 #include "nema/apps/bad_usb_app.h"
 #include "aether/screens/desktop_screen.h"
 #include "nema/ui/view_dispatcher.h"
@@ -29,6 +30,7 @@ void setup() {
     rt.apps().installService(cs, "com.palanu.svc.clock");
 
     rt.start();
+    nema::loadInstalledPapps(rt);  // scan /system/apps + /sd/apps for user-installed .papp
     aether::bootDisplay(rt);   // Plan 80: construct + start display servers + GUI loop
 
     static nema::BadUsbApp badUsbApp;

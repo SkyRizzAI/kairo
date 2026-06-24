@@ -57,24 +57,35 @@ static void formatPathBuf(char* buf, size_t n, const std::string& path) {
         pos = slash + 1;
     }
 
-    // Build "/ > seg1 > ... > segN" (truncate middle if > 2 segments).
+    // Cap individual segment names to prevent overflow on narrow displays (~20 chars at Bold8).
+    auto abbr = [](const std::string& s) -> std::string {
+        return s.size() > 8 ? s.substr(0, 7) + "~" : s;
+    };
+
+    // Build "/ > seg1 > ... > segN" (truncate middle if > 3 segments).
     char tmp[128] = "/";
     size_t written = 1;
     if (segs.size() <= 3) {
         for (auto& s : segs) {
-            int r = std::snprintf(tmp + written, sizeof(tmp) - written, " > %s", s.c_str());
+            int r = std::snprintf(tmp + written, sizeof(tmp) - written, " > %s", abbr(s).c_str());
             if (r > 0) written += (size_t)r;
         }
     } else {
         // More than 3 segments: show first + "..." + last two.
-        int r = std::snprintf(tmp + written, sizeof(tmp) - written, " > %s > ...", segs[0].c_str());
+        int r = std::snprintf(tmp + written, sizeof(tmp) - written, " > %s > ...", abbr(segs[0]).c_str());
         if (r > 0) written += (size_t)r;
         for (size_t i = segs.size() - 2; i < segs.size(); i++) {
-            r = std::snprintf(tmp + written, sizeof(tmp) - written, " > %s", segs[i].c_str());
+            r = std::snprintf(tmp + written, sizeof(tmp) - written, " > %s", abbr(segs[i]).c_str());
             if (r > 0) written += (size_t)r;
         }
     }
-    std::snprintf(buf, n, "%s", tmp);
+
+    // Final safety: if still too long for the 128px display, show only the leaf.
+    if (written > 22) {
+        std::snprintf(buf, n, "... > %s", abbr(segs.back()).c_str());
+    } else {
+        std::snprintf(buf, n, "%s", tmp);
+    }
 }
 
 // Recursive copy: handles both files and directories.

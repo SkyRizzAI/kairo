@@ -45,6 +45,7 @@ void AppListScreen::loadInstalledPapps() {
 
     for (const auto& m : rt_.apps().list()) {
         if (m.type != AppType::App) continue;
+        if (m.category && std::strcmp(m.category, "System") == 0) continue;
         names_.push_back(m.name);
         ids_.push_back(m.id);
         if (m.iconBitmap && m.iconW && m.iconH) {
