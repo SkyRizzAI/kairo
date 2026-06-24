@@ -52,3 +52,7 @@ add_test(NAME wifi_contract_test COMMAND wifi_contract_test)
 add_executable(wasm_test wasm_test.cpp)
 target_link_libraries(wasm_test PRIVATE nema_core aether)
 add_test(NAME wasm_test COMMAND wasm_test)
+
+add_executable(lazy_dir_loader_test lazy_dir_loader_test.cpp)
+target_link_libraries(lazy_dir_loader_test PRIVATE nema_core aether)
+add_test(NAME lazy_dir_loader_test COMMAND lazy_dir_loader_test)

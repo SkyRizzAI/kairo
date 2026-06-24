@@ -780,9 +780,9 @@ Untuk AppList yang support folder nested:
 - Breadcrumb path di TitleBar
 
 Tasks:
-- [ ] **F6.B1** — LazyDirLoader sudah sort dirs-first alpha; verifikasi unit test di firmware/tests/
-- [ ] **F6.B2** — AppListScreen: tambah folder drilldown (path stack, push screen per folder)
-- [ ] **F6.B3** — FileBrowserScreen: ganti listing ke LazyDirLoader (sudah dapat sorting gratis)
+- [x] **F6.B1** — LazyDirLoader unit tests written (`firmware/tests/lazy_dir_loader_test.cpp`): sort dirs-first alpha, empty dir, error path, out-of-bounds, progressive reveal. Added to CMakeLists.txt.
+- [ ] **F6.B2** — AppListScreen: tambah folder drilldown (path stack, push screen per folder) — deferred, significant new feature
+- [ ] **F6.B3** — FileBrowserScreen LazyDirLoader: deferred. Synchronous reload() + VirtualList (F6.05) is correct and sufficient. Migration would change sort to case-sensitive (regression) and requires async/sync bridge for openEntry/showOpsMenu.
 - [x] **F6.B4** — FileBrowserScreen header now shows "/ > docs > notes" breadcrumb (replaces raw path string; long paths truncated as "/ > first > ... > parent > name")
 
 #### F6.C — Modal & Dialog Polish
@@ -853,7 +853,7 @@ Tasks:
 ---
 
 ### Docs
-- [ ] Update `docs/feats/` untuk Aether UI system setelah Fase 1 selesai
-- [ ] Architecture doc: `docs/architecture/aether-ui.md`
-- [ ] Migration guide untuk breaking changes (padding setter, namespace)
-- [ ] Tambah "How to write a screen" guide dengan HelloApp (F6.28) sebagai contoh canonical
+- [x] Update `docs/feats/` untuk Aether UI system — `docs/feats/aether-ui.md` written (widget catalog, layout model, VirtualList, transitions, AnimatedValue)
+- [x] Architecture doc: `docs/architecture/aether-ui.md` — written (render pipeline, NodeArena, clip-based transitions, ComponentScreen internals)
+- [x] Migration guide: `docs/feats/aether-ui-migration.md` — before/after patterns for ListRow→ListItemRow, manual-append→initializer-list, Modal→Dialog, hint hardcoding
+- [x] "How to write a screen" guide: `docs/feats/how-to-write-a-screen.md` — tutorial with HelloApp as canonical example, covers build() contract, state mutation, ScrollState, VirtualList, navigation canonical
