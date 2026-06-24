@@ -16,6 +16,7 @@ idf_component_register(
     INCLUDE_DIRS "include"
     REQUIRES
         core
+        aether
         espressif__arduino-esp32
         joltwallet__littlefs
         fatfs
