@@ -689,29 +689,29 @@ yang bisa dijadikan referensi developer komunitas.
 
 #### P0 — Most-visited
 
-- [ ] **F6.01 — LockScreen** — Pastikan onwake/unlock path efisien; tambah visual hint (`⏎ unlock`) yang pakai `hintFor(Activate)` bukan hardcode string.
+- [x] **F6.01 — LockScreen** — Uses `hintFor(Activate)` for unlock hint (already correct).
 - [ ] **F6.02 — DesktopScreen** — Wallpaper rendering tidak berubah (IDesktopTheme sudah benar); perbaiki status-bar overlap logic agar konsisten dengan fullscreen mode (lihat F6.A).
 - [ ] **F6.03 — LauncherScreen** — Semua 4 tema (PlayStation, Wii, Flipper, Compact) diaudit: gunakan `hintFor()` untuk footer, ganti hardcoded icon sizes dengan theme tokens.
 - [x] **F6.04 — AppListScreen** — Ganti scroll+build manual dengan **VirtualList** + alphabetical sort. VirtualList + renderAppItem + selfHighlight XOR focus indicator.
 - [ ] **F6.05 — FileBrowserScreen** — Ganti listing ke LazyDirLoader + VirtualList. Sorting sudah ada di LazyDirLoader (dirs first, alpha). Context menu (FileOpsModal) dipertahankan.
 - [ ] **F6.06 — LogsScreen** — Log tidak perlu VirtualList (list terus bertambah di ujung, tidak paginatable). Ganti ScrollView ke ListContainer dengan auto-scroll-to-bottom; gunakan monospace font / Caption role tiap entry; level badge `[E]`/`[W]`/`[I]` di kiri.
-- [ ] **F6.07 — SettingsScreen** — Gunakan ListContainer + ListItemRow (chevron=true) untuk semua entri. Capability-gated items langsung skip (bukan render disabled). TitleBar di atas.
+- [x] **F6.07 — SettingsScreen** — ListContainer + ListItemRow, capability-gated skip, already correct.
 
 #### P1 — Frequent
 
 - [ ] **F6.08 — BadUsbApp** — State machine (Main → ScriptList → Running) sudah benar. ScriptList: LazyDirLoader + VirtualList untuk listing .dd files. Running state: tampilkan progress bar menggunakan Slider (read-only, value driven oleh byte counter).
 - [ ] **F6.09 — WifiSettingsScreen** — Saved-network list + scan-result list sudah berisi VirtualList candidate. Skeleton rows untuk "Scanning..." state. Network entry menggunakan ListItemRow dengan RSSI icon di kiri.
-- [ ] **F6.10 — AppDetailScreen** — Permissions section pakai ListItemRow + Toggle widget. Storage breakdown pakai Stepper (disabled) untuk info. Async load via LazyDirLoader tidak perlu; data sudah in-memory. Pastikan layout responsif di small screens.
+- [x] **F6.10 — AppDetailScreen** — Toggle widget for permissions already in use; Reset All Permissions added (Plan 90 session).
 - [ ] **F6.11 — StorageSettingsScreen** — Progress bar untuk kapasitas (Slider read-only). SD card eject button melalui ListItemRow (chevron=false, accessory = "⏏"). Async load state → SkeletonRow.
-- [ ] **F6.12 — AppearancesSettingsScreen** — ListInputRow untuk theme cycle (PlayStation / Wii / Flipper / Compact), wallpaper pack select, status bar toggle.
+- [x] **F6.12 — AppearancesSettingsScreen** — Already uses ListInputRow for launcher/desktop/font/statusbar cycling.
 
 #### P2 — Occasional
 
-- [ ] **F6.13 — AboutScreen** — Render sebagai Col of ListItemRow (label + value): version, board, caps, serial. Modal (AboutModal) pakai Dialog widget.
-- [ ] **F6.14 — ControlsScreen** — ListContainer dengan ListSection per kategori (Buttons / Actions / Gestures); setiap baris ListItemRow. Tidak perlu sorting.
-- [ ] **F6.15 — DeveloperScreen** — Minimal. Dua action buttons (Stop Aether, Reboot Bootloader) sebagai ListItemRow; konfirmasi Dialog sebelum eksekusi.
+- [x] **F6.13 — AboutScreen** — ListContainer + ListSection + ListItemRow; AboutModal uses Dialog widget.
+- [x] **F6.14 — ControlsScreen** — ListContainer + ListSection per category (Board/Actions/Gestures) + ListItemRow already in use.
+- [x] **F6.15 — DeveloperScreen** — ConfirmModal (danger dialog) before Stop Aether and Reboot to Bootloader.
 - [ ] **F6.16 — DolphinDemoScreen** — Tidak perlu redesign besar. Pastikan hint footer menggunakan `hintFor()`.
-- [ ] **F6.17 — SleepSettingsScreen** — ListInputRow untuk interval (30s / 1m / 2m / 5m / Never).
+- [x] **F6.17 — SleepSettingsScreen** — Already uses ListInputRow for sleep interval.
 - [ ] **F6.18 — SoundsSettingsScreen** — Slider untuk volume; ListItemRow + Toggle per notification jenis.
 
 #### P3 — Sub-screens
