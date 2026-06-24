@@ -34,6 +34,7 @@ public:
 
     // Handle Prev/Next/Activate/Menu/Back via VirtualListState.
     void onAction(input::Action a) override;
+    void tick(uint64_t nowMs) override;
 
 private:
     // Plan 84: bundled 1-bit icon from a .papp app (non-owning pointer).

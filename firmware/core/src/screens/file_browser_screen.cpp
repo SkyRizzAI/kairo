@@ -173,6 +173,13 @@ void FileBrowserScreen::onResume() {
 
 void FileBrowserScreen::tick(uint64_t nowMs) {
     ComponentScreen::tick(nowMs);
+    // VirtualList items are focusable=false → state_.focus.count stays 0 →
+    // ComponentScreen::tick's marquee guard never fires. Drive it here instead.
+    if (!entries_.empty() && !renaming_ && !newFoldering_
+            && (nowMs - lastMarqueeMs_) >= 66) {
+        lastMarqueeMs_ = nowMs;
+        requestRedraw();
+    }
     if (pendingOp_ == PendingOp::View) {
         pendingOp_ = PendingOp::None;
         viewer_.setPath(pendingPath_.c_str());
@@ -208,9 +215,11 @@ void FileBrowserScreen::onAction(input::Action a) {
 
     switch (a) {
     case input::Action::Prev:
+    case input::Action::AdjustDown:
         if (vlist_.moveFocus(-1)) { dirty_ = true; requestRedraw(); }
         break;
     case input::Action::Next:
+    case input::Action::AdjustUp:
         if (vlist_.moveFocus(+1)) { dirty_ = true; requestRedraw(); }
         break;
     case input::Action::Activate: {

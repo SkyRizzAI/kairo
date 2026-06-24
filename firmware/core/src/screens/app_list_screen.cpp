@@ -157,9 +157,11 @@ void AppListScreen::onAction(input::Action a) {
     using A = input::Action;
     switch (a) {
         case A::Prev:
+        case A::AdjustDown:
             if (vlist_.moveFocus(-1)) { dirty_ = true; requestRedraw(); }
             break;
         case A::Next:
+        case A::AdjustUp:
             if (vlist_.moveFocus(+1)) { dirty_ = true; requestRedraw(); }
             break;
         case A::Activate:
@@ -173,6 +175,16 @@ void AppListScreen::onAction(input::Action a) {
             break;
         default:
             break;
+    }
+}
+
+void AppListScreen::tick(uint64_t nowMs) {
+    ComponentScreen::tick(nowMs);
+    // VirtualList items are focusable=false so state_.focus.count stays 0 —
+    // ComponentScreen::tick()'s marquee guard never fires. Drive it here instead.
+    if (!names_.empty() && (nowMs - lastMarqueeMs_) >= 66) {
+        lastMarqueeMs_ = nowMs;
+        requestRedraw();
     }
 }
 
