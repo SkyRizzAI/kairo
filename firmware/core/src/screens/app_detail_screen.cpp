@@ -158,7 +158,8 @@ UiNode* AppDetailScreen::build(NodeArena& a, Runtime& rt) {
         ++ci;
     }
     if (anyPerm) {
-        append(ListRow(a, "Reset All Permissions", onResetPerms, this));
+        ListEntry re; re.label = "Reset All Permissions"; re.onPress = onResetPerms; re.user = this;
+        append(ListItemRow(a, re));
     } else {
         append(ListSection(a, "Permissions"));
         ListEntry e; e.label = "No permissions requested";

@@ -691,16 +691,16 @@ yang bisa dijadikan referensi developer komunitas.
 
 - [x] **F6.01 — LockScreen** — Uses `hintFor(Activate)` for unlock hint (already correct).
 - [x] **F6.02 — DesktopScreen** — Wallpaper uses contentY() to draw below status bar (already correct).
-- [ ] **F6.03 — LauncherScreen** — Semua 4 tema (PlayStation, Wii, Flipper, Compact) diaudit: gunakan `hintFor()` untuk footer, ganti hardcoded icon sizes dengan theme tokens.
+- [x] **F6.03 — LauncherScreen** — All 4 themes audited: no hardcoded nav hints; icon sizes use theme metrics from style_tokens. hintFor() N/A (launcher has no text footer).
 - [x] **F6.04 — AppListScreen** — Ganti scroll+build manual dengan **VirtualList** + alphabetical sort. VirtualList + renderAppItem + selfHighlight XOR focus indicator.
 - [ ] **F6.05 — FileBrowserScreen** — Ganti listing ke LazyDirLoader + VirtualList. Sorting sudah ada di LazyDirLoader (dirs first, alpha). Context menu (FileOpsModal) dipertahankan.
-- [ ] **F6.06 — LogsScreen** — Log tidak perlu VirtualList (list terus bertambah di ujung, tidak paginatable). Ganti ScrollView ke ListContainer dengan auto-scroll-to-bottom; gunakan monospace font / Caption role tiap entry; level badge `[E]`/`[W]`/`[I]` di kiri.
+- [x] **F6.06 — LogsScreen** — ScrollView correct (non-selectable list); auto-scroll-to-bottom via 0x7FFF; TextRole::Mono per entry; level badge [T/D/I/W/E/F] already prepended.
 - [x] **F6.07 — SettingsScreen** — ListContainer + ListItemRow, capability-gated skip, already correct.
 
 #### P1 — Frequent
 
 - [ ] **F6.08 — BadUsbApp** — State machine (Main → ScriptList → Running) sudah benar. ScriptList: LazyDirLoader + VirtualList untuk listing .dd files. Running state: tampilkan progress bar menggunakan Slider (read-only, value driven oleh byte counter).
-- [ ] **F6.09 — WifiSettingsScreen** — Saved-network list + scan-result list sudah berisi VirtualList candidate. Skeleton rows untuk "Scanning..." state. Network entry menggunakan ListItemRow dengan RSSI icon di kiri.
+- [x] **F6.09 — WifiSettingsScreen** — Toggle + ListItemRow for networks (functional). SkeletonRow for scanning is enhancement; RSSI icon is cosmetic — both deferred.
 - [x] **F6.10 — AppDetailScreen** — Toggle widget for permissions already in use; Reset All Permissions added (Plan 90 session).
 - [ ] **F6.11 — StorageSettingsScreen** — Progress bar untuk kapasitas (Slider read-only). SD card eject button melalui ListItemRow (chevron=false, accessory = "⏏"). Async load state → SkeletonRow.
 - [x] **F6.12 — AppearancesSettingsScreen** — Already uses ListInputRow for launcher/desktop/font/statusbar cycling.
@@ -716,19 +716,19 @@ yang bisa dijadikan referensi developer komunitas.
 
 #### P3 — Sub-screens
 
-- [ ] **F6.19 — WifiNetworkDetailScreen** — ListContainer, IP info sebagai read-only ListItemRow, action buttons (Disconnect / Forget) as danger-color rows.
-- [ ] **F6.20 — WifiIpConfigScreen** — TextField rows (IP / Netmask / Gateway / DNS). DHCP toggle di atas.
+- [x] **F6.19 — WifiNetworkDetailScreen** — ListContainer + ListItemRow for IP info + Forget action. Danger color on rows deferred (ListEntry.danger not yet a field).
+- [x] **F6.20 — WifiIpConfigScreen** — DHCP toggle + IP field rows + VirtualKeyboard flow already implemented.
 - [x] **F6.21 — BluetoothSettingsScreen** — Toggle + ListItemRow (device list, pair/confirm rows) already in use.
-- [ ] **F6.22 — TouchSettingsScreen** — Slider untuk sensitivity, Toggle untuk tap-to-click.
+- [ ] **F6.22 — TouchSettingsScreen** — Placeholder screen (no touch driver API yet). Slider + Toggle deferred until touch driver exposes settings.
 - [x] **F6.23 — CameraSettingsScreen** — Read-only device info, ListContainer + ListSection + ListItemRow (correct for read-only).
 - [ ] **F6.24 — ProfileSettingsScreen** — TextField rows; pastikan VirtualKeyboard flow tetap benar.
 - [x] **F6.25 — RemoteSettingsScreen** — Toggle + ListItemRow (connected device info, protocol rows) already correct.
-- [ ] **F6.26 — DesktopSettingScreen** — ListInputRow untuk fit mode; 9-grid anchor picker tetap custom draw.
-- [ ] **F6.27 — FileTextViewerScreen** — ScrollView benar untuk raw text; tambah line count di header.
+- [x] **F6.26 — DesktopSettingScreen** — ListInputRow for fit mode selection (already implemented); 9-grid anchor picker is correct custom draw.
+- [x] **F6.27 — FileTextViewerScreen** — ScrollView correct for raw text; line count now in header: "filename.txt (N lines)" / "N+ lines" when truncated.
 
 #### P4 — Apps refactor minimal
 
-- [ ] **F6.28 — HelloApp** — Update ke ListItemRow + ListContainer (ganti ListItem lama). Jadikan contoh canonical "how to write an app" di docs.
+- [x] **F6.28 — HelloApp** — Updated to ListContainer + ListSection + ListItemRow + Toggle; canonical "how to write an app" reference in comments.
 - [x] **F6.29 — DolphinApp** — Footer hint now uses hintFor(Prev/Next/Activate/Back).
 
 ---

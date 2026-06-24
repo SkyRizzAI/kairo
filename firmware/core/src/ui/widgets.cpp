@@ -159,26 +159,6 @@ UiNode* TitleBar(NodeArena& a, const char* title) {
     });
 }
 
-UiNode* ListRow(NodeArena& a, const char* label, void (*onPress)(void*), void* userdata) {
-    uint8_t pad = aether::theme().space.sm;
-    Style s; s.dir = FlexDir::Row; s.padding = pad; s.align = Align::Center;
-    return Pressable(a, onPress, userdata, s, { Text(a, label, TextRole::Body) });
-}
-
-UiNode* ListItem(NodeArena& a, const char* label, const char* accessory,
-                 void (*onPress)(void*), void* userdata) {
-    uint8_t pad = aether::theme().space.sm;
-    uint8_t gap = aether::theme().space.xs;
-    Style s; s.dir = FlexDir::Row; s.padding = pad; s.align = Align::Center; s.gap = gap;
-    s.justify = Justify::SpaceBetween;
-    UiNode* lbl = Text(a, label, TextRole::Body);
-    if (lbl) lbl->style.flexGrow = 1;   // label grows → accessory pushed flush-right
-    if (accessory && *accessory)
-        return Pressable(a, onPress, userdata, s,
-                         { lbl, Text(a, accessory, TextRole::Caption) });
-    return Pressable(a, onPress, userdata, s, { lbl });
-}
-
 // ── Plan 79: Flipper-style list (Layer 3) ───────────────────────────────────
 
 namespace {

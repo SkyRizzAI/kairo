@@ -87,7 +87,7 @@ UiNode* Footer(NodeArena& a, const char* hint);
 
 // SmartLabel (Plan 52): a Text node with TextRole::Smart. Ellipsis when its
 // parent Pressable is not focused; marquee-scrolls when focused. Use inside a
-// ListItem or ListRow to handle long strings gracefully.
+// ListItemRow to handle long strings gracefully.
 UiNode* SmartLabel(NodeArena& a, const char* text);
 
 // Icon (Plan 53): a 1-bit XBM bitmap leaf node. Pass the bitmap pointer and
@@ -95,18 +95,6 @@ UiNode* SmartLabel(NodeArena& a, const char* text);
 // Use findIcon() from icon_pack.h to look up built-in bitmaps by handle.
 UiNode* Icon(NodeArena& a, const uint8_t* bitmap, uint8_t w_px, uint8_t h_px,
              uint8_t padding = 0);
-
-// ListRow: a full-width focusable row with a left-aligned label and no border —
-// selection is shown by the focus ring (buttons) or touch. Put rows in a Col or
-// ScrollView with align=Stretch so they fill the width. The list/menu idiom.
-UiNode* ListRow(NodeArena& a, const char* label, void (*onPress)(void*), void* userdata);
-
-// ListItem (Plan 60): a focusable row "label                accessory". The
-// label grows to fill, pushing the accessory (e.g. ">", a value, "ON"/"OFF")
-// flush-right. accessory may be nullptr for none. Themed padding. Use inside a
-// ScrollView (align=Stretch) — the renderer draws a dashed scrollbar for free.
-UiNode* ListItem(NodeArena& a, const char* label, const char* accessory,
-                 void (*onPress)(void*), void* userdata);
 
 // ── Plan 79: Flipper-style list (Layer 3 component) ─────────────────────────
 // Built FROM Layer-2 primitives (Pressable/Text/Icon/Spacer). Put rows inside a
