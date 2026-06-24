@@ -1,5 +1,6 @@
 #pragma once
 #include "nema/app/component_app.h"
+#include "nema/ui/node.h"
 
 namespace nema {
 
@@ -16,7 +17,8 @@ protected:
     aether::ui::UiNode* build(aether::ui::NodeArena& arena, AppContext& ctx) override;
 
 private:
-    bool toggleOn_ = false;
+    bool                    toggleOn_ = false;
+    aether::ui::ScrollState scroll_;
 };
 
 } // namespace nema

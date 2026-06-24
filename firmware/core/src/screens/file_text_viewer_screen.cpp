@@ -55,6 +55,14 @@ void TextViewerScreen::onResume() {
     }
     if (lines_.size() >= kMaxLines) truncated_ = true;
 
+    // Update header with line count now that loading is done.
+    const char* slash = std::strrchr(path_.c_str(), '/');
+    const char* name  = slash ? slash + 1 : path_.c_str();
+    if (truncated_)
+        std::snprintf(titleBuf_, sizeof(titleBuf_), "%s (%u+ lines)", name, (unsigned)lines_.size());
+    else
+        std::snprintf(titleBuf_, sizeof(titleBuf_), "%s (%u lines)", name, (unsigned)lines_.size());
+
     ComponentScreen::onResume();
 }
 
