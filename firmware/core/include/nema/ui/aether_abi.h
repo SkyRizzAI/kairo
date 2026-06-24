@@ -4,7 +4,7 @@
 // Plan 50 — Aether ABI: flat C-compatible widget-building functions.
 // These are the host-side implementations of aether:ui imports.
 // Apps (WASM/JS/C) call these via generated bindings; they delegate
-// to the nema::ui retained-mode widget tree + NodeArena.
+// to the aether::ui retained-mode widget tree + NodeArena.
 //
 // Convention: each function takes a parent view handle (UiNode*)
 // and returns a child handle. nullptr = root / error.

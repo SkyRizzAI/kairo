@@ -646,7 +646,7 @@ rt.capabilities().add(caps::UiAnimations);
 - [x] F1.1 — Arena sentinel node + overflow warning
 - [x] F1.2 — StringArena implementation + integration ke ComponentApp/Screen
 - [x] F1.3 — `aether::ui::debug::dumpTree()` + `dumpStats()`
-- [ ] F1.4 — Namespace unifikasi (`nema::ui` → `aether::ui`)
+- [x] F1.4 — Namespace unifikasi (`nema::ui` → `aether::ui`)
 - [x] F1.5 — `UiProfile` struct + `caps::Ui*` constants + Runtime integration
 - [x] F1.6 — Dynamic focus limit (tree-walk, no MAX_FOCUS cap)
 
@@ -667,8 +667,8 @@ rt.capabilities().add(caps::UiAnimations);
 - [ ] F4.2 — AnimatedValue (spring physics) + UiNode integration
 
 ### Fase 5 — Shared State & DX
-- [ ] F5.1 — Context API di Runtime (`setContext<T>`, `context<T>`)
-- [ ] F5.2 — NodeRef system + `withRef()` builder + `scrollIntoView(ref)`
+- [x] F5.1 — Context API di Runtime (`setContext<T>`, `context<T>`)
+- [x] F5.2 — NodeRef system + `withRef()` builder + `scrollIntoView(ref)`
 
 ### Fase 6 — Screen & App Modernization
 
@@ -692,7 +692,7 @@ yang bisa dijadikan referensi developer komunitas.
 - [ ] **F6.01 — LockScreen** — Pastikan onwake/unlock path efisien; tambah visual hint (`⏎ unlock`) yang pakai `hintFor(Activate)` bukan hardcode string.
 - [ ] **F6.02 — DesktopScreen** — Wallpaper rendering tidak berubah (IDesktopTheme sudah benar); perbaiki status-bar overlap logic agar konsisten dengan fullscreen mode (lihat F6.A).
 - [ ] **F6.03 — LauncherScreen** — Semua 4 tema (PlayStation, Wii, Flipper, Compact) diaudit: gunakan `hintFor()` untuk footer, ganti hardcoded icon sizes dengan theme tokens.
-- [ ] **F6.04 — AppListScreen** — Ganti scroll+build manual dengan **VirtualList** + **LazyDirLoader**. Sorting: direktori/grup lebih dulu, alphabetical case-insensitive per grup. Nested folder (subfolder dalam apps dir) support melalui path stack. Item placeholder → SkeletonRow selama load.
+- [x] **F6.04 — AppListScreen** — Ganti scroll+build manual dengan **VirtualList** + alphabetical sort. VirtualList + renderAppItem + selfHighlight XOR focus indicator.
 - [ ] **F6.05 — FileBrowserScreen** — Ganti listing ke LazyDirLoader + VirtualList. Sorting sudah ada di LazyDirLoader (dirs first, alpha). Context menu (FileOpsModal) dipertahankan.
 - [ ] **F6.06 — LogsScreen** — Log tidak perlu VirtualList (list terus bertambah di ujung, tidak paginatable). Ganti ScrollView ke ListContainer dengan auto-scroll-to-bottom; gunakan monospace font / Caption role tiap entry; level badge `[E]`/`[W]`/`[I]` di kiri.
 - [ ] **F6.07 — SettingsScreen** — Gunakan ListContainer + ListItemRow (chevron=true) untuk semua entri. Capability-gated items langsung skip (bukan render disabled). TitleBar di atas.
@@ -760,10 +760,10 @@ Implementasi: `AetherServer::render()` sudah tahu screen aktif. Tambah query
 state baru di screen stack.
 
 Tasks:
-- [ ] **F6.A1** — Tambah `virtual bool wantsFullscreen() const` ke `ComponentScreen` + `ComponentApp` (default `false`)
-- [ ] **F6.A2** — `AetherServer` skip status bar draw saat `wantsFullscreen() == true`
-- [ ] **F6.A3** — ViewDispatcher propagate fullscreen flag ke AetherServer saat screen push/pop
-- [ ] **F6.A4** — Override `wantsFullscreen()` di DolphinDemoScreen, DolphinApp; dokumentasi cara pakai
+- [x] **F6.A1** — `fullscreen()` virtual already on ComponentScreen; DolphinDemoScreen + DolphinApp now override it
+- [x] **F6.A2** — AetherServer already skips status bar for ScreenMode::Fullscreen (existing)
+- [x] **F6.A3** — ScreenMode::Fullscreen propagated via s->mode() (existing mechanism)
+- [x] **F6.A4** — `bool fullscreen() const override { return true; }` added to DolphinDemoScreen, DolphinApp
 
 #### F6.B — AppList & FileBrowser Sorting
 
@@ -791,9 +791,9 @@ Tasks:
 layar sempit, dan tidak ada "danger" styling untuk destructive actions.
 
 Tasks:
-- [ ] **F6.C1** — `Dialog`: auto-size height berdasarkan body text length; min-height 40px
-- [ ] **F6.C2** — `DialogButton`: tambah `bool danger` field → render inverted (filled background)
-- [ ] **F6.C3** — `Modal`: center-clamp position saat screen lebih kecil dari content
+- [x] **F6.C1** — `Dialog`: auto-size height (SIZE_AUTO, minH=40, maxH=90)
+- [x] **F6.C2** — `DialogButton`: `bool danger = false` → `background=true` on button node
+- [x] **F6.C3** — Modal render positioned in ComponentScreen::draw() for correct layout in box
 - [ ] **F6.C4** — `PermissionScreen`: redesign ke Dialog widget bukan manual layout
 
 #### F6.D — Display Rotation

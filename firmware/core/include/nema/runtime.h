@@ -11,6 +11,8 @@
 #include <memory>
 #include <vector>
 #include <atomic>
+#include <typeindex>
+#include <unordered_map>
 
 namespace nema {
 
@@ -40,6 +42,14 @@ class DummyBatteryDriver;
 class NtpService;
 
 class Runtime {
+    // Plan 90 F5.1 — private nested types declared first so they're visible
+    // in the inline template methods below (clangd needs forward-visibility).
+    struct IContextHolder { virtual ~IContextHolder() = default; };
+    template<typename T>
+    struct ContextHolder : IContextHolder {
+        T value;
+        explicit ContextHolder(T v) : value(std::move(v)) {}
+    };
 public:
     static Runtime create();
     ~Runtime();
@@ -100,6 +110,25 @@ public:
 
     // Plan 90: UI resource profile for this board (derived from capabilities).
     aether::ui::UiProfile uiProfile() const;
+
+    // Plan 90 F5.1 — typed context slots (one value per type, owned by Runtime).
+    // Screens/apps call `rt.setContext<AppTheme>(theme)` and read with
+    // `if (auto* t = rt.context<AppTheme>()) { ... }`. Global per-runtime,
+    // no tree traversal needed. Analogous to React Context + useContext.
+    template<typename T>
+    void setContext(T&& value) {
+        // Erase old slot for T, then store new one.
+        auto key = std::type_index(typeid(T));
+        contextSlots_[key] = std::make_shared<ContextHolder<T>>(std::forward<T>(value));
+    }
+
+    template<typename T>
+    T* context() {
+        auto key = std::type_index(typeid(T));
+        auto it = contextSlots_.find(key);
+        if (it == contextSlots_.end()) return nullptr;
+        return &static_cast<ContextHolder<T>*>(it->second.get())->value;
+    }
 
     // Plan 80 — the display servers are constructed and owned by the target's
     // main (in the aether lib / a server module), then registered here so core
@@ -172,6 +201,9 @@ private:
     CameraService                      cameraService_; // value member — always alive
     std::unique_ptr<DummyBatteryDriver> dummyBattery_;
     std::unique_ptr<NtpService>        ntp_;
+
+    // Plan 90 F5.1 — context slots (types declared at top of class)
+    std::unordered_map<std::type_index, std::shared_ptr<IContextHolder>> contextSlots_;
 };
 
 } // namespace nema

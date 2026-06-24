@@ -63,6 +63,8 @@ src/input/gesture.cpp
     src/ui/font_iosk_reg12.cpp
     src/ui/font_iosk_bold12.cpp
     src/ui/view_dispatcher.cpp
+    src/ui/virtual_list.cpp
+    src/ui/lazy_dir_loader.cpp
     src/services/storage_service.cpp
     src/services/permission_service.cpp
     src/services/resource_broker.cpp

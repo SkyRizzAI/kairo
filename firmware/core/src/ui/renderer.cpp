@@ -158,7 +158,7 @@ static void paint(const UiNode* n, Canvas& c, const UiNode* focused, bool inFocu
         return;
     }
 
-    bool childIn = inFocused || (focused && n == focused);
+    bool childIn = inFocused || (focused && n == focused) || n->selfHighlight;
     // F2.4 Absolute positioning — painter's algorithm: relative children first,
     // then absolute children on top.
     for (UiNode* k = n->firstChild; k; k = k->nextSibling)
@@ -168,8 +168,9 @@ static void paint(const UiNode* n, Canvas& c, const UiNode* focused, bool inFocu
         if (k->style.position == Position::Absolute)
             paint(k, c, focused, childIn);
 
-    // Focus highlight: invert the focused Pressable's bounding box
-    if (focused && n == focused)
+    // Focus highlight: invert the focused Pressable's bounding box.
+    // selfHighlight covers VirtualList items (focusable=false, pointer match impossible).
+    if ((focused && n == focused) || n->selfHighlight)
         highlightBox(c, n);
 }
 

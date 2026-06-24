@@ -41,12 +41,15 @@ void AetherServer::renderFrame(Canvas& c, ViewDispatcher& vd, const StatusBarDat
                 bg->draw(c);
             }
             // Plan 70: dim the background with a 50% dither pattern before drawing the modal
-            uint16_t mw = s->modalWidth();
-            uint16_t mh = s->modalHeight();
+            // Clamp modal dims to canvas size so the border is always fully visible.
+            uint16_t mw = (s->modalWidth()  < c.width())  ? s->modalWidth()  : c.width();
+            uint16_t mh = (s->modalHeight() < c.height()) ? s->modalHeight() : c.height();
             uint16_t mx = (uint16_t)((c.width()  > mw) ? (c.width()  - mw) / 2 : 0);
             uint16_t my = (uint16_t)((c.height() > mh) ? (c.height() - mh) / 2 : 0);
-            // Dither backdrop: checkerboard pattern for 1-bit ~50% dim effect
-            for (uint16_t row = 0; row < c.height(); row++)
+            // Dither backdrop: checkerboard pattern for 1-bit ~50% dim effect.
+            // Start below the status bar so the status bar remains clean.
+            uint16_t ditherY0 = status.visible ? nema::display::contentY() : 0;
+            for (uint16_t row = ditherY0; row < c.height(); row++)
                 for (uint16_t col = (row % 2); col < c.width(); col += 2)
                     c.drawPixel(col, row, true);
             // Clear modal box interior + rounded border

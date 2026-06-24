@@ -15,6 +15,7 @@ public:
     const char* name() const override { return "Dolphin Showcase"; }
 
 protected:
+    bool       fullscreen()    const override { return true; }
     bool       capturesInput() const override { return true; }
     bool       drawRaw(Canvas& c, AppContext& ctx) override;
     bool       onKey(Key k, AppContext& ctx) override;

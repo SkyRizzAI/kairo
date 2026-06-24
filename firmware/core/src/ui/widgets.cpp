@@ -407,8 +407,11 @@ UiNode* Dialog(NodeArena& a, const char* title, const char* body,
         UiNode* btnRow = View(a, row, {});
         UiNode* prev = nullptr;
         for (uint8_t i = 0; i < buttonCount; i++) {
+            Style bs; bs.dir = FlexDir::Row; bs.border = true; bs.padding = aether::theme().space.sm;
+            bs.align = Align::Center; bs.justify = Justify::Center;
+            if (buttons[i].danger) bs.background = true;  // F6.C2: filled/inverted for destructive actions
             UiNode* btn = Pressable(a, buttons[i].onClick, buttons[i].userdata,
-                                    Style{}, {Text(a, buttons[i].label, TextRole::Body)});
+                                    bs, {Text(a, buttons[i].label, TextRole::Body)});
             if (!btn) break;
             if (!prev) btnRow->firstChild = btn;
             else       prev->nextSibling = btn;
@@ -418,8 +421,10 @@ UiNode* Dialog(NodeArena& a, const char* title, const char* body,
     }
 
     // Wrap in a centered column container
+    // F6.C1: auto-size height so content determines the modal height, bounded by minH/maxH.
     Style col; col.dir = FlexDir::Col; col.padding = pad; col.gap = gap;
     col.align = Align::Center;
+    col.height = SIZE_AUTO; col.minH = 40; col.maxH = 90;
     UiNode* root = View(a, col, {});
     UiNode* prev = nullptr;
     for (auto* k : kids) {
@@ -495,6 +500,28 @@ UiNode* SkeletonBlock(NodeArena& a, uint16_t w, uint16_t h, uint32_t phase) {
     s.height = h;
     s.border = true;
     return View(a, s);
+}
+
+// ── Plan 90 F5.2: NodeRef helpers ─────────────────────────────────────────────
+
+UiNode* withRef(UiNode* node, NodeRef& ref) {
+    ref.node = node;   // filled immediately — layout will update x/y/w/h in place
+    return node;
+}
+
+bool scrollIntoView(const NodeRef& ref, ScrollState& st) {
+    if (!ref.valid() || st.viewportMain == 0) return false;
+    int16_t nodeTop    = ref.y();
+    int16_t nodeBottom = (int16_t)(nodeTop + ref.h());
+    int16_t before     = st.scrollMain;
+    int16_t maxS       = st.maxScroll();
+    if (nodeTop < st.scrollMain)
+        st.scrollMain = nodeTop;
+    else if (nodeBottom > st.scrollMain + (int16_t)st.viewportMain)
+        st.scrollMain = (int16_t)(nodeBottom - st.viewportMain);
+    if (st.scrollMain < 0)  st.scrollMain = 0;
+    if (st.scrollMain > maxS) st.scrollMain = maxS;
+    return st.scrollMain != before;
 }
 
 } // namespace aether::ui

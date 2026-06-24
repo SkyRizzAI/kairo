@@ -1,19 +1,26 @@
 // Plan 60 — AppListScreen: standardised-UI list of installed apps.
 // Plan 52/53 — per-app icon from icon_pack or bundled bitmap (Plan 84).
+// Plan 79+  — VirtualList with app-managed focus + alphabetical sorting.
 #include "nema/screens/app_list_screen.h"
 #include "nema/screens/app_detail_screen.h"
 #include "nema/runtime.h"
 #include "nema/ui/widgets.h"
+#include "nema/ui/virtual_list.h"
 #include "nema/ui/icon_pack.h"
 #include "nema/app/app_registry.h"
 #include "nema/app/app_manifest.h"
 #include "nema/app/papp_installer.h"
 #include "nema/ui/view_dispatcher.h"
+#include <algorithm>
+#include <cctype>
 #include <cstring>
 
 namespace nema {
 
 using namespace aether::ui;
+
+// Row height must match what ListItemRow produces (Plan 79 theme default).
+static constexpr uint16_t kItemH = 12;
 
 AppListScreen::AppListScreen(Runtime& rt) : ComponentScreen(rt, 512) {}
 
@@ -31,56 +38,13 @@ static const IconDef* iconForApp(const AppManifest& m) {
     return findIcon("feature.apps");
 }
 
-void AppListScreen::onResume() {
-    loadInstalledPapps(rt_);
-    scroll_.scrollMain   = 0;
-    state_.focus.focused = 0;
-    ComponentScreen::onResume();
-}
+// ── Data loading ──────────────────────────────────────────────────────────────
 
-void AppListScreen::onLaunch(void* u) {
-    auto* r = static_cast<Row*>(u);
-    auto& ids = r->self->ids_;
-    if (r->index >= 0 && r->index < (int)ids.size() && !ids[r->index].empty())
-        r->self->rt_.apps().launch(ids[r->index].c_str());
-}
+void AppListScreen::loadInstalledPapps() {
+    names_.clear(); ids_.clear(); icons_.clear(); customIcons_.clear();
 
-void AppListScreen::onOpenDetail(void* u) {
-    auto* r    = static_cast<Row*>(u);
-    auto* self = r->self;
-    int   i    = r->index;
-    if (i < 0 || i >= (int)self->ids_.size()) return;
-    auto* detail = self->detailScreen_;
-    if (!detail) return;
-
-    const auto& ci = self->customIcons_[i];
-    detail->setApp(self->ids_[i], self->names_[i],
-                   ci.bitmap, ci.w, ci.h);
-    self->rt_.view().push(*detail);
-}
-
-void AppListScreen::openDetailForFocused() {
-    AppDetailScreen* detail = launchDetail_ ? launchDetail_ : detailScreen_;
-    if (!detail) return;
-    int i = state_.focus.focused;
-    if (i < 0 || i >= (int)ids_.size() || ids_[i].empty()) return;
-    const auto& ci = customIcons_[i];
-    detail->setApp(ids_[i], names_[i], ci.bitmap, ci.w, ci.h);
-    rt_.view().push(*detail);
-}
-
-void AppListScreen::onAction(input::Action a) {
-    if (a == input::Action::Menu) {
-        openDetailForFocused();
-        return;
-    }
-    ComponentScreen::onAction(a);
-}
-
-UiNode* AppListScreen::build(NodeArena& a, Runtime& rt) {
-    names_.clear(); ids_.clear(); icons_.clear(); customIcons_.clear(); rows_.clear();
-
-    for (const auto& m : rt.apps().list()) {
+    // Collect all non-system App-type entries.
+    for (const auto& m : rt_.apps().list()) {
         if (m.type != AppType::App) continue;
         if (m.category && std::strcmp(m.category, "System") == 0) continue;
         names_.push_back(m.name);
@@ -94,46 +58,152 @@ UiNode* AppListScreen::build(NodeArena& a, Runtime& rt) {
         }
     }
 
-    bool empty = names_.empty();
-    if (empty) {
+    // Sort all parallel arrays together alphabetically, case-insensitive.
+    if (names_.size() > 1) {
+        // Build a temporary flat list, sort, then unpack back.
+        struct Entry {
+            std::string      name;
+            std::string      id;
+            const IconDef*   icon;
+            CustomIcon       customIcon;
+        };
+        std::vector<Entry> entries;
+        entries.reserve(names_.size());
+        for (size_t i = 0; i < names_.size(); i++) {
+            entries.push_back({std::move(names_[i]), std::move(ids_[i]),
+                               icons_[i], customIcons_[i]});
+        }
+        std::sort(entries.begin(), entries.end(), [](const Entry& a, const Entry& b) {
+            size_t n = std::min(a.name.size(), b.name.size());
+            for (size_t i = 0; i < n; i++) {
+                char ca = (char)std::tolower((unsigned char)a.name[i]);
+                char cb = (char)std::tolower((unsigned char)b.name[i]);
+                if (ca != cb) return ca < cb;
+            }
+            return a.name.size() < b.name.size();
+        });
+        names_.clear(); ids_.clear(); icons_.clear(); customIcons_.clear();
+        for (auto& e : entries) {
+            names_.push_back(std::move(e.name));
+            ids_.push_back(std::move(e.id));
+            icons_.push_back(e.icon);
+            customIcons_.push_back(e.customIcon);
+        }
+    }
+
+    // Placeholder when no apps are installed.
+    if (names_.empty()) {
         names_.push_back("No apps installed");
         ids_.push_back("");
         icons_.push_back(nullptr);
         customIcons_.push_back({nullptr, 0, 0});
     }
-    rows_.resize(names_.size());
+}
 
-    Style root; root.dir = FlexDir::Col; root.flexGrow = 1; root.align = Align::Stretch;
+// ── Lifecycle ─────────────────────────────────────────────────────────────────
 
-    UiNode* list = ListContainer(a, scroll_, {});
-    UiNode* prev = nullptr;
+void AppListScreen::onResume() {
+    loadInstalledPapps();
+    vlist_.scrollMain   = 0;
+    vlist_.focusedIndex = 0;
+    ComponentScreen::onResume();
+}
 
-    for (size_t i = 0; i < names_.size(); i++) {
-        rows_[i] = {this, (int)i};
+// ── VirtualList renderItem callback ───────────────────────────────────────────
 
-        bool selectable = !empty;
-        ListEntry e;
-        e.label   = names_[i].c_str();
-        e.chevron = selectable;
-        e.onPress = selectable ? (detailScreen_ ? onOpenDetail : onLaunch) : nullptr;
-        e.user    = &rows_[i];
+// `focused` is true when index == vst.focusedIndex. VirtualList forces all
+// items focusable=false (out of ComponentRuntime's focus tree), so selectBox
+// does not fire here. Chevron signals that the row is selectable instead.
+UiNode* AppListScreen::renderAppItem(NodeArena& a, int index,
+                                      bool focused, void* userdata) {
+    auto* self = static_cast<AppListScreen*>(userdata);
+    if (index < 0 || index >= (int)self->names_.size()) return nullptr;
 
-        const auto& ci = customIcons_[i];
-        if (ci.bitmap) {
-            e.leftIcon = ci.bitmap; e.iconW = ci.w; e.iconH = ci.h;
-        } else if (icons_[i]) {
-            e.leftIcon = icons_[i]->bitmap;
-            e.iconW    = icons_[i]->w;
-            e.iconH    = icons_[i]->h;
-        }
+    bool selectable = !self->ids_[index].empty();
 
-        UiNode* row = ListItemRow(a, e);
-        if (!row) break;
-        if (!prev) list->firstChild = row; else prev->nextSibling = row;
-        prev = row;
+    ListEntry e;
+    e.label   = self->names_[index].c_str();
+    e.chevron = selectable;
+
+    const auto& ci = self->customIcons_[index];
+    if (ci.bitmap) {
+        e.leftIcon = ci.bitmap; e.iconW = ci.w; e.iconH = ci.h;
+    } else if (self->icons_[index]) {
+        e.leftIcon = self->icons_[index]->bitmap;
+        e.iconW    = self->icons_[index]->w;
+        e.iconH    = self->icons_[index]->h;
     }
 
+    UiNode* row = ListItemRow(a, e);
+    if (row) row->selfHighlight = focused;
+    return row;
+}
+
+// ── Build ─────────────────────────────────────────────────────────────────────
+
+UiNode* AppListScreen::build(NodeArena& a, Runtime& /*rt*/) {
+    Style root;
+    root.dir     = FlexDir::Col;
+    root.flexGrow = 1;
+    root.align   = Align::Stretch;
+
+    UiNode* list = VirtualList(a, vlist_, (int)names_.size(), kItemH,
+                               renderAppItem, this);
+
     return View(a, root, { list });
+}
+
+// ── Input ─────────────────────────────────────────────────────────────────────
+
+void AppListScreen::onAction(input::Action a) {
+    using A = input::Action;
+    switch (a) {
+        case A::Prev:
+            if (vlist_.moveFocus(-1)) { dirty_ = true; requestRedraw(); }
+            break;
+        case A::Next:
+            if (vlist_.moveFocus(+1)) { dirty_ = true; requestRedraw(); }
+            break;
+        case A::Activate:
+            activateFocused();
+            break;
+        case A::Menu:
+            openDetailForFocused();
+            break;
+        case A::Back:
+            rt_.view().goBack();
+            break;
+        default:
+            break;
+    }
+}
+
+// ── Actions ───────────────────────────────────────────────────────────────────
+
+void AppListScreen::activateFocused() {
+    int i = vlist_.focusedIndex;
+    if (i < 0 || i >= (int)ids_.size() || ids_[i].empty()) return;
+
+    if (detailScreen_) {
+        // Detail mode (Settings → Apps): push the detail screen.
+        const auto& ci = customIcons_[i];
+        detailScreen_->setApp(ids_[i], names_[i], ci.bitmap, ci.w, ci.h);
+        rt_.view().push(*detailScreen_);
+    } else {
+        // Launch mode (home launcher): start the app directly.
+        rt_.apps().launch(ids_[i].c_str());
+    }
+}
+
+void AppListScreen::openDetailForFocused() {
+    // Hold-OK in Launch mode uses launchDetail_; in Detail mode falls back to detailScreen_.
+    AppDetailScreen* detail = launchDetail_ ? launchDetail_ : detailScreen_;
+    if (!detail) return;
+    int i = vlist_.focusedIndex;
+    if (i < 0 || i >= (int)ids_.size() || ids_[i].empty()) return;
+    const auto& ci = customIcons_[i];
+    detail->setApp(ids_[i], names_[i], ci.bitmap, ci.w, ci.h);
+    rt_.view().push(*detail);
 }
 
 } // namespace nema

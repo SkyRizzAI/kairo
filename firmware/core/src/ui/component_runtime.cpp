@@ -251,16 +251,16 @@ bool dispatchNav(UiNode* root, ComponentState& st, Nav nav) {
     }
     // Detect a list-boundary wrap: focus index went backward for Next (was at
     // last item, jumped to 0), or forward for Prev (was at 0, jumped to last).
-    // When wrapping AND the scroll container still has non-focusable content
-    // beyond the boundary (e.g. Info rows below UI Scale in settings), reveal
-    // that content with a nudge instead of immediately wrapping. The wrap fires
-    // on the next press once the scroll has actually reached its limit.
     bool wrappedDown = (nav == Nav::Next) && (st.focus.focused < prevIdx);
     bool wrappedUp   = (nav == Nav::Prev) && (st.focus.focused > prevIdx);
     if ((wrappedDown || wrappedUp) && oldFoc) {
         UiNode* sn = findScrollAncestor(root, oldFoc);
         if (!sn) sn = firstScroll(root);
         if (sn && sn->scroll) {
+            // When wrapping AND the scroll container still has non-focusable content
+            // beyond the boundary (e.g. Info rows below UI Scale in settings), reveal
+            // that content with a nudge instead of immediately wrapping. The wrap fires
+            // on the next press once the scroll has actually reached its limit.
             int16_t cur  = sn->scroll->scrollMain;
             int16_t maxS = sn->scroll->maxScroll();
             if (wrappedDown && cur < maxS) {
@@ -275,6 +275,12 @@ bool dispatchNav(UiNode* root, ComponentState& st, Nav nav) {
                 sn->scroll->scrollMain = (int16_t)(next > 0 ? next : 0);
                 return true;
             }
+        } else {
+            // No scroll container (e.g. modal dialog with a flat button row).
+            // Clamp at boundary instead of wrapping so key-repeat events don't
+            // bounce focus back and make navigation feel unreliable.
+            st.focus.focused = prevIdx;
+            return false;
         }
     }
     return true;

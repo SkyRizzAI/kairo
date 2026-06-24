@@ -1,5 +1,5 @@
 // Plan 50 — Aether ABI implementation.
-// Thin shim over nema::ui widgets. Each function delegates to the existing
+// Thin shim over aether::ui widgets. Each function delegates to the existing
 // widget builder (widgets.h). A thread-local NodeArena holds the current
 // frame's tree; Plan 55 will replace this with per-surface arenas.
 

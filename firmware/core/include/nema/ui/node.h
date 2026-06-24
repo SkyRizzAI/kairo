@@ -92,7 +92,11 @@ struct UiNode {
     // Pressable:
     void  (*onPress)(void* userdata) = nullptr;
     void*   userdata  = nullptr;
-    bool    focusable = false;
+    bool    focusable     = false;
+    // Plan 90 F6.04: VirtualList items can't use the focus-tree pointer match
+    // (VirtualList forces focusable=false). Set selfHighlight=true to get the
+    // same XOR inversion that highlightBox() applies to the focused Pressable.
+    bool    selfHighlight = false;
 
     // Value controls — Left/Right "fine adjust" for a focused control (dir −1/+1).
     // Used by Slider (and any stepper-like widget that wants arrow tuning).
@@ -133,6 +137,3 @@ struct UiNode {
 };
 
 } // namespace aether::ui
-
-// Plan 80 migration bridge: core code still spells the UI lib `nema::ui`.
-namespace nema { namespace ui = ::aether::ui; }

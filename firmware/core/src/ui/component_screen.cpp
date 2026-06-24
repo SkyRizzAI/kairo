@@ -34,6 +34,25 @@ void ComponentScreen::draw(Canvas& c) {
     if (!root_) return;
     uint16_t w = c.width();
     uint16_t h = c.height();
+
+    if (mode() == ScreenMode::Modal) {
+        // Modal: layout + render inside the centered box so content aligns with
+        // the white box AetherServer already drew. Without this, renderComponentFrame
+        // uses (0, contentY(), fullWidth, …) and text renders above the modal box.
+        //
+        // Clamp to canvas size: if modalWidth() > canvas width (e.g. a 210px modal on
+        // a 128px display), the layout must use the actual canvas width, not the declared
+        // modal width — otherwise layout centers content in a 210px virtual space and
+        // text renders beyond the right edge of the canvas.
+        uint16_t mw = (modalWidth()  < w) ? modalWidth()  : w;
+        uint16_t mh = (modalHeight() < h) ? modalHeight() : h;
+        uint16_t mx = (w > mw) ? (uint16_t)((w - mw) / 2) : 0;
+        uint16_t my = (h > mh) ? (uint16_t)((h - mh) / 2) : 0;
+        aether::ui::renderComponentFrame(root_, c, state_, aether::ui::roleMetrics(),
+                                         (int16_t)mx, (int16_t)my, mw, mh);
+        return;
+    }
+
     // Normal mode leaves the top strip for the status bar (drawn by GuiService);
     // fullscreen screens own the whole canvas.
     int16_t  oy = fullscreen() ? 0 : (int16_t)nema::display::contentY();

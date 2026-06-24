@@ -1,5 +1,5 @@
 #pragma once
-// Plan 50 — Toolkit nema::ui (node-tree + flexbox + widget builders).
+// Plan 50 — Toolkit aether::ui (node-tree + flexbox + widget builders).
 // This is an OPTIONAL library, NOT a universal UI contract. Individual display
 // servers MAY use it (Aether does), but are NOT required to (LVGL would use its
 // own lv_obj tree). It is NOT part of the shared System API (Plan 48).
@@ -211,6 +211,7 @@ struct DialogButton {
     const char* label;
     void      (*onClick)(void*);
     void*       userdata;
+    bool        danger = false;   // true → inverted (filled) button for destructive actions
 };
 
 // Dialog: a full modal dialog with title, body, optional icon, and up to 3
@@ -251,5 +252,33 @@ UiNode* SkeletonRow(NodeArena& a, uint32_t phase = 0, uint16_t width = SIZE_AUTO
 
 // SkeletonBlock: a fixed-size skeleton placeholder (image, card, etc.).
 UiNode* SkeletonBlock(NodeArena& a, uint16_t w, uint16_t h, uint32_t phase = 0);
+
+// ── Plan 90 F5.2: NodeRef — safe handle to a laid-out UiNode ─────────────────
+//
+// A NodeRef is filled by the layout engine after build(), pointing to the
+// specific node in the arena. Valid only until the next build() (arena reset).
+// Use withRef() to attach a ref to any node. After renderComponentFrame(),
+// the ref is filled with the node's computed x/y/w/h.
+//
+// Use cases:
+//   - scrollIntoView(ref, scroll_) — adjust scroll so ref is visible
+//   - Inspect computed geometry for overlays / absolute positioning
+struct NodeRef {
+    UiNode* node = nullptr;
+    bool valid() const { return node != nullptr; }
+    int16_t  x() const { return node ? node->x : 0; }
+    int16_t  y() const { return node ? node->y : 0; }
+    uint16_t w() const { return node ? node->w : 0; }
+    uint16_t h() const { return node ? node->h : 0; }
+};
+
+// Attach a NodeRef to a node. The ref is filled after layout().
+// Usage: auto* btn = withRef(Button(a, "OK", cb, ud), myRef);
+UiNode* withRef(UiNode* node, NodeRef& ref);
+
+// Scroll a ScrollState so that ref's node is fully visible in the viewport.
+// Call after layout (e.g. inside renderComponentFrame or after build).
+// Returns true if scroll position changed.
+bool scrollIntoView(const NodeRef& ref, ScrollState& st);
 
 } // namespace aether::ui

@@ -21,6 +21,9 @@ public:
     void onAction(input::Action a) override;
     aether::ui::UiNode* build(aether::ui::NodeArena&, Runtime&) override { return nullptr; }
 
+protected:
+    bool fullscreen() const override { return true; }
+
 private:
     std::unique_ptr<nema::asset::PanimAsset>        asset_;
     std::unique_ptr<anim::AnimationPlayer>           player_;
