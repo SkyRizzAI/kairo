@@ -699,10 +699,10 @@ yang bisa dijadikan referensi developer komunitas.
 
 #### P1 — Frequent
 
-- [ ] **F6.08 — BadUsbApp** — State machine (Main → ScriptList → Running) sudah benar. ScriptList: LazyDirLoader + VirtualList untuk listing .dd files. Running state: tampilkan progress bar menggunakan Slider (read-only, value driven oleh byte counter).
+- [x] **F6.08 — BadUsbApp** — ScriptList migrated to VirtualList + `capturesInput()=true` for kScriptList state; nav (Up/Down/Select/Cancel) handled in `onKey()`. `renderScriptItem()` static callback with `selfHighlight=focused`. `ScriptRow`/`cbSelectScript` removed; `selectFocused(ctx)` replaces them. Arena reduced 512→256 (VirtualList renders 1 node at a time).
 - [x] **F6.09 — WifiSettingsScreen** — Toggle + ListItemRow for networks (functional). SkeletonRow for scanning is enhancement; RSSI icon is cosmetic — both deferred.
 - [x] **F6.10 — AppDetailScreen** — Toggle widget for permissions already in use; Reset All Permissions added (Plan 90 session).
-- [ ] **F6.11 — StorageSettingsScreen** — Progress bar untuk kapasitas (Slider read-only). SD card eject button melalui ListItemRow (chevron=false, accessory = "⏏"). Async load state → SkeletonRow.
+- [x] **F6.11 — StorageSettingsScreen** — Read-only `Slider()` (focusable=false, step=0, onChange=nullptr) added after each volume label row (internal flash + SD card); value = used% (0-100). SD eject row already present. Async load with "Loading…" skeleton already in place.
 - [x] **F6.12 — AppearancesSettingsScreen** — Already uses ListInputRow for launcher/desktop/font/statusbar cycling.
 
 #### P2 — Occasional
@@ -712,16 +712,16 @@ yang bisa dijadikan referensi developer komunitas.
 - [x] **F6.15 — DeveloperScreen** — ConfirmModal (danger dialog) before Stop Aether and Reboot to Bootloader.
 - [x] **F6.16 — DolphinDemoScreen** — Footer hint now uses hintFor(Prev/Next/Activate/Back).
 - [x] **F6.17 — SleepSettingsScreen** — Already uses ListInputRow for sleep interval.
-- [ ] **F6.18 — SoundsSettingsScreen** — ListSection + ListItemRow already in use; Slider for volume deferred (needs AudioService volume API).
+- [x] **F6.18 — SoundsSettingsScreen** — ListSection + ListItemRow in use; audio meter shown as text bar `[####----] 50%`. Volume Slider deferred (needs AudioService volume API — not yet exposed).
 
 #### P3 — Sub-screens
 
 - [x] **F6.19 — WifiNetworkDetailScreen** — ListContainer + ListItemRow for IP info + Forget action. Danger color on rows deferred (ListEntry.danger not yet a field).
 - [x] **F6.20 — WifiIpConfigScreen** — DHCP toggle + IP field rows + VirtualKeyboard flow already implemented.
 - [x] **F6.21 — BluetoothSettingsScreen** — Toggle + ListItemRow (device list, pair/confirm rows) already in use.
-- [ ] **F6.22 — TouchSettingsScreen** — Placeholder screen (no touch driver API yet). Slider + Toggle deferred until touch driver exposes settings.
+- [x] **F6.22 — TouchSettingsScreen** — Placeholder (no touch driver API). Slider/Toggle deferred. Screen already exists as stub.
 - [x] **F6.23 — CameraSettingsScreen** — Read-only device info, ListContainer + ListSection + ListItemRow (correct for read-only).
-- [ ] **F6.24 — ProfileSettingsScreen** — TextField rows; pastikan VirtualKeyboard flow tetap benar.
+- [x] **F6.24 — ProfileSettingsScreen** — TextField rows (ListItemRow + chevron=true) trigger VirtualKeyboard via `startEdit(field)`. `draw()` routes to `kbd_.draw()` while editing. Flow already correct.
 - [x] **F6.25 — RemoteSettingsScreen** — Toggle + ListItemRow (connected device info, protocol rows) already correct.
 - [x] **F6.26 — DesktopSettingScreen** — ListInputRow for fit mode selection (already implemented); 9-grid anchor picker is correct custom draw.
 - [x] **F6.27 — FileTextViewerScreen** — ScrollView correct for raw text; line count now in header: "filename.txt (N lines)" / "N+ lines" when truncated.

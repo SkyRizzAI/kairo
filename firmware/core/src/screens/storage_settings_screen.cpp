@@ -105,8 +105,13 @@ aether::ui::UiNode* StorageSettingsScreen::build(NodeArena& a, Runtime& /*rt*/) 
         std::string val = v.totalBytes > 0
             ? fmtBytes(v.usedBytes) + " / " + fmtBytes(v.totalBytes)
             : fmtBytes(v.usedBytes) + " used";
+        intCapPct_ = (v.totalBytes > 0)
+            ? (int)((uint64_t)v.usedBytes * 100 / v.totalBytes) : 0;
         ListEntry e; e.label = "Internal Flash"; e.value = pushVal(val);
         append(ListItemRow(a, e));
+        auto* bar = Slider(a, &intCapPct_, 0, 100, 0, nullptr, nullptr);
+        if (bar) bar->focusable = false;
+        append(bar);
     }
 
     // ── SD card ───────────────────────────────────────────────────────────────
@@ -121,13 +126,19 @@ aether::ui::UiNode* StorageSettingsScreen::build(NodeArena& a, Runtime& /*rt*/) 
             uint64_t used = sd.totalBytes > sd.freeBytes
                             ? sd.totalBytes - sd.freeBytes : 0;
             sdVal = fmtBytes64(used) + " / " + fmtBytes64(sd.totalBytes);
+            sdCapPct_ = (int)(used * 100 / sd.totalBytes);
         } else {
-            // Fall back to scanned used-bytes only.
             sdVal = fmtBytes(cached_.extVol.usedBytes) + " used";
+            sdCapPct_ = 0;
         }
         {
             ListEntry e; e.label = "SD Card"; e.value = pushVal(sdVal);
             append(ListItemRow(a, e));
+        }
+        {
+            auto* bar = Slider(a, &sdCapPct_, 0, 100, 0, nullptr, nullptr);
+            if (bar) bar->focusable = false;
+            append(bar);
         }
         // Eject action row.
         {

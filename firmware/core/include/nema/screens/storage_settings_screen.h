@@ -34,6 +34,8 @@ private:
     aether::ui::ScrollState  scroll_;
     std::vector<std::string> vals_;
     StorageData              cached_;
+    int                      intCapPct_ = 0;   // 0-100, drives read-only Slider
+    int                      sdCapPct_  = 0;
 };
 
 } // namespace nema

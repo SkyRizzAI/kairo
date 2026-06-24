@@ -20,8 +20,9 @@ void BadUsbApp::onStart(AppContext& ctx) {
     state_        = kMain;
     suppressNext_ = true;
     errorMsg_[0]  = '\0';
-    scrollMain_.scrollMain    = 0;
-    scrollScripts_.scrollMain = 0;
+    scrollMain_.scrollMain     = 0;
+    vlistScripts_.focusedIndex = 0;
+    vlistScripts_.scrollMain   = 0;
     scanScripts(ctx.runtime().fs());
 }
 
@@ -49,7 +50,6 @@ bool BadUsbApp::onTick(AppContext& ctx) {
 }
 
 bool BadUsbApp::onKey(Key k, AppContext& ctx) {
-    (void)ctx;
     if (running_) {
         if (k == Key::Cancel) {
             running_ = false;
@@ -58,38 +58,67 @@ bool BadUsbApp::onKey(Key k, AppContext& ctx) {
         }
         return true;  // swallow all input while running
     }
-    if (state_ == kScriptList && k == Key::Cancel) { state_ = kMain;       return true; }
-    if (state_ == kError      && k == Key::Cancel) { state_ = kScriptList; return true; }
+
+    if (state_ == kScriptList) {
+        // capturesInput()=true → all keys arrive here; own the VirtualList nav.
+        switch (k) {
+        case Key::Up:    vlistScripts_.moveFocus(-1); return true;
+        case Key::Down:  vlistScripts_.moveFocus(+1); return true;
+        case Key::Select: selectFocused(ctx);         return true;
+        case Key::Cancel: state_ = kMain;             return true;
+        default: return true;
+        }
+    }
+
+    if (state_ == kError && k == Key::Cancel) { state_ = kScriptList; return true; }
     return false;
+}
+
+void BadUsbApp::selectFocused(AppContext& ctx) {
+    if (scripts_.empty()) return;
+    int i = vlistScripts_.focusedIndex;
+    if (i < 0 || i >= (int)scripts_.size()) return;
+    selected_ = i;
+
+    if (!hid_ || !hid_->isReady()) {
+        std::snprintf(errorMsg_, sizeof(errorMsg_),
+                      "USB HID not enabled.\nEnable TinyUSB in\nCMakeLists.txt");
+        state_ = kError;
+        return;
+    }
+    auto& rt = ctx.runtime();
+    startExecution(rt.fs(), rt);
+    if (running_) {
+        state_ = kRunning;
+    } else {
+        std::snprintf(errorMsg_, sizeof(errorMsg_), "Failed to load script");
+        state_ = kError;
+    }
 }
 
 void BadUsbApp::cbRunScript(void* u) {
     auto* self = static_cast<BadUsbApp*>(u);
     if (self->suppressNext_) { self->suppressNext_ = false; return; }
     self->state_ = kScriptList;
-    self->scrollScripts_.scrollMain = 0;
+    self->vlistScripts_.focusedIndex = 0;
+    self->vlistScripts_.scrollMain   = 0;
 }
 
-void BadUsbApp::cbSelectScript(void* u) {
-    auto* r    = static_cast<ScriptRow*>(u);
-    auto* self = r->self;
-    self->selected_ = r->index;
-
-    if (!self->hid_ || !self->hid_->isReady()) {
-        std::snprintf(self->errorMsg_, sizeof(self->errorMsg_),
-                      "USB HID not enabled.\nEnable TinyUSB mode in\nCMakeLists.txt");
-        self->state_ = kError;
-        return;
+aether::ui::UiNode* BadUsbApp::renderScriptItem(
+    NodeArena& a, int idx, bool focused, void* ud)
+{
+    auto* self = static_cast<BadUsbApp*>(ud);
+    if (self->scripts_.empty()) {
+        ListEntry e; e.label = "(empty)";
+        return ListItemRow(a, e);
     }
-
-    auto& rt = self->ctx_->runtime();
-    self->startExecution(rt.fs(), rt);
-    if (self->running_) {
-        self->state_ = kRunning;
-    } else {
-        std::snprintf(self->errorMsg_, sizeof(self->errorMsg_), "Failed to load script");
-        self->state_ = kError;
-    }
+    if (idx < 0 || idx >= (int)self->scripts_.size()) return nullptr;
+    ListEntry e;
+    e.label   = self->scripts_[(size_t)idx].name.c_str();
+    e.chevron = true;
+    auto* n = ListItemRow(a, e);
+    if (n) n->selfHighlight = focused;
+    return n;
 }
 
 aether::ui::UiNode* BadUsbApp::build(NodeArena& arena, AppContext& ctx) {
@@ -128,36 +157,12 @@ aether::ui::UiNode* BadUsbApp::build(NodeArena& arena, AppContext& ctx) {
         });
     }
 
-    // ── Script list ──────────────────────────────────────────────────────────
+    // ── Script list (VirtualList — capturesInput=true, nav via onKey) ──────────
     if (state_ == kScriptList) {
-        scriptRows_.clear();
-        for (size_t i = 0; i < scripts_.size(); i++)
-            scriptRows_.push_back({this, (int)i});
-
-        UiNode* list = ListContainer(arena, scrollScripts_, {});
-        UiNode* prev = nullptr;
-
-        auto addRow = [&](UiNode* row) {
-            if (!row) return;
-            if (!prev) list->firstChild = row; else prev->nextSibling = row;
-            prev = row;
-        };
-
-        if (scripts_.empty()) {
-            ListEntry e; e.label = "(empty)";
-            addRow(ListItemRow(arena, e));
-        } else {
-            for (size_t i = 0; i < scripts_.size(); i++) {
-                ListEntry e;
-                e.label   = scripts_[i].name.c_str();
-                e.chevron = true;
-                e.onPress = cbSelectScript;   // HID check is inside cbSelectScript
-                e.user    = &scriptRows_[i];
-                addRow(ListItemRow(arena, e));
-            }
-        }
-
-        return View(arena, root, { list });
+        int n = scripts_.empty() ? 1 : (int)scripts_.size();
+        return View(arena, root, {
+            VirtualList(arena, vlistScripts_, n, kScriptItemH, renderScriptItem, this),
+        });
     }
 
     // ── Main ─────────────────────────────────────────────────────────────────
