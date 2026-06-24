@@ -27,7 +27,7 @@ public:
 
     ScreenMode mode()        const override { return ScreenMode::Modal; }
     uint16_t   modalWidth()  const override { return 210; }
-    uint16_t   modalHeight() const override { return 110; }
+    uint16_t   modalHeight() const override { return 90; }
 
     // Set the active request before pushing. Called by the ScreenFactory
     // (GuiService) on the GUI thread.
@@ -44,8 +44,8 @@ private:
     // Stored separately so build() can create one Text node per line — a single
     // body_ string with \n allocates multi-line height in layout but the text
     // renderer only draws the first line, leaving a blank gap for the rest.
-    char shortName_[32] = "";
-    char cap_[48]       = "";
+    char shortName_[32] = "";   // Dialog title: the requesting app's short name
+    char body_[96]      = "";   // Dialog body: "wants to access: {cap}"
 
     static void onAllow(void* ctx);
     static void onDeny (void* ctx);

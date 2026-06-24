@@ -1,7 +1,6 @@
 #include "nema/screens/permission_screen.h"
 #include "nema/runtime.h"
 #include "nema/ui/widgets.h"
-#include "nema/ui/style_tokens.h"
 #include "nema/ui/view_dispatcher.h"
 #include <cstdio>
 
@@ -20,7 +19,7 @@ void PermissionScreen::prepare(std::shared_ptr<PermissionService::PermRequest> r
                                : full.c_str();
 
     snprintf(shortName_, sizeof(shortName_), "%s", shortNameSrc);
-    snprintf(cap_,       sizeof(cap_),       "%s", req_->cap.c_str());
+    snprintf(body_,      sizeof(body_),      "wants to access: %s", req_->cap.c_str());
     dirty_ = true;
 }
 
@@ -46,35 +45,12 @@ void PermissionScreen::onDeny(void* ctx) {
 }
 
 aether::ui::UiNode* PermissionScreen::build(aether::ui::NodeArena& a, Runtime&) {
-    // Build separate Text nodes per line — a single string with \n works for
-    // layout height but the renderer only draws the first line, leaving a blank
-    // gap. One Text node per line gives correct rendering.
     using namespace aether::ui;
-    uint8_t pad = aether::theme().space.md;
-    uint8_t gap = aether::theme().space.sm;
-
-    UiNode* hdr   = Text(a, "Permission Request", TextRole::Caption);
-    UiNode* app   = Text(a, shortName_,           TextRole::Body);
-    UiNode* lbl   = Text(a, "to access:",         TextRole::Caption);
-    UiNode* cap   = Text(a, cap_,                 TextRole::Caption);
-    UiNode* allow = Button(a, "Allow", onAllow, this);
-    UiNode* deny  = Button(a, "Deny",  onDeny,  this);
-
-    Style rowS; rowS.dir = FlexDir::Row; rowS.gap = gap;
-    rowS.align = Align::Center; rowS.justify = Justify::Center;
-    UiNode* btnRow = View(a, rowS, {});
-    btnRow->firstChild  = allow;
-    allow->nextSibling  = deny;
-
-    Style colS; colS.dir = FlexDir::Col; colS.padding = pad; colS.gap = gap;
-    colS.align = Align::Center;
-    UiNode* root = View(a, colS, {});
-    root->firstChild   = hdr;
-    hdr->nextSibling   = app;
-    app->nextSibling   = lbl;
-    lbl->nextSibling   = cap;
-    cap->nextSibling   = btnRow;
-    return root;
+    DialogButton btns[2] = {
+        {"Deny",  onDeny,  this, false},
+        {"Allow", onAllow, this, false},
+    };
+    return Dialog(a, shortName_, body_, nullptr, 0, 0, btns, 2);
 }
 
 } // namespace nema

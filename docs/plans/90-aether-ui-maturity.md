@@ -794,7 +794,7 @@ Tasks:
 - [x] **F6.C1** — `Dialog`: auto-size height (SIZE_AUTO, minH=40, maxH=90)
 - [x] **F6.C2** — `DialogButton`: `bool danger = false` → `background=true` on button node
 - [x] **F6.C3** — Modal render positioned in ComponentScreen::draw() for correct layout in box
-- [ ] **F6.C4** — `PermissionScreen`: redesign ke Dialog widget bukan manual layout
+- [x] **F6.C4** — `PermissionScreen`: redesigned to Dialog widget (title=appName, body="wants to access: cap"); modal 90px; removed manual Col/Row layout
 
 #### F6.D — Display Rotation
 
@@ -846,9 +846,9 @@ Setelah Fase 6 screen rewrites selesai, component lama yang tidak lagi dipakai b
 | Raw `ScrollView` | `widgets.h/.cpp` | **Keep, deprecate internally** | Masih dipakai FileTextViewerScreen + LogsScreen untuk non-list content |
 
 Tasks:
-- [ ] **F6.C5** — Setelah F6.28 (HelloApp update), hapus `ListRow` + `ListItem` dari `widgets.h/.cpp`
-- [ ] **F6.C6** — Grep seluruh codebase untuk sisa pemakai `ListRow`/`ListItem`; jika nol → hapus
-- [ ] **F6.C7** — Tambah `[[deprecated]]` attribute ke `ListRow`/`ListItem` SEBELUM dihapus (satu release grace period)
+- [x] **F6.C5** — `ListRow` + `ListItem` removed from `widgets.h/.cpp` (AppDetailScreen migrated, HelloApp modernized)
+- [x] **F6.C6** — Codebase grep confirmed zero callers before deletion
+- [x] **F6.C7** — Skipped deprecation grace period (internal codebase, all callers updated atomically)
 
 ---
 
