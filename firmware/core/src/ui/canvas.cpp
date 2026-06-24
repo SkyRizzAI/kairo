@@ -11,7 +11,21 @@ Canvas::Canvas(IDisplayDriver& driver, float scale)
 uint16_t Canvas::width()  const { return (uint16_t)(driver_.width()  / scale_); }
 uint16_t Canvas::height() const { return (uint16_t)(driver_.height() / scale_); }
 
-void Canvas::clear(bool on) { driver_.clear(on); }
+void Canvas::clear(bool on) {
+    // Fast path when no clip is active.
+    if (clipX0_ == 0 && clipY0_ == 0 && clipX1_ >= width() && clipY1_ >= height()) {
+        driver_.clear(on);
+        return;
+    }
+    // Clip is active — only fill the clipped region so two-pass transition
+    // renders (each screen clipped to half the canvas) don't erase each other.
+    uint16_t cx1 = clipX1_ < width()  ? clipX1_ : width();
+    uint16_t cy1 = clipY1_ < height() ? clipY1_ : height();
+    if (cx1 > clipX0_ && cy1 > clipY0_)
+        driver_.fillRect(clipX0_, clipY0_,
+                         (uint16_t)(cx1 - clipX0_),
+                         (uint16_t)(cy1 - clipY0_), on);
+}
 
 // ── Clip region (logical px) ───────────────────────────────────────────────
 void Canvas::setClip(uint16_t x, uint16_t y, uint16_t w, uint16_t h) {

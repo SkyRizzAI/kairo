@@ -663,8 +663,8 @@ rt.capabilities().add(caps::UiAnimations);
 - [x] F3.4 — LazyDirLoader + SkeletonRow/SkeletonBlock widgets + progressive reveal
 
 ### Fase 4 — Animation & Transition
-- [ ] F4.1 — Screen transitions (SlideLeft/Right/Fade) + ViewDispatcher API
-- [ ] F4.2 — AnimatedValue (spring physics) + UiNode integration
+- [x] F4.1 — Screen transitions (SlideLeft/Right) + ViewDispatcher API. Two-pass clip rendering in AetherServer; Canvas::clear() now clip-aware. navigate(t)/goBack(t) overloads. 8-tick animation (~160ms at 20fps). Fade not implemented (deferred).
+- [x] F4.2 — AnimatedValue (spring physics) header-only struct. animateTo()/snapTo()/tick(dtMs). UiNode integration deferred.
 
 ### Fase 5 — Shared State & DX
 - [x] F5.1 — Context API di Runtime (`setContext<T>`, `context<T>`)

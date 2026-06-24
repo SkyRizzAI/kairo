@@ -15,6 +15,12 @@ void ViewDispatcher::navigate(IScreen& screen) {
 }
 
 
+void ViewDispatcher::navigate(IScreen& screen, Transition t) {
+    transitionFrom_ = active();   // capture before the push
+    navigate(screen);             // does lifecycle + requestRedraw
+    transitionType_ = t;
+}
+
 void ViewDispatcher::navigate(IScreen& screen, Bundle args) {
     args_ = std::move(args);
     navigate(screen);
@@ -43,6 +49,14 @@ bool ViewDispatcher::goBack() {
         requestRedraw();
     }
     return true;
+}
+
+bool ViewDispatcher::goBack(Transition t) {
+    if (stack_.size() <= 1) return false;
+    transitionFrom_ = active();   // the screen being dismissed
+    bool ok = goBack();           // does lifecycle + requestRedraw
+    if (ok) transitionType_ = t;
+    return ok;
 }
 
 bool ViewDispatcher::canGoBack() const { return stack_.size() > 1; }

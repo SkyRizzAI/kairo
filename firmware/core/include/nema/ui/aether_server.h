@@ -1,6 +1,7 @@
 #pragma once
 #include "nema/ui/display_server.h"
 #include "nema/ui/ui_sdk.h"
+#include "nema/ui/view_dispatcher.h"
 #include <cstdint>
 
 namespace aether { struct StyleTokens; }
@@ -44,6 +45,14 @@ public:
     const aether::StyleTokens* theme() const { return theme_; }
 
 private:
+    // Two-pass clip-based transition rendering.
+    // Each tick, splitX grows (SlideLeft) or shrinks (SlideRight) by W/kTicks.
+    // to-screen draws into [0, splitX), from-screen draws into [splitX, W).
+    static constexpr int kTransitionTicks = 8;
+    int      transitionTick_ = 0;    // 0 = no transition; 1..kTicks = animating
+    Transition transitionType_ = Transition::None;
+    IScreen*   transitionFrom_ = nullptr;
+
     IClock&  clock_;
     const aether::StyleTokens* theme_ = nullptr;   // nullptr → defaultTheme() at render
     bool     showFps_     = false;

@@ -27,6 +27,61 @@ void AetherServer::renderFrame(Canvas& c, ViewDispatcher& vd, const StatusBarDat
     }
     fpsFrames_++;
 
+    // ── Plan 90 F4.1: consume pending transition from ViewDispatcher ──────────
+    if (vd.pendingTransition() != Transition::None) {
+        transitionType_ = vd.pendingTransition();
+        transitionFrom_ = vd.transitionFrom();
+        transitionTick_ = 1;
+        vd.clearTransition();
+    }
+
+    // ── Two-pass clip-based transition rendering ───────────────────────────────
+    if (transitionTick_ > 0 && transitionFrom_ && vd.active()) {
+        IScreen* to   = vd.active();
+        IScreen* from = transitionFrom_;
+
+        // splitX: the column where the to-zone ends and the from-zone begins.
+        // SlideLeft (forward): to appears from left, splitX grows 0→W.
+        // SlideRight (back):   to appears from right, splitX shrinks W→0.
+        uint16_t W = c.width(), H = c.height();
+        uint16_t splitX;
+        if (transitionType_ == Transition::SlideLeft)
+            splitX = (uint16_t)((uint32_t)W * (uint32_t)transitionTick_ / kTransitionTicks);
+        else
+            splitX = (uint16_t)((uint32_t)W * (uint32_t)(kTransitionTicks - transitionTick_) / kTransitionTicks);
+
+        // Clear full canvas first (no active clip → fast driver_.clear() path).
+        c.clear(false);
+
+        // TO screen — renders into the left-or-right zone.
+        if (transitionType_ == Transition::SlideLeft)
+            c.setClip(0, 0, splitX, H);
+        else
+            c.setClip(splitX, 0, (uint16_t)(W - splitX), H);
+        to->draw(c);
+        c.clearClip();
+
+        // FROM screen — renders into the complementary zone.
+        if (transitionType_ == Transition::SlideLeft)
+            c.setClip(splitX, 0, (uint16_t)(W - splitX), H);
+        else
+            c.setClip(0, 0, splitX, H);
+        from->draw(c);
+        c.clearClip();
+
+        if (++transitionTick_ > kTransitionTicks) {
+            transitionTick_ = 0;
+            transitionFrom_ = nullptr;
+            transitionType_ = Transition::None;
+        }
+
+        uint64_t tFlush0 = clock_.millis();
+        c.flush();
+        lastFlushMs_ = (uint16_t)(clock_.millis() - tFlush0);
+        return;
+    }
+    transitionTick_ = 0;   // safety: clear stale state if from_ went null
+
     uint64_t tDraw0 = now;
     c.clear();
 
