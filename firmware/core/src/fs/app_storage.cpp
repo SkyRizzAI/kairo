@@ -16,15 +16,19 @@ static std::string storNsKey(const std::string& bundleId) {
 }
 
 AppStorage::AppStorage(std::string bundleId, IFileSystem* vfs,
-                       IConfigStore& cfg, bool critical)
+                       IConfigStore& cfg, bool critical, bool forceExternal)
     : bundleId_(std::move(bundleId)), vfs_(vfs), cfg_(cfg), critical_(critical) {
-    // Resolve the base path here, not in resolvePath(). nvs_get_str() disables
-    // the SPI cache — on ESP32-S3, this also disables PSRAM. If this constructor
-    // ran on a PSRAM-stacked thread (JS/WASM app threads), the CPU would lose
-    // access to its own stack mid-call → assert crash. Callers must construct
-    // AppStorage on an internal-RAM thread (see AppContext::warmStorage()).
+    // Base path resolved here (not lazily): nvs_get_str() disables the SPI flash
+    // cache which on ESP32-S3 also disables PSRAM. Must run on an internal-RAM
+    // thread — see AppContext::warmStorage().
+    //
+    // forceExternal=true skips the NVS lookup and always routes to /sd/data/.
+    // Mandatory for WASM/JS tasks (PSRAM stack): LittleFS reads also disable the
+    // SPI cache, causing the same stack-inaccessible crash.
     if (critical_) {
         base_ = "/system/data/" + bundleId_;
+    } else if (forceExternal) {
+        base_ = "/sd/data/" + bundleId_;
     } else {
         std::string loc;
         cfg_.getString("stor", storNsKey(bundleId_).c_str(), loc);

@@ -404,6 +404,45 @@ extern int wifi_probe_flood_start(const char* ssid, int channel);
 NEMA_IMPORT("wifi", "wifi_probe_flood_stop")
 extern int wifi_probe_flood_stop(void);
 
+// Set the radio MAC address ("AA:BB:CC:DD:EE:FF"). Empty string = no-op.
+// Requires net.wifi.inject. 0=ok/-1=err.
+NEMA_IMPORT("wifi", "wifi_set_mac")
+extern int wifi_set_mac(const char* mac);
+
+// Karma attack: respond to every probe request with a matching fake AP.
+// Events ("karma_hit") pushed via wifi_wait_event(). 0=ok/-1=err.
+NEMA_IMPORT("wifi", "wifi_karma_start")
+extern int wifi_karma_start(void);
+NEMA_IMPORT("wifi", "wifi_karma_stop")
+extern int wifi_karma_stop(void);
+
+// Evil portal: open soft-AP ssid + DNS hijack + captive HTTP portal.
+// html/html_len: custom HTML (0/0 = built-in login page).
+// Events ("ep_creds") pushed via wifi_wait_event() when form is submitted.
+// 0=ok/-1=err.
+NEMA_IMPORT("wifi", "wifi_evil_portal_start")
+extern int wifi_evil_portal_start(const char* ssid,
+                                   const char* html, int html_len);
+NEMA_IMPORT("wifi", "wifi_evil_portal_stop")
+extern int wifi_evil_portal_stop(void);
+
+// STA connection status. Writes "connected\t<IP>\n" or "disconnected\n".
+// Returns bytes written.
+NEMA_IMPORT("wifi", "wifi_sta_status")
+extern int wifi_sta_status(char* out, int max);
+
+// ARP/ping scan: discover live hosts on current subnet (blocking ~4s).
+// Writes "IP\n" per host. Returns bytes written; 0=not connected.
+// Requires net.wifi.scan.
+NEMA_IMPORT("wifi", "wifi_arp_scan")
+extern int wifi_arp_scan(char* out, int max);
+
+// TCP port probe: try connecting host:port within timeout_ms.
+// Returns 0=open, -1=closed/refused/timeout. Blocking.
+// Requires net.wifi.scan.
+NEMA_IMPORT("wifi", "wifi_tcp_probe")
+extern int wifi_tcp_probe(const char* host, int port, int timeout_ms);
+
 // ── display_* ergonomic aliases (Plan 86 Fase 5) ──────────────────────────────
 // AkiraOS-style short names. Map directly to canvas_* — zero overhead.
 #define display_width()              canvas_width()

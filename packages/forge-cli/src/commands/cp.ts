@@ -76,7 +76,18 @@ async function pushFile(localPath: string, deviceName: string, remotePath: strin
 	// install — both clients must unpack. appScan() asks the device to (re)install.
 	if (!isDir && localPath.endsWith(".papp.zip")) {
 		const id = basename(localPath).slice(0, -".papp.zip".length);
-		const destDir = await resolveInto(session, remotePath, `${id}.papp`);
+		// Resolve destination to always be <parentDir>/<id>.papp, regardless of whether
+		// the user typed the .papp dir, the .papp.zip path, a parent dir, or a trailing /.
+		let destDir: string;
+		if (remotePath.endsWith("/")) {
+			destDir = remotePath.replace(/\/+$/, "") + `/${id}.papp`;
+		} else if (remotePath.endsWith(".papp.zip") || remotePath.endsWith(".papp")) {
+			const parentDir = remotePath.slice(0, remotePath.lastIndexOf("/"));
+			destDir = `${parentDir}/${id}.papp`;
+		} else {
+			// Bare directory path — resolveInto appends leafName inside it.
+			destDir = await resolveInto(session, remotePath, `${id}.papp`);
+		}
 		const entries: Entry[] = Object.entries(unzipSync(new Uint8Array(await readFile(localPath))))
 			.map(([rel, data]) => ({ rel, data }));
 		console.log(`unzipping ${basename(localPath)} → ${deviceName}:${destDir}/…`);

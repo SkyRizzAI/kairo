@@ -16,8 +16,13 @@ namespace nema {
 
 class AppStorage {
 public:
+    // forceExternal: skip NVS lookup and always route to /sd/data/<id>/.
+    // Required for tasks with PSRAM stacks (JS/WASM): LittleFS direct-reads
+    // disable the SPI flash cache which also makes PSRAM inaccessible → crash.
+    // SD-card reads go through a separate SPI controller and are always safe.
     AppStorage(std::string bundleId, IFileSystem* vfs,
-               IConfigStore& cfg, bool critical = false);
+               IConfigStore& cfg, bool critical = false,
+               bool forceExternal = false);
 
     // File ops — name is a relative filename ("config.json", "cache/data.bin").
     // Routed to the correct physical path transparently.

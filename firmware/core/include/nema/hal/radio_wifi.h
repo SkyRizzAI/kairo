@@ -81,6 +81,42 @@ struct IRadioWifi : IDriver {
     virtual bool probeFloodStart(std::string_view /*ssid*/, uint8_t /*channel*/) { return false; }
     virtual bool probeFloodStop()                                                  { return true; }
 
+    // ── New attack primitives (net.wifi.inject lease) ─────────────────────────
+    // Set radio MAC address. mac="AA:BB:CC:DD:EE:FF"; empty → no-op.
+    virtual bool setMac(std::string_view /*mac*/) { return false; }
+
+    // Karma: respond to every probe request with a matching fake AP.
+    // Events ("karma_hit" + {ssid,sta}) pushed via waitEvent().
+    virtual bool karmaStart() { return false; }
+    virtual bool karmaStop()  { return true; }
+
+    // Evil portal: open soft-AP named ssid, DNS-hijack all queries to 192.168.4.1,
+    // serve html as captive HTTP portal (nullptr → built-in page).
+    // Events ("ep_creds" + {data}) pushed when a form is POSTed.
+    virtual bool evilPortalStart(std::string_view /*ssid*/,
+                                  const char* /*html*/    = nullptr,
+                                  size_t      /*htmlLen*/ = 0) { return false; }
+    virtual bool evilPortalStop() { return true; }
+
+    // ── Network tool primitives ────────────────────────────────────────────────
+    // Check STA connection. Writes "connected\t<IP>\n" or "disconnected\n".
+    // Returns bytes written.
+    virtual int staStatus(char* out, uint32_t max) {
+        static const char kDis[] = "disconnected\n";
+        if (max < sizeof(kDis)) return 0;
+        std::memcpy(out, kDis, sizeof(kDis) - 1); out[sizeof(kDis)-1] = '\0';
+        return static_cast<int>(sizeof(kDis) - 1);
+    }
+
+    // ARP/ping scan: discover live hosts on current subnet (blocking, STA must
+    // be connected). Writes "IP\n" per host. Returns bytes written; 0=not connected.
+    virtual int arpScan(char* /*out*/, uint32_t /*max*/) { return 0; }
+
+    // TCP port probe: connect to host:port within timeoutMs.
+    // Returns 0=open, -1=closed/refused/timeout. Blocking.
+    virtual int tcpProbe(std::string_view /*host*/, uint16_t /*port*/,
+                         uint32_t /*timeoutMs*/ = 3000) { return -1; }
+
     // ── Monitor frame ring (Fase 5) ───────────────────────────────────────────
     // pushFrame: called by promiscuous RX callbacks to enqueue raw frames.
     // Thread-safe and non-blocking. Drops the frame if the ring is full.

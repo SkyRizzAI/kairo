@@ -338,24 +338,150 @@ m3ApiRawFunction(wasm_wifi_wait_event) {
                          ev.data(), (int)ev.size()));
 }
 
+// ── wifi_set_mac(mac_str) → 0 ok / -1 err ───────────────────────────────────
+
+m3ApiRawFunction(wasm_wifi_set_mac) {
+    m3ApiReturnType(int32_t);
+    m3ApiGetArg(uint32_t, macOff);
+    if (checkPerm(runtime, "net.wifi.inject") != 1) m3ApiReturn(-1);
+    IRadioWifi* r = radio(runtime);
+    if (!r) m3ApiReturn(-1);
+    std::string mac;
+    if (!readCStr(runtime, macOff, mac)) m3ApiReturn(-1);
+    m3ApiReturn(r->setMac(mac) ? 0 : -1);
+}
+
+// ── wifi_karma_start() → 0 ok / -1 err ──────────────────────────────────────
+
+m3ApiRawFunction(wasm_wifi_karma_start) {
+    m3ApiReturnType(int32_t);
+    if (checkPerm(runtime, "net.wifi.inject") != 1) m3ApiReturn(-1);
+    if (!acquireLease(runtime, "net.wifi.inject", s_injectHandle)) m3ApiReturn(-1);
+    IRadioWifi* r = radio(runtime);
+    if (!r) m3ApiReturn(-1);
+    m3ApiReturn(r->karmaStart() ? 0 : -1);
+}
+
+// ── wifi_karma_stop() → 0 ────────────────────────────────────────────────────
+
+m3ApiRawFunction(wasm_wifi_karma_stop) {
+    m3ApiReturnType(int32_t);
+    IRadioWifi* r = radio(runtime);
+    if (r) r->karmaStop();
+    releaseLease(runtime, s_injectHandle);
+    m3ApiReturn(0);
+}
+
+// ── wifi_evil_portal_start(ssid, html, html_len) → 0 ok / -1 err ────────────
+// html=0 / html_len=0 → use built-in captive page.
+
+m3ApiRawFunction(wasm_wifi_evil_portal_start) {
+    m3ApiReturnType(int32_t);
+    m3ApiGetArg(uint32_t, ssidOff);
+    m3ApiGetArg(uint32_t, htmlOff);
+    m3ApiGetArg(int32_t,  htmlLen);
+    if (checkPerm(runtime, "net.wifi.inject") != 1) m3ApiReturn(-1);
+    if (!acquireLease(runtime, "net.wifi.inject", s_injectHandle)) m3ApiReturn(-1);
+    IRadioWifi* r = radio(runtime);
+    if (!r) m3ApiReturn(-1);
+    std::string ssid;
+    if (!readCStr(runtime, ssidOff, ssid)) m3ApiReturn(-1);
+    const char* html_ptr = nullptr;
+    if (htmlLen > 0) {
+        const uint8_t* raw = nullptr;
+        if (readBytes(runtime, htmlOff, (uint32_t)htmlLen, raw))
+            html_ptr = reinterpret_cast<const char*>(raw);
+    }
+    m3ApiReturn(r->evilPortalStart(ssid, html_ptr,
+                                   htmlLen > 0 ? (size_t)htmlLen : 0u) ? 0 : -1);
+}
+
+// ── wifi_evil_portal_stop() → 0 ─────────────────────────────────────────────
+
+m3ApiRawFunction(wasm_wifi_evil_portal_stop) {
+    m3ApiReturnType(int32_t);
+    IRadioWifi* r = radio(runtime);
+    if (r) r->evilPortalStop();
+    releaseLease(runtime, s_injectHandle);
+    m3ApiReturn(0);
+}
+
+// ── wifi_sta_status(out, max) → bytes written ────────────────────────────────
+
+m3ApiRawFunction(wasm_wifi_sta_status) {
+    m3ApiReturnType(int32_t);
+    m3ApiGetArg(uint32_t, outOff);
+    m3ApiGetArg(int32_t,  cap);
+    if (cap <= 0) m3ApiReturn(0);
+    IRadioWifi* r = radio(runtime);
+    if (!r) m3ApiReturn(0);
+    uint32_t memSz = 0;
+    uint8_t* base  = m3_GetMemory(runtime, &memSz, 0);
+    if (!base || outOff + (uint32_t)cap > memSz) m3ApiReturn(0);
+    int n = r->staStatus(reinterpret_cast<char*>(base + outOff), (uint32_t)cap);
+    m3ApiReturn((int32_t)n);
+}
+
+// ── wifi_arp_scan(out, max) → bytes written (blocking ~4s) ──────────────────
+
+m3ApiRawFunction(wasm_wifi_arp_scan) {
+    m3ApiReturnType(int32_t);
+    m3ApiGetArg(uint32_t, outOff);
+    m3ApiGetArg(int32_t,  cap);
+    if (cap <= 0) m3ApiReturn(0);
+    if (checkPerm(runtime, "net.wifi.scan") != 1) m3ApiReturn(-1);
+    IRadioWifi* r = radio(runtime);
+    if (!r) m3ApiReturn(0);
+    uint32_t memSz = 0;
+    uint8_t* base  = m3_GetMemory(runtime, &memSz, 0);
+    if (!base || outOff + (uint32_t)cap > memSz) m3ApiReturn(0);
+    int n = r->arpScan(reinterpret_cast<char*>(base + outOff), (uint32_t)cap);
+    m3ApiReturn((int32_t)n);
+}
+
+// ── wifi_tcp_probe(host, port, timeout_ms) → 0=open / -1=closed ─────────────
+
+m3ApiRawFunction(wasm_wifi_tcp_probe) {
+    m3ApiReturnType(int32_t);
+    m3ApiGetArg(uint32_t, hostOff);
+    m3ApiGetArg(int32_t,  port);
+    m3ApiGetArg(int32_t,  timeoutMs);
+    if (checkPerm(runtime, "net.wifi.scan") != 1) m3ApiReturn(-1);
+    IRadioWifi* r = radio(runtime);
+    if (!r) m3ApiReturn(-1);
+    std::string host;
+    if (!readCStr(runtime, hostOff, host)) m3ApiReturn(-1);
+    int res = r->tcpProbe(host, (uint16_t)port,
+                          timeoutMs > 0 ? (uint32_t)timeoutMs : 3000u);
+    m3ApiReturn((int32_t)res);
+}
+
 } // anon namespace
 
 void linkWifiImports(IM3Module mod) {
     auto link = [mod](const char* fn, const char* sig, M3RawCall cb) {
         m3_LinkRawFunction(mod, "wifi", fn, sig, cb);
     };
-    link("wifi_scan",             "i(*i)",   &wasm_wifi_scan);
-    link("wifi_deauth_start",     "i(*i)",   &wasm_wifi_deauth_start);
-    link("wifi_deauth_stop",      "i()",     &wasm_wifi_deauth_stop);
-    link("wifi_beacon_spam_start","i(*i)",   &wasm_wifi_beacon_spam_start);
-    link("wifi_beacon_spam_stop", "i()",     &wasm_wifi_beacon_spam_stop);
-    link("wifi_monitor_open",     "i(i)",    &wasm_wifi_monitor_open);
-    link("wifi_monitor_read",     "i(*ii)",  &wasm_wifi_monitor_read);
-    link("wifi_monitor_close",    "v()",     &wasm_wifi_monitor_close);
-    link("wifi_inject",             "i(i*i)",  &wasm_wifi_inject);
-    link("wifi_probe_flood_start",  "i(*i)",   &wasm_wifi_probe_flood_start);
-    link("wifi_probe_flood_stop",   "i()",     &wasm_wifi_probe_flood_stop);
-    link("wifi_wait_event",         "i(*ii)",  &wasm_wifi_wait_event);
+    link("wifi_scan",               "i(*i)",    &wasm_wifi_scan);
+    link("wifi_deauth_start",       "i(*i)",    &wasm_wifi_deauth_start);
+    link("wifi_deauth_stop",        "i()",      &wasm_wifi_deauth_stop);
+    link("wifi_beacon_spam_start",  "i(*i)",    &wasm_wifi_beacon_spam_start);
+    link("wifi_beacon_spam_stop",   "i()",      &wasm_wifi_beacon_spam_stop);
+    link("wifi_monitor_open",       "i(i)",     &wasm_wifi_monitor_open);
+    link("wifi_monitor_read",       "i(*ii)",   &wasm_wifi_monitor_read);
+    link("wifi_monitor_close",      "v()",      &wasm_wifi_monitor_close);
+    link("wifi_inject",             "i(i*i)",   &wasm_wifi_inject);
+    link("wifi_probe_flood_start",  "i(*i)",    &wasm_wifi_probe_flood_start);
+    link("wifi_probe_flood_stop",   "i()",      &wasm_wifi_probe_flood_stop);
+    link("wifi_wait_event",         "i(*ii)",   &wasm_wifi_wait_event);
+    link("wifi_set_mac",            "i(*)",     &wasm_wifi_set_mac);
+    link("wifi_karma_start",        "i()",      &wasm_wifi_karma_start);
+    link("wifi_karma_stop",         "i()",      &wasm_wifi_karma_stop);
+    link("wifi_evil_portal_start",  "i(**i)",   &wasm_wifi_evil_portal_start);
+    link("wifi_evil_portal_stop",   "i()",      &wasm_wifi_evil_portal_stop);
+    link("wifi_sta_status",         "i(*i)",    &wasm_wifi_sta_status);
+    link("wifi_arp_scan",           "i(*i)",    &wasm_wifi_arp_scan);
+    link("wifi_tcp_probe",          "i(*ii)",   &wasm_wifi_tcp_probe);
 }
 
 } // namespace nema

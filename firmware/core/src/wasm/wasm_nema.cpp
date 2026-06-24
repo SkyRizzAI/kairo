@@ -184,7 +184,11 @@ m3ApiRawFunction(nema_storage_fs_read_file) {
     if (!readCStr(runtime, nameOff, name)) m3ApiReturn(-1);
 
     Runtime& rt = h->ctx->runtime();
-    AppStorage stor(h->appId, rt.fs(), rt.config(), false);
+    // forceExternal=true: WASM tasks run with a PSRAM stack; LittleFS reads
+    // disable the SPI cache which also kills PSRAM access → stack inaccessible
+    // → assert crash. SD-card (FatFS) reads use a separate SPI controller and
+    // are safe from any task. All WASM app storage therefore lives on /sd/data/.
+    AppStorage stor(h->appId, rt.fs(), rt.config(), false, true);
     std::vector<uint8_t> buf;
     if (!stor.read(name.c_str(), buf)) m3ApiReturn(-1);
 
@@ -209,7 +213,7 @@ m3ApiRawFunction(nema_storage_fs_write_file) {
     if (!readCStr(runtime, nameOff, name)) m3ApiReturn(-1);
 
     Runtime& rt = h->ctx->runtime();
-    AppStorage stor(h->appId, rt.fs(), rt.config(), false);
+    AppStorage stor(h->appId, rt.fs(), rt.config(), false, true); // forceExternal — PSRAM stack safety
     bool ok = stor.write(name.c_str(), data, (size_t)len);
     m3ApiReturn(ok ? 0 : -1);
 }
