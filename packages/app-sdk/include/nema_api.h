@@ -390,10 +390,19 @@ extern void wifi_monitor_close(void);
 NEMA_IMPORT("wifi", "wifi_inject")
 extern int wifi_inject(int channel, const unsigned char* frame, int len);
 
-// Block until next thick-loop event (deauth/beacon tick).
+// Block until next thick-loop event (deauth/beacon/probe tick).
 // JSON bytes written into out; 0 = timeout.
 NEMA_IMPORT("wifi", "wifi_wait_event")
 extern int wifi_wait_event(char* out, int max, int timeout_ms);
+
+// Start probe request flood on channel. ssid="" for wildcard (finds hidden APs).
+// Probe requests sent at ~20 Hz from firmware Core 0. 0=ok/-1=err.
+NEMA_IMPORT("wifi", "wifi_probe_flood_start")
+extern int wifi_probe_flood_start(const char* ssid, int channel);
+
+// Stop the running probe flood.
+NEMA_IMPORT("wifi", "wifi_probe_flood_stop")
+extern int wifi_probe_flood_stop(void);
 
 // ── display_* ergonomic aliases (Plan 86 Fase 5) ──────────────────────────────
 // AkiraOS-style short names. Map directly to canvas_* — zero overhead.

@@ -289,6 +289,35 @@ m3ApiRawFunction(wasm_wifi_inject) {
     m3ApiReturn(r->inject((uint8_t)ch, ptr, (size_t)len) ? 0 : -1);
 }
 
+// ── wifi_probe_flood_start(ssid, channel) → 0 ok / -1 err ──────────────────
+// ssid: NUL-terminated string (empty = wildcard — probes for any AP).
+
+m3ApiRawFunction(wasm_wifi_probe_flood_start) {
+    m3ApiReturnType(int32_t);
+    m3ApiGetArg(uint32_t, ssidOff);
+    m3ApiGetArg(int32_t,  ch);
+
+    if (checkPerm(runtime, "net.wifi.inject") != 1) m3ApiReturn(-1);
+    if (!acquireLease(runtime, "net.wifi.inject", s_injectHandle)) m3ApiReturn(-1);
+    IRadioWifi* r = radio(runtime);
+    if (!r) m3ApiReturn(-1);
+
+    std::string ssid;
+    if (!readCStr(runtime, ssidOff, ssid)) m3ApiReturn(-1);
+
+    m3ApiReturn(r->probeFloodStart(ssid, (uint8_t)ch) ? 0 : -1);
+}
+
+// ── wifi_probe_flood_stop() → 0 ─────────────────────────────────────────────
+
+m3ApiRawFunction(wasm_wifi_probe_flood_stop) {
+    m3ApiReturnType(int32_t);
+    IRadioWifi* r = radio(runtime);
+    if (r) r->probeFloodStop();
+    releaseLease(runtime, s_injectHandle);
+    m3ApiReturn(0);
+}
+
 // ── wifi_wait_event(out, max, timeout_ms) → bytes written ───────────────────
 
 m3ApiRawFunction(wasm_wifi_wait_event) {
@@ -323,8 +352,10 @@ void linkWifiImports(IM3Module mod) {
     link("wifi_monitor_open",     "i(i)",    &wasm_wifi_monitor_open);
     link("wifi_monitor_read",     "i(*ii)",  &wasm_wifi_monitor_read);
     link("wifi_monitor_close",    "v()",     &wasm_wifi_monitor_close);
-    link("wifi_inject",           "i(i*i)",  &wasm_wifi_inject);
-    link("wifi_wait_event",       "i(*ii)",  &wasm_wifi_wait_event);
+    link("wifi_inject",             "i(i*i)",  &wasm_wifi_inject);
+    link("wifi_probe_flood_start",  "i(*i)",   &wasm_wifi_probe_flood_start);
+    link("wifi_probe_flood_stop",   "i()",     &wasm_wifi_probe_flood_stop);
+    link("wifi_wait_event",         "i(*ii)",  &wasm_wifi_wait_event);
 }
 
 } // namespace nema

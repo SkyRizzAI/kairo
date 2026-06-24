@@ -75,6 +75,12 @@ struct IRadioWifi : IDriver {
     virtual bool beaconSpamStart(const std::vector<std::string>& /*ssids*/) { return false; }
     virtual bool beaconSpamStop()                                            { return true; }
 
+    // Start probe request flood at ~20 Hz (firmware Core 0).
+    // ssid="" → wildcard probes (discover hidden APs); ssid set → targeted.
+    // App gets events ("probe_sent") via waitEvent().
+    virtual bool probeFloodStart(std::string_view /*ssid*/, uint8_t /*channel*/) { return false; }
+    virtual bool probeFloodStop()                                                  { return true; }
+
     // ── Monitor frame ring (Fase 5) ───────────────────────────────────────────
     // pushFrame: called by promiscuous RX callbacks to enqueue raw frames.
     // Thread-safe and non-blocking. Drops the frame if the ring is full.

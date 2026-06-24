@@ -37,6 +37,8 @@ public:
     bool deauthStop()  override;
     bool beaconSpamStart(const std::vector<std::string>& ssids) override;
     bool beaconSpamStop() override;
+    bool probeFloodStart(std::string_view ssid, uint8_t channel) override;
+    bool probeFloodStop() override;
 
     // ── IService ──────────────────────────────────────────────────────────────
     const char*  name() const override { return "Esp32WifiRadio"; }
@@ -48,6 +50,7 @@ private:
     static void loopEntry(void* self);
     void        deauthLoop();
     void        beaconLoop();
+    void        probeLoop();
 
     // Parse "AA:BB:CC:DD:EE:FF" string → 6-byte array. Returns false on error.
     static bool parseBssid(std::string_view s, uint8_t out[6]);
@@ -57,9 +60,12 @@ private:
     std::mutex               mu_;
     std::atomic<bool>        doDeauth_{false};
     std::atomic<bool>        doBeacon_{false};
+    std::atomic<bool>        doProbe_{false};
     uint8_t                  deauthBssid_[6]  = {};
     uint8_t                  deauthChannel_   = 0;
     std::vector<std::string> beaconSsids_;
+    std::string              probeSsid_;
+    uint8_t                  probeChannel_    = 1;
 };
 
 } // namespace nema
