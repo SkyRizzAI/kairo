@@ -136,6 +136,10 @@ void Esp32WifiDriver::start() {
 }
 
 void Esp32WifiDriver::stop() {
+    // Guard: stop promiscuous mode if an app left it active (e.g. WiFi Marauder
+    // exited without cleanup). esp_wifi_stop() panics if promiscuous is still on.
+    esp_wifi_set_promiscuous(false);
+    esp_wifi_set_promiscuous_rx_cb(nullptr);
     esp_wifi_stop();
     enabled_ = false;
     state_ = WifiState::Disabled;
@@ -154,6 +158,8 @@ void Esp32WifiDriver::setEnabled(bool on) {
         log_->info("Esp32WifiDriver", "radio on");
         autoConnect();
     } else {
+        esp_wifi_set_promiscuous(false);        // safe no-op if not active
+        esp_wifi_set_promiscuous_rx_cb(nullptr);
         if (connected_) esp_wifi_disconnect();
         esp_wifi_stop();
         enabled_   = false;

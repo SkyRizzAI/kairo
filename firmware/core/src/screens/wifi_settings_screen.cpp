@@ -123,6 +123,10 @@ void WifiSettingsScreen::pick(const Row& r) {
 
 void WifiSettingsScreen::cbToggleWifi(void* u) {
     auto* s = static_cast<WifiSettingsScreen*>(u);
+    // Block toggle while an app holds the WiFi radio — toggling with the radio
+    // in monitor/inject mode panics the ESP32 WiFi stack (esp_wifi_stop while
+    // promiscuous is still active). The suspended banner already informs the user.
+    if (!s->wifiSuspendedBy_.empty()) return;
     IWifiDriver* d = s->drv();
     if (!d) return;
     bool on = !d->isEnabled();
