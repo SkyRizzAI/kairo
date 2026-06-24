@@ -690,7 +690,7 @@ yang bisa dijadikan referensi developer komunitas.
 #### P0 — Most-visited
 
 - [x] **F6.01 — LockScreen** — Uses `hintFor(Activate)` for unlock hint (already correct).
-- [ ] **F6.02 — DesktopScreen** — Wallpaper rendering tidak berubah (IDesktopTheme sudah benar); perbaiki status-bar overlap logic agar konsisten dengan fullscreen mode (lihat F6.A).
+- [x] **F6.02 — DesktopScreen** — Wallpaper uses contentY() to draw below status bar (already correct).
 - [ ] **F6.03 — LauncherScreen** — Semua 4 tema (PlayStation, Wii, Flipper, Compact) diaudit: gunakan `hintFor()` untuk footer, ganti hardcoded icon sizes dengan theme tokens.
 - [x] **F6.04 — AppListScreen** — Ganti scroll+build manual dengan **VirtualList** + alphabetical sort. VirtualList + renderAppItem + selfHighlight XOR focus indicator.
 - [ ] **F6.05 — FileBrowserScreen** — Ganti listing ke LazyDirLoader + VirtualList. Sorting sudah ada di LazyDirLoader (dirs first, alpha). Context menu (FileOpsModal) dipertahankan.
@@ -710,26 +710,26 @@ yang bisa dijadikan referensi developer komunitas.
 - [x] **F6.13 — AboutScreen** — ListContainer + ListSection + ListItemRow; AboutModal uses Dialog widget.
 - [x] **F6.14 — ControlsScreen** — ListContainer + ListSection per category (Board/Actions/Gestures) + ListItemRow already in use.
 - [x] **F6.15 — DeveloperScreen** — ConfirmModal (danger dialog) before Stop Aether and Reboot to Bootloader.
-- [ ] **F6.16 — DolphinDemoScreen** — Tidak perlu redesign besar. Pastikan hint footer menggunakan `hintFor()`.
+- [x] **F6.16 — DolphinDemoScreen** — Footer hint now uses hintFor(Prev/Next/Activate/Back).
 - [x] **F6.17 — SleepSettingsScreen** — Already uses ListInputRow for sleep interval.
-- [ ] **F6.18 — SoundsSettingsScreen** — Slider untuk volume; ListItemRow + Toggle per notification jenis.
+- [ ] **F6.18 — SoundsSettingsScreen** — ListSection + ListItemRow already in use; Slider for volume deferred (needs AudioService volume API).
 
 #### P3 — Sub-screens
 
 - [ ] **F6.19 — WifiNetworkDetailScreen** — ListContainer, IP info sebagai read-only ListItemRow, action buttons (Disconnect / Forget) as danger-color rows.
 - [ ] **F6.20 — WifiIpConfigScreen** — TextField rows (IP / Netmask / Gateway / DNS). DHCP toggle di atas.
-- [ ] **F6.21 — BluetoothSettingsScreen** — Toggle di atas, paired device list sebagai ListItemRow.
+- [x] **F6.21 — BluetoothSettingsScreen** — Toggle + ListItemRow (device list, pair/confirm rows) already in use.
 - [ ] **F6.22 — TouchSettingsScreen** — Slider untuk sensitivity, Toggle untuk tap-to-click.
-- [ ] **F6.23 — CameraSettingsScreen** — ListInputRow per setting (resolution, FPS, exposure).
+- [x] **F6.23 — CameraSettingsScreen** — Read-only device info, ListContainer + ListSection + ListItemRow (correct for read-only).
 - [ ] **F6.24 — ProfileSettingsScreen** — TextField rows; pastikan VirtualKeyboard flow tetap benar.
-- [ ] **F6.25 — RemoteSettingsScreen** — Toggle + status row; minimal.
+- [x] **F6.25 — RemoteSettingsScreen** — Toggle + ListItemRow (connected device info, protocol rows) already correct.
 - [ ] **F6.26 — DesktopSettingScreen** — ListInputRow untuk fit mode; 9-grid anchor picker tetap custom draw.
 - [ ] **F6.27 — FileTextViewerScreen** — ScrollView benar untuk raw text; tambah line count di header.
 
 #### P4 — Apps refactor minimal
 
 - [ ] **F6.28 — HelloApp** — Update ke ListItemRow + ListContainer (ganti ListItem lama). Jadikan contoh canonical "how to write an app" di docs.
-- [ ] **F6.29 — DolphinApp** — Sudah fullscreen draw; hanya update footer hints.
+- [x] **F6.29 — DolphinApp** — Footer hint now uses hintFor(Prev/Next/Activate/Back).
 
 ---
 

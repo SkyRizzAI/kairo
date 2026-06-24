@@ -9,6 +9,7 @@
 #include "nema/ui/style_tokens.h"
 #include "nema/runtime.h"
 #include "nema/clock.h"
+#include "nema/input/input_action.h"
 #include <cstdio>
 #include <cstring>
 
@@ -180,8 +181,15 @@ bool DolphinApp::drawRaw(Canvas& c, AppContext& ctx) {
                   e.anim ? e.anim->def.frameCount : 0u,
                   paused_ ? "PAUSED" : "PLAY");
     c.drawText(2, (uint16_t)(H - lineH * 2 - 2), info, true);
-    c.drawText(2, (uint16_t)(H - lineH - 1),
-               "< > : switch   OK : pause   Back : exit   [.panim]", true);
+    char hintBuf[64];
+    auto& inp = ctx.runtime().input();
+    std::snprintf(hintBuf, sizeof(hintBuf), "%s/%s:switch  %s:%s  %s:exit  [.panim]",
+                  inp.hintFor(input::Action::Prev),
+                  inp.hintFor(input::Action::Next),
+                  inp.hintFor(input::Action::Activate),
+                  paused_ ? "play" : "pause",
+                  inp.hintFor(input::Action::Back));
+    c.drawText(2, (uint16_t)(H - lineH - 1), hintBuf, true);
 
     dirty_ = false;
     return true;

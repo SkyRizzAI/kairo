@@ -154,8 +154,14 @@ void DolphinDemoScreen::draw(Canvas& c) {
                   asset_ ? asset_->def.frameCount : 0u,
                   paused_ ? "PAUSED" : "PLAY");
     c.drawText(2, (uint16_t)(H - lineH * 2 - 2), info, true);
-    c.drawText(2, (uint16_t)(H - lineH - 1),
-               "< > : switch   OK : pause   Back : exit", true);
+    char hintBuf[64];
+    std::snprintf(hintBuf, sizeof(hintBuf), "%s/%s:switch  %s:%s  %s:exit",
+                  rt_.input().hintFor(input::Action::Prev),
+                  rt_.input().hintFor(input::Action::Next),
+                  rt_.input().hintFor(input::Action::Activate),
+                  paused_ ? "play" : "pause",
+                  rt_.input().hintFor(input::Action::Back));
+    c.drawText(2, (uint16_t)(H - lineH - 1), hintBuf, true);
 }
 
 } // namespace nema
