@@ -852,6 +852,13 @@ Tasks:
 
 ---
 
+### Hotfixes dari device testing (2026-06-24)
+- [x] **HF1** — AppListScreen: hapus filter `category == "System"` yang menyebabkan BadUSB (satu-satunya registered App) tidak tampil → "no apps installed". Filter ini ditambahkan di Plan 90 Fase 1+2+3 tapi tidak seharusnya ada — semua AppType::App harus tampil.
+- [x] **HF2** — VirtualList: tambah `scroll->style.align = Align::Stretch` pada scroll container. Tanpa ini, item di VirtualList hanya selebar kontennya (bukan full width) → `selfHighlight` XOR-inversion hanya mencakup area sempit, marquee text tidak berjalan karena `availW == textW`.
+- [x] **HF3** — Scroll tracking FileBrowserScreen: setelah HF2 fixed, `scrollToFocused()` sudah benar secara logis (dipanggil dari `moveFocus()`, menggunakan `viewportMain` dari frame sebelumnya). Bug "scroll tidak berfungsi" adalah gejala dari HF2 (focus indicator tidak terlihat sehingga scroll terkesan tidak bekerja).
+
+---
+
 ### Docs
 - [x] Update `docs/feats/` untuk Aether UI system — `docs/feats/aether-ui.md` written (widget catalog, layout model, VirtualList, transitions, AnimatedValue)
 - [x] Architecture doc: `docs/architecture/aether-ui.md` — written (render pipeline, NodeArena, clip-based transitions, ComponentScreen internals)
