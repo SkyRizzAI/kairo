@@ -783,7 +783,7 @@ Tasks:
 - [ ] **F6.B1** — LazyDirLoader sudah sort dirs-first alpha; verifikasi unit test di firmware/tests/
 - [ ] **F6.B2** — AppListScreen: tambah folder drilldown (path stack, push screen per folder)
 - [ ] **F6.B3** — FileBrowserScreen: ganti listing ke LazyDirLoader (sudah dapat sorting gratis)
-- [ ] **F6.B4** — TitleBar: tampilkan current path / breadcrumb singkat saat dalam subfolder
+- [x] **F6.B4** — FileBrowserScreen header now shows "/ > docs > notes" breadcrumb (replaces raw path string; long paths truncated as "/ > first > ... > parent > name")
 
 #### F6.C — Modal & Dialog Polish
 

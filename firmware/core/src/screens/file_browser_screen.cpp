@@ -42,22 +42,39 @@ static std::string basename(const std::string& path) {
     return (slash == std::string::npos) ? path : path.substr(slash + 1);
 }
 
-// Smart path: if > 20 chars, show /…/parent/name (last 2 segments).
+// Breadcrumb: "/ > docs > notes". Segments after the first two are replaced
+// with "..." to keep the header short ("/ > ... > parent > name").
 static void formatPathBuf(char* buf, size_t n, const std::string& path) {
-    if (path.size() <= 20) {
-        std::snprintf(buf, n, "%s", path.c_str());
-        return;
+    if (path == "/") { std::snprintf(buf, n, "/"); return; }
+
+    // Split into non-empty segments.
+    std::vector<std::string> segs;
+    size_t pos = 1;
+    while (pos < path.size()) {
+        size_t slash = path.find('/', pos);
+        if (slash == std::string::npos) slash = path.size();
+        segs.push_back(path.substr(pos, slash - pos));
+        pos = slash + 1;
     }
-    size_t last = path.rfind('/');
-    if (last == std::string::npos || last == 0) {
-        std::snprintf(buf, n, "%s", path.c_str());
-        return;
+
+    // Build "/ > seg1 > ... > segN" (truncate middle if > 2 segments).
+    char tmp[128] = "/";
+    size_t written = 1;
+    if (segs.size() <= 3) {
+        for (auto& s : segs) {
+            int r = std::snprintf(tmp + written, sizeof(tmp) - written, " > %s", s.c_str());
+            if (r > 0) written += (size_t)r;
+        }
+    } else {
+        // More than 3 segments: show first + "..." + last two.
+        int r = std::snprintf(tmp + written, sizeof(tmp) - written, " > %s > ...", segs[0].c_str());
+        if (r > 0) written += (size_t)r;
+        for (size_t i = segs.size() - 2; i < segs.size(); i++) {
+            r = std::snprintf(tmp + written, sizeof(tmp) - written, " > %s", segs[i].c_str());
+            if (r > 0) written += (size_t)r;
+        }
     }
-    size_t prev = path.rfind('/', last - 1);
-    if (prev != std::string::npos && prev > 0)
-        std::snprintf(buf, n, "/...%s", path.c_str() + prev);
-    else
-        std::snprintf(buf, n, "/...%s", path.c_str() + last);
+    std::snprintf(buf, n, "%s", tmp);
 }
 
 // Recursive copy: handles both files and directories.
