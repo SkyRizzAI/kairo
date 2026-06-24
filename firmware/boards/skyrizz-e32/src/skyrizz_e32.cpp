@@ -106,6 +106,9 @@ void SkyRizzE32::describeHardware(Runtime& rt) {
     rt.hardware().add({"secure", DriverKind::Other, "NXP SE050 @0x48"});
     rt.capabilities().add(caps::Secure);
 
+    rt.capabilities().add(nema::caps::UiExtended);  // 4MB PSRAM → 512 nodes OK
+    rt.capabilities().add(nema::caps::UiMomentum);  // 240 MHz → flick scroll OK
+
     rt.log().info("SkyRizzE32", "hardware described",
         {{"mcu", "ESP32-S3-WROOM-1-N16R8"}, {"flash", "16MB"}, {"psram", "8MB"}});
 }

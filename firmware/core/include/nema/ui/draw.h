@@ -46,6 +46,11 @@ void scrollbar(nema::Canvas& c, uint16_t x, uint16_t y, uint16_t size,
 void multiline(nema::Canvas& c, uint16_t x, uint16_t y, uint16_t w,
                const char* text, aether::ui::TextRole role = aether::ui::TextRole::Body);
 
+// Measure the pixel height of word-wrapped text within w pixels.
+// Returns single-line font height if w == 0 or text is nullptr.
+// Used by layout.cpp to size wrapped Text nodes.
+uint16_t measureMultilineH(const char* text, uint16_t w, TextRole role = TextRole::Body);
+
 // Tick-driven marquee scroll. Clips text to w pixels, scrolling left each tick.
 // When text fits, draws statically. tick must be incremented by caller each frame.
 void marquee(nema::Canvas& c, uint16_t x, uint16_t y, uint16_t w,

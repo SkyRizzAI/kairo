@@ -1,4 +1,5 @@
 #include "nema/ui/layout.h"
+#include "nema/ui/draw.h"
 
 namespace aether::ui {
 using namespace nema;  // Plan 80: nema core symbols (Canvas/Key/input/anim/fonts) in scope
@@ -18,9 +19,21 @@ static void measure(UiNode* n, const TextMetrics& tm) {
 
     if (n->type == NodeType::Text) {
         uint16_t tw = n->text ? tm.width(tm.ctx, n->text, n->role) : 0;
-        uint16_t th = tm.height(tm.ctx, n->role);
+        uint16_t th;
+        // F2.3: multiline text measurement — use measured wrap height when width is fixed.
+        // If wrap but width is auto, fall through to single-line (graceful degradation).
+        if (n->wrap && s.width != SIZE_AUTO) {
+            th = aether::ui::draw::measureMultilineH(n->text, s.width, n->role);
+        } else {
+            th = tm.height(tm.ctx, n->role);
+        }
         n->w = (s.width  == SIZE_AUTO) ? (uint16_t)(tw + pad2) : s.width;
         n->h = (s.height == SIZE_AUTO) ? (uint16_t)(th + pad2) : s.height;
+        // F2.2: apply min/max constraints
+        if (s.minW > 0 && n->w < s.minW) n->w = s.minW;
+        if (s.maxW != SIZE_AUTO && n->w > s.maxW) n->w = s.maxW;
+        if (s.minH > 0 && n->h < s.minH) n->h = s.minH;
+        if (s.maxH != SIZE_AUTO && n->h > s.maxH) n->h = s.maxH;
         return;
     }
 
@@ -28,6 +41,11 @@ static void measure(UiNode* n, const TextMetrics& tm) {
         constexpr uint16_t SLIDER_H = 11;
         n->w = (s.width  == SIZE_AUTO) ? 0 : s.width;
         n->h = (s.height == SIZE_AUTO) ? SLIDER_H : s.height;
+        // F2.2: apply min/max constraints
+        if (s.minW > 0 && n->w < s.minW) n->w = s.minW;
+        if (s.maxW != SIZE_AUTO && n->w > s.maxW) n->w = s.maxW;
+        if (s.minH > 0 && n->h < s.minH) n->h = s.minH;
+        if (s.maxH != SIZE_AUTO && n->h > s.maxH) n->h = s.maxH;
         return;
     }
 
@@ -36,15 +54,23 @@ static void measure(UiNode* n, const TextMetrics& tm) {
         const uint16_t pad2 = (uint16_t)(s.padding * 2);
         n->w = (s.width  == SIZE_AUTO) ? (uint16_t)(n->iconW + pad2) : s.width;
         n->h = (s.height == SIZE_AUTO) ? (uint16_t)(n->iconH + pad2) : s.height;
+        // F2.2: apply min/max constraints
+        if (s.minW > 0 && n->w < s.minW) n->w = s.minW;
+        if (s.maxW != SIZE_AUTO && n->w > s.maxW) n->w = s.maxW;
+        if (s.minH > 0 && n->h < s.minH) n->h = s.minH;
+        if (s.maxH != SIZE_AUTO && n->h > s.maxH) n->h = s.maxH;
         return;
     }
 
     // View / Pressable / Scroll: measure children first.
+    // F2.4: absolute children are measured (to get their natural size) but excluded
+    // from sumMain/maxCross so they don't inflate the parent's content size.
     int n_children = 0;
     uint32_t sumMain = 0, maxCross = 0;
     const bool isRow = (s.dir == FlexDir::Row);
     for (UiNode* k = n->firstChild; k; k = k->nextSibling) {
         measure(k, tm);
+        if (k->style.position == Position::Absolute) continue;
         uint16_t kMain  = isRow ? k->w : k->h;
         uint16_t kCross = isRow ? k->h : k->w;
         sumMain += kMain;
@@ -71,6 +97,11 @@ static void measure(UiNode* n, const TextMetrics& tm) {
                                  : (isRow ? s.height : s.width);
         if (isRow) { n->w = mainSize; n->h = crossSize; }
         else       { n->h = mainSize; n->w = crossSize; }
+        // F2.2: apply min/max constraints
+        if (s.minW > 0 && n->w < s.minW) n->w = s.minW;
+        if (s.maxW != SIZE_AUTO && n->w > s.maxW) n->w = s.maxW;
+        if (s.minH > 0 && n->h < s.minH) n->h = s.minH;
+        if (s.maxH != SIZE_AUTO && n->h > s.maxH) n->h = s.maxH;
         return;
     }
 
@@ -80,6 +111,11 @@ static void measure(UiNode* n, const TextMetrics& tm) {
 
     n->w = (s.width  == SIZE_AUTO) ? cw : s.width;
     n->h = (s.height == SIZE_AUTO) ? ch : s.height;
+    // F2.2: apply min/max constraints
+    if (s.minW > 0 && n->w < s.minW) n->w = s.minW;
+    if (s.maxW != SIZE_AUTO && n->w > s.maxW) n->w = s.maxW;
+    if (s.minH > 0 && n->h < s.minH) n->h = s.minH;
+    if (s.maxH != SIZE_AUTO && n->h > s.maxH) n->h = s.maxH;
 }
 
 // ── Scroll arrange: children at natural main size, shifted by -scrollMain ───
@@ -108,6 +144,12 @@ static void arrangeScroll(UiNode* n) {
     // Lay children stacked at their natural main size, offset by the scroll pos.
     int cursor = (isRow ? innerX : innerY) - sc;
     for (UiNode* k = n->firstChild; k; k = k->nextSibling) {
+        // F2.4: skip absolute children in scroll flow
+        if (k->style.position == Position::Absolute) continue;
+
+        // F2.1: advance cursor by main-axis leading margin before placing child
+        cursor += isRow ? k->style.ml : k->style.mt;
+
         if (s.align == Align::Stretch) {
             if (isRow) k->h = (uint16_t)crossAvail;
             else       k->w = (uint16_t)crossAvail;
@@ -125,7 +167,21 @@ static void arrangeScroll(UiNode* n) {
         if (isRow) { k->x = (int16_t)cursor;             k->y = (int16_t)(innerY + crossOff); }
         else       { k->x = (int16_t)(innerX + crossOff); k->y = (int16_t)cursor; }
 
+        // F2.1: apply per-child margins to final position
+        k->x += k->style.ml;
+        k->y += k->style.mt;
+
         cursor += (isRow ? k->w : k->h) + s.gap;
+        // F2.1: advance cursor by main-axis trailing margin after placing child
+        cursor += isRow ? k->style.mr : k->style.mb;
+        arrange(k);
+    }
+
+    // F2.4: place absolute children pinned to parent origin after relative flow
+    for (UiNode* k = n->firstChild; k; k = k->nextSibling) {
+        if (k->style.position != Position::Absolute) continue;
+        k->x = (int16_t)(n->x + k->style.absX);
+        k->y = (int16_t)(n->y + k->style.absY);
         arrange(k);
     }
 }
@@ -145,12 +201,19 @@ static void arrange(UiNode* n) {
     const int mainAvail  = isRow ? innerW : innerH;
     const int crossAvail = isRow ? innerH : innerW;
 
-    int nKids = childCount(n);
-    if (nKids == 0) return;
+    if (!n->firstChild) return;
+
+    // F2.4: count only relative children for flex flow; absolute children are
+    // placed separately after the flex pass and do not affect sizing/spacing.
+    int nKids = 0;
+    for (UiNode* k = n->firstChild; k; k = k->nextSibling) {
+        if (k->style.position != Position::Absolute) nKids++;
+    }
 
     // flex-basis:0 — grow children that opt in contribute 0 to the base sum, so
     // the leftover (and thus the ratio split) ignores their content width.
     for (UiNode* k = n->firstChild; k; k = k->nextSibling) {
+        if (k->style.position == Position::Absolute) continue;
         if (k->style.flexZero && k->style.flexGrow > 0) {
             if (isRow) k->w = 0; else k->h = 0;
         }
@@ -159,6 +222,7 @@ static void arrange(UiNode* n) {
     // Sum measured main sizes + collect grow weights.
     int sumMain = 0, growWeight = 0;
     for (UiNode* k = n->firstChild; k; k = k->nextSibling) {
+        if (k->style.position == Position::Absolute) continue;
         sumMain += isRow ? k->w : k->h;
         growWeight += k->style.flexGrow;
     }
@@ -171,6 +235,7 @@ static void arrange(UiNode* n) {
         int given = 0;
         UiNode* lastGrow = nullptr;
         for (UiNode* k = n->firstChild; k; k = k->nextSibling) {
+            if (k->style.position == Position::Absolute) continue;
             if (k->style.flexGrow > 0) {
                 int extra = leftover * k->style.flexGrow / growWeight;
                 if (isRow) k->w = (uint16_t)(k->w + extra);
@@ -204,6 +269,12 @@ static void arrange(UiNode* n) {
 
     int cursor = (isRow ? innerX : innerY) + startOff;
     for (UiNode* k = n->firstChild; k; k = k->nextSibling) {
+        // F2.4: skip absolute children in flex flow
+        if (k->style.position == Position::Absolute) continue;
+
+        // F2.1: advance cursor by main-axis leading margin before placing child
+        cursor += isRow ? k->style.ml : k->style.mt;
+
         // Cross-axis sizing/positioning.
         if (s.align == Align::Stretch) {
             if (isRow) k->h = (uint16_t)crossAvail;
@@ -219,10 +290,24 @@ static void arrange(UiNode* n) {
         }
         if (crossOff < 0) crossOff = 0;
 
-        if (isRow) { k->x = (int16_t)cursor;            k->y = (int16_t)(innerY + crossOff); }
+        if (isRow) { k->x = (int16_t)cursor;             k->y = (int16_t)(innerY + crossOff); }
         else       { k->x = (int16_t)(innerX + crossOff); k->y = (int16_t)cursor; }
 
+        // F2.1: apply per-child margins to final position
+        k->x += k->style.ml;
+        k->y += k->style.mt;
+
         cursor += (isRow ? k->w : k->h) + spacing;
+        // F2.1: advance cursor by main-axis trailing margin after placing child
+        cursor += isRow ? k->style.mr : k->style.mb;
+        arrange(k);
+    }
+
+    // F2.4: place absolute children pinned to parent origin after relative flow
+    for (UiNode* k = n->firstChild; k; k = k->nextSibling) {
+        if (k->style.position != Position::Absolute) continue;
+        k->x = (int16_t)(n->x + k->style.absX);
+        k->y = (int16_t)(n->y + k->style.absY);
         arrange(k);
     }
 }

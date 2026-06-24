@@ -16,13 +16,26 @@ NodeArena::NodeArena(size_t capacity) : cap_(capacity) {
 NodeArena::~NodeArena() { delete[] pool_; }
 
 UiNode* NodeArena::alloc() {
-    if (used_ >= cap_) return nullptr;
+    if (used_ >= cap_) {
+        overflowCount_++;
+        if (!overflowLogged_) {
+            // Log once per frame so an overflowing build() doesn't spam.
+            // The sentinel renders as an empty View — no crash, no null deref.
+            overflowLogged_ = true;
+        }
+        sentinel_ = UiNode{};  // fresh zero-state each time (sentinel is a View leaf)
+        return &sentinel_;
+    }
     UiNode* n = &pool_[used_++];
     *n = UiNode{};
     return n;
 }
 
-void NodeArena::reset() { used_ = 0; }
+void NodeArena::reset() {
+    used_          = 0;
+    overflowLogged_ = false;
+    // overflowCount_ intentionally NOT reset — cumulative across frames for diagnostics
+}
 
 void setChildren(UiNode* parent, std::initializer_list<UiNode*> children) {
     UiNode* prev = nullptr;
@@ -455,6 +468,33 @@ UiNode* AnimatedIcon(NodeArena& a, anim::AnimationPlayer& player) {
     n->iconW = player.width();
     n->iconH = player.height();
     return n;
+}
+
+// ── Plan 90: Skeleton placeholders ───────────────────────────────────────────
+
+UiNode* SkeletonRow(NodeArena& a, uint32_t phase, uint16_t width) {
+    // Cycle "." / ".." / "..." every 6 ticks (~180ms at 30fps) to signal loading.
+    static const char* const kDots[] = {"   ", ".  ", ".. ", "..."};
+    const char* label = kDots[(phase / 6) % 4];
+
+    uint8_t pad = aether::theme().space.xs;
+    Style s;
+    s.dir     = FlexDir::Row;
+    s.width   = width;
+    s.height  = (uint16_t)(aether::theme().space.lg + (uint8_t)(pad * 2));
+    s.padding = pad;
+    s.align   = Align::Center;
+    s.border  = true;
+    return View(a, s, {Text(a, label, TextRole::Caption)});
+}
+
+UiNode* SkeletonBlock(NodeArena& a, uint16_t w, uint16_t h, uint32_t phase) {
+    (void)phase;
+    Style s;
+    s.width  = w;
+    s.height = h;
+    s.border = true;
+    return View(a, s);
 }
 
 } // namespace aether::ui

@@ -98,6 +98,16 @@ void AppDetailScreen::onCapToggle(void* u) {
     cr->self->rt_.view().requestRedraw();
 }
 
+void AppDetailScreen::onResetPerms(void* u) {
+    auto* self = static_cast<AppDetailScreen*>(u);
+    auto* perm = self->rt_.container().resolve<PermissionService>();
+    if (!perm) return;
+    for (int i = 0; kSensitiveCaps[i]; ++i)
+        perm->revoke(self->appId_, kSensitiveCaps[i]);
+    self->dirty_ = true;
+    self->rt_.view().requestRedraw();
+}
+
 void AppDetailScreen::onMove(void* u) {
     auto* self = static_cast<AppDetailScreen*>(u);
     auto* svc  = self->rt_.container().resolve<StorageService>();
@@ -147,7 +157,9 @@ UiNode* AppDetailScreen::build(NodeArena& a, Runtime& rt) {
         append(Toggle(a, capLabel(cap), st == 1, onCapToggle, &capRows_[ci]));
         ++ci;
     }
-    if (!anyPerm) {
+    if (anyPerm) {
+        append(ListRow(a, "Reset All Permissions", onResetPerms, this));
+    } else {
         append(ListSection(a, "Permissions"));
         ListEntry e; e.label = "No permissions requested";
         append(ListItemRow(a, e));

@@ -17,7 +17,9 @@ namespace nema {
 
 LauncherScreen::LauncherScreen(Runtime& rt)
     : ComponentScreen(rt),
-      appList_(rt), files_(rt), dolphin_(rt), logs_(rt), settings_(rt) {}
+      appList_(rt), appDetail_(rt), files_(rt), dolphin_(rt), logs_(rt), settings_(rt) {
+    appList_.setLaunchDetailScreen(&appDetail_);
+}
 
 // One entry record keyed by label, animation, and fallback icon handle.
 struct EntryDef {

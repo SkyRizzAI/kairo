@@ -320,8 +320,12 @@ m3ApiRawFunction(wasm_ui_wait_event) {
         if (ev.type != InputEvent::Type::Press) continue;
 
         if (ev.key == Key::Cancel) {
-            // Signal ComponentApp::run() to exit cleanly after WASM returns.
-            h->ctx->requestExit(0);
+            // Return EV_BACK to the WASM app so it can decide whether to exit
+            // (by returning 0 from main()) or navigate internally. Do NOT call
+            // requestExit() here — that makes shouldExit() permanently true,
+            // causing the next ui_wait_event()/ui_poll_event() call to also
+            // return EV_BACK immediately, which breaks multi-screen WASM apps
+            // where sub-screens set g_screen = SCR_MAIN and loop back.
             m3ApiReturn(EV_BACK);
         }
 
@@ -358,7 +362,6 @@ m3ApiRawFunction(wasm_ui_poll_event) {
 
     if (ev.kind == InputEvent::Kind::Key && ev.type == InputEvent::Type::Press) {
         if (ev.key == Key::Cancel) {
-            h->ctx->requestExit(0);
             m3ApiReturn(EV_BACK);
         }
         st->pendingId = 0;

@@ -1,5 +1,6 @@
 #pragma once
 #include "nema/types.h"
+#include "nema/ui/ui_profile.h"
 #include "nema/event/async_event_poster.h"
 #include "nema/services/input_service.h"
 #include "nema/services/audio_service.h"
@@ -96,6 +97,9 @@ public:
     std::vector<const char*> displayServerList() const;
     IDisplayServer*          displayServer() const;      // Plan 50/51: active server
     IDisplayServer*          findDisplayServer(const char* name) const;  // Plan 51: by name
+
+    // Plan 90: UI resource profile for this board (derived from capabilities).
+    aether::ui::UiProfile uiProfile() const;
 
     // Plan 80 — the display servers are constructed and owned by the target's
     // main (in the aether lib / a server module), then registered here so core

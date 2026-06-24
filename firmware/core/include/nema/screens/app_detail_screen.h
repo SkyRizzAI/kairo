@@ -35,6 +35,7 @@ private:
     };
 
     static void onCapToggle(void* u);
+    static void onResetPerms(void* u);
     static void onMove(void* u);
     static void onUninstall(void* u);
     static std::string fmtBytes(size_t bytes);

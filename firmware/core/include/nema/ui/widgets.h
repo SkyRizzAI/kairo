@@ -22,16 +22,23 @@ public:
     NodeArena(const NodeArena&) = delete;
     NodeArena& operator=(const NodeArena&) = delete;
 
-    UiNode* alloc();    // returns a zero-reset node, or nullptr if pool exhausted
-    void    reset();    // call at the start of each render() — O(1)
+    UiNode* alloc();    // returns a zero-reset node; returns &sentinel_ on overflow (log once per frame, never null)
+    void    reset();    // call at the start of each render() — O(1); also resets the overflow flag
 
     size_t  used()     const { return used_; }
     size_t  capacity() const { return cap_; }
+
+    bool   overflowed()    const { return overflowLogged_; }
+    size_t overflowCount() const { return overflowCount_; }
 
 private:
     UiNode* pool_ = nullptr;
     size_t  cap_  = 0;
     size_t  used_ = 0;
+
+    bool   overflowLogged_ = false;
+    size_t overflowCount_  = 0;
+    UiNode sentinel_{};  // returned instead of nullptr on overflow; renders nothing
 };
 
 // ── Primitive builders (low-level) ─────────────────────────────────────────
@@ -232,5 +239,17 @@ UiNode* Toast(NodeArena& a, const char* message);
 // The player is caller-owned (lives as a screen/app member). The renderer
 // calls animPlayer->currentFrameData() each frame.
 UiNode* AnimatedIcon(NodeArena& a, anim::AnimationPlayer& player);
+
+// ── Plan 90: Skeleton placeholders ────────────────────────────────────────────
+
+// SkeletonRow: an animated placeholder row used while list data is loading
+// (e.g. LazyDirLoader is still fetching). Renders as a dashed rect that
+// toggles solid/outline every `phase` ticks. Pass a counter incremented each
+// tick (e.g. a uint32_t member of the screen) for the animation phase.
+// When `phase` is always 0 the row renders as a static dashed outline.
+UiNode* SkeletonRow(NodeArena& a, uint32_t phase = 0, uint16_t width = SIZE_AUTO);
+
+// SkeletonBlock: a fixed-size skeleton placeholder (image, card, etc.).
+UiNode* SkeletonBlock(NodeArena& a, uint16_t w, uint16_t h, uint32_t phase = 0);
 
 } // namespace aether::ui

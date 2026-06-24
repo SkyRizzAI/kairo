@@ -166,6 +166,47 @@ void multiline(Canvas& c, uint16_t x, uint16_t y, uint16_t w,
     }
 }
 
+uint16_t measureMultilineH(const char* text, uint16_t w, TextRole role) {
+    if (!text || !*text || w == 0) return measureTextH(role);
+    FontSpec fs = fontForRole(role);
+    uint16_t charW_px = (uint16_t)((resolve(fs.handle).charW + resolve(fs.handle).spacing) * fs.scale);
+    uint16_t lineH    = (uint16_t)(resolve(fs.handle).charH * fs.scale + 1);
+
+    size_t len = strlen(text);
+    size_t lineStart = 0;
+    size_t lastBreak = (size_t)-1;
+    uint16_t lineW  = 0;
+    uint16_t lines  = 0;
+
+    for (size_t i = 0; i <= len; i++) {
+        char ch = text[i];
+        bool flush = (ch == '\n' || ch == '\0');
+        if (!flush) {
+            if (ch == ' ') lastBreak = i;
+            lineW += charW_px;
+        }
+        if (flush || lineW > w) {
+            size_t breakAt = flush ? i
+                           : (lastBreak != (size_t)-1 ? lastBreak : i);
+            size_t lineLen = breakAt - lineStart;
+            if (lineLen > 0 || flush) lines++;
+
+            if (!flush) {
+                size_t newStart = (lastBreak != (size_t)-1) ? lastBreak + 1 : i;
+                lineStart = newStart;
+                lastBreak = (size_t)-1;
+                lineW = (i >= lineStart) ? (uint16_t)((i - lineStart + 1) * charW_px) : 0;
+            } else {
+                lineStart = i + 1;
+                lineW = 0;
+                lastBreak = (size_t)-1;
+            }
+        }
+    }
+    if (lines == 0) lines = 1;
+    return (uint16_t)(lines * lineH);
+}
+
 void marquee(Canvas& c, uint16_t x, uint16_t y, uint16_t w,
              const char* text, uint32_t tick, TextRole role) {
     if (!text || !*text) return;

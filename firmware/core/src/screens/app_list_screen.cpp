@@ -59,6 +59,24 @@ void AppListScreen::onOpenDetail(void* u) {
     self->rt_.view().push(*detail);
 }
 
+void AppListScreen::openDetailForFocused() {
+    AppDetailScreen* detail = launchDetail_ ? launchDetail_ : detailScreen_;
+    if (!detail) return;
+    int i = state_.focus.focused;
+    if (i < 0 || i >= (int)ids_.size() || ids_[i].empty()) return;
+    const auto& ci = customIcons_[i];
+    detail->setApp(ids_[i], names_[i], ci.bitmap, ci.w, ci.h);
+    rt_.view().push(*detail);
+}
+
+void AppListScreen::onAction(input::Action a) {
+    if (a == input::Action::Menu) {
+        openDetailForFocused();
+        return;
+    }
+    ComponentScreen::onAction(a);
+}
+
 UiNode* AppListScreen::build(NodeArena& a, Runtime& rt) {
     names_.clear(); ids_.clear(); icons_.clear(); customIcons_.clear(); rows_.clear();
 

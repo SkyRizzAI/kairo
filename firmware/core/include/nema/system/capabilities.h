@@ -54,4 +54,10 @@ inline constexpr const char* Profile       = "profile";
 inline constexpr const char* Secure        = "secure.element"; // HW root-of-trust (SE050 / ATECC608B)
 inline constexpr const char* SecureStore   = "secure.store";   // SE050-only secured key-value
 
+// UI tier caps (Plan 90) — boards declare above the universal floor.
+inline constexpr const char* UiExtended    = "ui.extended";    // 512+ arena nodes, 128 focusable
+inline constexpr const char* UiMomentum    = "ui.momentum";    // flick scroll + velocity decay
+inline constexpr const char* UiTransitions = "ui.transitions"; // screen push/pop animation
+inline constexpr const char* UiAnimations  = "ui.animations";  // tween/spring value animation
+
 } // namespace nema::caps

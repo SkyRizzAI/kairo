@@ -9,6 +9,7 @@
 #include "aether/shell/launcher_theme.h"
 #include "nema/ui/animation_player.h"
 #include "nema/screens/app_list_screen.h"
+#include "nema/screens/app_detail_screen.h"
 #include "nema/screens/file_browser_screen.h"
 #include "nema/screens/dolphin_demo.h"
 #include "nema/screens/logs_screen.h"
@@ -34,6 +35,7 @@ private:
     // Sub-screens reachable from the launcher (owned here, like the old HomeScreen).
     // BadUsbApp is a proper ComponentApp now (Plan 84); launched via AppRegistry.
     AppListScreen     appList_;
+    AppDetailScreen   appDetail_;   // for Hold-OK → App Detail shortcut from app list
     FileBrowserScreen files_;
     DolphinDemoScreen dolphin_;
     LogsScreen        logs_;

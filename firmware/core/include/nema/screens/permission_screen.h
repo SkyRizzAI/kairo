@@ -26,8 +26,8 @@ public:
     explicit PermissionScreen(Runtime& rt);
 
     ScreenMode mode()        const override { return ScreenMode::Modal; }
-    uint16_t   modalWidth()  const override { return 220; }
-    uint16_t   modalHeight() const override { return 100; }
+    uint16_t   modalWidth()  const override { return 210; }
+    uint16_t   modalHeight() const override { return 110; }
 
     // Set the active request before pushing. Called by the ScreenFactory
     // (GuiService) on the GUI thread.
@@ -41,7 +41,11 @@ public:
 
 private:
     std::shared_ptr<PermissionService::PermRequest> req_;
-    char body_[80] = "";
+    // Stored separately so build() can create one Text node per line — a single
+    // body_ string with \n allocates multi-line height in layout but the text
+    // renderer only draws the first line, leaving a blank gap for the rest.
+    char shortName_[32] = "";
+    char cap_[48]       = "";
 
     static void onAllow(void* ctx);
     static void onDeny (void* ctx);

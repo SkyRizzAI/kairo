@@ -26,6 +26,8 @@ enum class TextRole : uint8_t {
 // width/height == SIZE_AUTO → measured from content; otherwise fixed logical px.
 constexpr uint16_t SIZE_AUTO = 0xFFFF;
 
+enum class Position : uint8_t { Relative, Absolute };
+
 struct Style {
     FlexDir  dir        = FlexDir::Col;
     uint16_t flexGrow   = 0;            // 0 = no grow; >0 = weight sharing leftover main-axis space
@@ -46,6 +48,20 @@ struct Style {
     // by pure ratio regardless of their content width. Lets a list row keep a
     // FIXED label/value split independent of label length (content clips/marquees).
     bool     flexZero   = false;
+
+    // F2.1 — Per-side margins (independent of padding, applied in layout after flex)
+    int8_t  mt = 0, mr = 0, mb = 0, ml = 0;  // margin top/right/bottom/left
+
+    // F2.2 — Size constraints: clamp after flex distribution
+    uint16_t minW = 0;
+    uint16_t maxW = SIZE_AUTO;   // SIZE_AUTO = unconstrained
+    uint16_t minH = 0;
+    uint16_t maxH = SIZE_AUTO;
+
+    // F2.4 — Absolute positioning: remove from flex flow, pin to parent origin
+    Position position = Position::Relative;
+    int16_t  absX = 0;   // relative to parent top-left
+    int16_t  absY = 0;
 };
 
 // Persistent scroll state for a NodeType::Scroll node. Lives OUTSIDE the arena
@@ -70,6 +86,7 @@ struct UiNode {
 
     // Text leaf:
     const char* text = nullptr;        // NOT owned — caller guarantees lifetime through render
+    const char* key  = nullptr;   // F3.2: stable id for reconciliation (optional)
     TextRole    role = TextRole::Body;
 
     // Pressable:
@@ -93,6 +110,11 @@ struct UiNode {
     const uint8_t* iconBitmap = nullptr;
     uint8_t        iconW      = 0;
     uint8_t        iconH      = 0;
+
+    // F2.3 — Multiline text: wrap at node width, limited to maxLines (0=unlimited)
+    bool    wrap     = false;
+    uint8_t lineGap  = 1;    // px between lines
+    uint8_t maxLines = 0;    // 0 = unlimited
 
     // Plan 70: AnimatedIcon leaf (type == AnimatedIcon). Caller-owned player;
     // the renderer draws the current frame on each paint.

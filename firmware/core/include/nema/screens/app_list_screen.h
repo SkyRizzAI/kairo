@@ -25,11 +25,21 @@ public:
     // Switch to Detail mode: pressing a row opens `detail` instead of launching.
     void setDetailScreen(AppDetailScreen* detail) { detailScreen_ = detail; }
 
+    // Wire a detail screen for Hold-OK → App Detail from Launch mode. Allows
+    // users to long-press OK on any app in the launcher to open App Detail
+    // without going through Settings → Apps.
+    void setLaunchDetailScreen(AppDetailScreen* detail) { launchDetail_ = detail; }
+
+    // Override to handle Action::Menu (Hold-OK) → open App Detail in-place.
+    void onAction(input::Action a) override;
+
 private:
     struct Row { AppListScreen* self; int index; };
 
     // Plan 84: bundled 1-bit icon from a .papp app (non-owning pointer).
     struct CustomIcon { const uint8_t* bitmap; uint8_t w, h; };
+
+    void openDetailForFocused();
 
     aether::ui::ScrollState                 scroll_;
     std::vector<std::string>                names_;
@@ -42,6 +52,7 @@ private:
     static void onOpenDetail(void* u);
 
     AppDetailScreen* detailScreen_ = nullptr;
+    AppDetailScreen* launchDetail_ = nullptr;  // detail screen for Hold-OK in Launch mode
 };
 
 } // namespace nema

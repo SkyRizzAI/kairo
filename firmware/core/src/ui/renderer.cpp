@@ -76,8 +76,15 @@ static void paint(const UiNode* n, Canvas& c, const UiNode* focused, bool inFocu
         } else {
             // Text on a filled background renders inverted (white) so banner/title
             // bars are legible. Otherwise normal (black-on-white).
-            if (fs.scale <= 1) c.drawText(tx, ty, n->text, on);
-            else               c.drawTextScaled(tx, ty, n->text, fs.scale, on);
+            if (n->wrap && n->w > 0) {
+                // F2.3 Multiline: word-wrap within node width
+                uint16_t availW = (n->w > 2u * s.padding) ? (uint16_t)(n->w - 2u * s.padding) : n->w;
+                aether::ui::draw::multiline(c, tx, ty, availW, n->text, n->role);
+            } else {
+                // Single-line (existing behavior)
+                if (fs.scale <= 1) c.drawText(tx, ty, n->text, on);
+                else               c.drawTextScaled(tx, ty, n->text, fs.scale, on);
+            }
         }
     }
 
@@ -152,8 +159,14 @@ static void paint(const UiNode* n, Canvas& c, const UiNode* focused, bool inFocu
     }
 
     bool childIn = inFocused || (focused && n == focused);
+    // F2.4 Absolute positioning — painter's algorithm: relative children first,
+    // then absolute children on top.
     for (UiNode* k = n->firstChild; k; k = k->nextSibling)
-        paint(k, c, focused, childIn);
+        if (k->style.position == Position::Relative)
+            paint(k, c, focused, childIn);
+    for (UiNode* k = n->firstChild; k; k = k->nextSibling)
+        if (k->style.position == Position::Absolute)
+            paint(k, c, focused, childIn);
 
     // Focus highlight: invert the focused Pressable's bounding box
     if (focused && n == focused)

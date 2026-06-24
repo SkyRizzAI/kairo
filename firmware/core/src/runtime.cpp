@@ -27,6 +27,7 @@
 #include "nema/services/dummy_battery_driver.h"
 #include "nema/services/ntp_service.h"
 #include "nema/version.h"
+#include "nema/ui/ui_profile.h"
 #include <cassert>
 
 namespace nema {
@@ -302,6 +303,10 @@ void Runtime::logForEach(void (*fn)(void* ctx, const LogEntry&), void* ctx) cons
 size_t Runtime::logCount() const {
     auto* ms = dynamic_cast<MemorySink*>(memorySink_.get());
     return ms ? ms->entries().size() : 0;
+}
+
+aether::ui::UiProfile Runtime::uiProfile() const {
+    return aether::ui::UiProfile::fromCapabilities(*capabilities_);
 }
 
 } // namespace nema
