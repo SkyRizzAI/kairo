@@ -37,6 +37,7 @@ The boot sequence is identical for every target:
 |---|---|
 | [`runtime-kernel.md`](runtime-kernel.md) | Boot flow, `Runtime`, service container/manager, Nema kernel (Thread / MessageQueue / TaskRunner), capability & resource model, event bus, logger, config store, process model, threading. |
 | [`ui-app-input.md`](ui-app-input.md) | Canvas (1-bit), ViewDispatcher, component/flex UI, app model (`IApp`/`AppHost`), input abstraction (Action/Code/Key + gestures), assets/fonts/animation, screens & built-in apps. |
+| [`ui-design-system.md`](ui-design-system.md) | **Design-oriented** consolidation for a production UI concept: physical 1-bit constraints, `StyleTokens` design tokens, typography/`TextRole`, flex layout rules, the 1-bit visual language, component vocabulary, full screen map, app-facing UI surface, design invariants & open questions. |
 | [`link-remote-storage.md`](link-remote-storage.md) | PLP wire protocol, transports (USB-CDC / BLE / WASM cable / mux), `LinkService`, `RemoteService` channels, CLI, OTA, VFS & filesystem backends, HAL interface map. |
 | [`scripting-and-apps.md`](scripting-and-apps.md) | QuickJS (UI apps) + wasm3 (headless) runtimes, sandboxing, the app store, `.papp` packaging, embedded apps. |
 | [`platforms-boards-targets.md`](platforms-boards-targets.md) | `IPlatform`/`IBoard` contracts, ESP32 & WASM platforms, the boards (skyrizz-e32, dev-board, simulator), all targets, build/flash, USB mode toggle. |
