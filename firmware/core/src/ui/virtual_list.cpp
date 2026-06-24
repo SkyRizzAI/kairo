@@ -33,9 +33,10 @@ UiNode* VirtualList(NodeArena& a, VirtualListState& vst,
     if (!scroll) return nullptr;
     scroll->type        = NodeType::Scroll;
     scroll->scroll      = &vst;
-    scroll->style       = style;
+    scroll->style          = style;
     scroll->style.dir      = FlexDir::Col;
     scroll->style.flexGrow = (style.flexGrow > 0) ? style.flexGrow : 1;
+    scroll->style.align    = Align::Stretch;  // items must fill full width for highlight + marquee
 
     // Walk tail pointer to build the child linked list in order.
     UiNode** tail = &scroll->firstChild;

@@ -43,10 +43,8 @@ static const IconDef* iconForApp(const AppManifest& m) {
 void AppListScreen::loadInstalledPapps() {
     names_.clear(); ids_.clear(); icons_.clear(); customIcons_.clear();
 
-    // Collect all non-system App-type entries.
     for (const auto& m : rt_.apps().list()) {
         if (m.type != AppType::App) continue;
-        if (m.category && std::strcmp(m.category, "System") == 0) continue;
         names_.push_back(m.name);
         ids_.push_back(m.id);
         if (m.iconBitmap && m.iconW && m.iconH) {

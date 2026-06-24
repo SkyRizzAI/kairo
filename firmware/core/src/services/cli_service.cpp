@@ -184,6 +184,14 @@ std::string resolvePath(const std::string& cwd, const std::string& p) {
     return out;
 }
 
+static std::string fmtSize(uint32_t bytes) {
+    if (bytes < 1024) return std::to_string(bytes) + " B";
+    if (bytes < 1024u * 1024u) {
+        char buf[16]; std::snprintf(buf, sizeof(buf), "%.1f KB", bytes / 1024.0f); return buf;
+    }
+    char buf[16]; std::snprintf(buf, sizeof(buf), "%.1f MB", bytes / (1024.0f * 1024.0f)); return buf;
+}
+
 } // namespace
 
 void registerCoreCliCommands(CliService& cli, Runtime& rt) {
@@ -507,35 +515,45 @@ void registerCoreCliCommands(CliService& cli, Runtime& rt) {
             }
         });
 
-    cli.add("fs", "filesystem: fs ls|cat|rm|mkdir [path] (relative to cwd)",
+    cli.add("ls", "list directory: ls [path]",
         [r](CliContext& c) {
-            const auto& args = c.args; const auto& out = c.out;
             auto* fs = r->container().resolve<IFileSystem>();
-            if (!fs) { out("fs: not available"); return; }
-            std::string sub = args.empty() ? "ls" : args[0];
-            // ls defaults to cwd; the rest resolve their arg relative to cwd.
-            std::string path = (args.size() > 1) ? resolvePath(c.session.cwd, args[1])
-                             : (sub == "ls" ? c.session.cwd : "/");
-            if (sub == "ls") {
-                std::vector<FsEntry> es;
-                if (!fs->list(path, es)) { out("no such directory: " + path); return; }
-                for (auto& e : es)
-                    out((e.isDir ? "d " : "- ") + e.name +
-                        (e.isDir ? "" : "  " + std::to_string(e.size) + "B"));
-            } else if (sub == "cat") {
-                if (args.size() < 2) { out("usage: fs cat <path>"); return; }
-                std::vector<uint8_t> data;
-                if (!fs->read(path, data)) { out("no such file: " + path); return; }
-                out(std::string((const char*)data.data(), data.size()));
-            } else if (sub == "rm") {
-                if (args.size() < 2) { out("usage: fs rm <path>"); return; }
-                out(fs->remove(path) ? "removed " + path : "failed: " + path);
-            } else if (sub == "mkdir") {
-                if (args.size() < 2) { out("usage: fs mkdir <path>"); return; }
-                out(fs->mkdir(path) ? "created " + path : "failed: " + path);
-            } else {
-                out("usage: fs ls|cat|rm|mkdir [path]");
-            }
+            if (!fs) { c.out("ls: filesystem not available"); return; }
+            std::string path = c.args.empty() ? c.session.cwd : resolvePath(c.session.cwd, c.args[0]);
+            std::vector<FsEntry> es;
+            if (!fs->list(path, es)) { c.out("ls: no such directory: " + path); return; }
+            for (auto& e : es)
+                c.out((e.isDir ? "d " : "- ") + e.name +
+                      (e.isDir ? "" : "  " + fmtSize(e.size)));
+        });
+
+    cli.add("cat", "print file contents: cat <path>",
+        [r](CliContext& c) {
+            if (c.args.empty()) { c.out("usage: cat <path>"); return; }
+            auto* fs = r->container().resolve<IFileSystem>();
+            if (!fs) { c.out("cat: filesystem not available"); return; }
+            std::string path = resolvePath(c.session.cwd, c.args[0]);
+            std::vector<uint8_t> data;
+            if (!fs->read(path, data)) { c.out("cat: no such file: " + path); return; }
+            c.out(std::string((const char*)data.data(), data.size()));
+        });
+
+    cli.add("rm", "remove file or directory: rm <path>",
+        [r](CliContext& c) {
+            if (c.args.empty()) { c.out("usage: rm <path>"); return; }
+            auto* fs = r->container().resolve<IFileSystem>();
+            if (!fs) { c.out("rm: filesystem not available"); return; }
+            std::string path = resolvePath(c.session.cwd, c.args[0]);
+            c.out(fs->remove(path) ? "removed " + path : "rm: failed: " + path);
+        });
+
+    cli.add("mkdir", "create directory: mkdir <path>",
+        [r](CliContext& c) {
+            if (c.args.empty()) { c.out("usage: mkdir <path>"); return; }
+            auto* fs = r->container().resolve<IFileSystem>();
+            if (!fs) { c.out("mkdir: filesystem not available"); return; }
+            std::string path = resolvePath(c.session.cwd, c.args[0]);
+            c.out(fs->mkdir(path) ? "created " + path : "mkdir: failed: " + path);
         });
 
     cli.add("config", "config get|set|rm <ns> <key> [value]",
