@@ -66,32 +66,33 @@ bool Se050Driver::writeBlock(uint8_t pcb, const uint8_t* inf, size_t n) {
 }
 
 bool Se050Driver::readBlock(uint8_t& pcb, std::vector<uint8_t>& inf) {
-    // The chip returns 0xFF while busy; poll until a real block shows up.
-    for (int attempt = 0; attempt < 200; attempt++) {
-        size_t got = Wire.requestFrom((int)I2C_ADDR_SE050, 2);
-        if (got >= 2) {
-            uint8_t b0 = Wire.read(), b1 = Wire.read();
-            if (b0 != 0xFF) {
-                pcb = b0;
-                uint8_t len = b1;
-                size_t need = (size_t)len + 2;            // INF + CRC
-                Wire.requestFrom((int)I2C_ADDR_SE050, (int)need);
-                std::vector<uint8_t> rest;
-                while (Wire.available()) rest.push_back(Wire.read());
-                std::vector<uint8_t> full = {pcb, len};
-                full.insert(full.end(), rest.begin(), rest.end());
-                rt_->log().debug("SE050", "rx", {{"frame", hx(full.data(), full.size())}});
-                if (rest.size() < need) return false;
-                inf.assign(rest.begin(), rest.begin() + len);
-                uint16_t got_crc = rest[len] | (rest[len + 1] << 8);
-                std::vector<uint8_t> chk = {pcb, len};
-                chk.insert(chk.end(), inf.begin(), inf.end());
-                if (crc16(chk.data(), chk.size()) != got_crc) {
-                    rt_->log().warn("SE050", "rx CRC mismatch");
-                    return false;
-                }
-                return true;
+    // Read each whole T=1 block in ONE I²C transaction into a fixed, bounded stack
+    // buffer. The chip returns 0xFF while busy → poll. (The earlier two-requestFrom +
+    // heap-vector version corrupted the heap → boot loop; this is the safe rewrite.)
+    constexpr size_t kMax = 260;                  // PCB+LEN+255 INF+2 CRC
+    for (int attempt = 0; attempt < 100; attempt++) {
+        uint8_t buf[kMax];
+        Wire.requestFrom((int)I2C_ADDR_SE050, (int)kMax);
+        size_t got = 0;
+        while (Wire.available() && got < kMax) buf[got++] = (uint8_t)Wire.read();
+
+        if (got >= 4 && buf[0] != 0xFF) {         // a real block (4 = PCB+LEN+min CRC)
+            pcb = buf[0];
+            uint8_t len = buf[1];
+            size_t frame = (size_t)len + 4;       // PCB+LEN+INF+CRC
+            if (frame > got) {                     // incomplete read — give up cleanly
+                rt_->log().warn("SE050", "rx short frame",
+                                {{"len", std::to_string(len)}, {"got", std::to_string(got)}});
+                return false;
             }
+            rt_->log().debug("SE050", "rx", {{"frame", hx(buf, frame)}});
+            uint16_t got_crc = buf[2 + len] | (buf[3 + len] << 8);
+            if (crc16(buf, 2 + len) != got_crc) {
+                rt_->log().warn("SE050", "rx CRC mismatch");
+                return false;
+            }
+            inf.assign(buf + 2, buf + 2 + len);
+            return true;
         }
         delay(1);
     }

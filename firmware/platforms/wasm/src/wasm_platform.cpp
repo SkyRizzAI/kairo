@@ -180,11 +180,11 @@ void WasmPlatform::registerDrivers(Runtime& rt) {
 
     remote_.onReady(&WasmPlatform::readyThunk, this); // push current screen on connect (after auth)
 
-    // Secure element — software-emulated SE050 so the crypto-wallet feature can
-    // be developed/tested in the browser. Apps gate on caps::Secure (ADR 0005).
-    rt.container().registerAs<ISecureElement>(&secure_);
-    rt.hardware().add({"secure", DriverKind::Other, "sim SE050 (software)"});
-    rt.capabilities().add(caps::Secure);
+    // No secure element in the browser. We deliberately do NOT register an
+    // ISecureElement or declare caps::Secure — so the wallet (capability-driven) sees
+    // no SE and uses the software/NVS backend (mode C). A board WITH a real SE050
+    // registers its driver + caps::Secure (see skyrizz-e32); the sim behaves like a
+    // board without one. (SimSecureElement stays available for any future opt-in test.)
 
     // Audio output — Web Audio bridge. No real DAC in the browser; WasmSpeaker
     // forwards playTone() to the host page (Module.nemaPlayTone → Web Audio). This

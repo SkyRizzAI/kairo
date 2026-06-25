@@ -3,6 +3,8 @@
 #include "nema/runtime.h"
 #include "nema/log/logger.h"
 #include "nema/service/service_container.h"
+#include "nema/system/capabilities.h"
+#include "nema/system/capability_registry.h"
 #include "nema/fs/app_storage.h"
 
 #include <utility>
@@ -45,10 +47,16 @@ WalletSystem& bootWalletSystem(Runtime& rt) {
     // device-bound sealing (SeFeature::SecureStore), use it to wrap the seed (mode B,
     // 🔒). Otherwise stay pure-software (mode C, ⚠️) — the PIN is still a real crypto
     // gate. No board branching: we ask the chip what it can do.
-    ISecureElement* se = rt.container().resolve<ISecureElement>();
+    // Capability-driven (CLAUDE.md: check capabilities, never board type). A board with
+    // a real secure element registers its driver AND declares caps::Secure; a board
+    // without one (e.g. the WASM simulator) does neither — so here we see no caps::Secure,
+    // resolve no driver, and fall back to software/NVS (mode C). "SE first, else software."
+    bool hasSecure = rt.capabilities().has(caps::Secure);
+    ISecureElement* se = hasSecure ? rt.container().resolve<ISecureElement>() : nullptr;
     bool sealable = se && se->hasFeature(SeFeature::SecureStore);
     rt.log().info("WalletSystem", "backend",
                   {{"secureElement", se ? se->name() : "none"},
+                   {"capability", hasSecure ? "secure.element" : "none"},
                    {"sealable", sealable ? "yes" : "no"},
                    {"mode", sealable ? "B (secure-element)" : "C (software)"}});
 
