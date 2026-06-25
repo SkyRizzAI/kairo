@@ -13,9 +13,14 @@
 > 3. ✅ Dark mode = swap the fg/bg tokens.
 > 4. ✅ Display rotation (0/90/180/270) + input/touch follow.
 >
-> - Status: 🟢 firmware done & build-verified (hardware + wasm). One caveat: the simulator
->   doesn't yet render the device colour/dark palette (Forge uses its own tint dropdown) —
->   visible on hardware; sim auto-follow needs the deferred Option B (device→Forge palette).
+> - Status: 🟢 firmware done & build-verified (hardware + wasm). The sim now follows the
+>   device colour/dark palette (Option B shipped: device→Forge palette over PLP).
+> - **Also shipped this sweep** (beyond the original 4 goals — see `docs/feats/`):
+>   status-bar redesign (battery + 3×5 clock + wifi signal bars), list scroll-off margin,
+>   **Mission Control** quick-settings panel ([`mission-control.md`](../feats/mission-control.md)),
+>   and a boot/restart **splash screen** ([`splash-screen.md`](../feats/splash-screen.md)).
+>   Feature docs: [display-rotation](../feats/display-rotation.md),
+>   [colour-themes](../feats/colour-themes.md).
 > - Architecture: [ADR 0012](../decisions/0012-color-token-system-display-capability.md).
 > - Design reference: [`docs/architecture/ui-design-system.md`](../architecture/ui-design-system.md) §17 (Target design).
 > - Builds on: Plan 53 (StyleTokens), Plan 79/80 (UI foundations + aether split),

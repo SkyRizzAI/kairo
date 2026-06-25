@@ -1,6 +1,7 @@
 # 12 — Color token system & display-capability rendering
 
-- **Status:** Proposed
+- **Status:** Accepted (2-colour palette path shipped; the multi-colour `Color`/`toMono`
+  tier remains future work)
 - **Date:** 2026-06-25
 - **Area:** ui/theme, core/display (Canvas), board/display-driver
 - Refines: [ADR 0002](0002-nema-aether-boundary.md) (nema ↔ aether boundary),

@@ -18,6 +18,10 @@
 | Asset loader & animation pipeline | [`asset-loader.md`](asset-loader.md) |
 | Dolphin showcase — system screen | [`dolphin-system-screen.md`](dolphin-system-screen.md) |
 | Dolphin showcase — custom app | [`dolphin-custom-app.md`](dolphin-custom-app.md) |
+| Mission Control (Flipper-style quick-settings panel) | [`mission-control.md`](mission-control.md) |
+| Display rotation (0/90/180/270, input + touch follow) | [`display-rotation.md`](display-rotation.md) |
+| Colour themes + dark mode (mono/Flipper palette) | [`colour-themes.md`](colour-themes.md) |
+| Splash screen (boot + restart logo & progress bar) | [`splash-screen.md`](splash-screen.md) |
 
 > Not yet documented as standalone features (covered in architecture docs): settings
 > screens, lock/sleep, owner profile, audio (mic/speaker) and camera on SkyRizz E32, BLE

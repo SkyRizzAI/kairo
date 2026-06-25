@@ -4,7 +4,12 @@
 > Detail per-stage ada di [`plans/`](plans/00-overview.md). Master plan: [`concept_plan.md`](concept_plan.md).
 > Reference arsitektur per-subsistem: [`architecture/`](architecture/README.md).
 >
-> **Last updated:** 2026-06-23 (Plan 88: Remote Protocol v2 + **internal-SRAM diet** — WiFi dynamic-TX/RX-trim freed ~120 KB internal → SD `/sd` reliable, network/mDNS/WS-server work. NVS connect-crash + registry race fixed. ADR 0009/0010)
+> **Last updated:** 2026-06-25 (Plan 92 — **UI maturity sweep**: display rotation
+> (0/90/180/270 + button/touch follow), colour theme system (mono/Flipper palette +
+> dark mode, device→Forge palette over PLP, ADR 0012), status-bar redesign, list
+> scroll-off margin, **Mission Control** quick-settings panel (brightness/volume/wifi),
+> and a boot/restart **splash screen**. New feats: mission-control, display-rotation,
+> colour-themes, splash-screen. Prev: Plan 88 Remote Protocol v2 + internal-SRAM diet.)
 
 ---
 
