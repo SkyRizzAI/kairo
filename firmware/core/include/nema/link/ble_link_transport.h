@@ -30,7 +30,43 @@ public:
 
     // ── ILinkTransport ──
     bool send(const uint8_t* data, size_t len) override {
-        return ble_ && ble_->notify(plp_ble::CHAR_TX, data, len);
+        if (!ble_) return false;
+        if (len == 0) return true;
+        const size_t chunk = mtu();
+        // ── "Smart-data" channel arbitration (Plan 93) ──────────────────────────────
+        // BLE is low-bandwidth, so the Screen mirror (PLP channel 0x01, at data[1]) is
+        // strictly BEST-EFFORT and YIELDS to the request/response channels (CLI, control,
+        // file). It is sent ONLY when:
+        //   (a) the link is nearly idle — txPending() ≤ kIdle, i.e. no CLI/control reply is
+        //       still in flight. While a command runs, its reply keeps pending > kIdle so the
+        //       mirror pauses and the CLI gets the whole link; when the reply drains, the
+        //       mirror resumes. (Exactly the "stop the display while a command replies" idea.)
+        //   (b) the frame is small enough that its burst of chunks can't overrun the
+        //       controller's ACL buffers ("BLE_INIT: Malloc failed"). Big/busy frames are
+        //       skipped; the next small one gets through.
+        // Inbound input (host→device) is RX, not gated here, so it's always instant. CLI/
+        // control replies are non-screen channels → never gated → always sent. The peak
+        // in-flight (kIdle + kMaxChunks) stays well under the controller's buffer count.
+        if (len >= 2 && data[1] == 0x01 /*plp::Channel::Screen*/) {
+            // kMaxChunks stays just under the host mbuf pool (MSYS=24) so a frame's burst
+            // can't exhaust it (which would truncate the frame → blank). 10 was far too low
+            // — real screens RLE to >1.8 KB, so every frame was skipped. kIdle keeps the
+            // mirror yielding to CLI/control. NOTE: this only sends successfully when the
+            // BLE controller can allocate TX buffers — i.e. WiFi OFF (RAM). With WiFi ON the
+            // controller mallocs fail regardless (radio RAM contention), so the screen mirror
+            // is effectively WiFi-OFF-only on this board. (Plan 93)
+            constexpr int    kIdle      = 4;
+            constexpr size_t kMaxChunks = 20;
+            const size_t chunks = (len + chunk - 1) / chunk;
+            if (ble_->txPending() > kIdle || chunks > kMaxChunks) return true;  // skip frame
+        }
+        // A single BLE notification carries only (ATT_MTU − 3) bytes, so split the frame
+        // across notifications; the host's PLP FrameParser reassembles the byte stream.
+        for (size_t off = 0; off < len; off += chunk) {
+            const size_t n = (len - off < chunk) ? (len - off) : chunk;
+            if (!ble_->notify(plp_ble::CHAR_TX, data + off, n)) return false;
+        }
+        return true;
     }
     void onRecv(RecvFn fn, void* user) override { recv_ = fn; user_ = user; }
     bool isConnected() const override { return ble_ && ble_->isConnected(); }

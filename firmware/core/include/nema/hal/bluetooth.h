@@ -65,6 +65,9 @@ struct IBleAdapter : IDriver {
 
     // I/O primitives (server side) — used by the remote layer's BleLinkTransport.
     virtual bool notify(const char* charUuid, const uint8_t* data, size_t len) = 0;
+    // Outstanding (submitted-but-not-yet-transmitted) TX notifications. Lets the transport
+    // pace the heavy screen mirror at frame granularity. Default 0 = no pacing (Plan 93).
+    virtual int  txPending() const { return 0; }
     using WriteFn = void (*)(void* user, const char* charUuid, const uint8_t* data, size_t len);
     virtual void onWrite(WriteFn fn, void* user) = 0;
 

@@ -43,9 +43,14 @@ namespace nema {
 void Esp32Platform::registerDrivers(Runtime& rt) {
     rt_ = &rt;
     // Each driver self-registers via its lifecycle hook (deps, service, caps, hw).
+    // ORDER MATTERS (Plan 93): BLE registers FIRST so its service start() runs BEFORE
+    // WiFi's. esp_bt_controller_init crashes if WiFi has already grabbed the shared
+    // 2.4 GHz radio (the controller's own rollback faults — not a RAM issue: it failed
+    // even with 124 KB free). Bringing the BLE controller up on a pristine radio, then
+    // letting WiFi init on top with SW coexistence, is the reliable order.
+    ble_.onRegister(rt);   // BLE radio (NimBLE) — MUST come before WiFi
     wifi_.onRegister(rt);
     http_.onRegister(rt);
-    ble_.onRegister(rt);   // BLE radio (NimBLE) — capability "bluetooth.ble"
     usbHid_.onRegister(rt);
 
     // NVS-backed config store — available to all ESP32 boards.

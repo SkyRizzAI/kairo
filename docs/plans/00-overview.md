@@ -203,6 +203,22 @@ Kerjakan **berurutan**; tiap dok punya `Depends on`. Centang status di sini saat
 |---|---|---|---|---|
 | 90 | [`90-aether-ui-maturity.md`](90-aether-ui-maturity.md) | UiProfile + universal floor, arena safety, namespace unifikasi, per-side padding, multiline text, position:absolute, VirtualList, FunctionArena, screen transitions, Context API | 79,70,53 | ☐ |
 
+### Phase 11 — Connectivity HW Bring-up
+
+> Menghidupkan stack BLE yang sudah dibangun (Plan 34/35/73/74 + Forge Web Bluetooth) di hardware: fix crash controller, verifikasi pairing dari HP, parity Flipper.
+
+| # | Dokumen | Fitur / Stage | Depends on | Status |
+|---|---|---|---|---|
+| 93 | [`93-ble-bringup-crash-pairing.md`](93-ble-bringup-crash-pairing.md) | **BLE bring-up**: fix crash `esp_bt_controller_init` (RAM internal habis → `SPIRAM_TRY_ALLOCATE_WIFI_LWIP` + guard heap), verifikasi pairing dari HP (Web Bluetooth), parity Flipper (flow control, advertising 16-bit) | 34,35,73,74,88 | 🟡 |
+
+### Phase 12 — Crypto Wallet & Secure Element
+
+> Hardware crypto wallet sekelas Trezor Safe di SkyRizz E32 (NXP SE050): Secure Element API (privileged HAL), Wallet API (backend pluggable SE050/software, never expose key), app "Wallets" di launcher, dApp signing (EIP-1193/Wallet Standard/PSBT) dengan konfirmasi trusted-display + tombol fisik. Nyambung ke ADR 0005 (SE generic HAL).
+
+| # | Dokumen | Fitur / Stage | Depends on | Status |
+|---|---|---|---|---|
+| 94 | [`94-crypto-wallet-secure-element.md`](94-crypto-wallet-secure-element.md) | **Crypto wallet + SE**: arsitektur tiga-sumbu (Custody `IWalletBackend` × Chain `IChain` × Consent system-modal), trezor-crypto (BIP32/39/44, secp256k1/Ed25519), dua backend (SE050 wrapped-seed / software-NVS) + indikator backend, network=data (EVM multi-chain), WYSIWYS sign-consent (fail-closed, physical-only), isi TODO crypto `Se050Driver` (Plug&Trust), app Wallets + onboarding/PIN, dApp bridge (EIP-1193/Wallet Standard/PSBT → PLP), Phantom (next). ADR 0014 (key-mode/threat) + 0015 (arsitektur) | ADR0005,83,87,23,35,88,90 | ☐ |
+
 ---
 
 ## 5. Konvensi

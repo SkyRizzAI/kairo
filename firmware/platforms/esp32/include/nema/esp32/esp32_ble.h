@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <cstdint>
+#include <atomic>
 
 namespace nema {
 
@@ -26,7 +27,7 @@ public:
 
     // IDriver / IService
     const char* name() const override { return "Esp32Ble"; }
-    void start() override {}
+    void start() override;            // boot: reserve the BLE controller (Plan 93)
     void stop()  override {}
 
     // ── IBluetoothController ──
@@ -47,6 +48,7 @@ public:
     bool peer(BtPeer& out) const override;
     void disconnect() override;
     bool notify(const char* charUuid, const uint8_t* data, size_t len) override;
+    int  txPending() const override;
     void onWrite(WriteFn fn, void* user) override { writeFn_ = fn; writeUser_ = user; }
     void onPairRequest(PairFn fn, void* user) override { pairFn_ = fn; pairUser_ = user; }
     void confirmPairing(bool accept) override;
@@ -69,13 +71,15 @@ public:
 
 private:
     void startAdvertisingInternal();
+    bool initStack();                // one-time controller+host bring-up (boot)
 
     Logger*             log_    = nullptr;
     EventBus*           events_ = nullptr;
     AsyncEventPoster*   poster_ = nullptr;
     CapabilityRegistry* caps_   = nullptr;
 
-    bool        enabled_     = false;
+    bool        stackUp_     = false;   // controller+host initialized (reserved at boot)
+    bool        enabled_     = false;   // user toggle: advertising/connectable
     bool        advertising_ = false;
     BtMode      mode_        = BtMode::Off;
     std::string addr_        = "00:00:00:00:00:00";
@@ -83,6 +87,11 @@ private:
 
     uint16_t connHandle_ = 0xFFFF;     // 0xFFFF = not connected
     BtPeer   peer_{};
+
+    // Notify flow control (Plan 93): outstanding (submitted-not-yet-transmitted) TX
+    // notifications. Caps how far the high-rate screen mirror can run ahead of the radio
+    // so it never overruns the controller's ACL buffers ("BLE_INIT: Malloc failed").
+    std::atomic<int> pendingNotify_{0};
 
     // pending numeric-comparison passkey
     bool     pairing_ = false;

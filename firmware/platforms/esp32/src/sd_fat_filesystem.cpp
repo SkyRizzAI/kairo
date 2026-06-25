@@ -6,6 +6,7 @@
 #include "sdmmc_cmd.h"
 #include "esp_vfs_fat.h"
 #include "esp_task_wdt.h"
+#include "esp_heap_caps.h"
 #include <dirent.h>
 #include <sys/stat.h>
 #include <cerrno>
@@ -13,6 +14,17 @@
 #include <unistd.h>
 
 namespace nema {
+
+// Each SD/SPI transaction makes ESP-IDF allocate a contiguous INTERNAL DMA buffer. Under
+// heavy concurrent load (BLE controller + WiFi) that pool can be exhausted, and the IDF
+// SD path then dereferences the failed allocation and PANICS the whole device (Plan 93 —
+// the "cd /sd over BLE" crash). Refuse SD I/O gracefully when DMA RAM is too low to be
+// safe, so the caller gets a clean failure instead of a reboot. ~8 KB covers the priv
+// transfer buffer (max_transfer_sz=4000) plus descriptors with margin.
+static bool sdDmaReady() {
+    constexpr size_t kMinDmaBlock = 8 * 1024;
+    return heap_caps_get_largest_free_block(MALLOC_CAP_DMA | MALLOC_CAP_INTERNAL) >= kMinDmaBlock;
+}
 
 bool SdFatFileSystem::begin(const SdSpiConfig& cfg, const char* basePath) {
     if (mounted_) return true;
@@ -65,7 +77,7 @@ void SdFatFileSystem::mkdirsFor(const std::string& realPath) {
 }
 
 bool SdFatFileSystem::list(const std::string& path, std::vector<FsEntry>& out) {
-    if (!mounted_) return false;
+    if (!mounted_ || !sdDmaReady()) return false;   // refuse vs crash under low DMA RAM
     std::string rp = real(path);
     DIR* d = opendir(rp.c_str());
     if (!d) return false;
@@ -95,7 +107,7 @@ bool SdFatFileSystem::list(const std::string& path, std::vector<FsEntry>& out) {
 }
 
 bool SdFatFileSystem::read(const std::string& path, std::vector<uint8_t>& out) {
-    if (!mounted_) return false;
+    if (!mounted_ || !sdDmaReady()) return false;   // refuse vs crash under low DMA RAM
     FILE* f = fopen(real(path).c_str(), "rb");
     if (!f) return false;
     fseek(f, 0, SEEK_END);
@@ -111,8 +123,8 @@ bool SdFatFileSystem::read(const std::string& path, std::vector<uint8_t>& out) {
 }
 
 bool SdFatFileSystem::write(const std::string& path, const uint8_t* data, size_t len) {
-    if (!mounted_) {
-        if (log_) log_->warn("SdFatFS", "write: not mounted", {{"path", path}});
+    if (!mounted_ || !sdDmaReady()) {
+        if (log_) log_->warn("SdFatFS", "write: not mounted / low DMA RAM", {{"path", path}});
         return false;
     }
     std::string rp = real(path);
@@ -153,7 +165,7 @@ bool SdFatFileSystem::writeStreamBegin(const std::string& path) {
 
 bool SdFatFileSystem::writeStreamChunk(uint32_t offset, const uint8_t* data, size_t len) {
     FILE* f = (FILE*)stream_;
-    if (!f) return false;
+    if (!f || !sdDmaReady()) return false;   // refuse vs crash under low DMA RAM
     if (fseek(f, (long)offset, SEEK_SET) != 0) return false;
     size_t wrote = len ? fwrite(data, 1, len, f) : 0;
     return wrote == len;

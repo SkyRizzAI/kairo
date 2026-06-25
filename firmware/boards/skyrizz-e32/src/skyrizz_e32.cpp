@@ -105,9 +105,12 @@ void SkyRizzE32::describeHardware(Runtime& rt) {
     rt.hardware().add({"audio.output", DriverKind::Other, "NS4168 I2S Amp"});
     rt.capabilities().add(caps::AudioOutput);
 
-    // Camera — GC2145 DVP
+    // Camera — GC2145 DVP. LAZY (Plan 93): NOT registered as a service, so it does
+    // NOT start() at boot — its DVP DMA descriptors would eat scarce internal RAM and
+    // fragment the heap the BLE controller needs, yet nothing captures frames today
+    // (only the settings screen reads count/desc). A future camera app must call
+    // camera_.start()/open() on enter and stop() on exit (acquire-on-use, Flipper-style).
     camera_.init(rt, expander_);
-    rt.container().registerService(&camera_);
     rt.camera().add(&camera_, "cam0", "GC2145 2MP DVP");
     rt.hardware().add({"camera", DriverKind::Other, "GC2145 2MP @0x3C"});
     rt.capabilities().add(caps::Camera);

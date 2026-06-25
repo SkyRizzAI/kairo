@@ -23,18 +23,25 @@ public:
         return cdc_ && cdc_->write(data, len) == len;
     }
     void onRecv(RecvFn fn, void* user) override { recv_ = fn; user_ = user; }
-    bool isConnected() const override { return cdc_ && cdc_->isOpen(); }
+    // "Open" (port up) is NOT "connected": an `idf.py monitor` (or any terminal) holds
+    // the CDC open without speaking PLP. If we reported connected on open-alone, the
+    // MuxTransport would broadcast the screen mirror onto the console wire — flooding it
+    // with binary frames and double-loading the device while the real session is on BLE
+    // (Plan 93). Require evidence of an actual PLP host first: any inbound byte.
+    bool isConnected() const override { return cdc_ && cdc_->isOpen() && hostSeen_; }
     size_t mtu() const override { return 512; }   // CDC-ACM bulk endpoint packet
 
 private:
     static void dataThunk(void* user, const uint8_t* d, size_t n) {
         auto* self = static_cast<UsbCdcLinkTransport*>(user);
+        self->hostSeen_ = true;   // something is sending us PLP — a real host, not a monitor
         if (self->recv_) self->recv_(self->user_, d, n);
     }
 
     IUsbCdc* cdc_  = nullptr;
     RecvFn   recv_ = nullptr;
     void*    user_ = nullptr;
+    bool     hostSeen_ = false;
 };
 
 } // namespace nema

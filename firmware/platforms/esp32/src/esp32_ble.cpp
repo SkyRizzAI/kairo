@@ -28,6 +28,9 @@ void Esp32Ble::onRegister(Runtime& rt) {
     caps_ = &rt.capabilities();
 }
 
+// In-flight TX notifications (0 in the no-BT stub build, where notify() never runs).
+int Esp32Ble::txPending() const { return pendingNotify_.load(std::memory_order_relaxed); }
+
 } // namespace nema
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -40,8 +43,17 @@ void Esp32Ble::onRegister(Runtime& rt) {
 #include "host/util/util.h"
 #include "services/gap/ble_svc_gap.h"
 #include "services/gatt/ble_svc_gatt.h"
+#include "esp_heap_caps.h"
 
 extern "C" void ble_store_config_init(void);
+
+// ⚠️ THE root-cause fix (Plan 93). arduino-esp32's initArduino() calls
+// esp_bt_controller_mem_release(ESP_BT_MODE_BTDM) at boot — freeing the BT controller's
+// memory — UNLESS btInUse() returns true. btInUse() is a WEAK symbol defaulting to false,
+// and arduino explicitly invites a strong user override (esp32-hal-bt.c). Without this,
+// our later esp_bt_controller_init() runs on released memory and crashes deterministically
+// inside btdm_controller_init (the entire boot-loop saga). We DO use BT → claim it.
+extern "C" bool btInUse(void) { return true; }
 
 namespace nema {
 
@@ -82,7 +94,10 @@ static const struct ble_gatt_chr_def PLP_CHRS[] = {
       .descriptors = nullptr, .flags = BLE_GATT_CHR_F_NOTIFY,
       .min_key_size = 0, .val_handle = &g_plp_tx_handle },
     { .uuid = &PLP_RX_UUID.u, .access_cb = plp_gatt_access, .arg = nullptr,
-      .descriptors = nullptr, .flags = BLE_GATT_CHR_F_WRITE,
+      // WRITE_NO_RSP is REQUIRED: Forge sends via writeValueWithoutResponse() (low
+      // latency, no round-trip). Without this flag that JS call rejects silently and
+      // the PLP HELLO never reaches the device → Forge stuck "connecting" (Plan 93).
+      .descriptors = nullptr, .flags = BLE_GATT_CHR_F_WRITE | BLE_GATT_CHR_F_WRITE_NO_RSP,
       .min_key_size = 0, .val_handle = nullptr },
     { 0 },
 };
@@ -104,12 +119,43 @@ static void host_task(void*) {
     nimble_port_freertos_deinit();
 }
 
-bool Esp32Ble::enable(BtMode mode) {
-    if (mode == BtMode::Classic || mode == BtMode::Dual) {
-        if (log_) log_->warn("Esp32Ble", "Classic BT unsupported (ESP32-S3 = BLE only)");
+// One-time controller + NimBLE host bring-up. Called at BOOT (start()) while the
+// heap still has a big contiguous internal block — NOT on the user toggle, which
+// hits a fragmented heap and crashes esp_bt_controller_init (Plan 93).
+bool Esp32Ble::initStack() {
+    if (stackUp_) return true;
+
+    // ── Internal-RAM pre-flight (Plan 93) ────────────────────────────────────
+    // The BLE controller (esp_bt_controller_init) needs contiguous INTERNAL DRAM
+    // for its ISR/DMA structures — it cannot run from PSRAM. On this RAM-tight board
+    // (WiFi + LVGL + camera + audio all share ~230 KB internal) it can be exhausted
+    // by the time the user toggles BLE on. If the controller's init then fails, its
+    // own rollback (btdm_controller_deinit_internal → semphr_delete_wrapper) faults
+    // on an uninitialised handle and PANICS THE WHOLE DEVICE (LoadProhibited). So we
+    // measure first and refuse gracefully instead of letting it crash.
+    size_t freeInternal = heap_caps_get_free_size(MALLOC_CAP_INTERNAL);
+    size_t largestBlock = heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL);
+    if (log_) log_->info("Esp32Ble", "pre-init internal RAM",
+                         {{"free", std::to_string(freeInternal)},
+                          {"largest", std::to_string(largestBlock)}});
+    // Floors are a graceful-OOM net only (the real crash was btInUse — ADR 0013 — not
+    // RAM; that's fixed). The controller's host/LL pools live in PSRAM (NimBLE EXTERNAL +
+    // SPIRAM_ALLOW_BSS_SEG_EXTERNAL_MEMORY, mirroring Flipper-ESP32), so its remaining
+    // INTERNAL need is modest — a couple of task stacks. Keep a low floor so BLE can come
+    // up alongside WiFi+apps, but still refuse (Bluetooth "unavailable") rather than risk
+    // a genuine alloc failure inside the blob if internal RAM is truly exhausted.
+    constexpr size_t kFreeFloor  = 24 * 1024;   // total internal headroom
+    constexpr size_t kBlockFloor = 10 * 1024;   // largest contiguous chunk
+    if (freeInternal < kFreeFloor || largestBlock < kBlockFloor) {
+        if (log_) log_->error("Esp32Ble", "insufficient contiguous internal RAM for BLE",
+                              {{"free", std::to_string(freeInternal)},
+                               {"largest", std::to_string(largestBlock)},
+                               {"needFree", std::to_string(kFreeFloor)},
+                               {"needBlock", std::to_string(kBlockFloor)}});
+        if (caps_) caps_->setState(caps::BtBle, ResourceState::Fault);
         return false;
     }
-    if (enabled_) return true;
+
     g_ble = this;
 
     esp_err_t err = nimble_port_init();
@@ -144,23 +190,46 @@ bool Esp32Ble::enable(BtMode mode) {
 
     nimble_port_freertos_init(host_task);
 
+    stackUp_ = true;
+    if (caps_) caps_->setState(caps::BtBle, ResourceState::Available);
+    if (log_) log_->info("Esp32Ble", "BLE stack up (controller reserved at boot)");
+    return true;
+}
+
+// Boot hook (IService::start). The BLE controller is brought up ON DEMAND (first
+// enable()), NOT here — on this RAM-tight board the controller's ~30 KB working memory
+// (allocated at init) starves the SD-card DMA buffer when taken at boot, so SD reads
+// fail and apps loaded from /sd get dropped. Deferring keeps boot clean; the btInUse()
+// override above is what lets on-demand init succeed (no arduino mem-release crash).
+// (Fragmentation was never the issue — that was a wrong early theory; see Plan 93.)
+void Esp32Ble::start() {}
+
+// User toggle ON. Controller is already up (boot); just begin advertising. Light &
+// crash-free — no nimble_port_init here. (Caller then calls startAdvertising().)
+bool Esp32Ble::enable(BtMode mode) {
+    if (mode == BtMode::Classic || mode == BtMode::Dual) {
+        if (log_) log_->warn("Esp32Ble", "Classic BT unsupported (ESP32-S3 = BLE only)");
+        return false;
+    }
+    if (!stackUp_ && !initStack()) return false;   // boot init failed (RAM) → unavailable
+    if (enabled_) return true;
     enabled_ = true;
     mode_    = BtMode::Ble;
-    if (caps_) caps_->setState(caps::BtBle, ResourceState::Available);
     if (events_ && poster_) poster_->post({events::BtEnabled, {}});
-    if (log_) log_->info("Esp32Ble", "enabled (NimBLE)");
+    if (log_) log_->info("Esp32Ble", "enabled (advertising)");
     return true;
 }
 
 void Esp32Ble::disable() {
     if (!enabled_) return;
-    nimble_port_stop();
-    nimble_port_deinit();
+    // Keep the controller/host UP (reserved at boot). Only stop advertising and drop
+    // the link — re-init/deinit on a fragmented heap is exactly what crashed before.
+    stopAdvertising();
+    if (connHandle_ != 0xFFFF) ble_gap_terminate(connHandle_, BLE_ERR_REM_USER_CONN_TERM);
     enabled_ = false;
-    mode_ = BtMode::Off;
-    advertising_ = false;
-    if (caps_) caps_->setState(caps::BtBle, ResourceState::Absent);
+    mode_    = BtMode::Off;
     if (poster_) poster_->post({events::BtDisabled, {}});
+    if (log_) log_->info("Esp32Ble", "disabled (advertising off)");
 }
 
 void Esp32Ble::onSync() {
@@ -173,18 +242,32 @@ void Esp32Ble::onSync() {
     std::snprintf(buf, sizeof(buf), "%02X:%02X:%02X:%02X:%02X:%02X",
                   mac[5], mac[4], mac[3], mac[2], mac[1], mac[0]);
     addr_ = buf;
-    startAdvertisingInternal();
+    // Controller synced at boot — advertise only when the user has Bluetooth ON.
+    if (enabled_) startAdvertisingInternal();
 }
 
 void Esp32Ble::startAdvertisingInternal() {
     struct ble_gap_adv_params adv_params{};
-    struct ble_hs_adv_fields fields{};
 
-    fields.flags = BLE_HS_ADV_F_DISC_GEN | BLE_HS_ADV_F_BREDR_UNSUP;
-    fields.name = (uint8_t*)devName_.c_str();
-    fields.name_len = (uint8_t)devName_.size();
-    fields.name_is_complete = 1;
+    // Main advertisement = flags + the PLP 128-bit service UUID. The UUID is what lets
+    // Forge (Web Bluetooth) discover the device via its service filter; without it,
+    // requestDevice({filters:[{services:[PLP]}]}) never matches. (Note: iOS/macOS
+    // Settings still won't list a custom BLE peripheral — that's expected; use a BLE
+    // scanner app, e.g. nRF Connect / LightBlue, or Chrome Web Bluetooth.)
+    struct ble_hs_adv_fields fields{};
+    fields.flags        = BLE_HS_ADV_F_DISC_GEN | BLE_HS_ADV_F_BREDR_UNSUP;
+    fields.uuids128     = (ble_uuid128_t*)&PLP_SVC_UUID;
+    fields.num_uuids128 = 1;
+    fields.uuids128_is_complete = 1;
     ble_gap_adv_set_fields(&fields);
+
+    // Name goes in the SCAN RESPONSE so the 31-byte main packet (flags + 128-bit UUID =
+    // 21 B) never overflows regardless of how long the device name is.
+    struct ble_hs_adv_fields rsp{};
+    rsp.name           = (uint8_t*)devName_.c_str();
+    rsp.name_len       = (uint8_t)devName_.size();
+    rsp.name_is_complete = 1;
+    ble_gap_adv_rsp_set_fields(&rsp);
 
     adv_params.conn_mode = BLE_GAP_CONN_MODE_UND;
     adv_params.disc_mode = BLE_GAP_DISC_MODE_GEN;
@@ -220,17 +303,20 @@ int Esp32Ble::onGapEvent(void* ev) {
                         {{"handle", std::to_string(centConnHandle_)}});
                 } else {
                     connHandle_ = event->connect.conn_handle;
+                    pendingNotify_.store(0, std::memory_order_relaxed);  // fresh flow-control window
                     struct ble_gap_conn_desc desc{};
                     if (ble_gap_conn_find(connHandle_, &desc) == 0) {
                         std::memcpy(peer_.addr, desc.peer_id_addr.val, 6);
                     }
                     std::snprintf(peer_.name, sizeof(peer_.name), "peer");
                     advertising_ = false;
+                    if (log_) log_->info("Esp32Ble", "peer connected",
+                        {{"handle", std::to_string(connHandle_)}});
                     if (poster_) poster_->post({events::BtConnected, {{"name", peer_.name}}});
                 }
             } else {
                 connecting_ = false;
-                startAdvertisingInternal();
+                if (enabled_) startAdvertisingInternal();
             }
             break;
         case BLE_GAP_EVENT_DISCONNECT:
@@ -241,7 +327,7 @@ int Esp32Ble::onGapEvent(void* ev) {
                 connHandle_ = 0xFFFF;
                 peer_ = BtPeer{};
                 if (poster_) poster_->post({events::BtDisconnected, {}});
-                startAdvertisingInternal();
+                if (enabled_) startAdvertisingInternal();
             }
             break;
         case BLE_GAP_EVENT_DISC: {
@@ -279,9 +365,30 @@ int Esp32Ble::onGapEvent(void* ev) {
             }
             break;
         case BLE_GAP_EVENT_ENC_CHANGE:
+            if (log_) log_->info("Esp32Ble", "enc change",
+                {{"status", std::to_string(event->enc_change.status)}});
             if (event->enc_change.status == 0) {
                 peer_.bonded = true;
                 if (poster_) poster_->post({events::BtPaired, {{"name", peer_.name}}});
+            }
+            break;
+        // ── PLP handshake diagnostics (Plan 93 Fase B) ──
+        case BLE_GAP_EVENT_SUBSCRIBE:   // central enabled/disabled a CCCD (TX notify)
+            if (log_) log_->info("Esp32Ble", "subscribe",
+                {{"attr", std::to_string(event->subscribe.attr_handle)},
+                 {"notify", std::to_string(event->subscribe.cur_notify)}});
+            break;
+        case BLE_GAP_EVENT_MTU:
+            if (log_) log_->info("Esp32Ble", "mtu", {{"value", std::to_string(event->mtu.value)}});
+            break;
+        case BLE_GAP_EVENT_NOTIFY_TX:
+            // Fires once per TX notification — on SUCCESS OR ERROR. Always free the slot,
+            // else the counter drifts up on errors (e.g. controller buffer full) and screen
+            // pacing latches off mid-session. EDONE is the indication-ack variant (we only
+            // send notifications, never indications) — skip it so it can't double-decrement.
+            if (event->notify_tx.status != BLE_HS_EDONE) {
+                int p = pendingNotify_.load(std::memory_order_relaxed);
+                if (p > 0) pendingNotify_.fetch_sub(1, std::memory_order_relaxed);
             }
             break;
         default:
@@ -313,9 +420,13 @@ bool Esp32Ble::notify(const char* charUuid, const uint8_t* data, size_t len) {
     if (connHandle_ == 0xFFFF) return false;
     // Only the PLP TX characteristic is notify-capable here.
     if (std::strcmp(charUuid, plp_ble::CHAR_TX) != 0 || g_plp_tx_handle == 0) return false;
+    // No per-chunk cap here (that splits a chunked frame mid-way → the host CRC-drops the
+    // partial → screen never completes). Pacing is done at FRAME granularity in
+    // BleLinkTransport::send() using txPending(). Here we just submit and track in-flight.
     struct os_mbuf* om = ble_hs_mbuf_from_flat(data, len);
-    if (!om) return false;                       // mbuf pool exhausted → drop frame
+    if (!om) return false;                       // host mbuf pool exhausted → drop chunk
     int rc = ble_gatts_notify_custom(connHandle_, g_plp_tx_handle, om);
+    if (rc == 0) pendingNotify_.fetch_add(1, std::memory_order_relaxed);   // count in-flight
     return rc == 0;
 }
 
@@ -429,6 +540,8 @@ void Esp32Ble::disconnectFrom(const char* mac) {
 
 #else  // ── BT disabled: no-op stubs so non-BT boards still link ──
 namespace nema {
+void Esp32Ble::start() {}
+bool Esp32Ble::initStack() { return false; }
 bool Esp32Ble::enable(BtMode) { if (log_) log_->warn("Esp32Ble", "BT not enabled in sdkconfig"); return false; }
 void Esp32Ble::disable() {}
 void Esp32Ble::onSync() {}

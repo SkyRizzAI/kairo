@@ -10,6 +10,7 @@
 #include <esp_wifi.h>
 #include <esp_event.h>
 #include <esp_netif.h>
+#include <esp_timer.h>
 #include <nvs_flash.h>
 #include <nvs.h>
 #include <cstdio>
@@ -115,6 +116,13 @@ void Esp32WifiDriver::start() {
             static_cast<Esp32WifiDriver*>(arg)->onWifiEvent(id, data);
         }, this);
 
+    // One-shot timer that retries esp_wifi_connect() with backoff (auto-reconnect).
+    esp_timer_create_args_t targs = {};
+    targs.callback = [](void* arg) { static_cast<Esp32WifiDriver*>(arg)->reconnectTick(); };
+    targs.arg      = this;
+    targs.name     = "wifi_reconnect";
+    esp_timer_create(&targs, reinterpret_cast<esp_timer_handle_t*>(&reconnectTimer_));
+
     esp_wifi_start();
     enabled_ = true;
     // Legal channel set (1–11/13); without this scans can miss APs in some regions.
@@ -158,6 +166,8 @@ void Esp32WifiDriver::setEnabled(bool on) {
         log_->info("Esp32WifiDriver", "radio on");
         autoConnect();
     } else {
+        wantConnection_ = false;                // radio off: stop reconnect attempts
+        if (reconnectTimer_) esp_timer_stop((esp_timer_handle_t)reconnectTimer_);
         esp_wifi_set_promiscuous(false);        // safe no-op if not active
         esp_wifi_set_promiscuous_rx_cb(nullptr);
         if (connected_) esp_wifi_disconnect();
@@ -188,6 +198,8 @@ bool Esp32WifiDriver::connect(const char* ssid, const char* password) {
     strncpy((char*)wcfg.sta.ssid,     ssid_, sizeof(wcfg.sta.ssid) - 1);
     strncpy((char*)wcfg.sta.password, pass_, sizeof(wcfg.sta.password) - 1);
     esp_wifi_set_config(WIFI_IF_STA, &wcfg);
+    wantConnection_ = true;          // we now want to stay on this network
+    retryDelayMs_   = 2000;          // fresh backoff for a fresh attempt
     setState(WifiState::Connecting);
     esp_wifi_connect();
     log_->info("Esp32WifiDriver", std::string("connecting: ") + ssid_);
@@ -196,6 +208,8 @@ bool Esp32WifiDriver::connect(const char* ssid, const char* password) {
 }
 
 void Esp32WifiDriver::disconnect() {
+    wantConnection_ = false;         // explicit user intent: stop reconnecting
+    if (reconnectTimer_) esp_timer_stop((esp_timer_handle_t)reconnectTimer_);
     esp_wifi_disconnect();
     connected_ = false;
     std::strcpy(ip_, "0.0.0.0");
@@ -203,6 +217,18 @@ void Esp32WifiDriver::disconnect() {
     log_->info("Esp32WifiDriver", "disconnected");
     if (poster_) poster_->post({events::NetworkDisconnected, {{"ssid", ssid_}}});
     ssid_[0] = '\0';
+}
+
+// Schedule a backed-off reconnect attempt (ESP-IDF won't retry on its own).
+void Esp32WifiDriver::armReconnect() {
+    if (!reconnectTimer_) { esp_wifi_connect(); return; }   // fallback: retry now
+    esp_timer_stop((esp_timer_handle_t)reconnectTimer_);    // no-op if not armed
+    esp_timer_start_once((esp_timer_handle_t)reconnectTimer_, (uint64_t)retryDelayMs_ * 1000);
+    retryDelayMs_ = retryDelayMs_ < 16000 ? retryDelayMs_ * 2 : 30000;  // cap at 30 s
+}
+
+void Esp32WifiDriver::reconnectTick() {
+    if (wantConnection_ && enabled_ && !connected_) esp_wifi_connect();
 }
 
 int8_t Esp32WifiDriver::rssi() const {
@@ -316,7 +342,8 @@ void Esp32WifiDriver::setIpConfig(const WifiIpConfig& c) {
 // ── sys_evt task — ONLY touch poster_/flags/state. No EventBus, no Logger. ──
 void Esp32WifiDriver::onWifiEvent(int32_t event_id, void* data) {
     if (event_id == IP_EVENT_STA_GOT_IP) {
-        connected_ = true;
+        connected_   = true;
+        retryDelayMs_ = 2000;                 // link is up — reset backoff for next drop
         auto* ev = static_cast<ip_event_got_ip_t*>(data);
         if (ev) esp_ip4addr_ntoa(&ev->ip_info.ip, ip_, sizeof(ip_));
         setState(WifiState::Connected);
@@ -331,23 +358,23 @@ void Esp32WifiDriver::onWifiEvent(int32_t event_id, void* data) {
             if (poster_) poster_->post({events::NetworkConnected, {{"ssid", ssid_}}});
         }
     } else if (event_id == WIFI_EVENT_STA_DISCONNECTED) {
-        bool wasConnecting = (state_ == WifiState::Connecting);
         connected_ = false;
         std::strcpy(ip_, "0.0.0.0");
-        if (wasConnecting) {
-            // Map the ESP-IDF disconnect reason to a user-facing error.
-            WifiError e = WifiError::Unknown;
-            if (auto* ev = static_cast<wifi_event_sta_disconnected_t*>(data)) {
-                switch (ev->reason) {
-                    case WIFI_REASON_NO_AP_FOUND:          e = WifiError::ApNotFound; break;
-                    case WIFI_REASON_AUTH_FAIL:
-                    case WIFI_REASON_4WAY_HANDSHAKE_TIMEOUT:
-                    case WIFI_REASON_HANDSHAKE_TIMEOUT:
-                    case WIFI_REASON_AUTH_EXPIRE:          e = WifiError::AuthFailed; break;
-                    default:                               e = WifiError::Unknown;    break;
-                }
-            }
-            setState(WifiState::Failed, e);
+        uint8_t reason = 0;
+        if (auto* ev = static_cast<wifi_event_sta_disconnected_t*>(data)) reason = ev->reason;
+        // A wrong password / failed handshake won't fix itself by retrying — stop and
+        // surface the error. Everything else (AP out of range, beacon timeout, the AP
+        // rebooting) IS transient: keep retrying so we auto-rejoin when it returns.
+        bool credentialIssue = (reason == WIFI_REASON_AUTH_FAIL ||
+                                reason == WIFI_REASON_4WAY_HANDSHAKE_TIMEOUT ||
+                                reason == WIFI_REASON_HANDSHAKE_TIMEOUT ||
+                                reason == WIFI_REASON_AUTH_EXPIRE);
+        if (credentialIssue) {
+            wantConnection_ = false;
+            setState(WifiState::Failed, WifiError::AuthFailed);
+        } else if (wantConnection_ && enabled_) {
+            setState(WifiState::Connecting);   // actively retrying (backed off)
+            armReconnect();
         } else {
             setState(WifiState::Idle);
         }
@@ -427,7 +454,12 @@ void Esp32WifiDriver::autoConnect() {
             }
         }
     }
-    if (bestSaved) connect(bestSaved->ssid, bestSaved->pass);
+    if (bestSaved) { connect(bestSaved->ssid, bestSaved->pass); return; }
+    // Not seen in this scan (out of range, or the scan raced esp_wifi_start). Still
+    // arm an auto-join to the most-recent auto-join network — connect() sets the
+    // config + wantConnection_, so the retry loop rejoins the moment it appears.
+    for (int i = 0; i < n; i++)
+        if (list[i].autojoin) { connect(list[i].ssid, list[i].pass); return; }
 }
 
 } // namespace nema

@@ -25,10 +25,13 @@ static constexpr uint8_t CMD_COLMOD  = 0x3A;
 static constexpr uint8_t CMD_MADCTL  = 0x36;
 
 // Multi-row RGB565 staging buffer (GUI-thread-only). Sending the frame in
-// 32-row chunks instead of per-row cuts ~320 SPI transactions/frame down to
-// ~10 — the per-transaction overhead, not the bitrate, was the bottleneck
-// (~1 s/frame → ~0.2 s/frame). Sized for up to 320 px wide × 32 rows.
-static constexpr int CHUNK_ROWS = 32;
+// chunks instead of per-row cuts SPI transactions/frame. 16 rows → ~20 txns/frame
+// (vs ~10 at 32 rows): a small flush-speed cost for ~10 KB of internal SRAM freed
+// for the BLE controller, which MUST live in internal RAM (Plan 93). The bottleneck
+// is per-transaction overhead, not bitrate. Sized for up to 320 px wide × 8 rows.
+// 8 rows → ~40 txns/frame; chosen to free internal SRAM for the boot-reserved BLE
+// controller (Plan 93). Bump back up if screen flush feels slow and RAM allows.
+static constexpr int CHUNK_ROWS = 8;
 static uint16_t chunkbuf_[320 * CHUNK_ROWS];
 
 void LcdDriver::init(Runtime& rt, Xl9535& expander) {

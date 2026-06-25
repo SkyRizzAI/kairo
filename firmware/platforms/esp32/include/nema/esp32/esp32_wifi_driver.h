@@ -65,6 +65,8 @@ private:
     void loadIpConfig();        // NVS → ipcfg_/staticIp_
     void saveIpConfig();        // ipcfg_ → NVS
     void applyStaticIp();       // push ipcfg_ static address onto esp_netif
+    void armReconnect();        // schedule a backed-off esp_wifi_connect() retry
+    void reconnectTick();       // timer callback — retry if still wanted & enabled
 
     Logger*             log_      = nullptr;
     AsyncEventPoster*   poster_   = nullptr;
@@ -77,6 +79,12 @@ private:
     char              pass_[65]   = {};
     char              ip_[16]     = "0.0.0.0";
     bool              staticIp_   = false;
+    // Auto-reconnect: keep rejoining a desired network when it drops/returns
+    // (ESP-IDF does NOT retry on its own). Cleared by explicit user disconnect /
+    // radio-off / a credential failure.
+    bool              wantConnection_ = false;
+    void*             reconnectTimer_ = nullptr;  // esp_timer_handle_t (opaque here)
+    uint32_t          retryDelayMs_   = 2000;     // exponential backoff, reset on link-up
     WifiIpConfig      ipcfg_;
     std::vector<WifiNetwork> scan_;
 };
