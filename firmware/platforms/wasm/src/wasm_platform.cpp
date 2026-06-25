@@ -34,11 +34,17 @@ void WasmPlatform::registerDrivers(Runtime& rt) {
     cable_.init();
     link_.attach(&cable_, LinkService::Role::Device);
 
-    // Simulated panel resolution (config-overridable). Default 128×80 so the Forge
-    // mirror is a small handheld panel at UI scale 1 — no 2× scaling needed. Override
-    // with config "display/sim_w" / "display/sim_h".
-    display_.setNativeSize((uint16_t)config_.getIntOr("display", "sim_w", 128),
-                           (uint16_t)config_.getIntOr("display", "sim_h", 80));
+    // Simulated panel resolution (config-overridable). Default 320×240 — paired with
+    // the 2× UI scale below, that presents a 160×120 logical canvas (chunky retro
+    // pixels). Override with config "display/sim_w" / "display/sim_h".
+    display_.setNativeSize((uint16_t)config_.getIntOr("display", "sim_w", 320),
+                           (uint16_t)config_.getIntOr("display", "sim_h", 240));
+
+    // Default the UI scale to 2× (200) for the sim, like the SkyRizz board — so the
+    // 320×240 panel renders at a 160×120 logical canvas. Only seeded when unset, so
+    // a user's explicit Settings choice is preserved.
+    if (config_.getIntOr("aether", "scale", 0) == 0)
+        config_.setInt("aether", "scale", 200);
 
     // Sim display colour capability (Plan 92 Fase B) — default RGB-capable so colour
     // themes show; set config "display/sim_color" = 0 to simulate a true B&W panel.
