@@ -88,6 +88,7 @@ int WasmEngine::runStart(ProcessContext& ctx, const char* appId, ISurface* surfa
     linkUiImports(mod_);
     linkInputImports(mod_);
     linkWifiImports(mod_);
+    linkAudioImports(mod_);
 
     IM3Function startFn;
     M3Result res;

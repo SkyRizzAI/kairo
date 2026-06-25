@@ -1,0 +1,9 @@
+{
+  "id": "web3-test",
+  "name": "Web3 Test",
+  "version": "1.0.0",
+  "entry": "App.tsx",
+  "api_version": "1.0",
+  "needs": ["wallet.read", "wallet.sign"],
+  "description": "Demo dApp: pick a network, read the wallet address, sign a message or transaction via nema.wallet (Plan 94, Fase 7)."
+}

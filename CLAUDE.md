@@ -133,6 +133,26 @@ Anywhere else, raw stdio for logging is a bug.
 - Resolution-independent: draw from `canvas.width()`/`canvas.height()`, never
   hardcode screen dimensions. (Plan 25 — Adaptive UI.)
 
+## App UX (MANDATORY — applies to every app)
+
+- **An app ALWAYS opens to its home/menu screen — NEVER jump straight into a
+  sub-flow or action.** Set the landing state to the menu in `onStart()`. If the
+  app has data, the home lists it ("My Wallet", "My Notes", …) with actions
+  (Create / Settings / About); if empty, the home offers the entry actions. The
+  first thing the user sees is a *choice*, not a screen mid-task.
+- **Swallow the launcher's "Activate" on the first frame.** The same `Activate`
+  that launched the app from the launcher bleeds into the app's first input and
+  fires the first-focused control — so the app appears to "jump" straight into
+  whatever button was focused (e.g. a wallet opening directly on the backup-phrase
+  screen). Guard it: ignore the first activation after `onStart()`. See
+  `WalletsApp::swallowFirst()` and `BadUsbApp::suppressNext_` for the pattern.
+- Footer/back behaviour: `Back` from a sub-screen returns to the home menu; `Back`
+  from the home exits the app. Don't trap the user.
+- **Sub-screen titles: use a `ListSection` subheader, NOT a big `TitleBar` banner.**
+  The full-width filled `TitleBar` eats vertical space on the small display; match the
+  Settings screens — each screen is a `ListContainer` whose first `ListSection` names it
+  (and groups already labelled by their own `ListSection` don't need a separate title).
+
 ---
 
 ## SkyRizz E32 — USB mode toggle (HID/CDC ↔ JTAG/Serial)

@@ -126,6 +126,92 @@ UiNode* Footer(NodeArena& a, const char* hint) {
     return Text(a, hint, TextRole::Caption);
 }
 
+// ── Footer legends (Plan 92) ─────────────────────────────────────────────────
+
+// One pill: a filled rounded capsule holding an optional icon + optional caption,
+// both flagged background=true so the renderer paints them in paper colour
+// (inverted) over the dark fill. Tappable (onPress) but never a focus stop.
+//
+// `reveal` in [0,1] scales the label width for the Phase-2 collapse: 1 = full
+// label, 0 = icon only. At reveal≈0 the label (and its gap) is dropped entirely
+// so the pill shrinks to a tight icon. reveal<0 means "no animation" (full label).
+static UiNode* legendPill(NodeArena& a, const LegendItem& it, float reveal) {
+    Style pill;
+    pill.dir          = FlexDir::Row;
+    pill.align        = Align::Center;
+    pill.justify      = Justify::Center;
+    pill.background    = true;                       // filled capsule
+    pill.cornerRadius  = 1;                          // subtle rounding (compact)
+    pill.padding      = 1;                           // 1px — minimal, hugs the content
+    pill.gap          = 1;                           // 1px between icon + label
+
+    UiNode* icon = nullptr;
+    if (it.icon && it.iconW && it.iconH) {
+        icon = Icon(a, it.icon, it.iconW, it.iconH, 0);
+        if (icon) icon->style.background = true;     // → renderer inverts the glyph
+    }
+    UiNode* label = nullptr;
+    // Drop the label (and its gap) once it has collapsed to ~nothing, so the pill
+    // shrinks to a tight icon. reveal<0 means "no animation" → always full label.
+    if (it.label && *it.label && (reveal < 0.f || reveal > 0.04f)) {
+        // Mono (6×8 pixel font) keeps the bar compact (~status-bar height) and
+        // matches the retro pixel look better than the proportional Caption font.
+        label = Text(a, it.label, TextRole::Mono);
+        if (label) {
+            label->style.background = true;          // → caption drawn in paper colour
+            if (reveal >= 0.f) {                     // animating: scale + clip the width
+                label->style.widthScale = reveal;    // layout shrinks the measured width
+                label->style.clip       = true;      // truncate text to the shrunk box
+            }
+        }
+    }
+
+    UiNode* node = it.onPress ? Pressable(a, it.onPress, it.user, pill, {})
+                              : View(a, pill, {});
+    if (!node) return nullptr;
+    node->focusable = false;                         // a hint bar, not a focus stop
+
+    UiNode* prev = nullptr;
+    auto add = [&](UiNode* n) {
+        if (!n) return;
+        if (!prev) node->firstChild = n; else prev->nextSibling = n;
+        prev = n;
+    };
+    add(icon);
+    add(label);
+    return node;
+}
+
+static UiNode* buildLegends(NodeArena& a, const LegendItem* items, int count,
+                            FooterLegendsState* st) {
+    Style row;
+    row.dir     = FlexDir::Row;
+    row.align   = Align::Center;
+    // 1 item hugs the left; 2+ spread edge-to-edge.
+    row.justify = (count <= 1) ? Justify::Start : Justify::SpaceBetween;
+
+    UiNode* root = Row(a, row, {});
+    if (!root) return nullptr;
+    UiNode* prev = nullptr;
+    for (int i = 0; i < count; i++) {
+        float reveal = st ? st->reveal(i) : -1.f;
+        UiNode* pill = legendPill(a, items[i], reveal);
+        if (!pill) continue;
+        if (!prev) root->firstChild = pill; else prev->nextSibling = pill;
+        prev = pill;
+    }
+    return root;
+}
+
+UiNode* FooterLegends(NodeArena& a, const LegendItem* items, int count) {
+    return buildLegends(a, items, count, nullptr);
+}
+
+UiNode* FooterLegends(NodeArena& a, const LegendItem* items, int count,
+                      FooterLegendsState& st) {
+    return buildLegends(a, items, count, &st);
+}
+
 UiNode* SmartLabel(NodeArena& a, const char* text) {
     return Text(a, text, TextRole::Smart);
 }

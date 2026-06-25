@@ -7,6 +7,7 @@
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 #include <string>
+#include <vector>
 
 namespace nema::skyrizze32 {
 
@@ -88,6 +89,58 @@ void I2sSpeaker::playTone(uint16_t freqHz, uint16_t ms) {
                                 5, nullptr);
     if (ok != pdPASS) {
         if (rt_) rt_->log().error("I2sSpeaker", "beep task create failed");
+        delete params;
+    }
+}
+
+// Raw PCM playback (media.audioOutput.playPcm). Runs in a background task so the
+// caller (JS engine / GUI thread) is not blocked. Owns a copy of the samples.
+struct PcmParams {
+    std::vector<int16_t> samples;
+    float                volume;
+};
+
+static void pcmTask(void* arg) {
+    PcmParams* p = static_cast<PcmParams*>(arg);
+
+    // int16 mono → 32-bit stereo (NS4168 reads the upper bits), scaled by volume.
+    constexpr size_t kChunk = 256;                 // frames per i2s_write
+    int32_t buf[kChunk * 2];
+    size_t i = 0;
+    while (i < p->samples.size()) {
+        size_t n = 0;
+        while (n < kChunk && i < p->samples.size()) {
+            // int16 → upper bits of a 32-bit slot. Multiply (not <<16) to avoid
+            // signed-shift UB on negative samples; 32767*65536 still fits int32.
+            int32_t s = (int32_t)(p->samples[i] * p->volume) * 65536;
+            buf[n * 2]     = s;
+            buf[n * 2 + 1] = s;
+            n++; i++;
+        }
+        size_t bytesOut = 0;
+        if (i2s_write(I2S_NUM_0, buf, n * 2 * sizeof(int32_t),
+                      &bytesOut, pdMS_TO_TICKS(200)) != ESP_OK) break;
+    }
+
+    int32_t silence[64] = {};
+    size_t dummy = 0;
+    i2s_write(I2S_NUM_0, silence, sizeof(silence), &dummy, pdMS_TO_TICKS(50));
+
+    delete p;
+    vTaskDelete(nullptr);
+}
+
+void I2sSpeaker::writePcm(const int16_t* samples, size_t count, uint32_t /*sampleRate*/) {
+    if (!samples || count == 0) return;
+    if (!mic_ || !mic_->i2sReady()) {
+        if (rt_) rt_->log().warn("I2sSpeaker", "writePcm: I2S not ready");
+        return;
+    }
+    // sampleRate is advisory — the shared I2S0 clock is fixed at 16 kHz.
+    auto* params  = new PcmParams{std::vector<int16_t>(samples, samples + count), volume_};
+    BaseType_t ok = xTaskCreate(pcmTask, "pcm", 4096, params, 5, nullptr);
+    if (ok != pdPASS) {
+        if (rt_) rt_->log().error("I2sSpeaker", "pcm task create failed");
         delete params;
     }
 }

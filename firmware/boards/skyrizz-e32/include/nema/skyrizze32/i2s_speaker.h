@@ -23,6 +23,9 @@ public:
     void        setVolume(float v) override { volume_ = v < 0.0f ? 0.0f : (v > 1.0f ? 1.0f : v); }
     float       volume() const { return volume_; }
     void        playTone(uint16_t freqHz, uint16_t ms) override;
+    // Raw 16-bit mono PCM → I2S (upconverted to 32-bit stereo). The I2S clock is
+    // fixed at 16 kHz, so sampleRate is advisory only. Backs media.audioOutput.playPcm.
+    void        writePcm(const int16_t* samples, size_t count, uint32_t sampleRate) override;
 
     // IService
     const char* name() const override { return "I2sSpeaker"; }

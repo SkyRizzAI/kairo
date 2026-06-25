@@ -94,6 +94,14 @@ void GuiService::start() {
             vd.navigate(permScreen_);
         });
     }
+
+    // Plan 94: wallet sign-consent modal (trusted display) — same pattern.
+    if (auto* cs = rt_.container().resolve<wallet::WalletConsentService>()) {
+        cs->setScreenFactory([this](auto req) {
+            signConsentScreen_.prepare(req);
+            rt_.view().navigate(signConsentScreen_);
+        });
+    }
     rt_.view().requestRedraw();   // paint the boot backend immediately (esp. fbcon)
     // UI thread on core 1 (Arduino loop also core 1 but now near-idle).
     // Priority above the near-idle main loop so input/render stay snappy.
@@ -161,8 +169,14 @@ void GuiService::loop() {
                 }
                 if (!dpm.deliverKey(ie.key, now)) {
                     if (!server || !server->onAction(ie.action)) {
+                        auto* before = vd.active();
                         vd.handleAction(ie.action);  // primary: Action-based dispatch
-                        vd.handleCode(ie.code);       // secondary: raw code
+                        // If the action navigated away (e.g. a modal's Approve/Allow
+                        // closed it), do NOT also deliver the raw code to the now-active
+                        // screen — that single press would otherwise bleed through and
+                        // re-fire the control beneath the modal (sign-consent loop).
+                        if (vd.active() == before)
+                            vd.handleCode(ie.code);   // secondary: raw code
                     }
                 }
             }
@@ -179,6 +193,11 @@ void GuiService::loop() {
         //      when an app is blocking on perm.request() for a sensitive cap.
         if (auto* perm = rt_.container().resolve<PermissionService>())
             perm->guiTick(vd);
+
+        // Wallet sign-consent injection (Plan 94): push SignConsentScreen when a
+        // sign request is blocking on the trusted display.
+        if (auto* cs = rt_.container().resolve<wallet::WalletConsentService>())
+            cs->guiTick();
 
         // 4. Background job completions — run on THIS (UI) thread, so callbacks
         //    can safely touch screen/app UI state.

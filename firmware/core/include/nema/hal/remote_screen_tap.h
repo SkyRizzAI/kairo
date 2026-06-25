@@ -45,7 +45,15 @@ public:
     bool    supportsColor() const override { return inner_ ? inner_->supportsColor() : false; }
 
     // Re-stream the current shadow + palette (e.g. when a viewer just connected).
-    void requestResend() { streamFrame(); sendPalette(); }
+    // Clears prev_ so the (otherwise unchanged) frame is force-sent to the new viewer.
+    void requestResend() { prev_.clear(); streamFrame(); sendPalette(); }
+
+    // Downsample the streamed frame by an integer factor before RLE (Plan 93). Set this
+    // to the UI scale (e.g. 2 for a 2× UI): because every logical pixel is drawn as an
+    // f×f block of identical physical pixels, dropping to 1 sample per block is LOSSLESS
+    // and cuts the streamed bytes by f² — e.g. 320×240 → 160×120 is 4× smaller. The host
+    // gets the logical resolution in the W×H header and scales it to its viewport.
+    void setDownscale(int f) { downscale_ = f < 1 ? 1 : f; }
 
 private:
     void ensureShadow();
@@ -56,6 +64,9 @@ private:
     LinkService*         link_  = nullptr;
     std::vector<uint8_t> shadow_;     // w*h, 0/1
     std::vector<uint8_t> payload_;    // scratch for SCREEN payload
+    std::vector<uint8_t> ds_;         // scratch for the downsampled frame
+    std::vector<uint8_t> prev_;       // last frame actually sent (skip resend if unchanged)
+    int                  downscale_ = 1;
     uint16_t w_ = 0, h_ = 0;
     uint16_t palFg_ = 0xFFFF, palBg_ = 0x0000;   // last palette pushed to the host
 };

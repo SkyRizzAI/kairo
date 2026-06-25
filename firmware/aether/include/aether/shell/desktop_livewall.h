@@ -5,6 +5,7 @@
 #include "nema/ui/animation_player.h"
 #include "nema/ui/asset_loader.h"
 #include <memory>
+#include <string>
 
 namespace nema { class Runtime; }
 
@@ -20,9 +21,12 @@ public:
     nema::anim::AnimationPlayer* player() override { return player_.get(); }
 
 private:
+    bool loadAnim(const std::string& anim);   // (re)load <anim>.panim; swaps asset_/player_
+
     nema::Runtime& rt_;
     FitMode fit_    = FitMode::Fit;
     Anchor  anchor_ = Anchor::Center;
+    std::string currentAnim_;   // loaded anim name (config "desktop"/"anim"), e.g. "laptop"
     std::unique_ptr<nema::asset::PanimAsset>       asset_;
     std::unique_ptr<nema::anim::AnimationPlayer>   player_;
 };

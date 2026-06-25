@@ -87,6 +87,7 @@ const KNOWN_CAPS = new Set([
   "net.wifi.monitor", "net.wifi.inject", "net.wifi.ap",
   "net.http", "bt.ble",
   "storage", "remote.usb", "profile",
+  "wallet.read", "wallet.sign",
 ]);
 
 const PRIMITIVES = new Set([

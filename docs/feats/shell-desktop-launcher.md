@@ -36,12 +36,16 @@ Settings → **Display & Appearances** (`SleepSettingsScreen`):
 
 | Row | Config key | Values |
 |---|---|---|
-| Wallpaper | `desktop/wallpaper` | `dolphin` |
+| Wallpaper | `desktop/anim` | discovered at runtime — any `*.panim` under `/system/assets/anims` (e.g. `laptop` · `hacking_pc` · `lab_research`) |
 | Fit | `desktop/fit` | `center` · `stretch` · `crop` · `fit` |
 | Anchor | `desktop/anchor` | 9-grid (`top-left` … `center` … `bot-right`) |
 
+The **Wallpaper** selector scans `/system/assets/anims` for `*.panim` (basename =
+the value saved to `desktop/anim`), so dropping a new `.panim` in there makes it
+selectable with no code change.
+
 Changes persist immediately; the Desktop/Launcher re-read config on `onResume()`,
-so a new skin or fit shows the next time the screen opens.
+so a new skin, wallpaper, or fit shows the next time the screen opens.
 
 ## How it's built
 
@@ -50,9 +54,15 @@ so a new skin or fit shows the next time the screen opens.
 - **`ILauncherTheme`** (`shell/launcher_theme.h`) — `draw(canvas, model, cursor)` +
   `columns()`. Skins: `PlayStationLauncher`, `WiiLauncher`.
 - **`IDesktopTheme`** (`shell/desktop_theme.h`) — `draw(canvas, rect)` + `tick()` +
-  `player()`. Skin: `LiveWallpaperDesktop` — loads `anims/boxing.panim` from VFS
-  on `onResume()`; blits each frame with a fit/anchor nearest-neighbour scaler.
-  On WASM the `.panim` is embedded as a C array and seeded into MemFileSystem at boot.
+  `player()`. Skin: `LiveWallpaperDesktop` — loads the selected
+  `system/assets/anims/<anim>.panim` (config `desktop/anim`, default `laptop`) on
+  `onResume()`, reloading when the selection changes (falls back to `laptop` if the
+  file is missing); blits each frame with a fit/anchor nearest-neighbour scaler.
+  Animations ship for **both** targets: as `.panim` files under `firmware/assets/`
+  (flashed into the skyrizz-e32 LittleFS image) and as compiled-in C headers
+  (`nema/assets/anims/*_panim.h`) seeded into the WASM/host MemFileSystem at boot.
+  Generate a `.panim` with `tools/asset_gen` (`seq2panim` on a Flipper animation
+  dir), then `xxd -i` for the WASM header.
 - **`shell_factory`** — maps a config name → a concrete skin. One line per new skin.
 - **`LauncherScreen`** owns the fixed entry model, the cursor, **linear**
   navigation (±1, board-agnostic), Activate routing, and Back→Desktop.

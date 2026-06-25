@@ -16,7 +16,11 @@
 #include "nema/services/profile_service.h"
 #include "nema/services/permission_service.h"
 #include "nema/services/resource_broker.h"
+#include "nema/wallet/wallet_service.h"
+#include "nema/wallet/wallet_consent_service.h"
+#include "nema/wallet/network_registry.h"
 #include "nema/hal/radio_wifi.h"
+#include "nema/services/audio_service.h"
 #include "nema/ui/aether_abi.h"
 #include <string>
 #include <utility>
@@ -33,6 +37,29 @@ static std::string nvsNs(const std::string& bundleId) {
     char buf[9];
     snprintf(buf, sizeof(buf), "%08x", (unsigned int)h);
     return buf;
+}
+
+static std::string toHex(const std::vector<uint8_t>& b) {
+    static const char* k = "0123456789abcdef";
+    std::string s;
+    for (uint8_t x : b) { s += k[x >> 4]; s += k[x & 0xf]; }
+    return s;
+}
+static std::vector<uint8_t> fromHex(std::string_view h) {
+    std::vector<uint8_t> out;
+    auto nib = [](char c) -> int {
+        if (c >= '0' && c <= '9') return c - '0';
+        if (c >= 'a' && c <= 'f') return c - 'a' + 10;
+        if (c >= 'A' && c <= 'F') return c - 'A' + 10;
+        return -1;
+    };
+    size_t i = (h.size() >= 2 && h[0] == '0' && (h[1] == 'x' || h[1] == 'X')) ? 2 : 0;
+    for (; i + 1 < h.size(); i += 2) {
+        int hi = nib(h[i]), lo = nib(h[i + 1]);
+        if (hi < 0 || lo < 0) return {};
+        out.push_back((uint8_t)((hi << 4) | lo));
+    }
+    return out;
 }
 
 class NemaHostImpl : public HostApi {
@@ -87,6 +114,65 @@ public:
         auto* perm = rt_.container().resolve<nema::PermissionService>();
         if (!perm) return true;
         return perm->status(appId_, std::string(cap)) == 1;
+    }
+
+    // ── nema:wallet ───────────────────────────────────────────────────
+    // Custom apps connect to the system wallet (Plan 94, Fase 7). Private keys are
+    // NEVER exposed — only addresses + signatures. The "wallet.read"/"wallet.sign"
+    // gate is GENERATED in the quickjs wrapper from the IDL @tier(sensitive) annotations
+    // (same mechanism as Wi-Fi) — so these methods are only reached once the permission
+    // is granted. Signing additionally needs per-tx consent on the trusted display.
+
+    nema::wallet::WalletService::Confirm walletConfirm(nema::wallet::WalletService* svc) {
+        auto* consent = rt_.container().resolve<nema::wallet::WalletConsentService>();
+        if (consent) return consent->confirmFor(appId_, svc->activeBackendKind());
+        return [](const nema::wallet::TxPreview&) { return false; };  // no consent UI → fail-closed
+    }
+
+    std::vector<std::string> wallet_networks() override {
+        std::vector<std::string> ids;
+        for (const auto& n : nema::wallet::NetworkRegistry::all()) ids.push_back(n.id);
+        return ids;
+    }
+
+    bool wallet_ready() override {
+        auto* svc = rt_.container().resolve<nema::wallet::WalletService>();
+        return svc && svc->ready();
+    }
+
+    NemaResult<std::string, std::string> wallet_address(std::string_view networkId,
+                                                        uint32_t index) override {
+        auto* svc = rt_.container().resolve<nema::wallet::WalletService>();
+        if (!svc || !svc->ready()) return {false, {}, "locked"};
+        std::string addr;
+        if (!svc->deriveAddress(std::string(networkId).c_str(), index, addr))
+            return {false, {}, "derive-failed"};
+        return {true, addr, {}};
+    }
+
+    NemaResult<std::string, std::string> wallet_sign_message(std::string_view networkId,
+                                                             uint32_t index,
+                                                             std::string_view message) override {
+        auto* svc = rt_.container().resolve<nema::wallet::WalletService>();
+        if (!svc || !svc->ready()) return {false, {}, "locked"};
+        nema::wallet::Bytes msg(message.begin(), message.end());
+        nema::wallet::Signature sig;
+        if (!svc->signMessage(std::string(networkId).c_str(), index, msg, walletConfirm(svc), sig))
+            return {false, {}, "rejected"};
+        return {true, toHex(sig), {}};
+    }
+
+    NemaResult<std::string, std::string> wallet_sign_transaction(std::string_view networkId,
+                                                                 uint32_t index,
+                                                                 std::string_view rawTxHex) override {
+        auto* svc = rt_.container().resolve<nema::wallet::WalletService>();
+        if (!svc || !svc->ready()) return {false, {}, "locked"};
+        nema::wallet::Bytes rawTx = fromHex(rawTxHex);
+        if (rawTx.empty()) return {false, {}, "failed"};
+        nema::wallet::Bytes signedTx;
+        if (!svc->signTransaction(std::string(networkId).c_str(), index, rawTx, walletConfirm(svc), signedTx))
+            return {false, {}, "rejected"};
+        return {true, toHex(signedTx), {}};
     }
 
     // ── nema:sys/lease ────────────────────────────────────────────────
@@ -293,10 +379,41 @@ public:
     bool ble_is_enabled() override { return false; }
 
     // ── nema:media/* ──────────────────────────────────────────────────
-    // @future — stubs
 
-    std::vector<std::string> audio_input_list() override { return {}; }
-    std::vector<std::string> audio_output_list() override { return {}; }
+    std::vector<std::string> audio_input_list() override {
+        auto& a = rt_.audio();
+        std::vector<std::string> v;
+        for (int i = 0; i < a.inputCount(); i++)
+            v.push_back(a.inputDesc(i) ? a.inputDesc(i) : "");
+        return v;
+    }
+    std::vector<std::string> audio_output_list() override {
+        auto& a = rt_.audio();
+        std::vector<std::string> v;
+        for (int i = 0; i < a.outputCount(); i++)
+            v.push_back(a.outputDesc(i) ? a.outputDesc(i) : "");
+        return v;
+    }
+    void audio_output_set_volume(uint8_t level) override {
+        const float g = (level > 100 ? 100 : level) / 100.0f;
+        auto& a = rt_.audio();
+        for (int i = 0; i < a.outputCount(); i++)
+            if (auto* o = a.output(i)) o->setVolume(g);
+    }
+    void audio_output_play_tone(uint16_t freq, uint16_t ms) override {
+        auto& a = rt_.audio();
+        if (a.outputCount() > 0)
+            if (auto* o = a.output(0)) o->playTone(freq, ms);
+    }
+    void audio_output_play_pcm(const std::vector<uint8_t>& data, uint32_t sample_rate) override {
+        auto& a = rt_.audio();
+        if (a.outputCount() == 0 || data.size() < 2) return;
+        auto* o = a.output(0);
+        if (!o) return;
+        // data is little-endian int16 mono PCM (matches the playPcm contract).
+        o->writePcm(reinterpret_cast<const int16_t*>(data.data()),
+                    data.size() / sizeof(int16_t), sample_rate);
+    }
     std::vector<std::string> camera_list() override { return {}; }
     NemaResult<std::string, std::string> camera_capture() override { return {false, {}, "camera not implemented"}; }
 

@@ -48,17 +48,18 @@ public:
         // control replies are non-screen channels → never gated → always sent. The peak
         // in-flight (kIdle + kMaxChunks) stays well under the controller's buffer count.
         if (len >= 2 && data[1] == 0x01 /*plp::Channel::Screen*/) {
-            // kMaxChunks stays just under the host mbuf pool (MSYS=24) so a frame's burst
-            // can't exhaust it (which would truncate the frame → blank). 10 was far too low
-            // — real screens RLE to >1.8 KB, so every frame was skipped. kIdle keeps the
-            // mirror yielding to CLI/control. NOTE: this only sends successfully when the
-            // BLE controller can allocate TX buffers — i.e. WiFi OFF (RAM). With WiFi ON the
-            // controller mallocs fail regardless (radio RAM contention), so the screen mirror
-            // is effectively WiFi-OFF-only on this board. (Plan 93)
-            constexpr int    kIdle      = 4;
-            constexpr size_t kMaxChunks = 20;
-            const size_t chunks = (len + chunk - 1) / chunk;
-            if (ble_->txPending() > kIdle || chunks > kMaxChunks) return true;  // skip frame
+            // Send a screen frame ONLY when the host mbuf pool has room for ALL its chunks
+            // right now — so it never goes out partial (the host would CRC-drop a truncated
+            // frame → that's what froze the mirror after the first frame) and never hogs the
+            // last slots needed by CLI/control. txPending() reads the live pool, so it self-
+            // recovers as the radio drains; no manual counter to latch. This also yields to
+            // CLI automatically: while a reply is in flight the pool is fuller, so the mirror
+            // pauses, then resumes. (NOTE: only succeeds with WiFi OFF — with WiFi on the BLE
+            // controller can't allocate TX buffers at all; radio RAM contention. Plan 93.)
+            constexpr int kPoolCap  = 24;   // CONFIG_BT_NIMBLE_MSYS_1_BLOCK_COUNT
+            constexpr int kReserve  = 4;    // keep slots free for CLI/control replies
+            const int chunks = (int)((len + chunk - 1) / chunk);
+            if (ble_->txPending() + chunks > kPoolCap - kReserve) return true;  // no room → skip
         }
         // A single BLE notification carries only (ATT_MTU − 3) bytes, so split the frame
         // across notifications; the host's PLP FrameParser reassembles the byte stream.

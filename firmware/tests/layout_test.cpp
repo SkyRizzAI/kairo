@@ -129,6 +129,125 @@ static void test_scroll_overflow() {
     CHECK(st.scrollMain == 120, "over-scroll clamped to maxScroll 120");
 }
 
+// 8x8 dummy icon (all bits set) so pills have a non-zero icon column.
+static const uint8_t kDummyIcon[8] = {
+    0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF
+};
+
+static LegendItem mkItem(const char* label) {
+    LegendItem it;
+    it.icon = kDummyIcon; it.iconW = 8; it.iconH = 8;
+    it.label = label;
+    return it;
+}
+
+static void test_footer_legends() {
+    const uint16_t W = 200;
+
+    // 1 item → hugs the left edge.
+    {
+        std::printf("[footer legends: 1 item hugs left]\n");
+        NodeArena a(64);
+        LegendItem items[] = { mkItem("Mission") };
+        UiNode* root = FooterLegends(a, items, 1);
+        root->style.width = W;                       // span full width
+        layout(*root, W, 30, TM);
+        UiNode* c0 = root->firstChild;
+        CHECK(c0 && c0->x == 0, "single pill x == 0 (start)");
+    }
+
+    // 2 items → spread to both edges (space-between).
+    {
+        std::printf("[footer legends: 2 items spread to edges]\n");
+        NodeArena a(64);
+        LegendItem items[] = { mkItem("Mission"), mkItem("Launcher") };
+        UiNode* root = FooterLegends(a, items, 2);
+        root->style.width = W;
+        layout(*root, W, 30, TM);
+        UiNode* c0 = root->firstChild;
+        UiNode* c1 = c0->nextSibling;
+        CHECK(c0->x == 0, "left pill x == 0");
+        CHECK((int)(c1->x + c1->w) == (int)W, "right pill flush to right edge");
+    }
+
+    // 3 items → ends pinned, middle centered (alignment preserved).
+    {
+        std::printf("[footer legends: 3 items, middle centered]\n");
+        NodeArena a(64);
+        LegendItem items[] = { mkItem("A"), mkItem("BB"), mkItem("C") };
+        UiNode* root = FooterLegends(a, items, 3);
+        root->style.width = W;
+        layout(*root, W, 30, TM);
+        UiNode* c0 = root->firstChild;
+        UiNode* c1 = c0->nextSibling;
+        UiNode* c2 = c1->nextSibling;
+        CHECK(c0->x == 0, "first pill x == 0");
+        // space-between floors the inter-item gap, so the last pill can land 1px
+        // short of the exact edge — accept ±1px.
+        CHECK((int)W - (int)(c2->x + c2->w) <= 1 && (int)(c2->x + c2->w) <= (int)W,
+              "last pill flush to right edge (±1px)");
+        int mid    = c1->x + c1->w / 2;              // middle pill centre
+        int canvas = W / 2;
+        int diff   = mid > canvas ? mid - canvas : canvas - mid;
+        CHECK(diff <= 1, "middle pill centre within 1px of canvas centre");
+    }
+}
+
+static void test_footer_legends_collapse() {
+    const uint16_t W = 200;
+
+    // The collapse timer is wall-clock (time-based, not spring): full labels until
+    // the delay, then reveal eases to 0 over a fixed duration — identical on any FPS.
+    {
+        std::printf("[footer legends: wall-clock collapse timer]\n");
+        FooterLegendsState st;
+        st.reset(2);
+        CHECK(st.reveal(0) == 1.f, "reveal starts at 1 (full label)");
+        st.tick(1000.f);
+        CHECK(st.reveal(0) == 1.f, "still full before delay (1s < 2s)");
+        st.tick(2100.f);                                 // 3.1s → just past delay
+        CHECK(st.reveal(0) < 1.f, "reveal drops after the delay");
+        st.tick(1000.f);                                 // past delay+duration
+        CHECK(st.reveal(0) == 0.f, "reveal settles at 0 (collapsed)");
+        CHECK(st.settled(), "state reports settled");
+        CHECK(!st.tick(16.f), "settled → tick returns false (no more redraws)");
+    }
+
+    // Collapsed layout: each pill shrinks to an icon-only capsule (pad+icon+pad),
+    // ends stay pinned to the edges → alignment preserved.
+    {
+        std::printf("[footer legends: collapsed → icon-only pills, edges pinned]\n");
+        NodeArena a(64);
+        FooterLegendsState st;
+        st.reset(2);
+        st.tick(5000.f);                                 // fully collapsed
+        LegendItem items[] = { mkItem("Mission Control"), mkItem("Launcher") };
+        UiNode* root = FooterLegends(a, items, 2, st);
+        root->style.width = W;
+        layout(*root, W, 30, TM);
+        UiNode* c0 = root->firstChild;
+        UiNode* c1 = c0->nextSibling;
+        // pad(1) + icon(8) + pad(1) == 10, no label, no gap.
+        CHECK(c0->w == 10, "collapsed pill width == pad+icon+pad == 10");
+        CHECK(c0->x == 0, "left pill still at x == 0");
+        CHECK((int)(c1->x + c1->w) == (int)W, "right pill still flush to right edge");
+    }
+
+    // Full reveal keeps the label → pill is wider than the icon-only capsule.
+    {
+        std::printf("[footer legends: full reveal keeps label]\n");
+        NodeArena a(64);
+        FooterLegendsState st;
+        st.reset(2);   // reveal == 1
+        LegendItem items[] = { mkItem("Mission Control"), mkItem("Launcher") };
+        UiNode* root = FooterLegends(a, items, 2, st);
+        root->style.width = W;
+        layout(*root, W, 30, TM);
+        UiNode* c0 = root->firstChild;
+        CHECK(c0->w > 10, "full pill wider than icon-only (label present)");
+    }
+}
+
 int main() {
     std::printf("== Layout engine tests ==\n");
     test_col_grow();
@@ -136,6 +255,8 @@ int main() {
     test_align_center_padding_gap();
     test_text_measure();
     test_scroll_overflow();
+    test_footer_legends();
+    test_footer_legends_collapse();
     std::printf("== %s ==\n", g_fail == 0 ? "ALL PASS" : "FAILURES");
     return g_fail == 0 ? 0 : 1;
 }

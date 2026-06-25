@@ -14,7 +14,7 @@
 | [`nema:bt/ble`](./nema_bt_ble.md) | `nema:bt@1.0` | `bt.ble` | 3 |
 | [`nema:input/input`](./nema_input_input.md) | `nema:input@1.0` | `input` | 2 |
 | [`nema:media/audio-input`](./nema_media_audio-input.md) | `nema:media@1.0` | `audio.input` | 1 |
-| [`nema:media/audio-output`](./nema_media_audio-output.md) | `nema:media@1.0` | `audio.output` | 1 |
+| [`nema:media/audio-output`](./nema_media_audio-output.md) | `nema:media@1.0` | `audio.output` | 4 |
 | [`nema:media/camera`](./nema_media_camera.md) | `nema:media@1.0` | `camera` | 2 |
 | [`nema:net/http`](./nema_net_http.md) | `nema:net@1.0` | `net.http` | 2 |
 | [`nema:net/wifi`](./nema_net_wifi.md) | `nema:net@1.0` | `net.wifi` | 6 |
@@ -27,6 +27,7 @@
 | [`nema:sys/perm`](./nema_sys_perm.md) | `nema:sys@1.0` | core | 2 |
 | [`nema:sys/lease`](./nema_sys_lease.md) | `nema:sys@1.0` | core | 2 |
 | [`nema:sys/tasks`](./nema_sys_tasks.md) | `nema:sys@1.0` | core | 4 |
+| [`nema:wallet/wallet`](./nema_wallet_wallet.md) | `nema:wallet@1.0` | core | 5 |
 | [`nema:wifi/radio`](./nema_wifi_radio.md) | `nema:wifi@1.0` | core | 5 |
 
 ## Records

@@ -164,7 +164,6 @@ hardware (no runtime, direct register access, verbose serial diagnostics):
 
 ```bash
 bun flash:camtest         # camera + display bring-up
-bun flash:audiotest       # mic + speaker bring-up
 ```
 
 ---

@@ -10,10 +10,13 @@
 #include "nema/hal/wifi.h"
 #include "nema/hal/radio_wifi.h"
 #include "nema/config/config_store.h"
+#include "nema/services/audio_service.h"
 #include "nema/event/event_bus.h"
 #include "nema/apps/js_app_store.h"
 #include "nema/app/papp_installer.h"
 #include "nema/assets/anims/dolphin_sleep_panim.h"
+#include "nema/assets/anims/hacking_pc_panim.h"
+#include "nema/assets/anims/lab_research_panim.h"
 #include "nema/assets/fonts/iosk_mono_pack.h"
 #include "nema/assets/fonts/iosk_cond_pack.h"
 #include "nema/assets/fonts/ibm_plex_mono_pack.h"
@@ -30,6 +33,12 @@ void WasmPlatform::registerDrivers(Runtime& rt) {
 
     cable_.init();
     link_.attach(&cable_, LinkService::Role::Device);
+
+    // Simulated panel resolution (config-overridable). Default 128×80 so the Forge
+    // mirror is a small handheld panel at UI scale 1 — no 2× scaling needed. Override
+    // with config "display/sim_w" / "display/sim_h".
+    display_.setNativeSize((uint16_t)config_.getIntOr("display", "sim_w", 128),
+                           (uint16_t)config_.getIntOr("display", "sim_h", 80));
 
     // Sim display colour capability (Plan 92 Fase B) — default RGB-capable so colour
     // themes show; set config "display/sim_color" = 0 to simulate a true B&W panel.
@@ -96,7 +105,9 @@ void WasmPlatform::registerDrivers(Runtime& rt) {
     rootFs_.mkdir("/system");
     rootFs_.mkdir("/system/assets");
     rootFs_.mkdir("/system/assets/anims");
-    rootFs_.write("/system/assets/anims/laptop.panim", kDolphinSleepPanim, kDolphinSleepPanimLen);
+    rootFs_.write("/system/assets/anims/laptop.panim",       kDolphinSleepPanim, kDolphinSleepPanimLen);
+    rootFs_.write("/system/assets/anims/hacking_pc.panim",   kHackingPcPanim,    kHackingPcPanimLen);
+    rootFs_.write("/system/assets/anims/lab_research.panim", kLabResearchPanim,  kLabResearchPanimLen);
     // Font packs — seeded so Settings > Appearances > Font can discover them.
     rootFs_.mkdir("/system/assets/fonts");
     rootFs_.mkdir("/system/assets/fonts/IoskeleyMono");
@@ -174,6 +185,14 @@ void WasmPlatform::registerDrivers(Runtime& rt) {
     rt.container().registerAs<ISecureElement>(&secure_);
     rt.hardware().add({"secure", DriverKind::Other, "sim SE050 (software)"});
     rt.capabilities().add(caps::Secure);
+
+    // Audio output — Web Audio bridge. No real DAC in the browser; WasmSpeaker
+    // forwards playTone() to the host page (Module.nemaPlayTone → Web Audio). This
+    // also makes Settings → Sounds appear (it gates on caps::AudioOutput) so the
+    // test beep is reachable and audible in the simulator.
+    rt.audio().addOutput(&speaker_, "spk0", "Web Audio (browser)");
+    rt.hardware().add({"audio.output", DriverKind::Other, "Web Audio (browser)"});
+    rt.capabilities().add(caps::AudioOutput);
 
     rt.hardware().add({"display", DriverKind::Display, "wasm 1-bit (remote)"});
     rt.capabilities().add(caps::Display);

@@ -122,6 +122,15 @@ struct HostApi {
     // media/audio-output.list
     // List available audio output devices.
     virtual std::vector<std::string> audio_output_list() = 0;
+    // media/audio-output.set-volume
+    // Set output gain, 0..100 (%). Maps to IAudioOutput::setVolume.
+    virtual void audio_output_set_volume(uint8_t level) = 0;
+    // media/audio-output.play-tone
+    // Play a simple test tone (square wave) on the default output. freq in Hz, duration in ms. Maps to IAudioOutput::playTone.
+    virtual void audio_output_play_tone(uint16_t freq, uint16_t ms) = 0;
+    // media/audio-output.play-pcm
+    // Play RAW 16-bit mono PCM on the default output. `data` is little-endian int16 samples (pass an Int16Array / ArrayBuffer / Uint8Array of bytes); `sample-rate` in Hz. Maps to IAudioOutput::writePcm — the device/simulator reproduces exactly these samples (no re-synthesis). On hardware the I2S clock is fixed at 16 kHz; the simulator honours sample-rate.
+    virtual void audio_output_play_pcm(const std::vector<uint8_t>& data, uint32_t sample_rate) = 0;
     // media/camera.list
     // List available camera devices.
     virtual std::vector<std::string> camera_list() = 0;
@@ -250,6 +259,23 @@ struct HostApi {
     // sys/tasks.cancel
     // Cancel a pending timeout/interval by handle.
     virtual void tasks_cancel(int32_t token) = 0;
+
+    // ── nema:wallet ───────────────────────────────────────
+    // wallet/wallet.networks
+    // All built-in network ids the device supports.
+    virtual std::vector<std::string> wallet_networks() = 0;
+    // wallet/wallet.ready
+    // Whether a wallet exists and is unlocked (ready to read/sign).
+    virtual bool wallet_ready() = 0;
+    // wallet/wallet.address
+    // Address for (network id, BIP44 account index). err = "locked" | "bad-network" | "derive-failed".
+    virtual NemaResult<std::string, std::string> wallet_address(std::string_view network_id, uint32_t index) = 0;
+    // wallet/wallet.sign-message
+    // Sign a UTF-8 message for the account (+ on-device consent). Returns the signature as hex. err = "locked" | "rejected" | "failed".
+    virtual NemaResult<std::string, std::string> wallet_sign_message(std::string_view network_id, uint32_t index, std::string_view message) = 0;
+    // wallet/wallet.sign-transaction
+    // Sign a raw transaction (hex-encoded) for the account (+ on-device consent: trusted-display + physical button). Returns the signed tx as hex (the app broadcasts it itself). err = "locked" | "rejected" | "failed".
+    virtual NemaResult<std::string, std::string> wallet_sign_transaction(std::string_view network_id, uint32_t index, std::string_view raw_tx_hex) = 0;
 
     // ── nema:wifi ───────────────────────────────────────
     // wifi/radio.scan [@blocking]

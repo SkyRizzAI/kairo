@@ -83,6 +83,7 @@ set(AETHER_SRCS
     ${CMAKE_CURRENT_SOURCE_DIR}/../core/src/screens/lock_screen.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../core/src/screens/close_and_open_modal.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../core/src/screens/permission_screen.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../core/src/screens/sign_consent_screen.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../core/src/screens/mission_control_screen.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../core/src/screens/splash_screen.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../core/src/screens/sleep_settings_screen.cpp

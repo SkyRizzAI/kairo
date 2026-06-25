@@ -163,7 +163,13 @@ void AppHost::draw(Canvas& c) {
     // pass (skips 76,800 per-pixel drawPixel calls). Only valid when the app
     // buffer is at physical dimensions (scale == 1.0); at scale > 1.0, w_/h_
     // are logical (smaller) and flushBuffer would silently no-op.
-    if (app_.fullscreen() && display_ &&
+    //
+    // ONLY when topmost: if a system modal (permission / wallet sign-consent) is pushed
+    // above us, a direct flushBuffer would overwrite the whole panel every frame while
+    // the modal renders into the canvas → the two full-panel writes alternate and the
+    // modal flickers. With a modal above, fall through to the canvas blit so the modal
+    // composites onto a single flushed frame.
+    if (rt_.view().active() == this && app_.fullscreen() && display_ &&
         w_ == display_->width() && h_ == display_->height()) {
         display_->flushBuffer(readyBuf_, w_, h_);
         return;
@@ -181,9 +187,10 @@ void AppHost::draw(Canvas& c) {
 
 bool AppHost::suppressCanvasFlush() const {
     // Suppress only when we actually took the flushBuffer fast path (physical
-    // dimensions match). At scale > 1.0 we fall through to the canvas blit path
-    // and GuiService must flush normally.
-    return app_.fullscreen() && display_ != nullptr &&
+    // dimensions match) AND we're topmost. With a modal above us we render into the
+    // canvas (see draw()), so GuiService must flush the canvas normally — otherwise
+    // the modal would never reach the panel.
+    return rt_.view().active() == this && app_.fullscreen() && display_ != nullptr &&
            w_ == display_->width() && h_ == display_->height();
 }
 

@@ -55,7 +55,7 @@ declare namespace nema {
       /**
        * Whether the BLE controller is enabled.
        */
-      enable(): Promise<{ ok: true; value: void } | { ok: false; error: string }>;
+      enable(): Promise<void>;
       /**
        * Stop the BLE controller.
        */
@@ -70,16 +70,14 @@ declare namespace nema {
 
   namespace input {
       // gated: input
-    namespace input {
-      /**
-       * Get the hardware-specific hint label for an Action.
-       */
-      hint(action: string): string;
-      /**
-       * List all supported actions on this device.
-       */
-      actions(): string[];
-    }
+    /**
+     * Get the hardware-specific hint label for an Action.
+     */
+    hint(action: string): string;
+    /**
+     * List all supported actions on this device.
+     */
+    actions(): string[];
 
   }
 
@@ -98,6 +96,18 @@ declare namespace nema {
        * List available audio output devices.
        */
       list(): string[];
+      /**
+       * Set output gain, 0..100 (%). Maps to IAudioOutput::setVolume.
+       */
+      setVolume(level: number): void;
+      /**
+       * Play a simple test tone (square wave) on the default output. freq in Hz, duration in ms. Maps to IAudioOutput::playTone.
+       */
+      playTone(freq: number, ms: number): void;
+      /**
+       * Play RAW 16-bit mono PCM on the default output. `data` is little-endian int16 samples (pass an Int16Array / ArrayBuffer / Uint8Array of bytes); `sample-rate` in Hz. Maps to IAudioOutput::writePcm — the device/simulator reproduces exactly these samples (no re-synthesis). On hardware the I2S clock is fixed at 16 kHz; the simulator honours sample-rate.
+       */
+      playPcm(data: Uint8Array | ArrayBuffer | number[], sampleRate: number): void;
     }
 
       // gated: camera
@@ -109,7 +119,7 @@ declare namespace nema {
       /**
        * Capture a frame from the default camera. @blocking — runs on worker.
        */
-      capture(): Promise<{ ok: true; value: string } | { ok: false; error: string }>;
+      capture(): Promise<string>;
     }
 
   }
@@ -120,11 +130,11 @@ declare namespace nema {
       /**
        * HTTPS GET. Returns the response or an error string on transport failure.
        */
-      get(url: string): Promise<{ ok: true; value: http-response } | { ok: false; error: string }>;
+      get(url: string): Promise<http-response>;
       /**
        * HTTPS POST with a body and Content-Type header.
        */
-      post(url: string, body: string, contentType: string): Promise<{ ok: true; value: http-response } | { ok: false; error: string }>;
+      post(url: string, body: string, contentType: string): Promise<http-response>;
     }
 
       // gated: net.wifi
@@ -148,7 +158,7 @@ declare namespace nema {
       /**
        * Connect to an AP.
        */
-      connect(ssid: string, password: string): Promise<{ ok: true; value: void } | { ok: false; error: string }>;
+      connect(ssid: string, password: string): Promise<void>;
       /**
        * Disconnect from the current AP.
        */
@@ -159,24 +169,22 @@ declare namespace nema {
 
   namespace profile {
       // gated: profile
-    namespace profile {
-      /**
-       * The device owner's display name (e.g. "Alice").
-       */
-      userName(): string;
-      /**
-       * The user-assigned device name (e.g. "My Palanu").
-       */
-      deviceName(): string;
-      /**
-       * Whether a password/PIN has been set.
-       */
-      hasPassword(): boolean;
-      /**
-       * Verify a password/PIN candidate. Uses constant-time comparison. Returns false if no password is set.
-       */
-      verifyPassword(input: string): boolean;
-    }
+    /**
+     * The device owner's display name (e.g. "Alice").
+     */
+    userName(): string;
+    /**
+     * The user-assigned device name (e.g. "My Palanu").
+     */
+    deviceName(): string;
+    /**
+     * Whether a password/PIN has been set.
+     */
+    hasPassword(): boolean;
+    /**
+     * Verify a password/PIN candidate. Uses constant-time comparison. Returns false if no password is set.
+     */
+    verifyPassword(input: string): boolean;
 
   }
 
@@ -293,11 +301,11 @@ declare namespace nema {
       /**
        * Acquire an exclusive lease for a capability. Returns a lease handle on success, or a lease-error if busy/denied.
        */
-      acquire(cap: string): { ok: true; value: number } | { ok: false; error: lease-error };
+      acquire(cap: string): number;
       /**
        * Release a previously acquired lease.
        */
-      release(leaseHandle: number): { ok: true; value: void } | { ok: false; error: string };
+      release(leaseHandle: number): void;
     }
 
       // core
@@ -322,6 +330,34 @@ declare namespace nema {
 
   }
 
+  namespace wallet {
+      // core
+    /**
+     * All built-in network ids the device supports.
+     */
+    networks(): string[];
+    /**
+     * Whether a wallet exists and is unlocked (ready to read/sign).
+     */
+    ready(): boolean;
+    /**
+     * Address for (network id, BIP44 account index). err = "locked" | "bad-network" | "derive-failed".
+     * @requires wallet.read (sensitive)
+     */
+    address(networkId: string, index: number): string;
+    /**
+     * Sign a UTF-8 message for the account (+ on-device consent). Returns the signature as hex. err = "locked" | "rejected" | "failed".
+     * @requires wallet.sign (sensitive)
+     */
+    signMessage(networkId: string, index: number, message: string): string;
+    /**
+     * Sign a raw transaction (hex-encoded) for the account (+ on-device consent: trusted-display + physical button). Returns the signed tx as hex (the app broadcasts it itself). err = "locked" | "rejected" | "failed".
+     * @requires wallet.sign (sensitive)
+     */
+    signTransaction(networkId: string, index: number, rawTxHex: string): string;
+
+  }
+
   namespace wifi {
       // core
     namespace radio {
@@ -329,27 +365,27 @@ declare namespace nema {
        * Scan for visible APs. @blocking — runs on worker. Auto-grant (benign): no permission prompt. No exclusive lease required.
        * @requires net.wifi.scan (benign)
        */
-      scan(): Promise<{ ok: true; value: scan-result[] } | { ok: false; error: string }>;
+      scan(): Promise<scan-result[]>;
       /**
        * Open promiscuous/monitor mode on the given channel. Requires user permission (sensitive) and an exclusive lease.
        * @requires net.wifi.monitor (sensitive +lease)
        */
-      monitorOpen(channel: number): { ok: true; value: void } | { ok: false; error: string };
+      monitorOpen(channel: number): void;
       /**
        * Read raw 802.11 frames from the ring buffer (up to max bytes). Drops frames when ring is full — radio never stalls.
        * @requires net.wifi.monitor (sensitive +lease)
        */
-      monitorRead(max: number): Promise<{ ok: true; value: number[] } | { ok: false; error: string }>;
+      monitorRead(max: number): Promise<number[]>;
       /**
        * Close monitor mode and release promiscuous capture.
        * @requires net.wifi.monitor (sensitive +lease)
        */
-      monitorClose(): { ok: true; value: void } | { ok: false; error: string };
+      monitorClose(): void;
       /**
        * Inject a raw 802.11 frame on the given channel.
        * @requires net.wifi.inject (sensitive +lease)
        */
-      inject(channel: number, frame: number[]): { ok: true; value: void } | { ok: false; error: string };
+      inject(channel: number, frame: Uint8Array | ArrayBuffer | number[]): void;
     }
 
   }

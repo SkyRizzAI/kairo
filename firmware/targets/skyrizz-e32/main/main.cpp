@@ -10,6 +10,8 @@
 #include "nema/app/app_registry.h"
 #include "nema/app/papp_installer.h"
 #include "nema/apps/bad_usb_app.h"
+#include "nema/apps/wallets_app.h"
+#include "nema/wallet/wallet_system.h"
 #include "aether/screens/desktop_screen.h"
 #include "nema/ui/view_dispatcher.h"
 #include "aether/boot.h"
@@ -30,11 +32,15 @@ void setup() {
     rt.apps().installService(cs, "com.palanu.svc.clock");
 
     rt.start();
+    nema::wallet::bootWalletSystem(rt);   // shared wallet for the Wallets app + nema.wallet.*
     nema::loadInstalledPapps(rt);  // scan /system/apps + /sd/apps for user-installed .papp
     aether::bootDisplay(rt);   // Plan 80: construct + start display servers + GUI loop
 
     static nema::BadUsbApp badUsbApp;
     rt.apps().install(badUsbApp, "1.0.0");
+
+    static nema::WalletsApp walletsApp;   // Plan 94 — crypto wallet
+    rt.apps().install(walletsApp, "1.0.0");
 
     static nema::DesktopScreen desktop(rt);   // Plan 81: idle wallpaper → launcher
     rt.view().push(desktop);

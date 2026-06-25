@@ -12,6 +12,7 @@ Kumpulan contoh app untuk Palanu. Tiap folder adalah source `.papp` — tinggal 
 | `canvas-demo-wasm/` | WASM | UI | Demo menggambar langsung ke canvas |
 | `wifi-marauder/` | WASM | UI | WiFi audit: scan, deauth, beacon spam, monitor, evil portal (radio-takeover) |
 | `network-tools/` | WASM | UI | Utilitas LAN via STA: status koneksi, ARP scan, port scan gateway |
+| `hbd/` | WASM | Canvas | Happy Birthday — scene bertahap: floor muncul → kue jatuh ke floor → lilin nyala (flicker) → "HAPPY BIRTHDAY!!!" naik dari kue + kedip → prompt + tombol **Blow**. **OK** tiup → asap + 3 balon naik + "Make a wish!". **OK** lagi → finale sparkles + fireworks. **Back** keluar. **+ melodi "Happy Birthday" (tone bit) loop** via `audio_play_tone` |
 
 ## Build
 

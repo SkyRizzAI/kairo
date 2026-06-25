@@ -335,7 +335,6 @@ buttons. Footer hints come from `rt.input().hintFor(Action)` — never hardcoded
    dev-board         esp32      dev-board     palanu-dev-board.bin     ✅ HW
    skyrizz-e32       esp32      skyrizz-e32   skyrizz-e32.bin          ✅ build
    skyrizz-camtest   esp32      skyrizz-e32   camera bring-up          test
-   skyrizz-audiotest esp32      skyrizz-e32   mic/speaker bring-up     test
 
    bun run forge:wasm     core C++ → WASM → Forge (/simulator)
    bun run build:esp32    → build/palanu-dev-board.bin  (~1.3 MB, 59% free)

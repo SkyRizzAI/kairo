@@ -66,9 +66,12 @@ void LcdDriver::setBrightness(uint8_t level) {
 }
 
 void LcdDriver::start() {
-    // 1-bit monochrome framebuffer
+    // 1-bit monochrome framebuffer. It is CPU-read into chunkbuf_ for the SPI DMA in
+    // flush() — never DMA'd itself — so it lives in PSRAM, freeing ~10 KB internal SRAM
+    // for the BLE controller + WiFi (Plan 93). Falls back to internal if PSRAM is absent.
     size_t fbSize = ((size_t)width_ * height_ + 7) / 8;
-    framebuf_ = (uint8_t*)heap_caps_malloc(fbSize, MALLOC_CAP_DMA | MALLOC_CAP_8BIT);
+    framebuf_ = (uint8_t*)heap_caps_malloc(fbSize, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+    if (!framebuf_) framebuf_ = (uint8_t*)heap_caps_malloc(fbSize, MALLOC_CAP_8BIT);
     if (!framebuf_) {
         if (rt_) rt_->log().error("LcdDriver", "framebuf alloc failed");
         return;

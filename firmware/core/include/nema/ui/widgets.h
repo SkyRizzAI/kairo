@@ -6,6 +6,7 @@
 // Status: library reuse, not interface standard.
 #include "nema/ui/node.h"
 #include "nema/ui/animation_player.h"
+#include "nema/ui/animated_value.h"
 #include <cstddef>
 #include <initializer_list>
 
@@ -84,6 +85,80 @@ UiNode* TitleBar(NodeArena& a, const char* title);
 
 // Footer: a Caption-role hint line (use at the bottom of a Col).
 UiNode* Footer(NodeArena& a, const char* hint);
+
+// ── Footer legends (Plan 92) ────────────────────────────────────────────────
+// A bottom soft-key / hint bar: a row of filled pill buttons, each a small icon
+// + short caption (Flipper-style "Mission" / "Launcher" legends). Layout follows
+// the item count:
+//   • 1 item  → hugs the left edge (Justify::Start)
+//   • 2+ items → spread edge-to-edge (Justify::SpaceBetween)
+// Place the result inside a Stretch parent (or set its style.width to the canvas
+// width) so the row has full-width slack for space-between to distribute.
+//
+// Each pill is a filled rounded capsule whose icon + label render in paper colour
+// (inverted), so they read as white-on-dark on mono / orange-on-dark on Flipper.
+// Items are tappable when onPress is set, but are NOT focus stops (a hint bar,
+// like a soft-key strip — the physical key it labels does the real activation).
+struct LegendItem {
+    const uint8_t* icon  = nullptr;            // 1-bit XBM, optional (see findIcon())
+    uint8_t        iconW = 0, iconH = 0;
+    const char*    label = nullptr;            // short caption, optional
+    void         (*onPress)(void*) = nullptr;  // tap handler (touch boards), optional
+    void*          user  = nullptr;
+};
+UiNode* FooterLegends(NodeArena& a, const LegendItem* items, int count);
+
+// ── Footer-legend collapse animation (Plan 92, Phase 2) ──────────────────────
+// Caller-owned state (lives OUTSIDE the arena, like ScrollState) that drives the
+// "icon + label → icon only" collapse. On show, every pill displays its full
+// label; after `collapseDelayMs` the labels tween their width to 0 so each pill
+// shrinks to just its icon — while space-between keeps the row's alignment.
+//
+// Lifecycle:
+//   FooterLegendsState st;
+//   void onResume() { st.reset(count); }          // re-arm: labels show again
+//   void tick(dtMs) { if (st.tick(dtMs)) redraw; } // advance springs
+//   void draw()     { FooterLegends(a, items, n, &st); }  // build with reveal
+// Time-driven (NOT spring) so the collapse is wall-clock identical on every
+// platform regardless of frame rate. A spring integrates per-frame, so on a
+// low-FPS device it settles far slower (and can go unstable) than at 60 FPS —
+// this uses elapsed milliseconds and a fixed eased duration instead.
+struct FooterLegendsState {
+    static constexpr int kMax = 6;
+    float elapsedMs         = 0.f;       // wall-clock ms since reset()
+    float collapseDelayMs   = 2000.f;    // labels stay full for this long
+    float collapseDurationMs = 320.f;    // then collapse over this long
+    int   count             = 0;
+
+    // Re-arm: show all labels in full, restart the timer.
+    void reset(int n) { count = n < kMax ? n : kMax; elapsedMs = 0.f; }
+
+    bool settled() const { return elapsedMs >= collapseDelayMs + collapseDurationMs; }
+
+    // Per-pill label reveal in [0,1] (1=full label, 0=icon only). Currently
+    // uniform across pills; the index is kept for a future per-pill stagger.
+    float reveal(int /*i*/) const {
+        if (elapsedMs <= collapseDelayMs) return 1.f;
+        float t = (elapsedMs - collapseDelayMs) / collapseDurationMs;
+        if (t >= 1.f) return 0.f;
+        float e = t * t * (3.f - 2.f * t);   // smoothstep ease-in-out
+        return 1.f - e;
+    }
+
+    // Advance the wall-clock timer by dtMs. Returns true while a redraw is still
+    // needed (during the collapse window); false once settled (idle).
+    bool tick(float dtMs) {
+        if (settled()) return false;
+        elapsedMs += dtMs;
+        return elapsedMs > collapseDelayMs;   // only the collapse window animates
+    }
+};
+
+// Animated overload: same layout as FooterLegends() but each pill's label width
+// is scaled by st.reveal[i] (and dropped once it collapses to ~0px), producing
+// the Phase-2 collapse. Pass the same `count` used for reset().
+UiNode* FooterLegends(NodeArena& a, const LegendItem* items, int count,
+                      FooterLegendsState& st);
 
 // SmartLabel (Plan 52): a Text node with TextRole::Smart. Ellipsis when its
 // parent Pressable is not focused; marquee-scrolls when focused. Use inside a

@@ -31,10 +31,11 @@ struct EntryDef {
 static const EntryDef kEntries[] = {
     { "Apps",     &nema::assets::animIconApps,     "feature.apps"     },
     { "Files",    nullptr,                          "file.folder"      },
-    { "Dolphin",  nullptr,                          "action.info"      },
-    { "Logs",     nullptr,                          "file.file"        },
-    { "Settings", &nema::assets::animIconSettings,  "feature.settings" },
+    { "Wallets",  nullptr,                          "feature.wallet"   },  // Plan 94
     { "BadUSB",   &nema::assets::animIconBadusb,    nullptr            },
+    { "Settings", &nema::assets::animIconSettings,  "feature.settings" },
+    { "Logs",     nullptr,                          "file.file"        },
+    { "Dolphin",  nullptr,                          "action.info"      },
 };
 static constexpr int kEntryCount = (int)(sizeof(kEntries) / sizeof(kEntries[0]));
 
@@ -76,10 +77,11 @@ void LauncherScreen::activate(int i) {
     switch (i) {
         case 0: rt_.view().navigate(appList_);  break;
         case 1: rt_.view().navigate(files_);    break;
-        case 2: rt_.view().navigate(dolphin_);  break;
-        case 3: rt_.view().navigate(logs_);     break;
+        case 2: rt_.apps().launch("com.palanu.wallets"); break;
+        case 3: rt_.apps().launch("com.palanu.badusb");  break;
         case 4: rt_.view().navigate(settings_); break;
-        case 5: rt_.apps().launch("com.palanu.badusb"); break;
+        case 5: rt_.view().navigate(logs_);     break;
+        case 6: rt_.view().navigate(dolphin_);  break;
         default: break;
     }
 }

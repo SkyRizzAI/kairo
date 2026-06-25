@@ -63,6 +63,23 @@ static void paint(const UiNode* n, Canvas& c, const UiNode* focused, bool inFocu
         uint16_t ty = (uint16_t)(n->y + s.padding);
         bool on = !s.background;
 
+        // Overflow:hidden — clip drawing to the node's bbox (intersected with the
+        // current clip). Used by the collapsing footer-legend label.
+        uint16_t svx = 0, svy = 0, svw = 0, svh = 0; bool clipped = false;
+        if (s.clip) {
+            c.getClip(svx, svy, svw, svh);
+            uint16_t x0 = n->x, y0 = n->y;
+            uint16_t x1 = (uint16_t)(n->x + n->w), y1 = (uint16_t)(n->y + n->h);
+            uint16_t cr = (uint16_t)(svx + svw), cb = (uint16_t)(svy + svh);
+            if (x0 < svx) x0 = svx;
+            if (y0 < svy) y0 = svy;
+            if (x1 > cr)  x1 = cr;
+            if (y1 > cb)  y1 = cb;
+            if (x1 > x0 && y1 > y0) c.setClip(x0, y0, (uint16_t)(x1 - x0), (uint16_t)(y1 - y0));
+            else                    c.setClip(0, 0, 0, 0);   // fully collapsed → draw nothing
+            clipped = true;
+        }
+
         if (n->role == TextRole::Smart) {
             // Smart text: static when fits, marquee when focused+overflow, ellipsis otherwise.
             uint16_t availW = (n->w > 2u * s.padding)
@@ -95,13 +112,24 @@ static void paint(const UiNode* n, Canvas& c, const UiNode* focused, bool inFocu
                 else               c.drawTextScaled(tx, ty, n->text, fs.scale, on);
             }
         }
+        if (clipped) c.setClip(svx, svy, svw, svh);   // restore prior clip
     }
 
     if (n->type == NodeType::Icon && n->iconBitmap) {
         uint16_t ix = (uint16_t)(n->x + s.padding);
         uint16_t iy = (uint16_t)(n->y + s.padding);
         uint8_t sc = n->iconScale ? n->iconScale : 1;
-        if (sc <= 1) {
+        if (s.background) {
+            // Icon on a filled box (e.g. a footer-legend pill): XOR the set bits
+            // so the glyph shows in paper colour. Mirrors inverted Text drawing
+            // (on = !s.background) so icon + label match on a dark capsule.
+            for (uint8_t r2 = 0; r2 < n->iconH; r2++)
+                for (uint8_t cc = 0; cc < n->iconW; cc++) {
+                    uint32_t bit = (uint32_t)r2 * n->iconW + cc;
+                    if ((n->iconBitmap[bit / 8] >> (7 - (bit % 8))) & 1)
+                        c.invertRect((uint16_t)(ix + cc * sc), (uint16_t)(iy + r2 * sc), sc, sc);
+                }
+        } else if (sc <= 1) {
             aether::ui::draw::icon(c, ix, iy, n->iconBitmap, n->iconW, n->iconH);
         } else {
             for (uint8_t r2 = 0; r2 < n->iconH; r2++)

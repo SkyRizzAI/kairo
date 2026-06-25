@@ -57,6 +57,31 @@ static double jsToDouble(JSContext* ctx, JSValueConst v) {
     return r;
 }
 
+// Read raw bytes from a JS ArrayBuffer or TypedArray (Uint8Array, Int16Array, …)
+// into a byte vector. Used for binary IDL params (list<u8>), e.g. PCM audio. The
+// underlying bytes are copied so the vector outlives the JS value. Returns empty
+// if v is neither an ArrayBuffer nor a TypedArray.
+static std::vector<uint8_t> jsToBytes(JSContext* ctx, JSValueConst v) {
+    std::vector<uint8_t> out;
+    // TypedArray → underlying ArrayBuffer + byte window.
+    size_t byteOffset = 0, byteLen = 0, bytesPerEl = 0;
+    JSValue ab = JS_GetTypedArrayBuffer(ctx, v, &byteOffset, &byteLen, &bytesPerEl);
+    if (!JS_IsException(ab)) {
+        size_t abLen = 0;
+        uint8_t* p = JS_GetArrayBuffer(ctx, &abLen, ab);
+        if (p && byteOffset + byteLen <= abLen)
+            out.assign(p + byteOffset, p + byteOffset + byteLen);
+        JS_FreeValue(ctx, ab);
+        return out;
+    }
+    JS_FreeValue(ctx, JS_GetException(ctx)); // clear the "not a TypedArray" exception
+    // Plain ArrayBuffer.
+    size_t abLen = 0;
+    uint8_t* p = JS_GetArrayBuffer(ctx, &abLen, v);
+    if (p) out.assign(p, p + abLen);
+    return out;
+}
+
 static void setFn(JSContext* ctx, JSValue obj, const char* name, JSCFunction* fn, int argc) {
     JS_SetPropertyStr(ctx, obj, name, JS_NewCFunction(ctx, fn, name, argc));
 }
@@ -267,6 +292,44 @@ static JSValue nema_audio_output_list(JSContext* ctx, JSValueConst, int argc, JS
 
     auto __ret = host->audio_output_list();
     return marshalList(ctx, __ret, [ctx](JSContext* c, auto& v) { (void)c; return JS_NewString(ctx, v.c_str()); });
+}
+
+// audio-output.set-volume
+static JSValue nema_audio_output_set_volume(JSContext* ctx, JSValueConst, int argc, JSValueConst* argv) {
+    (void)argc; (void)argv;
+    auto* e = engineOf(ctx);
+    auto* host = e->hostApi();
+    if (!host) return JS_UNDEFINED;
+
+    auto level = jsToU32(ctx, argv[0]);
+    host->audio_output_set_volume(level);
+    return JS_UNDEFINED;
+}
+
+// audio-output.play-tone
+static JSValue nema_audio_output_play_tone(JSContext* ctx, JSValueConst, int argc, JSValueConst* argv) {
+    (void)argc; (void)argv;
+    auto* e = engineOf(ctx);
+    auto* host = e->hostApi();
+    if (!host) return JS_UNDEFINED;
+
+    auto freq = jsToU32(ctx, argv[0]);
+    auto ms = jsToU32(ctx, argv[1]);
+    host->audio_output_play_tone(freq, ms);
+    return JS_UNDEFINED;
+}
+
+// audio-output.play-pcm
+static JSValue nema_audio_output_play_pcm(JSContext* ctx, JSValueConst, int argc, JSValueConst* argv) {
+    (void)argc; (void)argv;
+    auto* e = engineOf(ctx);
+    auto* host = e->hostApi();
+    if (!host) return JS_UNDEFINED;
+
+    std::vector<uint8_t> data = jsToBytes(ctx, argv[0]);
+    auto sample_rate = jsToU32(ctx, argv[1]);
+    host->audio_output_play_pcm(data, sample_rate);
+    return JS_UNDEFINED;
 }
 
 // camera.list
@@ -753,6 +816,81 @@ static JSValue nema_tasks_cancel(JSContext* ctx, JSValueConst, int argc, JSValue
     return JS_UNDEFINED;
 }
 
+// wallet.networks
+static JSValue nema_wallet_networks(JSContext* ctx, JSValueConst, int argc, JSValueConst* argv) {
+    (void)argc; (void)argv;
+    auto* e = engineOf(ctx);
+    auto* host = e->hostApi();
+    if (!host) return JS_UNDEFINED;
+
+    auto __ret = host->wallet_networks();
+    return marshalList(ctx, __ret, [ctx](JSContext* c, auto& v) { (void)c; return JS_NewString(ctx, v.c_str()); });
+}
+
+// wallet.ready
+static JSValue nema_wallet_ready(JSContext* ctx, JSValueConst, int argc, JSValueConst* argv) {
+    (void)argc; (void)argv;
+    auto* e = engineOf(ctx);
+    auto* host = e->hostApi();
+    if (!host) return JS_UNDEFINED;
+
+    auto __ret = host->wallet_ready();
+    return JS_NewBool(ctx, __ret);
+}
+
+// wallet.address
+static JSValue nema_wallet_address(JSContext* ctx, JSValueConst, int argc, JSValueConst* argv) {
+    (void)argc; (void)argv;
+    auto* e = engineOf(ctx);
+    auto* host = e->hostApi();
+    if (!host) return JS_UNDEFINED;
+
+    // @capability("wallet.read") @tier(sensitive)
+    if (!host->perm_check(e->appId(), "wallet.read"))
+        return JS_ThrowTypeError(ctx, "ERR_PERMISSION: wallet.read");
+
+    std::string network_id = jsToString(ctx, argv[0]);
+    auto index = jsToU32(ctx, argv[1]);
+    auto __ret = host->wallet_address(network_id, index);
+    return marshalResult(ctx, __ret, [ctx](JSContext* c, auto& v) { (void)c; return JS_NewString(ctx, v.c_str()); }, [ctx](JSContext* c, auto& e) { return JS_ThrowTypeError(c, "%s", e.c_str()); });
+}
+
+// wallet.sign-message
+static JSValue nema_wallet_sign_message(JSContext* ctx, JSValueConst, int argc, JSValueConst* argv) {
+    (void)argc; (void)argv;
+    auto* e = engineOf(ctx);
+    auto* host = e->hostApi();
+    if (!host) return JS_UNDEFINED;
+
+    // @capability("wallet.sign") @tier(sensitive)
+    if (!host->perm_check(e->appId(), "wallet.sign"))
+        return JS_ThrowTypeError(ctx, "ERR_PERMISSION: wallet.sign");
+
+    std::string network_id = jsToString(ctx, argv[0]);
+    auto index = jsToU32(ctx, argv[1]);
+    std::string message = jsToString(ctx, argv[2]);
+    auto __ret = host->wallet_sign_message(network_id, index, message);
+    return marshalResult(ctx, __ret, [ctx](JSContext* c, auto& v) { (void)c; return JS_NewString(ctx, v.c_str()); }, [ctx](JSContext* c, auto& e) { return JS_ThrowTypeError(c, "%s", e.c_str()); });
+}
+
+// wallet.sign-transaction
+static JSValue nema_wallet_sign_transaction(JSContext* ctx, JSValueConst, int argc, JSValueConst* argv) {
+    (void)argc; (void)argv;
+    auto* e = engineOf(ctx);
+    auto* host = e->hostApi();
+    if (!host) return JS_UNDEFINED;
+
+    // @capability("wallet.sign") @tier(sensitive)
+    if (!host->perm_check(e->appId(), "wallet.sign"))
+        return JS_ThrowTypeError(ctx, "ERR_PERMISSION: wallet.sign");
+
+    std::string network_id = jsToString(ctx, argv[0]);
+    auto index = jsToU32(ctx, argv[1]);
+    std::string raw_tx_hex = jsToString(ctx, argv[2]);
+    auto __ret = host->wallet_sign_transaction(network_id, index, raw_tx_hex);
+    return marshalResult(ctx, __ret, [ctx](JSContext* c, auto& v) { (void)c; return JS_NewString(ctx, v.c_str()); }, [ctx](JSContext* c, auto& e) { return JS_ThrowTypeError(c, "%s", e.c_str()); });
+}
+
 // radio.scan
 // @blocking — dispatched via TaskRunner (the host wraps as async).
 static JSValue nema_radio_scan(JSContext* ctx, JSValueConst, int argc, JSValueConst* argv) {
@@ -833,7 +971,7 @@ static JSValue nema_radio_inject(JSContext* ctx, JSValueConst, int argc, JSValue
         return JS_ThrowTypeError(ctx, "ERR_NO_LEASE: net.wifi.inject");
 
     auto channel = jsToU32(ctx, argv[0]);
-    std::vector<uint8_t> frame = {};
+    std::vector<uint8_t> frame = jsToBytes(ctx, argv[1]);
     auto __ret = host->radio_inject(channel, frame);
     return marshalResultVoid(ctx, __ret, [ctx](JSContext* c, auto& e) { return JS_ThrowTypeError(c, "%s", e.c_str()); });
 }
@@ -871,6 +1009,9 @@ void installNemaApi(JSContext* ctx, HostApi* host, nema::CapabilityRegistry& cap
         JS_SetPropertyStr(ctx, media, "audio-output", media_audio_output);
     }
     setFn(ctx, media_audio_output, "list", nema_audio_output_list, 0);
+    setFn(ctx, media_audio_output, "setVolume", nema_audio_output_set_volume, 1);
+    setFn(ctx, media_audio_output, "playTone", nema_audio_output_play_tone, 2);
+    setFn(ctx, media_audio_output, "playPcm", nema_audio_output_play_pcm, 2);
 
     JSValue media_camera = JS_NewObject(ctx);
     if (caps.has(nema::caps::Camera)) {
@@ -952,6 +1093,14 @@ void installNemaApi(JSContext* ctx, HostApi* host, nema::CapabilityRegistry& cap
     setFn(ctx, sys_tasks, "timeout", nema_tasks_timeout, 2);
     setFn(ctx, sys_tasks, "interval", nema_tasks_interval, 2);
     setFn(ctx, sys_tasks, "cancel", nema_tasks_cancel, 1);
+
+    JSValue wallet = JS_NewObject(ctx);
+    JS_SetPropertyStr(ctx, nema, "wallet", wallet);
+    setFn(ctx, wallet, "networks", nema_wallet_networks, 0);
+    setFn(ctx, wallet, "ready", nema_wallet_ready, 0);
+    setFn(ctx, wallet, "address", nema_wallet_address, 2);
+    setFn(ctx, wallet, "signMessage", nema_wallet_sign_message, 3);
+    setFn(ctx, wallet, "signTransaction", nema_wallet_sign_transaction, 3);
 
     JSValue wifi = JS_NewObject(ctx);
     JS_SetPropertyStr(ctx, nema, "wifi", wifi);

@@ -121,7 +121,10 @@ void SkyRizzE32::describeHardware(Runtime& rt) {
     secure_.init(rt, expander_);
     rt.container().registerAs<ISecureElement>(&secure_);
     rt.hardware().add({"secure", DriverKind::Other, "NXP SE050 @0x48"});
-    rt.capabilities().add(caps::Secure);
+    // Only claim the capability if the chip actually ACKed on I²C — honest reporting.
+    // (Crypto ops / SecureStore sealing are scaffolded pending NXP middleware, so the
+    //  wallet auto-falls-back to software until Se050Driver::hasFeature(SecureStore).)
+    if (secure_.present()) rt.capabilities().add(caps::Secure);
 
     rt.capabilities().add(nema::caps::UiExtended);  // 4MB PSRAM → 512 nodes OK
     rt.capabilities().add(nema::caps::UiMomentum);  // 240 MHz → flick scroll OK

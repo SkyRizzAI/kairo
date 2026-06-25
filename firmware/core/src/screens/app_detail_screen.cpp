@@ -8,27 +8,16 @@
 #include "nema/ui/widgets.h"
 #include "nema/ui/view_dispatcher.h"
 #include "nema/app/app_registry.h"
+#include "host/sensitive_caps.gen.h"   // kSensitiveCaps[] — generated from the IDL
 #include <cstdio>
 
 namespace nema {
 
 using namespace aether::ui;
 
-// All @tier(sensitive) capabilities in the system. AppDetailScreen checks
-// each one and shows a toggle for any that the app has ever been asked about.
-static const char* const kSensitiveCaps[] = {
-    "net.wifi.scan",
-    "net.wifi.monitor",
-    "net.wifi.inject",
-    nullptr  // sentinel
-};
-
-static const char* capLabel(const char* cap) {
-    if (cap == std::string_view("net.wifi.scan"))    return "Wi-Fi Scan";
-    if (cap == std::string_view("net.wifi.monitor")) return "Wi-Fi Monitor";
-    if (cap == std::string_view("net.wifi.inject"))  return "Wi-Fi Inject / Deauth";
-    return cap;
-}
+// The sensitive-capability catalog (kSensitiveCaps / kSensitiveCapCount) is generated
+// from the IDL @tier(sensitive) annotations (see host/sensitive_caps.gen.h) — never
+// hand-maintained here, so it can't drift from the real permission set.
 
 AppDetailScreen::AppDetailScreen(Runtime& rt)
     : ComponentScreen(rt, 384) {}
@@ -102,8 +91,8 @@ void AppDetailScreen::onResetPerms(void* u) {
     auto* self = static_cast<AppDetailScreen*>(u);
     auto* perm = self->rt_.container().resolve<PermissionService>();
     if (!perm) return;
-    for (int i = 0; kSensitiveCaps[i]; ++i)
-        perm->revoke(self->appId_, kSensitiveCaps[i]);
+    for (int i = 0; i < kSensitiveCapCount; ++i)
+        perm->revoke(self->appId_, kSensitiveCaps[i].id);
     self->dirty_ = true;
     self->rt_.view().requestRedraw();
 }
@@ -148,13 +137,13 @@ UiNode* AppDetailScreen::build(NodeArena& a, Runtime& rt) {
     auto* perm = rt.container().resolve<PermissionService>();
     bool anyPerm = false;
     int ci = 0;
-    for (int i = 0; kSensitiveCaps[i] && ci < 8; ++i) {
-        const char* cap = kSensitiveCaps[i];
+    for (int i = 0; i < kSensitiveCapCount && ci < 8; ++i) {
+        const char* cap = kSensitiveCaps[i].id;
         uint8_t st = perm ? perm->status(appId_, cap) : 0;
         if (st == 0) continue;  // never asked → don't show
         if (!anyPerm) { append(ListSection(a, "Permissions")); anyPerm = true; }
         capRows_[ci] = {this, cap};
-        append(Toggle(a, capLabel(cap), st == 1, onCapToggle, &capRows_[ci]));
+        append(Toggle(a, kSensitiveCaps[i].label, st == 1, onCapToggle, &capRows_[ci]));
         ++ci;
     }
     if (anyPerm) {

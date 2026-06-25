@@ -78,6 +78,16 @@ struct ISecureElement : IDriver {
 
     // Query before relying on any non-baseline capability. Default: none.
     virtual bool hasFeature(SeFeature) const { return false; }
+
+    // ── Optional: seal/unseal data with a device-bound key held INSIDE the chip ──
+    // The wrapping key never leaves the chip, so the output is bound to this device.
+    // The wallet's mode-B backend (ADR 0014) uses this to wrap the BIP39 seed: the
+    // seed ciphertext lives in NVS, the key lives in the SE. Gate on
+    // hasFeature(SeFeature::SecureStore). Default: unsupported (return false).
+    virtual bool wrap(uint8_t /*slot*/, const uint8_t* /*in*/, size_t /*n*/,
+                      std::vector<uint8_t>& /*out*/) { return false; }
+    virtual bool unwrap(uint8_t /*slot*/, const uint8_t* /*in*/, size_t /*n*/,
+                        std::vector<uint8_t>& /*out*/) { return false; }
 };
 
 } // namespace nema

@@ -1,4 +1,5 @@
 import type { ILinkTransport } from '@palanu/link';
+import { playPcm } from '$lib/audio/SimAudio';
 
 // VirtualCableTransport — the simulator "cable" (Plan 35). Loads the CLASSIC
 // emscripten build (nema.js) via a <script> tag so Vite never transforms it
@@ -42,6 +43,11 @@ export class VirtualCableTransport implements ILinkTransport {
 			window.Module = {
 				locateFile: (p: string) => '/fw/' + p, // headered endpoint (COEP+CORP)
 				nemaPlpOut: (bytes: Uint8Array) => this.#data?.(new Uint8Array(bytes)),
+				// Audio bridge: the device streams RAW int16 PCM (WasmSpeaker) and we
+				// play it straight — no re-synthesis. HEAP16.slice in the EM_ASM hands
+				// us a private copy, so retaining it past this call is safe.
+				nemaAudioPcm: (samples: Int16Array, sampleRate: number) =>
+					playPcm(samples, sampleRate),
 				onRuntimeInitialized: () => {
 					this.#mod = window.Module as unknown as PalanuModule;
 					this.#ready = true;

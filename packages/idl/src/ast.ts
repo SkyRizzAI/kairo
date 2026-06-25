@@ -85,7 +85,9 @@ export function typeToTsString(t: TypeNode): string {
     case "option": return `${typeToTsString(t.inner!)} | null`;
     case "list":   return `${typeToTsString(t.inner!)}[]`;
     case "ref":    return t.name!;
-    case "result": return `{ ok: true; value: ${typeToTsString(t.ok!)} } | { ok: false; error: ${typeToTsString(t.err!)} }`;
+    // The quickjs binding returns the value on success and THROWS on error, so the
+    // TS type is just T (the call may throw — use try/catch).
+    case "result": return t.ok ? typeToTsString(t.ok) : "void";
     case "tuple": {
       if (!t.fields || t.fields.length === 0) return "void";
       return `[${t.fields.map(typeToTsString).join(", ")}]`;

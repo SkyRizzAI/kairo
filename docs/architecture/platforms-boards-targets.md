@@ -98,7 +98,6 @@ runtime and runs the standard boot.
 |---|---|---|
 | **dev-board** | Full firmware: Esp32Platform + DevBoard + Clock/Dolphin/JS apps + HomeScreen | `build:dev-board` (alias `build:esp32`) / `flash:dev-board` |
 | **skyrizz-e32** | Full firmware: Esp32Platform + SkyRizzE32 + Hello/BadUsb/Dolphin/JS apps + HomeScreen | `build:skyrizz-e32` / `flash:skyrizz-e32` |
-| **skyrizz-audiotest** | Standalone bring-up (**no runtime**): raw ES7243E + NS4168 I2S test, raw `printf` (sanctioned) | `build:audiotest` / `flash:audiotest` |
 | **skyrizz-camtest** | Standalone bring-up (**no runtime**): ILI9341 + GC2145 diagnostics, raw `printf` | `build:camtest` / `flash:camtest` |
 | **wasm** | Browser simulator: WasmPlatform + SimulatorBoard; emits `palanu.js`/`palanu.wasm` into Forge | `build:wasm` (needs emsdk) / `forge:wasm` |
 

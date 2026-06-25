@@ -15,6 +15,20 @@ interface audio-input {
 interface audio-output {
     /// List available audio output devices.
     list: func() -> list<string>
+
+    /// Set output gain, 0..100 (%). Maps to IAudioOutput::setVolume.
+    set-volume: func(level: u8)
+
+    /// Play a simple test tone (square wave) on the default output.
+    /// freq in Hz, duration in ms. Maps to IAudioOutput::playTone.
+    play-tone: func(freq: u16, ms: u16)
+
+    /// Play RAW 16-bit mono PCM on the default output. `data` is little-endian
+    /// int16 samples (pass an Int16Array / ArrayBuffer / Uint8Array of bytes);
+    /// `sample-rate` in Hz. Maps to IAudioOutput::writePcm — the device/simulator
+    /// reproduces exactly these samples (no re-synthesis). On hardware the I2S
+    /// clock is fixed at 16 kHz; the simulator honours sample-rate.
+    play-pcm: func(data: list<u8>, sample-rate: u32)
 }
 
 /// Camera capture. Maps to CameraService (services/camera_service.h:10–14).

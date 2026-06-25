@@ -1,0 +1,6 @@
+{
+  "name": "@palanu-examples/web3-test",
+  "devDependencies": {
+    "@palanu/app-sdk": "workspace:*"
+  }
+}

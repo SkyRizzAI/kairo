@@ -35,6 +35,14 @@ public:
     }
     uint8_t rotation() const override { return rotation_; }
 
+    // Resize the simulated panel (sim only). Re-applies the current rotation so
+    // width()/height() reflect the new native dims. Call before the screen tap
+    // reads the size at boot.
+    void setNativeSize(uint16_t w, uint16_t h) {
+        nativeW_ = w; nativeH_ = h;
+        setRotation(rotation_);
+    }
+
     // Theme palette (Plan 92 Fase B): stored for a future Forge colourised mirror
     // (the sim streams a 1-bit buffer; Forge would apply fg/bg). No local glass.
     void setPalette(uint16_t fg, uint16_t bg) override { paletteFg_ = fg; paletteBg_ = bg; }

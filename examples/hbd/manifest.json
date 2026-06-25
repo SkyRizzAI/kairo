@@ -1,0 +1,9 @@
+{
+  "id": "hbd",
+  "name": "HBD",
+  "version": "1.0.0",
+  "runtime": "wasm",
+  "entry": "hbd.wasm",
+  "api_version": "1.0",
+  "category": "Fun"
+}

@@ -50,6 +50,12 @@ extern int32_t nema_input__input_actions(void);
 extern int32_t nema_media__audio_input_list(void);
 /* List available audio output devices. */
 extern int32_t nema_media__audio_output_list(void);
+/* Set output gain, 0..100 (%). Maps to IAudioOutput::setVolume. */
+extern void nema_media__audio_output_set_volume(uint32_t level);
+/* Play a simple test tone (square wave) on the default output. freq in Hz, duration in ms. Maps to IAudioOutput::playTone. */
+extern void nema_media__audio_output_play_tone(uint32_t freq, uint32_t ms);
+/* Play RAW 16-bit mono PCM on the default output. `data` is little-endian int16 samples (pass an Int16Array / ArrayBuffer / Uint8Array of bytes); `sample-rate` in Hz. Maps to IAudioOutput::writePcm — the device/simulator reproduces exactly these samples (no re-synthesis). On hardware the I2S clock is fixed at 16 kHz; the simulator honours sample-rate. */
+extern void nema_media__audio_output_play_pcm(int32_t data, uint32_t sample_rate);
 /* List available camera devices. */
 extern int32_t nema_media__camera_list(void);
 /* Capture a frame from the default camera. @blocking — runs on worker. */
@@ -138,6 +144,21 @@ extern int32_t nema_sys__tasks_timeout(uint32_t ms, int32_t callback);
 extern int32_t nema_sys__tasks_interval(uint32_t ms, int32_t callback);
 /* Cancel a pending timeout/interval by handle. */
 extern void nema_sys__tasks_cancel(int32_t token);
+
+/* ── nema:wallet ───────────────────────────────────────── */
+/* All built-in network ids the device supports. */
+extern int32_t nema_wallet__wallet_networks(void);
+/* Whether a wallet exists and is unlocked (ready to read/sign). */
+extern uint32_t nema_wallet__wallet_ready(void);
+/* Address for (network id, BIP44 account index). err = "locked" | "bad-network" | "derive-failed". */
+/* requires: @capability("wallet.read") @tier(sensitive) */
+extern int32_t nema_wallet__wallet_address(const char* network_id, uint32_t index, const char** out_value);
+/* Sign a UTF-8 message for the account (+ on-device consent). Returns the signature as hex. err = "locked" | "rejected" | "failed". */
+/* requires: @capability("wallet.sign") @tier(sensitive) */
+extern int32_t nema_wallet__wallet_sign_message(const char* network_id, uint32_t index, const char* message, const char** out_value);
+/* Sign a raw transaction (hex-encoded) for the account (+ on-device consent: trusted-display + physical button). Returns the signed tx as hex (the app broadcasts it itself). err = "locked" | "rejected" | "failed". */
+/* requires: @capability("wallet.sign") @tier(sensitive) */
+extern int32_t nema_wallet__wallet_sign_transaction(const char* network_id, uint32_t index, const char* raw_tx_hex, const char** out_value);
 
 /* ── nema:wifi ─────────────────────────────────────────── */
 /* Scan for visible APs. @blocking — runs on worker. Auto-grant (benign): no permission prompt. No exclusive lease required. */

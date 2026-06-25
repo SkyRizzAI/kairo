@@ -42,8 +42,9 @@ function qjsUnmarshal(t: TypeNode, expr: string): string {
     case "u64": return `jsToU64(ctx, ${expr})`;
     case "handle": return `jsToI32(ctx, ${expr})`;
     case "f32": case "f64": return `jsToDouble(ctx, ${expr})`;
-    // Complex types that can't be unmarshalled from JS yet — return default.
-    case "list":   return `{}`;
+    // list<u8> input: read raw bytes from an ArrayBuffer / TypedArray (binary
+    // params, e.g. PCM audio). Other list element types are not yet supported.
+    case "list":   return t.inner && t.inner.kind === "u8" ? `jsToBytes(ctx, ${expr})` : `{}`;
     case "ref":    return `{}`;
     case "option": return `std::nullopt`;
     case "result": return `{}`;
@@ -189,6 +190,7 @@ function emitRegistration(ast: PidlAst): string {
     "input":        { parent: "nema",      var: "input",    gated: "input" },
     "wifi":         { parent: "nema",      var: "wifi" },        // Plan 87: WiFi radio HAL
     "wifi.radio":   { parent: "wifi",      var: "wifi_radio" }, // func-level gating only
+    "wallet.wallet":{ parent: "nema",      var: "wallet" },     // Plan 94: nema.wallet.* (perm-gated per call)
   };
 
   // Build namespace objects (only those present in the AST)
@@ -338,6 +340,31 @@ static double jsToDouble(JSContext* ctx, JSValueConst v) {
     double r = 0;
     JS_ToFloat64(ctx, &r, v);
     return r;
+}
+
+// Read raw bytes from a JS ArrayBuffer or TypedArray (Uint8Array, Int16Array, …)
+// into a byte vector. Used for binary IDL params (list<u8>), e.g. PCM audio. The
+// underlying bytes are copied so the vector outlives the JS value. Returns empty
+// if v is neither an ArrayBuffer nor a TypedArray.
+static std::vector<uint8_t> jsToBytes(JSContext* ctx, JSValueConst v) {
+    std::vector<uint8_t> out;
+    // TypedArray → underlying ArrayBuffer + byte window.
+    size_t byteOffset = 0, byteLen = 0, bytesPerEl = 0;
+    JSValue ab = JS_GetTypedArrayBuffer(ctx, v, &byteOffset, &byteLen, &bytesPerEl);
+    if (!JS_IsException(ab)) {
+        size_t abLen = 0;
+        uint8_t* p = JS_GetArrayBuffer(ctx, &abLen, ab);
+        if (p && byteOffset + byteLen <= abLen)
+            out.assign(p + byteOffset, p + byteOffset + byteLen);
+        JS_FreeValue(ctx, ab);
+        return out;
+    }
+    JS_FreeValue(ctx, JS_GetException(ctx)); // clear the "not a TypedArray" exception
+    // Plain ArrayBuffer.
+    size_t abLen = 0;
+    uint8_t* p = JS_GetArrayBuffer(ctx, &abLen, v);
+    if (p) out.assign(p, p + abLen);
+    return out;
 }
 
 static void setFn(JSContext* ctx, JSValue obj, const char* name, JSCFunction* fn, int argc) {

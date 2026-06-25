@@ -21,6 +21,7 @@ import { emitQuickJS } from "./emit/quickjs";
 import { emitDts } from "./emit/dts";
 import { emitWasmC } from "./emit/wasm_c";
 import { emitPlpTs } from "./emit/plp_ts";
+import { emitSensitiveCaps } from "./emit/sensitive_caps";
 
 // ── CLI ───────────────────────────────────────────────────────────────────
 
@@ -94,6 +95,10 @@ async function main() {
   }
   if (await writeGenerated("host/nema_api_quickjs.gen.cpp", emitQuickJS(ast), args.out)) {
     console.log("  generated/host/nema_api_quickjs.gen.cpp");
+    changes++;
+  }
+  if (await writeGenerated("host/sensitive_caps.gen.h", emitSensitiveCaps(ast), args.out)) {
+    console.log("  generated/host/sensitive_caps.gen.h");
     changes++;
   }
 

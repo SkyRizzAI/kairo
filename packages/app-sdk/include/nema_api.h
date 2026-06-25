@@ -214,6 +214,21 @@ extern int input_wait(int timeout_ms);
 NEMA_IMPORT("input", "delay")
 extern void delay(int ms);
 
+// ── Audio (ADR 0016) ──────────────────────────────────────────────────────────
+// Simple tone + volume. The kernel's audio manager routes these to the active
+// board's speaker (I2S on hardware) or the simulator's Web Audio; on a board with
+// no audio output the calls are silently ignored. Non-blocking on the simulator
+// (the tone is synthesized + streamed, then plays asynchronously for `ms`), so an
+// app can fire one note per frame and keep animating.
+//
+// (Raw PCM playback is JS-apps-only for now — see ADR 0016.)
+
+NEMA_IMPORT("audio", "audio_play_tone")
+extern void audio_play_tone(int freq_hz, int duration_ms);
+
+NEMA_IMPORT("audio", "audio_set_volume")
+extern void audio_set_volume(int level);   // 0..100 (%)
+
 // ── Minimal libc substitutes ─────────────────────────────────────────────────
 // Basic string/number utilities that do NOT pull in WASI libc.
 // Only what WASM apps actually need.

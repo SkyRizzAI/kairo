@@ -341,6 +341,11 @@ void Esp32Platform::postRegister(Runtime& rt) {
                      : nullptr;
     if (disp) {
         tap_.init(*disp, link_);                            // decorate board display
+        // Stream at the LOGICAL resolution: the UI scale (aether/scale, %; 200 = 2×) draws
+        // each logical pixel as an N×N physical block, so downsampling by that factor is
+        // lossless and cuts the remote frame by N² — e.g. 320×240 → 160×120 (Plan 93).
+        int scalePct = (int)rt.config().getIntOr("aether", "scale", 100);
+        tap_.setDownscale(scalePct / 100);
         rt.container().registerAs<IDisplayDriver>(&tap_);   // Canvas renders into tap
         remote_.onReady(&Esp32Platform::readyThunk, this);  // push screen on connect (after auth)
     }
@@ -442,3 +447,16 @@ bool Esp32Platform::syncNtp() {
 }
 
 } // namespace nema
+
+// ── trezor-crypto RNG hooks (Plan 94) ────────────────────────────────────────
+// trezor-crypto declares but does not define random32()/random_buffer() — the
+// platform supplies them. Defined in THIS TU (not a standalone file) so the linker
+// always pulls them: esp32_platform.o is already pulled to satisfy Esp32Platform,
+// bringing these with it. A standalone object isn't referenced early enough in the
+// IDF archive scan order and silently drops out → "undefined reference".
+//
+// NOTE: esp_random() is a true TRNG only while Wi-Fi/BT is active or after bootloader
+// seeding; otherwise PRNG. Fine for dev/testnet (the only mode before Secure Boot).
+#include "esp_random.h"
+extern "C" uint32_t random32(void) { return esp_random(); }
+extern "C" void random_buffer(uint8_t* buf, size_t len) { esp_fill_random(buf, len); }

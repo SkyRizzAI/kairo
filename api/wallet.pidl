@@ -1,0 +1,40 @@
+// nema:wallet — On-device wallet API for custom apps (Plan 94, Fase 7).
+// Lets a custom app pick a chain/network, read its address, and request signing of a
+// message or transaction for the ACTIVE wallet account. Backed by the system
+// WalletService (firmware/core/include/nema/wallet/wallet_service.h).
+//
+// Security: connect/read is gated by the "wallet.read" permission; signing additionally
+// requires the "wallet.sign" permission AND per-transaction consent on the trusted
+// display (physical button). The private key is NEVER exposed to the app — only
+// addresses + signatures. Network ids come from NetworkRegistry
+// (eth-mainnet, sepolia, polygon, bnb, arbitrum, optimism, base, avalanche,
+//  btc-mainnet, btc-testnet, sol-mainnet, sol-devnet).
+package nema:wallet@1.0
+
+@core
+interface wallet {
+    /// All built-in network ids the device supports.
+    networks: func() -> list<string>
+
+    /// Whether a wallet exists and is unlocked (ready to read/sign).
+    ready: func() -> bool
+
+    /// Address for (network id, BIP44 account index).
+    /// err = "locked" | "bad-network" | "derive-failed".
+    @capability("wallet.read")
+    @tier(sensitive)
+    address: func(network-id: string, index: u32) -> result<string, string>
+
+    /// Sign a UTF-8 message for the account (+ on-device consent).
+    /// Returns the signature as hex. err = "locked" | "rejected" | "failed".
+    @capability("wallet.sign")
+    @tier(sensitive)
+    sign-message: func(network-id: string, index: u32, message: string) -> result<string, string>
+
+    /// Sign a raw transaction (hex-encoded) for the account (+ on-device consent:
+    /// trusted-display + physical button). Returns the signed tx as hex (the app
+    /// broadcasts it itself). err = "locked" | "rejected" | "failed".
+    @capability("wallet.sign")
+    @tier(sensitive)
+    sign-transaction: func(network-id: string, index: u32, raw-tx-hex: string) -> result<string, string>
+}

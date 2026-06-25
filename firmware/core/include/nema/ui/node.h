@@ -63,6 +63,16 @@ struct Style {
     Position position = Position::Relative;
     int16_t  absX = 0;   // relative to parent top-left
     int16_t  absY = 0;
+
+    // Overflow:hidden — clip this node's own drawing (and children) to its bbox.
+    // Used by the footer-legend collapse animation to truncate a shrinking label
+    // cleanly instead of letting the text overflow the narrowing pill.
+    bool     clip = false;
+
+    // Scales an auto-width Text node's MEASURED content width (1.0 = natural).
+    // Lets the layout engine shrink a label without the caller measuring text —
+    // the footer-legend collapse animates this 1→0. Ignored when width is fixed.
+    float    widthScale = 1.0f;
 };
 
 // Persistent scroll state for a NodeType::Scroll node. Lives OUTSIDE the arena

@@ -1,14 +1,20 @@
 // tools/idl/emit/dts.ts — Generate nema.d.ts TypeScript declarations (Plan 49 Fase 3).
 // Replaces the hand-written system.ts with IDL-derived types.
 
-import type { PidlAst, PidlFunc, PidlInterface } from "../ast";
+import type { PidlAst, PidlFunc, PidlInterface, TypeNode } from "../ast";
 import { typeToTsString } from "../ast";
 
 function camelCase(s: string): string { const p = s.split("-").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(""); return p.charAt(0).toLowerCase() + p.slice(1); }
 
+// list<u8> params are binary buffers — accept the ergonomic JS binary types.
+function tsParamType(t: TypeNode): string {
+  if (t.kind === "list" && t.inner && t.inner.kind === "u8") return "Uint8Array | ArrayBuffer | number[]";
+  return typeToTsString(t);
+}
+
 function funcToTs(fn: PidlFunc, indent: string): string {
   const name = camelCase(fn.name);
-  const params = fn.params.map((p) => `${camelCase(p.name)}: ${typeToTsString(p.type)}`).join(", ");
+  const params = fn.params.map((p) => `${camelCase(p.name)}: ${tsParamType(p.type)}`).join(", ");
   const ret = fn.returns ? typeToTsString(fn.returns) : "void";
 
   const lines: string[] = [];
@@ -53,13 +59,17 @@ export function emitDts(ast: PidlAst): string {
         ? `  // gated: ${iface.annotations.capability}`
         : "  // core";
       lines.push(`    ${capNote}`);
-      lines.push(`    namespace ${iface.name} {`);
+      // Collapse when the interface name equals the domain (e.g. wallet.wallet) so the
+      // API reads as `nema.wallet.*`, matching the runtime quickjs tree.
+      const collapse = iface.name === domain;
+      if (!collapse) lines.push(`    namespace ${iface.name} {`);
+      const indent = collapse ? "    " : "      ";
 
       for (const fn of iface.functions) {
-        lines.push(funcToTs(fn, "      "));
+        lines.push(funcToTs(fn, indent));
       }
 
-      lines.push("    }");
+      if (!collapse) lines.push("    }");
       lines.push("");
     }
 

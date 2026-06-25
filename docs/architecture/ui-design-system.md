@@ -196,7 +196,10 @@ a design must be expressible as nested rows/columns.
 - **Alignment:** `align` (cross-axis: Start/Center/End/Stretch); `justify` (main-axis:
   Start/Center/End/SpaceBetween).
 - **Decoration:** `border` (1-px outline), `background` (fill), `selectBox` (focus
-  highlight style).
+  highlight style), `clip` (overflow-hidden — clip a node's drawing to its bbox).
+- **Animatable text width:** `widthScale` (0..1) scales an auto-width `Text` node's
+  measured width in layout, so a label can shrink without the caller measuring text
+  (paired with `clip` for the footer-legend collapse).
 - **Positioning:** `position` = Relative | Absolute (`absX/absY` pin to parent origin).
 - **Text wrap:** `wrap` + `lineGap` + `maxLines` for multiline.
 
@@ -237,6 +240,10 @@ be expressed using these — host-rendered consistency is guaranteed by reusing 
 - **`TitleBar(title)`** — filled banner, inverted centred title (page title).
 - **`Header(title)`** — title line + full-width separator.
 - **`Footer(hint)`** — Caption-role bottom hint line (often paired with `sep2Y` divider).
+- **`FooterLegends(items, count[, state])`** — soft-key bar of icon+label pills,
+  count-driven space-between (1=left, 2+=edges); paper-colour content on filled
+  capsules; optional wall-clock collapse-to-icon animation (`FooterLegendsState`).
+  See [`feats/footer-legends.md`](../feats/footer-legends.md).
 - **Status bar** — `StatusBar::draw(canvas, StatusBarData)`: clock, battery %, wifi/ble/
   sd/lock icons, version (`status_bar.h`). System-drawn, top of screen.
 
@@ -279,11 +286,13 @@ be expressed using these — host-rendered consistency is guaranteed by reusing 
 
 ## 8. Iconography
 
-- **Built-in pack:** `icon_pack.h` — `IconDef{handle, bitmap, w, h}`, standard **8×8**
-  1-bit XBM (row-major, MSB first). Lookup by string handle via `findIcon(handle)`.
+- **Built-in pack:** `icon_pack.h` — `IconDef{handle, bitmap, w, h}`, mostly **8×8**
+  1-bit XBM (row-major, MSB first; the footer `nav.*` icons are a compact **6×6**).
+  Lookup by string handle via `findIcon(handle)`. Each `IconDef` carries its own
+  `w`/`h`, so non-8×8 icons render fine — the renderer reads bits as `row*w+col`.
 - **Handle namespaces:** `status.*` (wifi/bt/battery/charging), `feature.*`
-  (apps/settings/gpio/subghz/nfc), `file.*` (folder/file/generic), `action.*`
-  (warning/info/ok/spinner).
+  (apps/**wallet**/settings/gpio/subghz/nfc), `file.*` (folder/file/generic),
+  `action.*` (warning/info/ok/spinner/dot), `nav.*` (up/enter — 6×6, footer legends).
 - **App icons:** an app's `manifest.json` `"icon"` is either a built-in **handle** or a
   bundle-relative path. A `.papp` may ship `icon.raw` (4-byte header `[w u16][h u16]` +
   1-bit packed bitmap), loaded at install time and rendered in the launcher/app list.

@@ -230,8 +230,7 @@ palanu/                         ( repo dir is still "kairo/" — rename pending,
 │  │  ├─ wasm/           Emscripten executable → nema.js + nema.wasm
 │  │  ├─ dev-board/      ESP-IDF project (Arduino setup()/loop())
 │  │  ├─ skyrizz-e32/    ESP-IDF project (USB-Serial-JTAG console)
-│  │  ├─ skyrizz-camtest/   standalone camera + display bring-up test
-│  │  └─ skyrizz-audiotest/ standalone mic + speaker bring-up test
+│  │  └─ skyrizz-camtest/   standalone camera + display bring-up test
 │  │
 │  ├─ vendor/            quickjs (JS engine), arduino-libs (GxEPD2/Adafruit_GFX/BusIO)
 │  ├─ tests/             host unit tests: layout, klp, link, service, js (+ render/dualimport/graceful)
@@ -670,7 +669,6 @@ The target assembles platform + board + core into a flashable/runnable program.
 | **dev-board** | Esp32Platform / DevBoard | ESP-IDF + arduino-esp32 | Arduino `setup()`/`loop()→rt.step()` | `nema-dev-board.bin` |
 | **skyrizz-e32** | Esp32Platform / SkyRizzE32 | ESP-IDF + arduino-esp32 | `setup()`/`loop()` (USB-Serial-JTAG) | `nema-skyrizz-e32.bin` |
 | **skyrizz-camtest** | — (bare) | ESP-IDF | direct camera + display test | bring-up binary |
-| **skyrizz-audiotest** | — (bare) | ESP-IDF | direct mic + speaker test | bring-up binary |
 
 ESP32 targets use **Arduino-as-component** under ESP-IDF v5.5.x (RTTI + exceptions on — the DI container
 uses `std::type_index`). The WASM target links with fixed 512 MB memory, a 12-worker pthread pool, and
@@ -732,7 +730,7 @@ bun run build:dev-board   && bun run flash:dev-board     # e-ink dev board
 
 # ── Hardware bring-up tests (standalone, no runtime) ──
 bun run flash:camtest     # camera + display
-bun run flash:audiotest   # mic + speaker
+# (audio/speaker bring-up is now done in-firmware via Settings → Sounds → test beep)
 ```
 
 `firmware/tools/` holds the scripts: `build-wasm.sh` runs `emcmake cmake` + builds the `nema` target and
@@ -791,8 +789,9 @@ and full hardware verification of the connectivity + media stack on SkyRizz E32.
 
 - **`.papp` installs are volatile** — OTA-installed JS apps live in RAM and are lost on reboot until
   on-flash persistence (plan 38) lands. Embedded JS apps (compiled in) survive.
-- **SkyRizz E32 is build-verified, HW bring-up ongoing** — the board/target compile and the camtest/
-  audiotest programs exist; full runtime validation on the physical badge is in progress.
+- **SkyRizz E32 is build-verified, HW bring-up ongoing** — the board/target compile and the camtest
+  program exists; speaker bring-up is now diagnosed in-firmware (Settings → Sounds); full runtime
+  validation on the physical badge is in progress.
 - **Connectivity not fully HW-verified** — WiFi/Ticker/keyboard/BLE build on all targets and pass in the
   simulator; end-to-end testing on the e-ink device is still pending in places.
 - **No battery monitoring on the dev board** — no battery ADC in its pinout; the `battery` capability is

@@ -4,12 +4,20 @@
 > Detail per-stage ada di [`plans/`](plans/00-overview.md). Master plan: [`concept_plan.md`](concept_plan.md).
 > Reference arsitektur per-subsistem: [`architecture/`](architecture/README.md).
 >
-> **Last updated:** 2026-06-25 (Plan 92 — **UI maturity sweep**: display rotation
-> (0/90/180/270 + button/touch follow), colour theme system (mono/Flipper palette +
-> dark mode, device→Forge palette over PLP, ADR 0012), status-bar redesign, list
-> scroll-off margin, **Mission Control** quick-settings panel (brightness/volume/wifi),
-> and a boot/restart **splash screen**. New feats: mission-control, display-rotation,
-> colour-themes, splash-screen. Prev: Plan 88 Remote Protocol v2 + internal-SRAM diet.)
+> **Last updated:** 2026-06-26 (**Simulator audio + app audio API** — `WasmSpeaker`
+> streams **raw PCM** to Forge Web Audio (dumb-DAC, no re-synthesis); `nema:media`
+> `audio-output` now exposes `setVolume`/`playTone`/`playPcm` to custom apps (first
+> binary IDL input param via `jsToBytes`); `IAudioOutput::writePcm` added; removed
+> `skyrizz-audiotest` target (HW speaker parked — `SP1` connector, ADR 0016). Earlier:
+> Desktop UX: **footer legends** soft-key bar
+> (count-driven space-between pills, icon+label → icon collapse, wall-clock timed,
+> replays on wake) on the Desktop; **selectable live wallpaper** — Desktop Setting
+> scans `/system/assets/anims/*.panim`, saved to `desktop/anim`; two new dolphin
+> anims (`hacking_pc`, `lab_research`) shipped for both targets; `feature.wallet`
+> launcher icon. New feat: footer-legends. Renderer/layout gained `Style::clip` +
+> `Style::widthScale` (overflow-hidden + animatable text width) and inverted-icon
+> draw on filled boxes. Prev: 2026-06-25 Plan 92 UI maturity sweep — display
+> rotation, colour themes (ADR 0012), Mission Control, splash screen.)
 
 ---
 
@@ -28,7 +36,8 @@ Palanu = platform handheld bergaya Flipper Zero, **1-bit retro/pixel UI**, denga
 | **App capability + Radio HAL (Plan 87+89)** | ✅ build | Three-axis access control (Capability · Permission · Lease); `PermissionService` tiered; `ResourceBroker` exclusivity groups (net.wifi.* single-owner); `SystemWifiManager` suspend/restore on app lease; `IRadioWifi` HAL; ESP32 promiscuous + `esp_wifi_80211_tx`; WASM watchdog; Settings→Apps→[app]; `wifi.*` WASM host imports now guarded by `checkPerm()` + `ResourceBroker` lease (monitor/inject handles auto-released via `releaseAll()` on exit); WiFi Marauder example; ADR 0008 |
 | **App runtime parity (Plan 84)** | ✅ build (host) | CLI/UI/Hybrid dispatch dari `AppMode`; `launchProcess()` spawn thread untuk mode Cli; WASM headless via `WasmApp:ComponentApp` + `WasmAppStore`; `wasm_nema.cpp` bridge (log/device/storage); icon pipeline `icon.raw` (1-bit) di launcher; `BadUsbApp` → `ComponentApp` (thread sendiri); `JsAppStore::apps_` → `std::list` (stable pointers) |
 | **Storage architecture (Plan 83+89)** | ✅ build (host) | VFS: `/system/assets/anims/`, `/data/<bundle-id>/`, `/sd/data/<bundle-id>/`; `AppStorage` (namespaced I/O); `StorageService` (routing+move+usage+sdCardInfo+ejectSd); `IFileSystem::statvfs()` + `Vfs::backendAt()`; Storage Settings: async load via TaskRunner, SD capacity via FAT statvfs, eject action row; AppDetailScreen: async storage load |
-| **Asset architecture (Plan 82)** | ✅ build (host+wasm) | T1 system icons (status bar), T2 launcher icon anims, T3 `.panim` (VFS); toolchain `tools/asset_gen/`; `dolphin_showcase.cpp` 895 KB removed; BadUSB → category="System"; battery icon 16×8 (proportional); WiFi icon state-gated (`available()`); animation consolidated to `laptop.panim`; LittleFS 512 KB |
+| **Asset architecture (Plan 82)** | ✅ build (host+wasm) | T1 system icons (status bar), T2 launcher icon anims, T3 `.panim` (VFS); toolchain `tools/asset_gen/`; `dolphin_showcase.cpp` 895 KB removed; BadUSB → category="System"; battery icon 16×8 (proportional); WiFi icon state-gated (`available()`); **3 desktop wallpapers** (`laptop`, `hacking_pc`, `lab_research`) — `.panim` in LittleFS (hardware) + C headers seeded into MemFS (WASM), **selectable** via Desktop Setting (`desktop/anim`); `feature.wallet` icon; LittleFS 512 KB |
+| **Footer legends + Desktop wallpaper picker** | ✅ build (host) | `FooterLegends` Aether widget (Layer-3): count-driven space-between pills, paper-colour icon+label, wall-clock collapse-to-icon (replays on launcher-return/sleep-wake); on `DesktopScreen` over the wallpaper. `Style::clip`/`widthScale` (renderer+layout), inverted-icon-on-fill. `LiveWallpaperDesktop` reloads anim on config change. Feat: footer-legends |
 | **Canvas scaling (non-integer)** | ✅ build | `fillRect`/`invertRect`/`drawPixel` pakai floor-edge formula — tidak ada gap/double-invert artifact di scale 1.75× / 1.5× |
 | **PlayStation launcher** | ✅ build | Flush-left pada layar sempit (≤3 tile); partial tile peek di kanan sebagai scroll hint |
 | **Aether display server = lib terpisah (Plan 80)** | ✅ build (host+wasm+esp32) | `nema_core` 0 ref ke `aether` (IDF strict-link); semua UI/screens/GuiService → `libaether`; ganti server = ganti lib + `aether::bootDisplay(rt)` |
@@ -50,6 +59,7 @@ Palanu = platform handheld bergaya Flipper Zero, **1-bit retro/pixel UI**, denga
 | **Secure element HAL** (`ISecureElement`, `caps::Secure`; backend SE050 skyrizz + sim) | 🟡 scaffold | build host+wasm+esp32 ✓; ops crypto TODO (ADR 0005) — fondasi crypto wallet |
 | **Font pack system** (dynamic `.bmf` load from VFS; Settings→Font cycles packs; IoskeleyMono + IoskeleyMono-Condensed seeded) | ✅ build | sim ✓ (font cycling + rendering) |
 | **Sleep/lock render gate** (`isDisplayOff()` di DPM — blok render + anim tick saat backlight mati, termasuk Locked state pre-wake) | ✅ build | fix animation flash on wake |
+| **Audio output** (`IAudioOutput` + `writePcm` raw PCM; sim → Forge Web Audio dumb-DAC; `nema:media` app API `setVolume`/`playTone`/`playPcm`, gated `caps::AudioOutput`) | ✅ build (host+wasm) | sim beep audible in browser; 27/27 tests; device NS4168 parity (HW speaker parked, ADR 0016) — feat: simulator-audio |
 
 **Pilar arsitektur "tidak pernah freeze" terbukti:** scan WiFi (1-3s) dan HTTP fetch (1-3s) jalan di `TaskRunner` worker thread sementara UI tetap render & responsif. Reference firmware-nya sendiri komentar "freezes UI during fetch" — Palanu tidak.
 

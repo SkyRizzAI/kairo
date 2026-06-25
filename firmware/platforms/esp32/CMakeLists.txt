@@ -18,6 +18,7 @@ idf_component_register(
     REQUIRES
         core
         aether
+        esp_hw_support
         espressif__arduino-esp32
         joltwallet__littlefs
         fatfs

@@ -35,12 +35,27 @@ src/input/gesture.cpp
     src/fs/vfs.cpp
     src/fs/app_storage.cpp
     src/crypto/sha256.cpp
+    src/wallet/hd_wallet.cpp
+    src/wallet/nvs_backend.cpp
+    src/wallet/se_backend.cpp
+    src/wallet/soft_secure_element.cpp
+    src/wallet/chains/rlp.cpp
+    src/wallet/network_registry.cpp
+    src/wallet/chains/evm.cpp
+    src/wallet/chains/solana.cpp
+    src/wallet/chains/bitcoin.cpp
+    src/wallet/wallet_service.cpp
+    src/wallet/wallet_consent_service.cpp
+    src/wallet/wallet_controller.cpp
+    src/wallet/wallet_vault.cpp
+    src/wallet/wallet_system.cpp
     src/services/profile_service.cpp
     src/services/clock_service.cpp
     src/services/dummy_battery_driver.cpp
     src/services/ntp_service.cpp
     src/services/cli_service.cpp
     src/app/app_registry.cpp
+    src/apps/wallets_app.cpp
     src/app/app_context.cpp
     src/app/app_host.cpp
     src/app/app_host_manager.cpp
@@ -83,6 +98,7 @@ src/input/gesture.cpp
     src/wasm/wasm_ui.cpp
     src/wasm/wasm_input.cpp
     src/wasm/wasm_wifi.cpp
+    src/wasm/wasm_audio.cpp
     src/wasm/wasm_runtime.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../../generated/host/nema_api_quickjs.gen.cpp
 )
@@ -93,7 +109,7 @@ if(ESP_PLATFORM)
     idf_component_register(
         SRCS ${NEMA_CORE_SRCS}
         INCLUDE_DIRS "include" "${CMAKE_BINARY_DIR}/nema_generated" "${CMAKE_CURRENT_SOURCE_DIR}/../../generated" "${CMAKE_CURRENT_SOURCE_DIR}/../vendor"
-        REQUIRES quickjs wasm3_idf
+        REQUIRES quickjs wasm3_idf trezor-crypto
     )
 else()
     # --- Host build (simulator) ---
@@ -105,7 +121,7 @@ else()
         ${CMAKE_CURRENT_SOURCE_DIR}/../../generated)
     target_compile_features(nema_core PUBLIC cxx_std_17)
     find_package(Threads REQUIRED)
-    target_link_libraries(nema_core PUBLIC Threads::Threads quickjs wasm3 nema_vendor)
+    target_link_libraries(nema_core PUBLIC Threads::Threads quickjs wasm3 nema_vendor trezor-crypto)
 
     # Plan 48/49: IDL codegen - only needed for the host build (pre-generated
     # files are committed and used by the IDF build directly).

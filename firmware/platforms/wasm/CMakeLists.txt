@@ -6,6 +6,8 @@ add_library(nema_platform_wasm STATIC
     # native sim platform, which was removed — the simulator is WASM now.
     src/sim_wifi_driver.cpp
     src/sim_wifi_radio.cpp    # raw radio HAL (Plan 87 Fase 4)
+    src/wasm_wallet_rng.cpp   # trezor-crypto RNG hooks (Plan 94)
+    src/wasm_speaker.cpp      # audio output → Web Audio bridge (Sounds test beep)
 )
 
 target_include_directories(nema_platform_wasm PUBLIC

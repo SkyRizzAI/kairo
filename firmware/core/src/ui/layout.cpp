@@ -19,6 +19,7 @@ static void measure(UiNode* n, const TextMetrics& tm) {
 
     if (n->type == NodeType::Text) {
         uint16_t tw = n->text ? tm.width(tm.ctx, n->text, n->role) : 0;
+        if (s.widthScale < 1.0f) tw = (uint16_t)(tw * s.widthScale + 0.5f);  // collapse anim
         uint16_t th;
         // F2.3: multiline text measurement — use measured wrap height when width is fixed.
         // If wrap but width is auto, fall through to single-line (graceful degradation).

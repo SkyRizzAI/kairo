@@ -1016,7 +1016,40 @@ GPIO45**, regardless of Phase B.
    GPIO45). If no → confirmed hardware (speaker disconnected/faulty).
 
 ### Diagnostic asset
-`firmware/targets/skyrizz-audiotest/main/main.cpp` currently holds the A/B
-isolation test (Phase A I2S-TX tone / Phase B float+crosstalk). Note: Phase B's
-busy-wait trips the task WDT (warning only, the GPIO toggling still runs).
-Restore to a clean mic+speaker bring-up once the hardware question is settled.
+The standalone `firmware/targets/skyrizz-audiotest` target (which held the A/B
+isolation test — Phase A I2S-TX tone / Phase B float+crosstalk) was **removed**
+on 2026-06-26: the investigation above had already proven the software path
+correct, so a separate target added no further signal. Speaker bring-up is now
+exercised in-firmware via **Settings → Sounds → test beep**
+(`I2sSpeaker::playTone`, same shared legacy I2S0 path). The open question is
+purely hardware — **is a speaker physically attached to the `SP1` JST
+connector?** (`SP1` is top-centre on the PCB back, left of `BATT`; the speaker
+is a hand-attached external part, not machine-placed.) Resolve that first; only
+if a speaker is confirmed present and still silent does a deeper I2S-TX routing
+investigation (scope GPIO45, try I2S port 1) become worthwhile.
+
+---
+
+## Addendum (2026-06-26) — Simulator audio + app-facing audio API
+
+Because the hardware speaker is parked (above), audio bring-up moved to the
+**simulator**, and the output HAL was opened up to custom apps. See
+[ADR 0016](../decisions/0016-simulator-audio-and-app-audio-api.md) and
+[feat: simulator-audio](../feats/simulator-audio.md).
+
+- [x] **Raw PCM, not RPC** — firmware synthesizes the PCM the NS4168 would receive
+      and streams it; the browser is a dumb DAC (no re-synthesis).
+- [x] `IAudioOutput::writePcm(samples, count, sampleRate)` added (default no-op);
+      `playTone` now generates PCM and calls `writePcm`.
+- [x] `WasmSpeaker` (platforms/wasm) → `Module.nemaAudioPcm` → `SimAudio.playPcm`
+      (Web Audio `AudioBuffer`, seamless back-to-back scheduling). Registers
+      `caps::AudioOutput`, so **Settings → Sounds** appears in the simulator.
+- [x] `I2sSpeaker::writePcm` (device) — int16 mono → 32-bit stereo I2S, background
+      task (parity; still blocked by the `SP1` hardware question).
+- [x] `nema:media` `audio-output` exposes `set-volume` / `play-tone` / `play-pcm`
+      to apps (`api/media.pidl` → `nema_host_impl.cpp`), gated `caps::AudioOutput`.
+- [x] **First binary IDL input param**: `play-pcm(data: list<u8>, …)` — QuickJS
+      codegen reads `ArrayBuffer`/`TypedArray` via generated `jsToBytes`.
+- [ ] WASM-C app ABI binary inputs (currently opaque handle) — `playPcm` is
+      JS-apps-only until this lands; `playTone`/`setVolume` already work for both.
+- Verified: WASM build OK, host build + 27/27 tests, `idl:gen:check` in sync.

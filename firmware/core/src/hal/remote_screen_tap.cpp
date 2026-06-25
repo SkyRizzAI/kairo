@@ -69,14 +69,35 @@ void RemoteScreenTap::streamFrame() {
     // (Forge web /remote does; the file/CLI tooling does not). This stops the
     // screen flood from starving the inbound file/CLI path on the USB RX task.
     if (!link_ || !link_->ready() || !link_->screenWanted() || shadow_.empty()) return;
+    // Downsample by the UI scale (lossless on integer-scaled content): 1 sample per f×f
+    // block → f² fewer bytes on the wire. The host renders the logical W×H. (Plan 93)
+    const uint8_t* src = shadow_.data();
+    uint16_t sw = w_, sh = h_;
+    if (downscale_ > 1) {
+        sw = (uint16_t)(w_ / downscale_);
+        sh = (uint16_t)(h_ / downscale_);
+        ds_.resize((size_t)sw * sh);
+        for (uint16_t y = 0; y < sh; y++)
+            for (uint16_t x = 0; x < sw; x++)
+                ds_[(size_t)y * sw + x] =
+                    shadow_[(size_t)(y * downscale_) * w_ + (size_t)(x * downscale_)];
+        src = ds_.data();
+    }
+    // Skip-if-unchanged (Plan 93): only stream when the frame actually differs from the
+    // last one sent. A static screen → zero traffic; an animation → still sent every frame
+    // (each render differs). Combined with downscale this keeps BLE light enough to share
+    // the radio/RAM with WiFi. requestResend() clears prev_ to force a frame to a new viewer.
+    const size_t npx = (size_t)sw * sh;
+    if (prev_.size() == npx && std::memcmp(prev_.data(), src, npx) == 0) return;
+    prev_.assign(src, src + npx);
     // Payload: [w:2 LE][h:2 LE][RLE 1-bit bytes...]
-    auto rle = plp::rleEncode(shadow_.data(), shadow_.size());
+    auto rle = plp::rleEncode(src, npx);
     payload_.clear();
     payload_.reserve(4 + rle.size());
-    payload_.push_back((uint8_t)(w_ & 0xff));
-    payload_.push_back((uint8_t)(w_ >> 8));
-    payload_.push_back((uint8_t)(h_ & 0xff));
-    payload_.push_back((uint8_t)(h_ >> 8));
+    payload_.push_back((uint8_t)(sw & 0xff));
+    payload_.push_back((uint8_t)(sw >> 8));
+    payload_.push_back((uint8_t)(sh & 0xff));
+    payload_.push_back((uint8_t)(sh >> 8));
     payload_.insert(payload_.end(), rle.begin(), rle.end());
     link_->send(plp::Channel::Screen, payload_.data(), payload_.size(), plp::Flags::Compressed);
 }

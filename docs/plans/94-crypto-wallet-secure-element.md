@@ -137,6 +137,25 @@ struct NetworkParams { const char* id; const char* family; uint64_t chainId; boo
 > MVP: registry = tabel **constexpr embedded** (tepercaya, tanpa injeksi). Network tambahan dari user
 > (future) wajib divalidasi sebelum dipakai.
 
+#### Cakupan chain & network (scope eksplisit)
+
+Tiga `IChain` (kode) menampung family berikut. EVM = **satu driver**, semua network di bawahnya cuma
+beda `chainId` (= **data**, +1 baris per network, nol kode tambahan):
+
+| Family | Driver | Kurva / derivasi | Address | Tx | Network target MVP |
+|---|---|---|---|---|---|
+| **EVM** | `EvmChain` | secp256k1 / BIP32 `m/44'/60'` | keccak256 → `0x…` | EIP-1559 + legacy (RLP) | **Ethereum (1), BNB Smart Chain (56), Polygon (137), Arbitrum (42161), Optimism (10), Base (8453), Avalanche C (43114)** + Sepolia testnet |
+| **Bitcoin** | `BitcoinChain` | secp256k1 / BIP32 `m/84'/0'` | bech32 P2WPKH (`bc1…`) | PSBT (multi-input) | mainnet + testnet |
+| **Solana (SVM)** | `SolanaChain` | Ed25519 / **SLIP-0010** `m/44'/501'` | base58 | message Solana | mainnet-beta + devnet |
+
+**Batas "bisa" (set ekspektasi):**
+- **Status:** masih plan — chain jadi nyata setelah **Fase 1 (crypto+HD)** + **Fase 2 (3 driver)**.
+- **Device = signer, bukan broadcaster.** Kirim tx ke jaringan = urusan app/dApp (pola Trezor/MetaMask);
+  device tak menyimpan RPC node.
+- **Clear-sign vs blind-sign:** v1 clear-sign **transfer native + ERC-20 transfer** (tampil to/amount/fee);
+  contract call rumit (swap/approve) → **blind-sign + warning**. Cakupan decoder bertambah bertahap.
+- Nambah EVM network baru (mis. zkSync, Linea) = **+1 baris di NetworkRegistry**, tanpa sentuh kode chain.
+
 ### 2.3 Sumbu CONSENT — lihat §3 (system modal).
 
 ### 2.4 Model akun (Wallet → Account)
@@ -350,49 +369,112 @@ dari `caps::Secure` yang tetap **capability hardware** (bukan permission).
 - [ ] (checklist §5)
 
 ### Fase 1 — Software crypto core + HD wallet (backend NVS / mode C)
-- [ ] Vendor **trezor-crypto** + wiring CMake (host-build & IDF). Subset: secp256k1 (RFC6979 + low-S),
-      ed25519, nist256p1, bip32, bip39, keccak, base58, bech32.
-- [ ] `wallet_types.h` + HD: BIP39 gen/restore, **BIP32 (secp256k1)** + **SLIP-0010 (Ed25519,
-      hardened-only — Solana `m/44'/501'/x'/0'`)**, BIP44 path per chain.
-- [ ] **Unit test host** (`firmware/tests/`) — test vector BIP39/BIP32 + known-answer address per chain.
-- [ ] `NvsBackend` (mode C): seed terenkripsi (KDF+AES) di `criticalStorage()`.
+- [x] Vendor **trezor-crypto** (`firmware/vendor/trezor-crypto/`, MIT, commit 44cc50e7) + wiring CMake
+      dual-build (host `add_subdirectory` ✓ verified; IDF `idf_component_register` ditulis). Subset:
+      secp256k1 (RFC6979 + low-S), ed25519, nist256p1, bip32, bip39, keccak/sha3, base58, bech32 + aes
+      (ECIES bip32). RNG = platform hook (random32/random_buffer; test pakai stub).
+- [x] **Kontrak `wallet_types.h`** (Curve/DerivationPath/SigningItem/NetworkParams/Account/preview) —
+      header kompilasi bersih.
+- [x] **Unit test host** (`firmware/tests/wallet_crypto_test.cpp`, lewat `ctest`) — vektor otoritatif
+      LULUS: **ETH** BIP44 `m/44'/60'/0'/0/0`, **BTC** BIP84 bech32 `m/84'/0'/0'/0/0`, **SOL** SLIP-0010
+      ed25519 spec vector 1. Membuktikan bip39+bip32+secp256k1+ed25519+keccak+bech32 benar.
+- [x] **`HdWallet` wrapper** C++ (`core/wallet/hd_wallet.{h,cpp}`) — bungkus trezor: generate/validate
+      mnemonic, unlockFromMnemonic/Seed, publicKey, sign(path,curve,prehashed), lock/wipe. Header tak
+      bocorkan trezor ke core. Test `hd_wallet_test` LULUS (derivasi + secp256k1/ed25519 sign **+verify**
+      + tolak prehashed-misuse + lock-wipe).
+- [x] `NvsBackend` (mode C, `core/wallet/nvs_backend.cpp` + `seed_store.h`): seed terenkripsi
+      **PBKDF2-HMAC-SHA256 → AES-256-CBC**, kunci diturunkan dari PIN, blob `[salt][iv][ct]` via
+      `ISeedStore` (firmware → `criticalStorage()`; test → in-memory). Test `nvs_backend_test` LULUS
+      (roundtrip, **wrong-PIN ditolak**, persistensi lintas-instance, wipe).
+- [x] **Build wiring:** `trezor-crypto` di-link ke `nema_core` (host PUBLIC + IDF REQUIRES); **seluruh
+      17 host test LULUS** (14 lama tak rusak + 3 wallet baru).
 
 ### Fase 2 — IChain × NetworkRegistry (sumbu chain)
-- [ ] `IChain` + `EvmChain`/`BitcoinChain`/`SolanaChain` (address, pathFor, decodeForDisplay,
-      buildSigningPayload, encodeSigned, decodeMessage).
-- [ ] `NetworkRegistry` data-driven (mainnet + testnet/devnet tiap family).
-- [ ] EVM: clear-sign native transfer + ERC-20 transfer; sisanya tandai **blind-sign**.
-- [ ] BTC: fee = Σin−Σout butuh amount input di PSBT (witness-utxo); bila absent → fee "unknown" + warn.
-- [ ] Test: decode→sign→encode round-trip per chain melawan test vector (termasuk PSBT multi-input).
+- [x] `NetworkRegistry` data-driven (`network_registry.cpp`) — 12 network (EVM ×8: eth/bnb/polygon/
+      arbitrum/optimism/base/avalanche/sepolia, BTC ×2, SOL ×2). Tambah network EVM = +1 baris.
+- [x] **RLP codec** (`chains/rlp.{h,cpp}`) — encode/decode string+list; test `rlp_test` LULUS (vektor spec RLP).
+- [x] **`EvmChain`** (`chains/evm.{h,cpp}`) — satu driver semua network EVM: address (keccak), pathFor
+      `m/44'/60'/0'/0/i`, decodeForDisplay (clear-sign native transfer + **ERC-20 transfer** + blind-sign
+      fallback contract call), buildSigningPayload (EIP-155 & EIP-1559 → keccak preimage), encodeSigned
+      (v=recid+35+2·chainId legacy / type-2). Test `evm_chain_test` LULUS terhadap **vektor EIP-155
+      resmi** (signing hash + signed-tx byte-identik) + address `0x9858…da94`.
+- [x] **`SolanaChain`** (`chains/solana.{h,cpp}`) — base58 raw, pathFor `m/44'/501'/i'/0'`, decode
+      message (SystemProgram Transfer clear-sign + blind-sign sisanya), sign pesan utuh (Ed25519),
+      encodeSigned wire (count|sig|message). Test `solana_chain_test` LULUS (base58 vektor zeros→ones,
+      decode Transfer 1 SOL, sign **+verify** Ed25519, wire format).
+- [x] **`BitcoinChain`** (`chains/bitcoin.{h,cpp}`) — **address bech32 P2WPKH + pathFor `m/84'/0'/0'/0/i`
+      LENGKAP & teruji** (`bitcoin_chain_test` LULUS vektor BIP84 `bc1qcr8te4…306fyu` + HRP testnet `tb1`).
+- [ ] **BTC tx-signing follow-up** (BIP143 sighash + PSBT) — fail-closed sekarang; wajib diverifikasi
+      lawan vektor spec BIP143 sebelum sign mainnet. Bukan penghalang app (receive jalan; kirim nyusul).
+- [x] EVM/SOL: decode→sign→encode round-trip teruji lawan vektor (EIP-155 / Transfer message).
 
 ### Fase 3 — WalletService + dua-sumbu + indikator
-- [ ] `IWalletBackend` + `WalletService` (pilih backend via `caps::Secure`+spike; multi-account;
-      `activeBackendKind()`).
-- [ ] Compose: `signTransaction` = chain.decode → consent → backend.sign → chain.encode.
-- [ ] Daftarkan service di container; resolve dari app/JS.
+- [x] `WalletService` (`wallet_service.{h,cpp}`) — registry chain by-family, `deriveAddress`,
+      `previewTransaction`, `signTransaction`, `activeBackendKind()` (→ indikator UI).
+- [x] Compose: `signTransaction` = chain.decode → **consent (Confirm callback, fail-closed)** →
+      backend.sign(tiap item) → chain.encode. Consent di-inject (Fase 5 = modal sistem; test = auto).
+- [x] Test `wallet_service_test` LULUS — derive ETH/BTC/SOL via satu service, preview, **signature
+      EVM tertanam terverifikasi untuk akun**, **reject→fail-closed**, Solana sign. **22/22 host test hijau.**
+- [ ] Daftarkan service di container + resolve dari app/JS — saat wiring app (Fase 6).
 
 ### Fase 4 — SE050 driver (isi TODO) + SeBackend (mode B)
-- [ ] Integrasi **Plug & Trust** (APDU/T=1); implement `Se050Driver` genKey/publicKey/sign/verify/
-      randomBytes/uniqueId sungguhan.
-- [ ] Ekstensi `ISecureElement`: **wrap/unwrap** seed (di belakang `hasFeature()`, jaga kontrak ADR 0005).
-- [ ] `SeBackend`: seed di-wrap SE → ciphertext di NVS; sign = unwrap→derive→sign→wipe.
-- [ ] Lengkapi `SimSecureElement` (WASM) untuk mode B; verifikasi address/sig **identik** SeBackend↔NvsBackend.
+- [x] Ekstensi `ISecureElement`: **wrap/unwrap** (di belakang `hasFeature(SecureStore)`, default false —
+      jaga kontrak ADR 0005).
+- [x] **`SoftSecureElement`** (`soft_secure_element.{h,cpp}`) — SE software device-bound (AES-256 kunci
+      internal) untuk host+sim; melengkapi cerita SimSecureElement untuk dev mode B tanpa chip.
+- [x] **`SeBackend`** (mode B, `se_backend.cpp`): seed → PIN-encrypt (PBKDF2→AES) → **SE.wrap (device-bound)**
+      → simpan; unlock = unwrap→PIN-decrypt→MAGIC-check→derive. Butuh **PIN _dan_ chip**. Test
+      `se_backend_test` LULUS (roundtrip, wrong-PIN, **device-bound: chip beda → gagal**, indikator
+      🔒 SecureElement). Address identik dgn NvsBackend (`0x9858…da94`).
+- [x] **Auto-selection ter-wire** (Fase 7): `WalletVault` jadi SE-aware (wrap/unwrap seed pakai
+      `ISecureElement` opsional → `kind()` SecureElement vs Software), dan `bootWalletSystem` **resolve
+      `ISecureElement` dari container + pilih otomatis** kalau `hasFeature(SecureStore)` (tanpa branching
+      board — tanya chip-nya). skyrizz sudah `registerAs<ISecureElement>(Se050)` + `caps::Secure`
+      (gated `present()`). `wallet_vault_test` LULUS untuk path mode-B (device-binding, 🔒 indikator).
+      → **Begitu Se050Driver implement `SecureStore`, wallet auto-upgrade ke mode B, nol perubahan kode.**
+- [ ] **Se050Driver Plug&Trust asli** (APDU/T=1: genKey/sign/wrap/unwrap di chip) — **hardware-gated TODO**
+      (butuh SE050 fisik + middleware NXP + spike Fase 0). Sampai itu, skyrizz `hasFeature(SecureStore)=false`
+      → wallet jalan software (mode C, PIN-encrypted) — indikator "Software key" jujur.
 
 ### Fase 5 — Consent & permission (sistem)
-- [ ] `SignConsentScreen` (`ScreenMode::Modal`) + publish via GuiService (pola PermissionService).
-- [ ] Properti §3: system-owned, decode==sign, physical-only, fail-closed, serialized, origin, blind-warn.
-- [ ] `wallet.read` connect (permission persist) vs sign (consent per-tx, tak diingat).
+- [x] **`WalletConsentService`** (`wallet_consent_service.{h,cpp}`) — plumbing consent system-owned ala
+      PermissionService: `requestSign` block worker-thread sampai GUI resolve; `guiTick` push layar via
+      ScreenFactory; `confirmFor()` adapter ke `WalletService::Confirm`. Properti §3 terpenuhi di level
+      service: **system-owned, fail-closed** (tanpa factory→reject), **serialized** (1 prompt), **origin**
+      (anti-phishing), **decode==sign** (preview dari WalletService), **resolve hanya dari layar**
+      (tombol fisik). Test `wallet_consent_test` LULUS (approve/reject/fail-closed).
+- [x] Permission strings `wallet.read`/`wallet.sign`/`se.raw` (perms:: di `wallet_types.h`) — dikonsumsi
+      PermissionService existing; signing tetap consent per-tx (tak diingat).
+- [ ] **`SignConsentScreen`** (`ScreenMode::Modal`, visual) + bind ScreenFactory + blind-sign warning —
+      di display layer, dikerjakan bareng app (Fase 6).
 
 ### Fase 6 — App "Wallets" + UI/UX (§6)
-- [ ] `WalletsApp : ComponentApp` (`com.palanu.wallets`) + register di `targets/*/main.cpp` + launcher.
-- [ ] Onboarding (create/reveal/verify/restore via VirtualKeyboard) + Set PIN + Unlock + auto-lock.
-- [ ] Account list (+badge backend), Receive (+QR), Connected apps, Settings (backup/PIN/network/wipe).
-- [ ] State loading/empty/error/locked dirancang. Indikator backend konsisten.
+- [x] **`WalletController`** (`wallet_controller.{h,cpp}`) — otak app: state machine
+      NoWallet/Locked/Unlocked, generate/validate mnemonic, createWallet(=restore), unlock/lock/wipe,
+      `accounts()` (derive address+label per network), `backendKind()` (indikator). Lifecycle diangkat ke
+      `IWalletBackend` (backend-agnostic). Test `wallet_controller_test` LULUS (**11/11 wallet suite hijau**).
+- [x] **`WalletsApp : ComponentApp`** (`apps/wallets_app.{h,cpp}`) — compile + **link** + identity terverifikasi
+      (`wallets_app_test`), **register di 3 target** (skyrizz-e32/dev-board/wasm) → muncul di launcher "Apps".
+- [x] Layar: **Onboard** (Create/Restore) · **Reveal** (12 kata) · **Restore** (VirtualKeyboard) · **SetPin**
+      (keyboard password) · **Locked** (unlock PIN) · **Accounts** (list + badge 🔒/⚠️) · **Receive** (address)
+      · **Settings** (Wipe + Dialog konfirmasi). `AppStorageSeedStore`→`criticalStorage()`.
+- [x] Backend default **NvsBackend** (⚠️ Software key) — `SeBackend` swap-in saat SE wrap (Plug&Trust) ada.
+- [ ] **`SignConsentScreen`** visual + bind `WalletConsentService` ScreenFactory — nunggu trigger (Fase 7 dApp / in-app send).
+- [ ] **Validasi visual on-device** (flash) — logika 12/12 host-test hijau; tampilan butuh perangkat.
 
 ### Fase 7 — dApp bridge (native/JS/web)
-- [ ] `WalletRequestRouter` + envelope seragam; host binding `nema.wallet.*` (JS/WASM).
-- [ ] Web shim (TS): EIP-1193+6963 (EVM), Wallet Standard (SVM), signPsbt (BTC) → PLP transport
-      (reqId Plan 88 + auth Plan 74); origin diteruskan ke consent.
+- [x] **`WalletSystem`** (`wallet_system.{h,cpp}`) — stack wallet **tunggal/shared**, register di container
+      saat boot (`bootWalletSystem(rt)` di 3 target). WalletsApp + custom app pakai wallet yang SAMA.
+- [x] **Host binding `nema.wallet.*`** (IDL `api/wallet.pidl` → codegen → `nema_host_impl.cpp`):
+      `networks/ready/address/signMessage/signTransaction`, gated `wallet.read`/`wallet.sign` + consent.
+      **Private key tak pernah ke-expose** — cuma address + signature. + `WalletService.signMessage`
+      + `IChain.messageSigningItem` (EVM EIP-191, SOL raw).
+- [x] **`SignConsentScreen`** (`screens/sign_consent_screen.{h,cpp}`) — modal trusted-display saat sign
+      dari dApp; di-wire di `GuiService` (ScreenFactory + guiTick, pola PermissionScreen). Fail-closed.
+- [x] **Contoh `examples/web3-test` → `Web3 Test.papp`** (build ✓) — pick network, show address,
+      sign message/tx. `app:build:web3-test`.
+- [ ] **Web shim (TS)**: EIP-1193+6963 (EVM), Wallet Standard (SVM), signPsbt (BTC) → PLP transport
+      (browser dApp) — **next goal** (Fase 8, bareng Phantom).
 
 ### Fase 8 — Cold wallet ↔ Phantom (NEXT GOAL, ekspektasi realistis)
 > ⚠️ **Bukan "tinggal connect BLE".** Phantom hanya bicara HW wallet yang sudah diintegrasikan

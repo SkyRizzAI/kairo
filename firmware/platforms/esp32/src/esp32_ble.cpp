@@ -28,9 +28,6 @@ void Esp32Ble::onRegister(Runtime& rt) {
     caps_ = &rt.capabilities();
 }
 
-// In-flight TX notifications (0 in the no-BT stub build, where notify() never runs).
-int Esp32Ble::txPending() const { return pendingNotify_.load(std::memory_order_relaxed); }
-
 } // namespace nema
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -54,6 +51,10 @@ extern "C" void ble_store_config_init(void);
 // our later esp_bt_controller_init() runs on released memory and crashes deterministically
 // inside btdm_controller_init (the entire boot-loop saga). We DO use BT → claim it.
 extern "C" bool btInUse(void) { return true; }
+
+// NimBLE host mbuf pool counters — used for self-recovering TX flow control (Plan 93).
+extern "C" int os_msys_count(void);
+extern "C" int os_msys_num_free(void);
 
 namespace nema {
 
@@ -426,8 +427,15 @@ bool Esp32Ble::notify(const char* charUuid, const uint8_t* data, size_t len) {
     struct os_mbuf* om = ble_hs_mbuf_from_flat(data, len);
     if (!om) return false;                       // host mbuf pool exhausted → drop chunk
     int rc = ble_gatts_notify_custom(connHandle_, g_plp_tx_handle, om);
-    if (rc == 0) pendingNotify_.fetch_add(1, std::memory_order_relaxed);   // count in-flight
     return rc == 0;
+}
+
+// Host mbufs currently IN USE ≈ notifications still in flight. Derived from the live pool
+// (NOT a manual counter that latches if NOTIFY_TX events stall — that froze the mirror on
+// the first frame). Self-recovering: as the radio drains, this drops on its own. (Plan 93)
+int Esp32Ble::txPending() const {
+    int used = os_msys_count() - os_msys_num_free();
+    return used < 0 ? 0 : used;
 }
 
 void Esp32Ble::onRxWrite(const uint8_t* data, size_t len) {
@@ -553,6 +561,7 @@ void Esp32Ble::confirmPairing(bool) {}
 bool Esp32Ble::peer(BtPeer&) const { return false; }
 void Esp32Ble::disconnect() {}
 bool Esp32Ble::notify(const char*, const uint8_t*, size_t) { return false; }
+int  Esp32Ble::txPending() const { return 0; }
 void Esp32Ble::onRxWrite(const uint8_t*, size_t) {}
 void Esp32Ble::registerService(const BleService&) {}
 size_t Esp32Ble::bondedCount() const { return 0; }
