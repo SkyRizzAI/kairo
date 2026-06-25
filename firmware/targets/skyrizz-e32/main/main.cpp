@@ -39,6 +39,8 @@ void setup() {
     static nema::DesktopScreen desktop(rt);   // Plan 81: idle wallpaper → launcher
     rt.view().push(desktop);
 
+    aether::bootSplash(rt);   // cat logo + 2s progress bar on top → reveals desktop
+
     rt.log().info("Boot", "ready");
 }
 

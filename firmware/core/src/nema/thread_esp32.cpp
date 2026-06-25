@@ -38,7 +38,9 @@ void Thread::start(const ThreadConfig& cfg, Entry entry, void* arg) {
     TaskHandle_t h = nullptr;
     BaseType_t rc;
     // ESP-IDF xTaskCreate stack depth is in BYTES (unlike vanilla FreeRTOS = words).
-    if (cfg.stackBytes >= kPsramStackThreshold) {
+    // PSRAM stack when the caller asks for it OR the stack is huge (JS/QuickJS) —
+    // keeps scarce internal RAM free for DMA/ISR allocations.
+    if (cfg.psram || cfg.stackBytes >= kPsramStackThreshold) {
         capsTask_ = true;
         BaseType_t core = cfg.core < 0 ? tskNO_AFFINITY : cfg.core;
         rc = xTaskCreatePinnedToCoreWithCaps(trampoline, cfg.name, cfg.stackBytes,
@@ -53,10 +55,14 @@ void Thread::start(const ThreadConfig& cfg, Entry entry, void* arg) {
     if (rc != pdPASS || h == nullptr) {
         // Could not allocate the task (e.g. not enough RAM for the stack). Fail
         // loudly instead of leaving a half-started Thread the owner waits on
-        // forever — the caller sees running()==false and recovers.
+        // forever — the caller sees running()==false and recovers. Delete the
+        // completion semaphore here: the caller bails out without join(), so
+        // nothing else will free it — leaking it on every failed start() was
+        // draining internal RAM ~260 B at a time.
         capsTask_ = false;
         running_.store(false);
-        xSemaphoreGive((SemaphoreHandle_t)done_);   // unblock any join()
+        vSemaphoreDelete((SemaphoreHandle_t)done_);
+        done_ = nullptr;
         os_ = nullptr;
         return;
     }

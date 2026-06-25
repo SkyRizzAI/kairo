@@ -13,7 +13,7 @@
 namespace nema {
 
 DesktopScreen::DesktopScreen(Runtime& rt)
-    : ComponentScreen(rt), launcher_(rt) {}
+    : ComponentScreen(rt), launcher_(rt), missionControl_(rt) {}
 
 void DesktopScreen::onResume() {
     ComponentScreen::onResume();
@@ -51,9 +51,12 @@ void DesktopScreen::draw(Canvas& c) {
 }
 
 void DesktopScreen::onAction(input::Action a) {
-    // OK opens the launcher; everything else (incl. Back) is ignored — this is home.
+    // OK opens the launcher. Up (Prev) or Left (AdjustDown) opens Mission Control —
+    // the Flipper-style quick-settings panel. Back is ignored (this is home).
     if (a == input::Action::Activate)
         rt_.view().navigate(launcher_);
+    else if (a == input::Action::Prev || a == input::Action::AdjustDown)
+        rt_.view().navigate(missionControl_);
 }
 
 aether::ui::UiNode* DesktopScreen::build(aether::ui::NodeArena&, Runtime&) {

@@ -267,20 +267,5 @@ struct HostApi {
     // wifi/radio.inject
     // Inject a raw 802.11 frame on the given channel.
     virtual NemaResult<void, std::string> radio_inject(uint8_t channel, const std::vector<uint8_t>& frame) = 0;
-    // wifi/radio.deauth-start
-    // Start continuous deauth loop (firmware-native, timing-critical). App receives events via wait-event; the loop itself never touches the sandbox.
-    virtual NemaResult<void, std::string> radio_deauth_start(std::string_view bssid, uint8_t channel) = 0;
-    // wifi/radio.deauth-stop
-    // Stop the deauth loop.
-    virtual NemaResult<void, std::string> radio_deauth_stop() = 0;
-    // wifi/radio.beacon-spam-start
-    // Start beacon spam (multiple fake SSIDs, firmware-native loop).
-    virtual NemaResult<void, std::string> radio_beacon_spam_start(const std::vector<std::string>& ssid_list) = 0;
-    // wifi/radio.beacon-spam-stop
-    // Stop the beacon spam loop.
-    virtual NemaResult<void, std::string> radio_beacon_spam_stop() = 0;
-    // wifi/radio.wait-event [@blocking]
-    // Block until the next matured radio event arrives (timeout_ms=0 → poll). Returns serialised event bytes; format is runtime-defined (JSON or binary).
-    virtual NemaResult<std::vector<uint8_t>, std::string> radio_wait_event(uint32_t timeout_ms) = 0;
 
 };

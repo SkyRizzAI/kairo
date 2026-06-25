@@ -108,4 +108,8 @@ void linkEnvImports(struct M3Module* mod);
 // Reset per-run UI state between WASM runs (call before each new run).
 void resetUiState();
 
+// Reset per-run WiFi takeover state between WASM runs (clears the session
+// takeover flag and stale lease handles so a new app starts clean).
+void resetWifiState();
+
 } // namespace nema

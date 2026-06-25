@@ -15,8 +15,8 @@ public:
     aether::ui::UiNode* build(aether::ui::NodeArena& a, Runtime& rt) override;
 
 private:
-    static const char*  kThemeNames[];
-    static constexpr int kThemeCount = 3;
+    static const char*  kThemeNames[];          // colour themes: default (mono) | flipper
+    static constexpr int kThemeCount = 2;
     static const char*  kDesktopNames[];
     static const char*  kDesktopLabels[];
     static constexpr int kDesktopCount = 1;
@@ -33,6 +33,7 @@ private:
                      int count, const char* def) const;
     void applyTheme(int idx);
     void cycleTheme(int dir);
+    void toggleDark();
     void cycleDesktop(int dir);
     void cycleLauncher(int dir);
     void cycleAsset(int dir);
@@ -42,6 +43,7 @@ private:
     void scanFontPacks();
 
     static void themeAdj       (void* u, int dir);
+    static void darkAdj        (void* u, int dir);
     static void desktopAdj     (void* u, int dir);
     static void launcherAdj    (void* u, int dir);
     static void assetAdj       (void* u, int dir);
@@ -52,6 +54,7 @@ private:
     aether::ui::ScrollState scroll_;
     int themeIdx_ = 0;
     int desktopIdx_ = 0, launcherIdx_ = 0, assetIdx_ = 0;
+    bool darkOn_   = false;   // Plan 92 Fase B — dark mode
 
     // Font pack cycling
     char fontName_[48]                       = "builtin";

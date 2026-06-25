@@ -13,6 +13,7 @@ idf_component_register(
         "src/littlefs_filesystem.cpp"
         "src/sd_fat_filesystem.cpp"
         "src/esp32_wifi_radio.cpp"
+        "src/esp32_net_sockets.cpp"
     INCLUDE_DIRS "include"
     REQUIRES
         core

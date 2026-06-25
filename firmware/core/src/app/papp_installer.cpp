@@ -17,7 +17,7 @@
 #include <nlohmann/json.hpp>
 #include <string>
 #include <vector>
-#include <unordered_set>
+#include <unordered_map>
 #include <cstring>
 
 namespace nema {
@@ -27,10 +27,13 @@ static const char* kAppRoots[kRootCount] = { "/system/apps", "/sd/apps" };
 
 // ── Cache ─────────────────────────────────────────────────────────────────
 
-// Tracks which app IDs are currently installed (from .papp folders).
-// When scanning, we compare discovered IDs against this set to detect
-// new apps (install), missing apps (uninstall), and same apps (skip).
-static std::unordered_set<std::string> s_installedIds;
+// Tracks which app IDs are currently installed AND a content signature (sum of
+// file sizes + names) for each. On scan we compare discovered IDs+signatures
+// against this map to detect new apps (install), missing apps (uninstall),
+// changed apps (reinstall — e.g. `palanu cp` of a new build over an old one),
+// and unchanged apps (skip). The signature is what makes in-place updates and
+// deletions reflect without a reboot.
+static std::unordered_map<std::string, uint32_t> s_installed;
 
 // ── Helpers ───────────────────────────────────────────────────────────────
 
@@ -43,6 +46,7 @@ static bool endsWith(const std::string& s, const std::string& suffix) {
 struct FoundPapp {
     std::string path;
     bool        isDir;
+    uint32_t    size;   // single-file: file size; dir: 0 (computed via pappSignature)
 };
 static void scanPappDirs(IFileSystem* fs, const std::string& dir,
                          std::vector<FoundPapp>& out) {
@@ -52,14 +56,28 @@ static void scanPappDirs(IFileSystem* fs, const std::string& dir,
         std::string full = dir + "/" + e.name;
         if (e.isDir) {
             if (endsWith(e.name, ".papp")) {
-                out.push_back({full, true});  // .papp folder
+                out.push_back({full, true, 0});  // .papp folder
             } else {
                 scanPappDirs(fs, full, out);  // recurse
             }
         } else if (endsWith(e.name, ".papp")) {
-            out.push_back({full, false});  // single-file .papp
+            out.push_back({full, false, e.size});  // single-file .papp
         }
     }
+}
+
+// Cheap content signature for a .papp — sum of contained file sizes and name
+// lengths (no file reads; FsEntry already carries sizes). Changes when the
+// entry binary is rebuilt (e.g. our WASM went 57941→51392 bytes) or files are
+// added/removed/renamed, so an in-place update is detected as "changed".
+static uint32_t pappSignature(IFileSystem* fs, const FoundPapp& entry) {
+    if (!entry.isDir) return entry.size + 1;  // +1 so a 0-byte file != "absent"
+    std::vector<FsEntry> files;
+    if (!fs->list(entry.path, files)) return 0;
+    uint32_t sig = 1;
+    for (auto& f : files)
+        if (!f.isDir) sig += f.size + (uint32_t)f.name.size();
+    return sig;
 }
 
 // Read app id from a .papp folder's manifest.json (or from binary header).
@@ -220,48 +238,64 @@ void loadInstalledPapps(Runtime& rt) {
     IFileSystem* fs = rt.fs();
     if (!fs) return;
 
-    // Phase 1: scan all .papp entries and collect discovered IDs
-    std::unordered_set<std::string> discovered;
+    // Phase 1: scan all .papp entries; map each discovered id → content signature.
     std::vector<FoundPapp> entries;
     for (int i = 0; i < kRootCount; i++) {
         scanPappDirs(fs, kAppRoots[i], entries);
     }
-
+    std::unordered_map<std::string, uint32_t> discovered;
     for (auto& e : entries) {
         std::string id = readAppId(rt, fs, e);
-        if (!id.empty()) discovered.insert(id);
+        if (!id.empty()) discovered[id] = pappSignature(fs, e);
     }
 
-    // Phase 2: install new apps (discovered but not cached)
-    int installed = 0;
+    // Phase 2: install NEW apps and reinstall CHANGED ones (signature differs).
+    // A changed signature means the bytes on disk differ from what we installed
+    // (e.g. `palanu cp` of a new build) — uninstall the stale registry entry and
+    // install the fresh one so the update actually takes effect ("replace").
+    int installed = 0, updated = 0;
     for (auto& e : entries) {
         std::string id = readAppId(rt, fs, e);
-        if (id.empty() || s_installedIds.count(id)) continue;  // already cached
+        if (id.empty()) continue;
+        uint32_t sig = discovered[id];
 
+        auto cached = s_installed.find(id);
+        if (cached != s_installed.end() && cached->second == sig) continue;  // unchanged
+
+        bool isUpdate = (cached != s_installed.end());
+        // Install FIRST — installFromDir → WasmAppStore/AppRegistry now REPLACE an
+        // existing id in place, so no uninstall is needed. Crucially, if the read
+        // fails (e.g. a just-`cp`'d file not yet flushed to FAT when appScan fires),
+        // we DON'T touch the old entry — it stays in the launcher and the next scan
+        // (e.g. reopening the launcher) retries until the bytes are readable. The
+        // old code uninstalled first, so a transient failure made the app vanish.
         bool ok = e.isDir ? installFromDir(rt, fs, e.path)
                           : installFromFile(rt, fs, e.path);
         if (ok) {
-            s_installedIds.insert(id);
-            installed++;
+            s_installed[id] = sig;
+            if (isUpdate) updated++; else installed++;
         }
+        // on failure: leave s_installed[id] at the old signature so the mismatch
+        // re-triggers an install attempt on the next scan.
     }
 
-    // Phase 3: uninstall removed apps (cached but not discovered)
+    // Phase 3: uninstall removed apps (cached but no longer discovered on disk).
     std::vector<std::string> removed;
-    for (const auto& id : s_installedIds) {
-        if (!discovered.count(id)) removed.push_back(id);
+    for (const auto& kv : s_installed) {
+        if (!discovered.count(kv.first)) removed.push_back(kv.first);
     }
     for (const auto& id : removed) {
         rt.apps().uninstall(id.c_str());
-        s_installedIds.erase(id);
+        s_installed.erase(id);
         rt.log().info("PappInstaller", "uninstall", {{"id", id}});
     }
 
-    if (installed > 0 || !removed.empty()) {
+    if (installed > 0 || updated > 0 || !removed.empty()) {
         rt.log().info("PappInstaller", "scan done",
                       {{"installed", std::to_string(installed)},
+                       {"updated", std::to_string(updated)},
                        {"removed", std::to_string(removed.size())},
-                       {"total", std::to_string(s_installedIds.size())}});
+                       {"total", std::to_string(s_installed.size())}});
     }
 }
 
@@ -286,7 +320,7 @@ bool installPappBundle(Runtime& rt, const PappPackage& pkg) {
         fs->write(dir + "/" + entryName, e.data, e.stored);
     }
 
-    s_installedIds.erase(id);  // invalidate cache for this id
+    s_installed.erase(id);     // invalidate cache for this id
     loadInstalledPapps(rt);    // will pick up the new folder
     return true;
 }

@@ -39,6 +39,7 @@ struct Style {
     Justify  justify    = Justify::Start;
     bool     border     = false;        // drawRect outline
     bool     background = false;        // fillRect fill
+    uint8_t  cornerRadius = 1;          // rounded-rect radius for border/background
     // Flipper-style focus highlight: when this focusable node is the focused one,
     // the renderer paints a rounded (r=1) inverted box over its bbox instead of a
     // square full-bleed invert. Used by ListView rows (Layer 3).
@@ -108,12 +109,15 @@ struct UiNode {
     int16_t sliderMin   = 0;
     int16_t sliderMax   = 100;
     int16_t sliderStep  = 1;
+    bool    sliderVertical = false;   // draw the bar vertically (fill from bottom)
     void  (*onChange)(void* userdata, int value) = nullptr;
 
     // Icon leaf (type == Icon, Plan 53): 1-bit packed XBM bitmap.
+    // Also reused by Slider as a centred overlay glyph (drawn XOR).
     const uint8_t* iconBitmap = nullptr;
     uint8_t        iconW      = 0;
     uint8_t        iconH      = 0;
+    uint8_t        iconScale  = 1;   // pixel-double factor (1 = native)
 
     // F2.3 — Multiline text: wrap at node width, limited to maxLines (0=unlimited)
     bool    wrap     = false;

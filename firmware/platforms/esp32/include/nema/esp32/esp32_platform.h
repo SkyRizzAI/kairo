@@ -24,6 +24,7 @@
 #include "nema/services/resource_broker.h"
 #include "nema/services/system_wifi_manager.h"
 #include "nema/esp32/esp32_wifi_radio.h"
+#include "nema/esp32/esp32_net_sockets.h"
 #include "nema/fs/mem_filesystem.h"
 #include "nema/fs/vfs.h"
 #include "nema/esp32/littlefs_filesystem.h"
@@ -80,6 +81,7 @@ private:
     ResourceBroker     broker_;    // exclusive HW leases + auto-release (Plan 87)
     SystemWifiManager  sysWifi_;   // system WiFi lease + suspend/restore (Plan 87)
     Esp32WifiRadio     wifiRadio_; // raw radio access (Plan 87 Fase 4)
+    Esp32NetSockets    netSockets_; // generic UDP/TCP sockets for apps (Plan 91)
     Vfs                vfs_;       // mount table
     LittleFsFileSystem rootFs_;    // "/"   — persistent (internal flash)
     MemFileSystem      tmpFs_;     // "/tmp" — volatile scratch (RAM)

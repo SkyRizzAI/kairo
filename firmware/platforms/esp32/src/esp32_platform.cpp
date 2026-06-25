@@ -281,6 +281,8 @@ void Esp32Platform::postRegister(Runtime& rt) {
     wifiRadio_.init(rt);
     rt.container().registerService(&wifiRadio_);
     rt.container().registerAs<IRadioWifi>(&wifiRadio_);
+    rt.container().registerService(&netSockets_);          // Plan 91: generic sockets
+    rt.container().registerAs<INetSockets>(&netSockets_);
 
     // microSD (FAT) — only on boards that wire an SD socket (Plan 38). Non-fatal:
     // a missing card or failed mount just means "/sd" is absent; boot continues.
@@ -406,6 +408,14 @@ void Esp32Platform::idle() {
 
 bool Esp32Platform::syncNtp() {
     if (!rt_) return false;
+
+    // syncNtp() runs on every NetworkConnected, including WiFi reconnects after
+    // a radio-takeover app (deauth/karma/beacon spam) releases the radio. The
+    // SNTP client persists across reconnects, and esp_sntp_setoperatingmode()
+    // asserts ("Operating mode must not be set while SNTP client is running") if
+    // called while it is already active — which reboots the device. Stop the
+    // running client first so re-init is always safe.
+    if (esp_sntp_enabled()) esp_sntp_stop();
 
     esp_sntp_setoperatingmode(SNTP_OPMODE_POLL);
     esp_sntp_setservername(0, "pool.ntp.org");

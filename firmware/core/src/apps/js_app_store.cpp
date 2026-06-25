@@ -8,6 +8,7 @@
 #include "nema/log/logger.h"
 #include <nlohmann/json.hpp>
 #include <utility>
+#include <algorithm>
 
 namespace nema {
 
@@ -22,7 +23,12 @@ bool JsAppStore::installApp(Runtime& rt, std::string id, std::string name,
                             std::vector<std::string> args,
                             std::vector<uint8_t> iconData) {
     if (id.empty() || js.empty()) return false;
-    for (auto& p : apps_) if (id == p->id()) return false;   // already installed
+    // Re-install with a known id → REPLACE in place so `palanu cp` of a new build
+    // swaps the bytes instead of vanishing the app until reboot (same fix as
+    // WasmAppStore — see there).
+    apps_.erase(std::remove_if(apps_.begin(), apps_.end(),
+                    [&](const std::unique_ptr<JsApp>& p) { return id == p->id(); }),
+                apps_.end());
     if (version.empty()) version = "1.0.0";
     apps_.push_back(std::make_unique<JsApp>(std::move(id), std::move(name),
                                             std::move(version), std::move(js),

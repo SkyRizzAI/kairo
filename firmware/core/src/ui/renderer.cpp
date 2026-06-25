@@ -22,6 +22,7 @@ namespace {
 // Focus highlight. Plain square invert by default; rounded (r=1) inverted box
 // when the node opts into Style::selectBox (ListView rows, Flipper style).
 static void highlightBox(Canvas& c, const UiNode* n) {
+    uint8_t r = n->style.cornerRadius;
     if (n->style.selectBox && n->w >= 10 && n->h >= 3) {
         // Inset the right edge so the rounded box clears the dashed scrollbar.
         const uint16_t GUTTER = 5;
@@ -29,6 +30,16 @@ static void highlightBox(Canvas& c, const UiNode* n) {
         c.invertRect(n->x, (uint16_t)(n->y + 1), w, (uint16_t)(n->h - 2)); // middle band
         c.invertRect((uint16_t)(n->x + 1), n->y, (uint16_t)(w - 2), 1);    // top cap
         c.invertRect((uint16_t)(n->x + 1), (uint16_t)(n->y + n->h - 1), (uint16_t)(w - 2), 1); // bottom cap
+    } else if (r > 1 && n->w > 2 * r && n->h > 2 * r) {
+        // Rounded invert matching the border radius (Mission Control tiles/bars):
+        // same shape, just filled + the icon flips to the opposite colour.
+        c.invertRect(n->x, (uint16_t)(n->y + r), n->w, (uint16_t)(n->h - 2 * r));
+        for (uint8_t i = 0; i < r; i++) {
+            uint16_t inset = (uint16_t)(r - i);
+            uint16_t bw    = (uint16_t)(n->w - 2 * inset);
+            c.invertRect((uint16_t)(n->x + inset), (uint16_t)(n->y + i),         bw, 1);
+            c.invertRect((uint16_t)(n->x + inset), (uint16_t)(n->y + n->h - 1 - i), bw, 1);
+        }
     } else {
         c.invertRect(n->x, n->y, n->w, n->h);
     }
@@ -39,13 +50,11 @@ static void highlightBox(Canvas& c, const UiNode* n) {
 static void paint(const UiNode* n, Canvas& c, const UiNode* focused, bool inFocused = false) {
     const Style& s = n->style;
 
-    // Background: rounded fill instead of plain rect
+    // Background / border: rounded-rect with the node's corner radius (default 1).
     if (s.background)
-        aether::ui::draw::box_rounded(c, n->x, n->y, n->w, n->h, true);
-
-    // Border: rounded outline
+        c.fillRoundRect(n->x, n->y, n->w, n->h, s.cornerRadius, true);
     if (s.border)
-        aether::ui::draw::box_rounded(c, n->x, n->y, n->w, n->h, false);
+        c.drawRoundRect(n->x, n->y, n->w, n->h, s.cornerRadius, true);
 
     if (n->type == NodeType::Text && n->text) {
         FontSpec fs = fontForRole(n->role);
@@ -91,7 +100,17 @@ static void paint(const UiNode* n, Canvas& c, const UiNode* focused, bool inFocu
     if (n->type == NodeType::Icon && n->iconBitmap) {
         uint16_t ix = (uint16_t)(n->x + s.padding);
         uint16_t iy = (uint16_t)(n->y + s.padding);
-        aether::ui::draw::icon(c, ix, iy, n->iconBitmap, n->iconW, n->iconH);
+        uint8_t sc = n->iconScale ? n->iconScale : 1;
+        if (sc <= 1) {
+            aether::ui::draw::icon(c, ix, iy, n->iconBitmap, n->iconW, n->iconH);
+        } else {
+            for (uint8_t r2 = 0; r2 < n->iconH; r2++)
+                for (uint8_t cc = 0; cc < n->iconW; cc++) {
+                    uint32_t bit = (uint32_t)r2 * n->iconW + cc;
+                    if ((n->iconBitmap[bit / 8] >> (7 - (bit % 8))) & 1)
+                        c.fillRect((uint16_t)(ix + cc * sc), (uint16_t)(iy + r2 * sc), sc, sc, true);
+                }
+        }
         return;
     }
 
@@ -111,6 +130,31 @@ static void paint(const UiNode* n, Canvas& c, const UiNode* focused, bool inFocu
         int val   = n->sliderValue ? *n->sliderValue : n->sliderMin;
         if (val < n->sliderMin) val = n->sliderMin;
         if (val > n->sliderMax) val = n->sliderMax;
+        if (n->sliderVertical) {
+            // iOS-style pill bar: rounded outline, solid rounded fill from the bottom,
+            // with a centred glyph (XOR so it shows on both the fill and the track).
+            uint8_t rr = n->style.cornerRadius > 1 ? n->style.cornerRadius : (uint8_t)(n->w / 3);
+            if (rr < 2) rr = 2;
+            c.drawRoundRect(n->x, n->y, n->w, n->h, rr, true);
+            uint16_t fillH = (uint16_t)(range > 0
+                ? (uint32_t)(val - n->sliderMin) * (n->h - 2) / range : 0);
+            if (fillH > 0) {
+                uint16_t fy = (uint16_t)(n->y + n->h - 1 - fillH);
+                c.fillRoundRect((uint16_t)(n->x + 1), fy, (uint16_t)(n->w - 2), fillH, rr, true);
+            }
+            if (n->iconBitmap) {
+                uint16_t gx = (uint16_t)(n->x + (n->w - n->iconW) / 2);
+                uint16_t gy = (uint16_t)(n->y + (n->h - n->iconH) / 2);
+                for (uint8_t r2 = 0; r2 < n->iconH; r2++)
+                    for (uint8_t cc = 0; cc < n->iconW; cc++) {
+                        uint32_t bit = (uint32_t)r2 * n->iconW + cc;
+                        if ((n->iconBitmap[bit / 8] >> (7 - (bit % 8))) & 1)
+                            c.invertRect((uint16_t)(gx + cc), (uint16_t)(gy + r2), 1, 1);
+                    }
+            }
+            if (focused && n == focused) highlightBox(c, n);
+            return;
+        }
         uint16_t midY = (uint16_t)(n->y + n->h / 2);
         // Track as separator
         aether::ui::draw::separator(c, n->x, midY, n->w, true);

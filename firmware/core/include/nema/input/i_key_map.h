@@ -36,6 +36,12 @@ public:
     // Called every poll tick for long-press / repeat detection.
     virtual void tick(uint64_t nowMs) = 0;
 
+    // Follow the active display rotation (Plan 92 Fase A). A board with directional
+    // buttons remaps them per orientation so input stays natural after the device is
+    // physically turned (like iPad). Driven by the DisplayRotationChanged event.
+    // Default no-op — boards without directional input ignore it.
+    virtual void setRotation(uint8_t /*r*/) {}
+
     // ── Introspection (read-only, used by ControlsScreen) ─────────────────
 
     virtual const char* boardName()   const = 0;   // e.g. "skyrizz-e32"

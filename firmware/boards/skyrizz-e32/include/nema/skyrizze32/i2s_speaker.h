@@ -18,7 +18,10 @@ public:
     // IAudioOutput
     const char* label()     const override { return "NS4168 Speaker"; }
     float       peakLevel() const override { return 0.0f; }
-    void        setVolume(float)   override {}
+    // Output gain 0.0–1.0 (Mission Control). Scales the tone amplitude — the only
+    // playback path on this board is playTone().
+    void        setVolume(float v) override { volume_ = v < 0.0f ? 0.0f : (v > 1.0f ? 1.0f : v); }
+    float       volume() const { return volume_; }
     void        playTone(uint16_t freqHz, uint16_t ms) override;
 
     // IService
@@ -30,6 +33,7 @@ public:
 private:
     nema::Runtime*          rt_  = nullptr;
     Es7243eMic*              mic_ = nullptr;
+    float                    volume_ = 1.0f;   // output gain 0..1 (Mission Control)
 };
 
 } // namespace nema::skyrizze32

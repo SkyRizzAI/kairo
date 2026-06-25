@@ -23,8 +23,13 @@ public:
     static void draw(Canvas& c, const StatusBarData& d);
 
 private:
-    static void drawBattery(Canvas& c, uint16_t x, uint16_t y, int pct);
-    static void drawClock  (Canvas& c, uint16_t x, uint16_t y, int h, int m);
+    // Simplified hand-drawn battery (Plan 92 Fase D) — ~11px, fill ∝ pct.
+    // `on` = draw polarity (false on a filled/inverted bar).
+    static void drawBattery(Canvas& c, uint16_t x, uint16_t y, int pct, bool on);
+    // Tiny 3×5 clock (HH:MM) — smaller than the 8px bitmap fonts (Plan 92 Fase D).
+    static void drawClock(Canvas& c, uint16_t x, uint16_t y, int h, int m, bool on);
+    // WiFi as standing ascending signal bars (7×5) — tidy at the bar height (Plan 92 Fase D).
+    static void drawWifi(Canvas& c, uint16_t x, uint16_t y, bool on);
 };
 
 } // namespace nema

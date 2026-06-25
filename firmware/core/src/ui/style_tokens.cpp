@@ -52,4 +52,25 @@ void setTheme(const StyleTokens& t) {
     s_theme = &t;
 }
 
+// ── Colour theme (Plan 92 Fase B) ──────────────────────────────────────────────
+
+static const ColorTokens* s_colors = nullptr;
+static bool               s_darkMode = false;
+
+const ColorTokens& monoColors() {
+    static const ColorTokens c{ "mono", 0xFFFF, 0x0000 };   // white ink, black paper
+    return c;
+}
+const ColorTokens& flipperColors() {
+    // Flipper orange ≈ #FF6600 → RGB565 0xFB20. Normal: black ink on orange paper;
+    // dark mode swaps to orange ink on black paper.
+    static const ColorTokens c{ "flipper", 0x0000, 0xFB20 };
+    return c;
+}
+
+const ColorTokens& colorTheme()              { return s_colors ? *s_colors : monoColors(); }
+void               setColorTheme(const ColorTokens& c) { s_colors = &c; }
+bool               darkMode()                { return s_darkMode; }
+void               setDarkMode(bool on)      { s_darkMode = on; }
+
 } // namespace aether

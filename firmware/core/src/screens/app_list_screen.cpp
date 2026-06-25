@@ -102,6 +102,11 @@ void AppListScreen::loadInstalledPapps() {
 // ── Lifecycle ─────────────────────────────────────────────────────────────────
 
 void AppListScreen::onResume() {
+    // Re-sync the registry with the .papp folders on disk every time the launcher
+    // opens (lazy refresh, Flipper-style): newly copied apps appear, deleted ones
+    // disappear, and updated ones (changed signature) are reinstalled — all
+    // without a reboot. Then rebuild the on-screen list from the fresh registry.
+    nema::loadInstalledPapps(rt_);
     loadInstalledPapps();
     vlist_.scrollMain   = 0;
     vlist_.focusedIndex = 0;

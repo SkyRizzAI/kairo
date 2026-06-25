@@ -23,4 +23,9 @@ namespace aether {
 // bring-up instead; nema core never names a concrete server.
 void bootDisplay(nema::Runtime& rt);
 
+// Push the boot splash (cat logo + 2s progress bar) on top of whatever screen is
+// currently active — call AFTER the home/desktop is pushed, so it reveals it when
+// done. The splash is an aether presentation screen (not a target/board concern).
+void bootSplash(nema::Runtime& rt);
+
 }  // namespace aether

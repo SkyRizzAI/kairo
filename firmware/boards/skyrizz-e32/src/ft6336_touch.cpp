@@ -3,6 +3,8 @@
 #include "nema/skyrizze32/board_config.h"
 #include "nema/runtime.h"
 #include "nema/log/logger.h"
+#include "nema/service/service_container.h"
+#include "nema/config/config_store.h"
 #include <Wire.h>
 #include <Arduino.h>
 
@@ -19,6 +21,8 @@ static constexpr uint16_t LCD_H = 320;
 void Ft6336Touch::init(Runtime& rt, Xl9535& expander) {
     rt_       = &rt;
     expander_ = &expander;
+    if (auto* cfg = rt.container().resolve<IConfigStore>())
+        rotation_ = (uint8_t)(cfg->getIntOr("display", "rotation", 0) & 3);
 }
 
 void Ft6336Touch::start() {
@@ -85,13 +89,22 @@ bool Ft6336Touch::readPoint(uint16_t& x, uint16_t& y, uint8_t& points) {
     return true;
 }
 
-// Raw panel → logical canvas coordinates. The FT6336U panel here is native
-// portrait 240×320, matching the LCD's MADCTL 0x48, so the mapping is direct
-// (clamp only). If touch axes turn out swapped/flipped at bring-up, correct the
-// transform HERE — components never see raw values.
+// Raw panel → logical canvas coordinates. The FT6336U panel is native portrait
+// 240×320 (LCD_W×LCD_H are the PHYSICAL, rotation-invariant touch dims). Apply
+// the active display rotation so touch matches the rotated UI (Plan 92 Fase A).
+// Pairs with the LCD MADCTL set {0x48,0x28,0x88,0xE8} for 0/90/180/270.
+// If a given orientation reads mirrored on real hardware, flip the sign in that
+// one case here — components never see raw values.
 void Ft6336Touch::toLogical(uint16_t rawX, uint16_t rawY, uint16_t& lx, uint16_t& ly) {
-    lx = rawX >= LCD_W ? (LCD_W - 1) : rawX;
-    ly = rawY >= LCD_H ? (LCD_H - 1) : rawY;
+    if (rawX >= LCD_W) rawX = LCD_W - 1;
+    if (rawY >= LCD_H) rawY = LCD_H - 1;
+    switch (rotation_ & 3) {
+        default:
+        case 0: lx = rawX;               ly = rawY;               break; // 0°   240×320
+        case 1: lx = rawY;               ly = (LCD_W - 1) - rawX; break; // 90°  320×240
+        case 2: lx = (LCD_W - 1) - rawX; ly = (LCD_H - 1) - rawY; break; // 180° 240×320
+        case 3: lx = (LCD_H - 1) - rawY; ly = rawX;               break; // 270° 320×240
+    }
 }
 
 } // namespace nema::skyrizze32

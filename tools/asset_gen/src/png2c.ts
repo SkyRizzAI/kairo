@@ -12,10 +12,11 @@ export interface Png2cOptions {
   symbolName: string;   // C symbol, e.g. "kIcBattery"
   threshold?: number;   // 0-255, default 128; pixel < threshold → ON
   appendMode?: boolean; // append to existing file instead of overwriting
+  invert?: boolean;     // pixel >= threshold → ON (for light-on-dark art, e.g. splash)
 }
 
 export async function png2c(opts: Png2cOptions): Promise<{ w: number; h: number }> {
-  const { inputPath, outputPath, symbolName, threshold = 128, appendMode = false } = opts;
+  const { inputPath, outputPath, symbolName, threshold = 128, appendMode = false, invert = false } = opts;
 
   const img = await Jimp.read(inputPath);
   const w = img.bitmap.width;
@@ -33,7 +34,8 @@ export async function png2c(opts: Png2cOptions): Promise<{ w: number; h: number 
       const g = (pixel >>> 16) & 0xff;
       const b = (pixel >>> 8)  & 0xff;
       const gray = (r * 299 + g * 587 + b * 114) / 1000;
-      if (gray < threshold) {
+      const on = invert ? gray >= threshold : gray < threshold;
+      if (on) {
         // pixel ON → set bit (MSB first within byte)
         const bitIdx = row * w + col;
         bytes[bitIdx >> 3] |= (1 << (7 - (bitIdx & 7)));

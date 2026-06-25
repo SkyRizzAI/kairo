@@ -30,6 +30,7 @@ namespace SysOp {
     enum : uint8_t {
         GetInfo      = 0x01,
         ScreenStream = 0x02,   // [op][on:1] — opt in/out of the screen mirror (Plan 88)
+        SetPalette   = 0x03,   // device→host [op][fg:2 LE][bg:2 LE] RGB565 — colour theme (Plan 92 Fase B)
         Restart      = 0x10, Sleep = 0x11, Shutdown = 0x12, Bootloader = 0x13,
     };
 }

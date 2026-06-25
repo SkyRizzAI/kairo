@@ -19,27 +19,25 @@ struct RadioScanResult {
     char    auth[16]  = {};  // "open" | "wpa" | "wpa2" | "wpa3"
 };
 
-// IRadioWifi — raw and thick WiFi radio access (Plan 87 Fase 4 + 5).
+// IRadioWifi — raw WiFi radio access (Plan 87 Fase 4 + 5; Plan 91).
 //
 // This is NOT the cooked STA driver (IWifiDriver). It exposes the radio chip
-// directly: passive scan, monitor mode, frame injection, and thick attack
-// primitives (deauth loop, beacon spam) whose timing loop runs natively on
-// Core 0 — never inside the app sandbox.
+// directly as GENERIC MECHANISM only: passive scan, monitor mode, frame
+// injection, a soft AP, and MAC override. There are NO attack/app verbs here —
+// deauth, beacon spam, karma, and captive portals are app policy, built from
+// these primitives in the app sandbox (Plan 91).
 //
 // Access control (enforced by generated host gating prologues):
 //   scan()        — @tier(benign)    — no exclusive lease
-//   deauth/beacon — @tier(sensitive) — net.wifi.inject lease
 //   monitor_*     — @tier(sensitive) — net.wifi.monitor lease
-//   inject()      — @tier(sensitive) — net.wifi.inject lease
+//   inject()/ap   — @tier(sensitive) — net.wifi.inject lease
 //
 // Threading: scan() and monitorRead() are blocking — call from TaskRunner worker.
-// All other methods are non-blocking. Native loops (deauth, beacon, promiscuous
-// RX) run on a Thread pinned to Core 0 (ESP32) and never touch the WASM sandbox.
+// All other methods are non-blocking. The promiscuous RX callback pushes frames
+// into monitorQ_ and never touches the WASM sandbox.
 //
-// Two bounded queues (both shared by all subclasses):
 //   monitorQ_  (128 slots) — raw 802.11 frames; producer = native RX callback,
 //                            consumer = monitorRead(). Full → frame dropped.
-//   eventQ_    (64 slots)  — matured JSON events from thick loops; consumer = waitEvent().
 struct IRadioWifi : IDriver {
     virtual ~IRadioWifi() = default;
 
@@ -66,37 +64,24 @@ struct IRadioWifi : IDriver {
     // ── Frame injection (net.wifi.inject lease) ────────────────────────────────
     virtual bool inject(uint8_t /*ch*/, const uint8_t* /*frame*/, size_t /*len*/) { return false; }
 
-    // ── Thick primitives — loop runs natively (net.wifi.inject lease) ─────────
-    // Start continuous deauth at ~10 Hz (firmware Core 0). App gets events via waitEvent().
-    virtual bool deauthStart(std::string_view /*bssid*/, uint8_t /*channel*/) { return false; }
-    virtual bool deauthStop()                                                  { return true; }
+    // NOTE: deauth / beacon-spam / probe-flood / karma are NOT radio methods.
+    // They are app policy — apps build those frames and inject() them in their own
+    // loop. The HAL exposes only mechanism (scan/monitor/inject/setMac). Plan 91.
 
-    // Start beacon spam (multiple fake SSIDs, firmware-native loop).
-    virtual bool beaconSpamStart(const std::vector<std::string>& /*ssids*/) { return false; }
-    virtual bool beaconSpamStop()                                            { return true; }
-
-    // Start probe request flood at ~20 Hz (firmware Core 0).
-    // ssid="" → wildcard probes (discover hidden APs); ssid set → targeted.
-    // App gets events ("probe_sent") via waitEvent().
-    virtual bool probeFloodStart(std::string_view /*ssid*/, uint8_t /*channel*/) { return false; }
-    virtual bool probeFloodStop()                                                  { return true; }
-
-    // ── New attack primitives (net.wifi.inject lease) ─────────────────────────
     // Set radio MAC address. mac="AA:BB:CC:DD:EE:FF"; empty → no-op.
     virtual bool setMac(std::string_view /*mac*/) { return false; }
 
-    // Karma: respond to every probe request with a matching fake AP.
-    // Events ("karma_hit" + {ssid,sta}) pushed via waitEvent().
-    virtual bool karmaStart() { return false; }
-    virtual bool karmaStop()  { return true; }
+    // ── Soft AP (generic — apps compose captive portals from AP + sockets) ────
+    // Bring up a soft AP broadcasting `ssid` on `channel` (open auth if open=true).
+    // Creates the AP netif + DHCP server (192.168.4.1). Suspends STA while up.
+    virtual bool apStart(std::string_view /*ssid*/, uint8_t /*channel*/,
+                         bool /*open*/) { return false; }
+    // Tear the AP down and restore STA mode.
+    virtual bool apStop() { return false; }
 
-    // Evil portal: open soft-AP named ssid, DNS-hijack all queries to 192.168.4.1,
-    // serve html as captive HTTP portal (nullptr → built-in page).
-    // Events ("ep_creds" + {data}) pushed when a form is POSTed.
-    virtual bool evilPortalStart(std::string_view /*ssid*/,
-                                  const char* /*html*/    = nullptr,
-                                  size_t      /*htmlLen*/ = 0) { return false; }
-    virtual bool evilPortalStop() { return true; }
+    // NOTE: there is no "evil portal" in the kernel. A captive portal is just
+    // apStart() + a UDP:53 + a TCP:80 server, all composed in the app from the
+    // generic socket primitives (INetSockets). Plan 91 Stage 2.
 
     // ── Network tool primitives ────────────────────────────────────────────────
     // Check STA connection. Writes "connected\t<IP>\n" or "disconnected\n".
@@ -125,27 +110,9 @@ struct IRadioWifi : IDriver {
         monitorQ_.send(std::vector<uint8_t>(data, data + len));
     }
 
-    // ── Matured event queue (thick loops → app) ────────────────────────────────
-    // waitEvent: block up to timeoutMs for next JSON event from deauth/beacon loops.
-    // Returns empty on timeout. Call from TaskRunner worker — never the UI thread.
-    virtual std::vector<uint8_t> waitEvent(uint32_t timeoutMs) {
-        std::vector<uint8_t> out;
-        eventQ_.receive(out, timeoutMs == 0 ? 1 : timeoutMs);
-        return out;
-    }
-
-    // pushEvent: called by native loops on Core 0. Thread-safe; drops if full.
-    virtual void pushEvent(const char* type, const char* data = "{}") {
-        std::string s;
-        s.reserve(32 + std::strlen(type) + std::strlen(data));
-        s += "{\"type\":\""; s += type; s += "\",\"data\":"; s += data; s += '}';
-        eventQ_.send(std::vector<uint8_t>(s.begin(), s.end()));
-    }
-
 private:
     // 128 raw-frame slots — full → frame dropped, radio never stalls.
     MessageQueue<std::vector<uint8_t>> monitorQ_{128};
-    MessageQueue<std::vector<uint8_t>> eventQ_{64};
 };
 
 } // namespace nema

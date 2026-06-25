@@ -1,6 +1,12 @@
 {
   "png2c": [
     {
+      "input": "assets/splashscreen.png",
+      "output": "../../firmware/core/include/nema/assets/splash_logo.h",
+      "sym": "kSplashLogo",
+      "invert": true
+    },
+    {
       "input": "../../refs/flipper-zero-momentum-firmware/assets/icons/StatusBar/Battery_25x8.png",
       "output": "../../firmware/core/include/nema/assets/icons/ic_battery.h",
       "sym": "kIcBattery"

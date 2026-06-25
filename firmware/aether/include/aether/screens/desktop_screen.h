@@ -9,6 +9,7 @@
 #include "nema/ui/component_screen.h"
 #include "aether/screens/launcher_screen.h"
 #include "aether/shell/desktop_theme.h"
+#include "nema/screens/mission_control_screen.h"
 #include <memory>
 
 namespace nema {
@@ -30,6 +31,7 @@ protected:
 
 private:
     LauncherScreen                        launcher_;
+    MissionControlScreen                  missionControl_;   // Up/Left from the desktop
     std::unique_ptr<shell::IDesktopTheme> theme_;
     bool                                  statusBar_ = true;
 };

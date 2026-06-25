@@ -1,10 +1,11 @@
-// nema:wifi — WiFi radio HAL (raw/thick access). Plan 87 Fase 0.
+// nema:wifi — WiFi radio HAL (generic primitives). Plan 87 Fase 0 / Plan 91.
 // This is the RADIO layer, separate from nema:net/wifi (cooked STA management).
 // All functions use func-level @capability/@tier/@lease annotations (Plan 87 §4.2).
 //
-// Two modes:
-//   Thick primitives — firmware runs the loop native on Core 0; app receives events.
-//   Raw escape — monitor ring buffer + inject passthrough for novel experiments.
+// MECHANISM ONLY — no app-specific attack verbs. Apps build their own deauth /
+// beacon / probe / karma frames and send them with inject() in their own loop
+// (Plan 91). The kernel exposes scan / monitor / inject; it never knows what a
+// frame is for.
 package nema:wifi@1.0
 
 /// One AP found during a WiFi scan.
@@ -60,41 +61,4 @@ interface radio {
     @tier(sensitive)
     @lease
     inject: func(channel: u8, frame: list<u8>) -> result<tuple<>, string>
-
-    // ── Thick primitives — loop runs native on Core 0 ─────────────────────────
-
-    /// Start continuous deauth loop (firmware-native, timing-critical).
-    /// App receives events via wait-event; the loop itself never touches the sandbox.
-    @capability("net.wifi.inject")
-    @tier(sensitive)
-    @lease
-    deauth-start: func(bssid: string, channel: u8) -> result<tuple<>, string>
-
-    /// Stop the deauth loop.
-    @capability("net.wifi.inject")
-    @tier(sensitive)
-    @lease
-    deauth-stop: func() -> result<tuple<>, string>
-
-    /// Start beacon spam (multiple fake SSIDs, firmware-native loop).
-    @capability("net.wifi.inject")
-    @tier(sensitive)
-    @lease
-    beacon-spam-start: func(ssid-list: list<string>) -> result<tuple<>, string>
-
-    /// Stop the beacon spam loop.
-    @capability("net.wifi.inject")
-    @tier(sensitive)
-    @lease
-    beacon-spam-stop: func() -> result<tuple<>, string>
-
-    // ── Matured events (wait/poll, pola ui_wait_event) ────────────────────────
-
-    /// Block until the next matured radio event arrives (timeout_ms=0 → poll).
-    /// Returns serialised event bytes; format is runtime-defined (JSON or binary).
-    @capability("net.wifi.monitor")
-    @tier(sensitive)
-    @lease
-    @blocking
-    wait-event: func(timeout-ms: u32) -> result<list<u8>, string>
 }

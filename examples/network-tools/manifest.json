@@ -1,0 +1,14 @@
+{
+  "id": "network-tools",
+  "name": "Network Tools",
+  "version": "1.0.0",
+  "runtime": "wasm",
+  "mode": "ui",
+  "entry": "network.wasm",
+  "api_version": "1.0",
+  "category": "Network",
+  "needs": [
+    "net.wifi.scan"
+  ],
+  "description": "LAN utilities over the device's WiFi STA: connection status, ARP host discovery, and a TCP port scan of the gateway."
+}

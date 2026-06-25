@@ -26,6 +26,10 @@ public:
     // Called by LockScreen on Select×2 — must run on GuiService thread.
     void unlock();
 
+    // Lock immediately (user-initiated, e.g. Mission Control) — shows the lock
+    // screen with the display ON. Must run on the GuiService thread.
+    void lockNow();
+
     bool isActive()        const;
     bool isSleeping()      const;
     bool isLocked()        const;

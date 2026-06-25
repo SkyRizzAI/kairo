@@ -19,6 +19,17 @@ void AetherServer::renderFrame(Canvas& c, ViewDispatcher& vd, const StatusBarDat
     // so it never bleeds in from another server. Default if none set.
     // (aether::setTheme = the global active-theme setter, not our member setTheme.)
     aether::setTheme(theme_ ? *theme_ : aether::defaultTheme());
+
+    // Plan 92 Fase B — push the active colour palette to the display driver. The
+    // 1-bit framebuffer expands on→fg, off→bg; dark mode swaps them. Cheap (two
+    // member writes); component screens full-flush each frame so changes show next
+    // frame. On a B&W panel the driver ignores it.
+    {
+        uint16_t fg = aether::colorTheme().fg, bg = aether::colorTheme().bg;
+        if (aether::darkMode()) { uint16_t t = fg; fg = bg; bg = t; }
+        c.driver().setPalette(fg, bg);
+    }
+
     uint64_t now = clock_.millis();
     if (now - fpsLastMs_ >= 1000) {
         fps_       = (uint16_t)fpsFrames_;

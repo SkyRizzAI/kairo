@@ -19,6 +19,7 @@ void I2sSpeaker::start() {
 struct BeepParams {
     uint16_t freqHz;
     uint16_t ms;
+    float    volume;   // 0..1 output gain (Mission Control)
 };
 
 // FreeRTOS task: runs beep in background so GUI thread is not blocked
@@ -30,8 +31,8 @@ static void beepTask(void* arg) {
     const uint32_t sampleRate      = 16000;
     const uint32_t samplesPerCycle = (p->freqHz > 0) ? (sampleRate / p->freqHz) : 36;
     const uint32_t totalFrames     = (uint32_t)((uint64_t)sampleRate * p->ms / 1000);
-    const int32_t  hi              =  0x3FFFFFFF;  // 75% full scale, positive half
-    const int32_t  lo              = -0x3FFFFFFF;
+    const int32_t  hi              =  (int32_t)(1073741824.0f * p->volume);  // scaled by volume
+    const int32_t  lo              = -hi;
 
     // Stack-local cycle buffer (max ~72 frames for 220 Hz at 16 kHz = 144 samples)
     // Worst case: 20 Hz → 800 samples × 8 bytes = 6.4 KB — use heap for safety
@@ -82,7 +83,7 @@ void I2sSpeaker::playTone(uint16_t freqHz, uint16_t ms) {
         {{"hz", std::to_string(freqHz)}, {"ms", std::to_string(ms)}});
 
     // Spawn background task — keeps GUI thread responsive during the beep
-    auto* params  = new BeepParams{freqHz, ms};
+    auto* params  = new BeepParams{freqHz, ms, volume_};
     BaseType_t ok = xTaskCreate(beepTask, "beep", 4096, params,
                                 5, nullptr);
     if (ok != pdPASS) {

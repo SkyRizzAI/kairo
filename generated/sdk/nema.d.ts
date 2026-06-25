@@ -350,31 +350,6 @@ declare namespace nema {
        * @requires net.wifi.inject (sensitive +lease)
        */
       inject(channel: number, frame: number[]): { ok: true; value: void } | { ok: false; error: string };
-      /**
-       * Start continuous deauth loop (firmware-native, timing-critical). App receives events via wait-event; the loop itself never touches the sandbox.
-       * @requires net.wifi.inject (sensitive +lease)
-       */
-      deauthStart(bssid: string, channel: number): { ok: true; value: void } | { ok: false; error: string };
-      /**
-       * Stop the deauth loop.
-       * @requires net.wifi.inject (sensitive +lease)
-       */
-      deauthStop(): { ok: true; value: void } | { ok: false; error: string };
-      /**
-       * Start beacon spam (multiple fake SSIDs, firmware-native loop).
-       * @requires net.wifi.inject (sensitive +lease)
-       */
-      beaconSpamStart(ssidList: string[]): { ok: true; value: void } | { ok: false; error: string };
-      /**
-       * Stop the beacon spam loop.
-       * @requires net.wifi.inject (sensitive +lease)
-       */
-      beaconSpamStop(): { ok: true; value: void } | { ok: false; error: string };
-      /**
-       * Block until the next matured radio event arrives (timeout_ms=0 → poll). Returns serialised event bytes; format is runtime-defined (JSON or binary).
-       * @requires net.wifi.monitor (sensitive +lease)
-       */
-      waitEvent(timeoutMs: number): Promise<{ ok: true; value: number[] } | { ok: false; error: string }>;
     }
 
   }

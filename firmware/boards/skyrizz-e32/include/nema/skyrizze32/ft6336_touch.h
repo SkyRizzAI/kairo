@@ -26,6 +26,9 @@ public:
     void stop()  override {}
     void tick(uint64_t nowMs) override;   // poll @ ~15 ms
 
+    // Follow the display rotation live (Plan 92 Fase A).
+    void setRotation(uint8_t r) override { rotation_ = (uint8_t)(r & 3); }
+
 private:
     bool readPoint(uint16_t& x, uint16_t& y, uint8_t& points);
     void toLogical(uint16_t rawX, uint16_t rawY, uint16_t& lx, uint16_t& ly);
@@ -36,6 +39,9 @@ private:
     bool     wasDown_  = false;
     uint16_t lastX_    = 0;
     uint16_t lastY_    = 0;
+    // Display rotation (Plan 92 Fase A): 0/1/2/3 → 0°/90°/180°/270°. Read from
+    // config at init so touch coords match the rotated LCD.
+    uint8_t  rotation_ = 0;
 };
 
 } // namespace nema::skyrizze32

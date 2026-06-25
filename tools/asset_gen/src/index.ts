@@ -21,8 +21,9 @@ async function main() {
     const inputPath  = rest[0];
     const outputPath = arg("--out", rest) ?? "out.h";
     const symbolName = arg("--sym", rest) ?? "kIcon";
-    if (!inputPath) { console.error("Usage: png2c <input.png> --out <output.h> --sym <SYM>"); process.exit(1); }
-    const { w, h } = await png2c({ inputPath, outputPath, symbolName });
+    const invert     = rest.includes("--invert");
+    if (!inputPath) { console.error("Usage: png2c <input.png> --out <output.h> --sym <SYM> [--invert]"); process.exit(1); }
+    const { w, h } = await png2c({ inputPath, outputPath, symbolName, invert });
     console.log(`${path.basename(inputPath)} → ${symbolName}  (${w}×${h})`);
 
   } else if (cmd === "seq2panim") {
@@ -34,7 +35,7 @@ async function main() {
   } else if (cmd === "batch") {
     const configPath = arg("--config", rest) ?? "asset_gen.config.json";
     const config = JSON.parse(fs.readFileSync(configPath, "utf8")) as {
-      png2c?:    Array<{ input: string; output: string; sym: string }>;
+      png2c?:    Array<{ input: string; output: string; sym: string; invert?: boolean }>;
       seq2panim?: Array<{ input: string; output: string }>;
       seqC?:     Array<{ input: string; output: string; baseSym: string }>;
     };
@@ -42,7 +43,7 @@ async function main() {
     if (config.png2c) {
       console.log("\n── png2c ──────────────────────────");
       for (const e of config.png2c) {
-        const { w, h } = await png2c({ inputPath: e.input, outputPath: e.output, symbolName: e.sym });
+        const { w, h } = await png2c({ inputPath: e.input, outputPath: e.output, symbolName: e.sym, invert: e.invert });
         console.log(`  ${path.basename(e.input)} → ${e.sym} (${w}×${h})`);
       }
     }

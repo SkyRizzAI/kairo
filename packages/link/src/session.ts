@@ -6,7 +6,7 @@
 // Refactored: localStorage → ITokenStore (injected via constructor) so this
 // module is isomorphic (works in both browser and Node).
 
-import { Channel, Flags, encodeFrame, FrameParser, rleDecode } from './codec';
+import { Channel, Flags, encodeFrame, FrameParser, rleDecode, rgb565ToRgb888 } from './codec';
 import type { ILinkTransport } from './transport';
 import type {
 	ScreenFrame,
@@ -37,6 +37,9 @@ const AUTH_OK = 0x22;
 const AUTH_FAIL = 0x23;
 const AUTH_REQUIRED = 0x24;
 const GET_INFO = 0x01; // SYSTEM channel opcode
+const SET_PALETTE = 0x03; // SYSTEM: device→host [op][fg:2 LE][bg:2 LE] RGB565 (Plan 92 Fase B)
+
+export type PaletteInfo = { fg: [number, number, number]; bg: [number, number, number] };
 
 // SHA-256 hex via Web Crypto (browser + Node). Mirrors the device's hexSha256.
 async function sha256hex(s: string): Promise<string> {
@@ -89,6 +92,7 @@ type Listeners = {
 	event: Set<(e: EventEntry) => void>;
 	ready: Set<() => void>;
 	profile: Set<(p: BoardProfile) => void>;
+	palette: Set<(p: PaletteInfo) => void>; // device theme colours (Plan 92 Fase B)
 	cli: Set<(c: CliChunk) => void>;
 	// Plan 74: device wants a password ('auth'), or session was authorized.
 	auth: Set<() => void>;
@@ -130,6 +134,7 @@ export class RemoteSession {
 		event: new Set(),
 		ready: new Set(),
 		profile: new Set(),
+		palette: new Set(),
 		cli: new Set(),
 		auth: new Set(),
 		authorized: new Set(),
@@ -378,6 +383,15 @@ export class RemoteSession {
 			return;
 		}
 		if (f.channel === Channel.System) {
+			// [SET_PALETTE][fg:2 LE][bg:2 LE] RGB565 — device theme colours (Plan 92 Fase B).
+			if (f.payload[0] === SET_PALETTE) {
+				if (f.payload.length >= 5) {
+					const fg = f.payload[1] | (f.payload[2] << 8);
+					const bg = f.payload[3] | (f.payload[4] << 8);
+					this.#emit('palette', { fg: rgb565ToRgb888(fg), bg: rgb565ToRgb888(bg) });
+				}
+				return;
+			}
 			// [GET_INFO][board-profile json] — see RemoteService::dispatch.
 			if (f.payload[0] !== GET_INFO) return;
 			try {

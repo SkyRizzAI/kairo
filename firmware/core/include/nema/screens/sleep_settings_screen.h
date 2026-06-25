@@ -23,24 +23,29 @@ private:
     static const float  kScaleVals[];
     static const char*  kScaleLabels[];
     static constexpr int kScaleCount = 5;
+    static const char*  kRotLabels[];
+    static constexpr int kRotCount = 4;   // 0°/90°/180°/270° (Plan 92 Fase A)
 
     int  findSleepIdx() const;
     int  findLockIdx()  const;
     int  findScaleIdx() const;
+    int  findRotIdx()   const;
     void cycleSleep(int dir);
     void cycleLock(int dir);
     void cycleScale(int dir);
+    void cycleRotation(int dir);
     void toggleFps();
     void toggleStatusBar();
 
     static void sleepAdj (void* u, int dir);
     static void lockAdj  (void* u, int dir);
     static void scaleAdj (void* u, int dir);
+    static void rotAdj   (void* u, int dir);
     static void fpsAdj   (void* u, int dir);
     static void statusAdj(void* u, int dir);
 
     aether::ui::ScrollState scroll_;
-    int sleepIdx_ = 0, lockIdx_ = 0, scaleIdx_ = 0;
+    int sleepIdx_ = 0, lockIdx_ = 0, scaleIdx_ = 0, rotIdx_ = 0;
 
     char infoLogical_ [16] = {};
     char infoPhysical_[16] = {};

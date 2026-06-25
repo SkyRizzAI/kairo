@@ -65,6 +65,13 @@ NemaResult<uint32_t, LeaseError> ResourceBroker::acquire(const std::string& appI
                 auto sit = leases_.find(sibling);
                 if (sit == leases_.end()) continue;
                 const std::string& holder = sit->second.appId;
+                if (holder == appId) {
+                    // Same app already holds a sibling cap. A radio-takeover app
+                    // (e.g. WiFi Marauder) legitimately owns inject AND monitor at
+                    // once for the whole session — that's not a conflict with
+                    // itself. Let it acquire the additional sibling.
+                    continue;
+                }
                 if (holder == grp.yieldableOwner) {
                     // Auto-yield the system lease so the app can proceed.
                     auto& sibCaps = byApp_[holder];
@@ -81,7 +88,14 @@ NemaResult<uint32_t, LeaseError> ResourceBroker::acquire(const std::string& appI
                     return {false, 0u, LeaseError{"busy", holder}};
                 }
             }
-            grp.exclusiveCount++;
+            // Only count exclusive (non-yieldable) holders. The yieldable owner's
+            // lease is auto-yielded on conflict (above) WITHOUT decrementing, so
+            // counting it here would leave a phantom that never drops to 0 — which
+            // blocks ResourceRestored after the app exits and makes the WiFi
+            // "Radio in use by" banner persist. Decrements (release/releaseAll)
+            // are already guarded by the same `!= yieldableOwner` condition.
+            if (appId != grp.yieldableOwner)
+                grp.exclusiveCount++;
         }
 
         uint32_t handle = nextHandle_++;

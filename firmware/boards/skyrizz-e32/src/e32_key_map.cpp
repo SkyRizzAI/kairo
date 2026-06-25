@@ -25,9 +25,23 @@ void E32KeyMap::tick(uint64_t nowMs) {
 // static
 void E32KeyMap::onGesture(void* ctx, uint8_t id, Gesture g, uint64_t now) {
     auto* self = static_cast<E32KeyMap*>(ctx);
-    Code   c = idToCode(id, g);
-    Action a = idToAction(id, g);
+    uint8_t eid = self->rotateId(id);    // follow display rotation (Plan 92 Fase A)
+    Code   c = idToCode(eid, g);
+    Action a = idToAction(eid, g);
     if (a != Action::None) self->emitEvent(c, a, g, now);
+}
+
+// Rotate the 4 directional buttons to match the display orientation so input
+// feels natural after the device is physically turned. Ring order Up→Right→Down→
+// Left; we step the OPPOSITE way (`-rotation_`) because the panel rotates CCW
+// relative to the buttons on this board (verified on hardware: at 90° the Right
+// button must drive Up, and Up must drive Left). MIDDLE is orientation-independent.
+uint8_t E32KeyMap::rotateId(uint8_t id) const {
+    if (rotation_ == 0) return id;
+    static const uint8_t ring[4] = {BTN_UP, BTN_RIGHT, BTN_DOWN, BTN_LEFT};
+    for (int i = 0; i < 4; i++)
+        if (ring[i] == id) return ring[(i + 4 - rotation_) & 3];
+    return id;
 }
 
 const char* E32KeyMap::buttonLabel(uint8_t id) const {

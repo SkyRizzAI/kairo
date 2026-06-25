@@ -1,5 +1,5 @@
 {
-  "id": "com.palanu.example.counter-wasm",
+  "id": "counter-wasm",
   "name": "Counter (WASM)",
   "version": "1.0.0",
   "runtime": "wasm",

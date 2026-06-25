@@ -14,6 +14,10 @@ struct ThreadConfig {
     uint32_t    stackBytes = 4096;   // ESP32: task stack (bytes, ESP-IDF convention)
     uint8_t     priority   = 5;      // ESP32 FreeRTOS prio. Host: ignored.
     int8_t      core       = -1;     // ESP32: 0/1, -1 = no affinity. Host: ignored.
+    bool        psram      = false;  // ESP32: force stack in PSRAM (WithCaps). Use for
+                                     // late-spawned threads when internal RAM is scarce
+                                     // — but NOT for threads that run during cache-disable
+                                     // (flash writes) or hard ISR context.
 };
 
 class Thread {

@@ -1,5 +1,5 @@
 {
-  "id": "com.palanu.example.canvas-demo-wasm",
+  "id": "canvas-demo",
   "name": "Canvas Demo",
   "version": "1.0.0",
   "runtime": "wasm",

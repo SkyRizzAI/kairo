@@ -1,5 +1,5 @@
 {
-  "id": "com.palanu.example.counter",
+  "id": "counter",
   "name": "Counter",
   "version": "1.0.0",
   "entry": "App.tsx",

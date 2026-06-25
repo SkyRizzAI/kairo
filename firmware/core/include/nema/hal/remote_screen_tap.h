@@ -32,18 +32,32 @@ public:
     void wake() override;
     uint16_t dpi() const override { return inner_ ? inner_->dpi() : 0; }
 
-    // Re-stream the current shadow (e.g. when a viewer just connected).
-    void requestResend() { streamFrame(); }
+    // Rotation forwards to the inner driver; width()/height() already delegate.
+    // ensureShadow() MUST run here so the shadow buffer + streamed W×H header
+    // resize to the new orientation — otherwise the frame keeps the old dims and
+    // the reflowed content looks clipped/"only the width changed".
+    void    setRotation(uint8_t r) override { if (inner_) { inner_->setRotation(r); ensureShadow(); } }
+    uint8_t rotation() const override { return inner_ ? inner_->rotation() : 0; }
+    // Plan 92 Fase B — track the theme palette and push it to the host on the SYSTEM
+    // channel when it changes, so the Forge mirror (sim + USB remote) colourises from
+    // the DEVICE's colour/dark setting instead of a manual web selection.
+    void    setPalette(uint16_t fg, uint16_t bg) override;
+    bool    supportsColor() const override { return inner_ ? inner_->supportsColor() : false; }
+
+    // Re-stream the current shadow + palette (e.g. when a viewer just connected).
+    void requestResend() { streamFrame(); sendPalette(); }
 
 private:
     void ensureShadow();
     void streamFrame();
+    void sendPalette();   // SYSTEM [SetPalette][fg:2][bg:2] (Plan 92 Fase B)
 
     IDisplayDriver*      inner_ = nullptr;
     LinkService*         link_  = nullptr;
     std::vector<uint8_t> shadow_;     // w*h, 0/1
     std::vector<uint8_t> payload_;    // scratch for SCREEN payload
     uint16_t w_ = 0, h_ = 0;
+    uint16_t palFg_ = 0xFFFF, palBg_ = 0x0000;   // last palette pushed to the host
 };
 
 } // namespace nema

@@ -5,7 +5,7 @@
 
 ## Coverage
 
-**Total functions:** 64
+**Total functions:** 59
 
 | Interface | Function | Cap | Tier | Host C++ | QuickJS | WASM .h | JS .d.ts | Docs | Impl |
 |---|---|---|---|---|---|---|---|---|---|
@@ -68,11 +68,6 @@
 | `nema:wifi/radio` | `monitor-read` 🔒 🔑 | `net.wifi.monitor` | sensitive | — | — | — | — | ✅ | — |
 | `nema:wifi/radio` | `monitor-close` 🔑 | `net.wifi.monitor` | sensitive | — | — | — | — | ✅ | — |
 | `nema:wifi/radio` | `inject` 🔑 | `net.wifi.inject` | sensitive | — | — | — | — | ✅ | — |
-| `nema:wifi/radio` | `deauth-start` 🔑 | `net.wifi.inject` | sensitive | — | — | — | — | ✅ | — |
-| `nema:wifi/radio` | `deauth-stop` 🔑 | `net.wifi.inject` | sensitive | — | — | — | — | ✅ | — |
-| `nema:wifi/radio` | `beacon-spam-start` 🔑 | `net.wifi.inject` | sensitive | — | — | — | — | ✅ | — |
-| `nema:wifi/radio` | `beacon-spam-stop` 🔑 | `net.wifi.inject` | sensitive | — | — | — | — | ✅ | — |
-| `nema:wifi/radio` | `wait-event` 🔒 🔑 | `net.wifi.monitor` | sensitive | — | — | — | — | ✅ | — |
 
 ## Legend
 

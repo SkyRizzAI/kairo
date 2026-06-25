@@ -1,9 +1,0 @@
-{
-  "id": "com.palanu.example.hello-wasm",
-  "name": "Hello (WASM)",
-  "version": "1.0.0",
-  "runtime": "wasm",
-  "entry": "hello.wasm",
-  "api_version": "1.0",
-  "category": "Demo"
-}

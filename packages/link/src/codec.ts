@@ -152,3 +152,12 @@ export function rleDecode(data: Uint8Array, expectedLen?: number): Uint8Array {
 	}
 	return new Uint8Array(out);
 }
+
+// Expand an RGB565 colour (uint16) to an [r, g, b] 0–255 tuple. Used to colourise
+// the screen mirror from the device's theme palette (Plan 92 Fase B).
+export function rgb565ToRgb888(c: number): [number, number, number] {
+	const r = (c >> 11) & 0x1f;
+	const g = (c >> 5) & 0x3f;
+	const b = c & 0x1f;
+	return [(r << 3) | (r >> 2), (g << 2) | (g >> 4), (b << 3) | (b >> 2)];
+}

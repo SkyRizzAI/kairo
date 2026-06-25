@@ -33,14 +33,17 @@ const manifest: PappManifest = JSON.parse(await Bun.file(manifestPath).text());
 // Inject defaults
 if (!manifest.api_version) manifest.api_version = "1.0";
 if (!manifest.runtime)     manifest.runtime = "js";
-if (!manifest.id)          manifest.id = "com.palanu.app";
+// id defaults to a simple slug of the name (no reverse-DNS noise).
+if (!manifest.id)
+  manifest.id = (manifest.name ?? "app").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 
 const entryFile = manifest.entry ?? "App.tsx";
 const entry = join(appDir, entryFile);
 
 // ── Write .papp folder ─────────────────────────────────────────────────────
-
-const outDir = join(appDir, "dist", `${manifest.id}.papp`);
+// Artifact is named after the human name ("WiFi Marauder.papp"), not the id.
+const bundleName = manifest.name ?? manifest.id;
+const outDir = join(appDir, "dist", `${bundleName}.papp`);
 await rm(outDir, { recursive: true, force: true });
 await mkdir(outDir, { recursive: true });
 
@@ -171,7 +174,7 @@ await writeFile(join(outDir, "manifest.json"), JSON.stringify(manifest, null, 2)
 
 // ── Zip the .papp folder into .papp.zip (Plan 86 Fase 6) ──────────────────
 // fflate zipSync: { 'filename': Uint8Array } → Uint8Array (deflate-compressed)
-const zipPath = join(appDir, "dist", `${manifest.id}.papp.zip`);
+const zipPath = join(appDir, "dist", `${bundleName}.papp.zip`);
 {
   const files: Record<string, Uint8Array> = {};
   for (const entry of await readdir(outDir)) {

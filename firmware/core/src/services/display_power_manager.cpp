@@ -89,6 +89,15 @@ void DisplayPowerManager::enterSleep(uint64_t nowMs) {
     if (display_) display_->sleep();
 }
 
+void DisplayPowerManager::lockNow() {
+    // User-initiated lock: keep the display on and reveal the lock screen now
+    // (the timeout path locks lazily on the next key press; this is eager).
+    state_ = State::Locked;
+    if (display_) display_->wake();
+    if (vd_ && lockScreen_) { vd_->push(*lockScreen_); lockScreenShown_ = true; }
+    else                      lockScreenShown_ = false;
+}
+
 void DisplayPowerManager::enterLocked() {
     state_ = State::Locked;
     lockScreenShown_ = false;

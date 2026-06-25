@@ -73,15 +73,6 @@ static UiNode* parentOf(UiNode* n, const UiNode* target) {
     return nullptr;
 }
 
-// Pixels of context kept above/below the focused item when scrolling it into view.
-// Going UP: section header lands ctx px from viewport top.
-// Going DOWN: item bottom lands ctx px from viewport bottom (shows context above).
-// Use ~1/6 of the viewport so the buffer scales with small 2x-DPI screens.
-static int scrollCtx(int viewportH) {
-    int c = viewportH / 6;
-    return c < 4 ? 4 : c;
-}
-
 static bool ensureVisible(UiNode* root, const UiNode* foc) {
     UiNode* sn = findScrollAncestor(root, foc);
     if (!sn || !sn->scroll || sn->style.dir != FlexDir::Col) return false;
@@ -105,15 +96,22 @@ static bool ensureVisible(UiNode* root, const UiNode* foc) {
     }
     int focBottom = foc->y + (int)foc->h;
 
-    // Compare in SCREEN SPACE — viewport window is [top, bot]. Only scroll when the
-    // item is actually outside; this prevents fighting with the dispatchNav nudge.
-    bool abovePort = alignTop < top;
-    bool belowPort = focBottom > bot;
+    // Keep ~1 row of buffer (vim scrolloff) above/below the focused item so the
+    // next/previous row is always visible — consistent with VirtualList screens.
+    // Triggering INSIDE the margin (not only when fully outside) makes the buffer
+    // appear every step instead of every-other-step.
+    int vph = (int)sn->scroll->viewportMain;
+    int ctx = (int)foc->h;
+    if (ctx < 4) ctx = 4;
+    if (ctx > vph / 3) ctx = vph / 3;     // don't starve a tiny viewport
+
+    // Compare in SCREEN SPACE — viewport window is [top, bot].
+    bool abovePort = alignTop < top + ctx;
+    bool belowPort = focBottom > bot - ctx;
     if (!abovePort && !belowPort) return false;
 
     // Convert screen target back to a scroll offset.
     // screen_y = top + (content_y - scrollMain)  →  sc = before + (screen_y - top).
-    int ctx = scrollCtx((int)sn->scroll->viewportMain);
     int sc;
     if (abovePort) {
         sc = before + (alignTop - top) - ctx;

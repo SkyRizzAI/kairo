@@ -6,6 +6,11 @@
 #include "nema/ui/display_server.h"
 #include "nema/services/display_power_manager.h"
 #include "nema/config/config_store.h"
+#include "nema/service/service_container.h"
+#include "nema/hal/display.h"
+#include "nema/input/i_touch_driver.h"
+#include "nema/event/event_bus.h"
+#include "nema/event/event.h"
 #include <cstdio>
 
 namespace nema {
@@ -16,6 +21,9 @@ const float SleepSettingsScreen::kScaleVals[kScaleCount] =
     {1.0f, 1.25f, 1.5f, 1.75f, 2.0f};
 const char* SleepSettingsScreen::kScaleLabels[kScaleCount] =
     {"1x", "1.25x", "1.5x", "1.75x", "2x"};
+// Rotation labels — plain ASCII (the degree glyph isn't in the bitmap fonts).
+const char* SleepSettingsScreen::kRotLabels[kRotCount] =
+    {"0", "90", "180", "270"};
 
 const SleepSettingsScreen::Option SleepSettingsScreen::kSleepOpts[kSleepCount] = {
     {"15s", 15000}, {"30s", 30000}, {"1min", 60000}, {"5min", 300000},
@@ -65,6 +73,22 @@ void SleepSettingsScreen::cycleScale(int dir) {
     rt_.config().setInt("aether", "scale", (int64_t)(s * 100.0f + 0.5f));
     rt_.view().requestRedraw();
 }
+int SleepSettingsScreen::findRotIdx() const {
+    return (int)(rt_.config().getIntOr("display", "rotation", 0) & 3);
+}
+void SleepSettingsScreen::cycleRotation(int dir) {
+    rotIdx_ = (rotIdx_ + dir + kRotCount) % kRotCount;
+    rt_.config().setInt("display", "rotation", (int64_t)rotIdx_);
+    // Apply live where the driver supports it (simulator + hardware): the display
+    // swaps its logical dims and the UI reflows; touch follows. On a driver with
+    // no live support these are no-ops and the persisted value applies at boot.
+    if (auto* disp  = rt_.container().resolve<IDisplayDriver>()) disp->setRotation((uint8_t)rotIdx_);
+    if (auto* touch = rt_.container().resolve<ITouchDriver>())   touch->setRotation((uint8_t)rotIdx_);
+    // Announce so each board's IKeyMap can remap its directional buttons (Plan 92).
+    char rbuf[4]; std::snprintf(rbuf, sizeof(rbuf), "%d", rotIdx_);
+    rt_.events().publish(Event{events::DisplayRotationChanged, {{"rotation", rbuf}}});
+    rt_.view().requestRedraw();
+}
 void SleepSettingsScreen::toggleFps() {
     bool on = !rt_.showFps();
     rt_.setShowFps(on);
@@ -79,6 +103,7 @@ void SleepSettingsScreen::toggleStatusBar() {
 void SleepSettingsScreen::sleepAdj (void* u, int d) { static_cast<SleepSettingsScreen*>(u)->cycleSleep(d); }
 void SleepSettingsScreen::lockAdj  (void* u, int d) { static_cast<SleepSettingsScreen*>(u)->cycleLock(d); }
 void SleepSettingsScreen::scaleAdj (void* u, int d) { static_cast<SleepSettingsScreen*>(u)->cycleScale(d); }
+void SleepSettingsScreen::rotAdj   (void* u, int d) { static_cast<SleepSettingsScreen*>(u)->cycleRotation(d); }
 void SleepSettingsScreen::fpsAdj   (void* u, int)   { static_cast<SleepSettingsScreen*>(u)->toggleFps(); }
 void SleepSettingsScreen::statusAdj(void* u, int)   { static_cast<SleepSettingsScreen*>(u)->toggleStatusBar(); }
 
@@ -86,6 +111,7 @@ void SleepSettingsScreen::onResume() {
     sleepIdx_ = findSleepIdx();
     lockIdx_  = findLockIdx();
     scaleIdx_ = findScaleIdx();
+    rotIdx_   = findRotIdx();
 
     auto& c = rt_.canvas();
     auto lw = c.width(), lh = c.height();
@@ -119,6 +145,7 @@ UiNode* SleepSettingsScreen::build(NodeArena& a, Runtime&) {
             input("Status Bar",        rt_.config().getIntOr("aether", "statusbar", 1) ? "ON" : "OFF",
                                                                statusAdj),
             input("UI Scale",          kScaleLabels[scaleIdx_],     scaleAdj),
+            input("Rotation",          kRotLabels[rotIdx_],         rotAdj),
             ListSection(a, "Info"),
             info("Logical",  infoLogical_),
             info("Physical", infoPhysical_),

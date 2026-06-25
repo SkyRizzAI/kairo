@@ -30,6 +30,11 @@ void WasmPlatform::registerDrivers(Runtime& rt) {
 
     cable_.init();
     link_.attach(&cable_, LinkService::Role::Device);
+
+    // Sim display colour capability (Plan 92 Fase B) — default RGB-capable so colour
+    // themes show; set config "display/sim_color" = 0 to simulate a true B&W panel.
+    display_.setColorCapable(config_.getIntOr("display", "sim_color", 1) != 0);
+
     tap_.init(display_, link_);
 
     rt.container().registerService(&display_);          // NullDisplay (IService)

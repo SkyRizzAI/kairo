@@ -5,60 +5,69 @@
 
 ## Coverage
 
-**Total functions:** 50
+**Total functions:** 59
 
-| Interface | Function | Host C++ | QuickJS | WASM .h | JS .d.ts | Docs | Impl |
-|---|---|---|---|---|---|---|---|
-| `aether:ui/view` | `view-begin` | — | — | — | — | ✅ | — |
-| `aether:ui/view` | `view-end` | — | — | — | — | ✅ | — |
-| `aether:ui/text` | `label` | — | — | — | — | ✅ | — |
-| `aether:ui/text` | `styled` | — | — | — | — | ✅ | — |
-| `aether:ui/interactive` | `button` | — | — | — | — | ✅ | — |
-| `aether:ui/scroll` | `scroll-begin` | — | — | — | — | ✅ | — |
-| `aether:ui/scroll` | `scroll-end` | — | — | — | — | ✅ | — |
-| `nema:bt/ble` | `enable` 🔒 | — | — | — | — | ✅ | — |
-| `nema:bt/ble` | `disable` | — | — | — | — | ✅ | — |
-| `nema:bt/ble` | `is-enabled` | — | — | — | — | ✅ | — |
-| `nema:input/input` | `hint` | — | — | — | — | ✅ | — |
-| `nema:input/input` | `actions` | — | — | — | — | ✅ | — |
-| `nema:media/audio-input` | `list` | — | — | — | — | ✅ | — |
-| `nema:media/audio-output` | `list` | — | — | — | — | ✅ | — |
-| `nema:media/camera` | `list` | — | — | — | — | ✅ | — |
-| `nema:media/camera` | `capture` 🔒 | — | — | — | — | ✅ | — |
-| `nema:net/http` | `get` 🔒 | — | — | — | — | ✅ | — |
-| `nema:net/http` | `post` 🔒 | — | — | — | — | ✅ | — |
-| `nema:net/wifi` | `is-connected` | — | — | — | — | ✅ | — |
-| `nema:net/wifi` | `ssid` | — | — | — | — | ✅ | — |
-| `nema:net/wifi` | `ip` | — | — | — | — | ✅ | — |
-| `nema:net/wifi` | `scan` 🔒 | — | — | — | — | ✅ | — |
-| `nema:net/wifi` | `connect` 🔒 | — | — | — | — | ✅ | — |
-| `nema:net/wifi` | `disconnect` | — | — | — | — | ✅ | — |
-| `nema:profile/profile` | `user-name` | — | — | — | — | ✅ | — |
-| `nema:profile/profile` | `device-name` | — | — | — | — | ✅ | — |
-| `nema:profile/profile` | `has-password` | — | — | — | — | ✅ | — |
-| `nema:profile/profile` | `verify-password` | — | — | — | — | ✅ | — |
-| `nema:storage/kv` | `get` | — | — | — | — | ✅ | — |
-| `nema:storage/kv` | `set` | — | — | — | — | ✅ | — |
-| `nema:storage/kv` | `get-int` | — | — | — | — | ✅ | — |
-| `nema:storage/kv` | `set-int` | — | — | — | — | ✅ | — |
-| `nema:storage/kv` | `remove` | — | — | — | — | ✅ | — |
-| `nema:storage/fs` | `read-file` | — | — | — | — | ✅ | — |
-| `nema:storage/fs` | `write-file` | — | — | — | — | ✅ | — |
-| `nema:storage/fs` | `list-files` | — | — | — | — | ✅ | — |
-| `nema:storage/fs` | `remove-file` | — | — | — | — | ✅ | — |
-| `nema:storage/fs` | `bytes-used` | — | — | — | — | ✅ | — |
-| `nema:sys/log` | `log` | — | — | — | — | ✅ | — |
-| `nema:sys/device` | `name` | — | — | — | — | ✅ | — |
-| `nema:sys/device` | `caps` | — | — | — | — | ✅ | — |
-| `nema:sys/device` | `has` | — | — | — | — | ✅ | — |
-| `nema:sys/device` | `available` | — | — | — | — | ✅ | — |
-| `nema:sys/events` | `subscribe` | — | — | — | — | ✅ | — |
-| `nema:sys/events` | `unsubscribe` | — | — | — | — | ✅ | — |
-| `nema:sys/events` | `publish` | — | — | — | — | ✅ | — |
-| `nema:sys/tasks` | `submit` | — | — | — | — | ✅ | — |
-| `nema:sys/tasks` | `timeout` | — | — | — | — | ✅ | — |
-| `nema:sys/tasks` | `interval` | — | — | — | — | ✅ | — |
-| `nema:sys/tasks` | `cancel` | — | — | — | — | ✅ | — |
+| Interface | Function | Cap | Tier | Host C++ | QuickJS | WASM .h | JS .d.ts | Docs | Impl |
+|---|---|---|---|---|---|---|---|---|---|
+| `aether:ui/view` | `view-begin` | — | — | — | — | — | — | ✅ | — |
+| `aether:ui/view` | `view-end` | — | — | — | — | — | — | ✅ | — |
+| `aether:ui/text` | `label` | — | — | — | — | — | — | ✅ | — |
+| `aether:ui/text` | `styled` | — | — | — | — | — | — | ✅ | — |
+| `aether:ui/interactive` | `button` | — | — | — | — | — | — | ✅ | — |
+| `aether:ui/scroll` | `scroll-begin` | — | — | — | — | — | — | ✅ | — |
+| `aether:ui/scroll` | `scroll-end` | — | — | — | — | — | — | ✅ | — |
+| `nema:bt/ble` | `enable` 🔒 | `bt.ble` | — | — | — | — | — | ✅ | — |
+| `nema:bt/ble` | `disable` | `bt.ble` | — | — | — | — | — | ✅ | — |
+| `nema:bt/ble` | `is-enabled` | `bt.ble` | — | — | — | — | — | ✅ | — |
+| `nema:input/input` | `hint` | `input` | — | — | — | — | — | ✅ | — |
+| `nema:input/input` | `actions` | `input` | — | — | — | — | — | ✅ | — |
+| `nema:media/audio-input` | `list` | `audio.input` | — | — | — | — | — | ✅ | — |
+| `nema:media/audio-output` | `list` | `audio.output` | — | — | — | — | — | ✅ | — |
+| `nema:media/camera` | `list` | `camera` | — | — | — | — | — | ✅ | — |
+| `nema:media/camera` | `capture` 🔒 | `camera` | — | — | — | — | — | ✅ | — |
+| `nema:net/http` | `get` 🔒 | `net.http` | — | — | — | — | — | ✅ | — |
+| `nema:net/http` | `post` 🔒 | `net.http` | — | — | — | — | — | ✅ | — |
+| `nema:net/wifi` | `is-connected` | `net.wifi` | — | — | — | — | — | ✅ | — |
+| `nema:net/wifi` | `ssid` | `net.wifi` | — | — | — | — | — | ✅ | — |
+| `nema:net/wifi` | `ip` | `net.wifi` | — | — | — | — | — | ✅ | — |
+| `nema:net/wifi` | `scan` 🔒 | `net.wifi` | — | — | — | — | — | ✅ | — |
+| `nema:net/wifi` | `connect` 🔒 | `net.wifi` | — | — | — | — | — | ✅ | — |
+| `nema:net/wifi` | `disconnect` | `net.wifi` | — | — | — | — | — | ✅ | — |
+| `nema:profile/profile` | `user-name` | `profile` | — | — | — | — | — | ✅ | — |
+| `nema:profile/profile` | `device-name` | `profile` | — | — | — | — | — | ✅ | — |
+| `nema:profile/profile` | `has-password` | `profile` | — | — | — | — | — | ✅ | — |
+| `nema:profile/profile` | `verify-password` | `profile` | — | — | — | — | — | ✅ | — |
+| `nema:storage/kv` | `get` | — | — | — | — | — | — | ✅ | — |
+| `nema:storage/kv` | `set` | — | — | — | — | — | — | ✅ | — |
+| `nema:storage/kv` | `get-int` | — | — | — | — | — | — | ✅ | — |
+| `nema:storage/kv` | `set-int` | — | — | — | — | — | — | ✅ | — |
+| `nema:storage/kv` | `remove` | — | — | — | — | — | — | ✅ | — |
+| `nema:storage/fs` | `read-file` | — | — | — | — | — | — | ✅ | — |
+| `nema:storage/fs` | `write-file` | — | — | — | — | — | — | ✅ | — |
+| `nema:storage/fs` | `list-files` | — | — | — | — | — | — | ✅ | — |
+| `nema:storage/fs` | `remove-file` | — | — | — | — | — | — | ✅ | — |
+| `nema:storage/fs` | `bytes-used` | — | — | — | — | — | — | ✅ | — |
+| `nema:sys/log` | `log` | — | — | — | — | — | — | ✅ | — |
+| `nema:sys/device` | `name` | — | — | — | — | — | — | ✅ | — |
+| `nema:sys/device` | `caps` | — | — | — | — | — | — | ✅ | — |
+| `nema:sys/device` | `has` | — | — | — | — | — | — | ✅ | — |
+| `nema:sys/device` | `available` | — | — | — | — | — | — | ✅ | — |
+| `nema:sys/events` | `subscribe` | — | — | — | — | — | — | ✅ | — |
+| `nema:sys/events` | `unsubscribe` | — | — | — | — | — | — | ✅ | — |
+| `nema:sys/events` | `publish` | — | — | — | — | — | — | ✅ | — |
+| `nema:sys/perm` | `status` | — | — | — | — | — | — | ✅ | — |
+| `nema:sys/perm` | `request` | — | — | — | — | — | — | ✅ | — |
+| `nema:sys/lease` | `acquire` | — | — | — | — | — | — | ✅ | — |
+| `nema:sys/lease` | `release` | — | — | — | — | — | — | ✅ | — |
+| `nema:sys/tasks` | `submit` | — | — | — | — | — | — | ✅ | — |
+| `nema:sys/tasks` | `timeout` | — | — | — | — | — | — | ✅ | — |
+| `nema:sys/tasks` | `interval` | — | — | — | — | — | — | ✅ | — |
+| `nema:sys/tasks` | `cancel` | — | — | — | — | — | — | ✅ | — |
+| `nema:wifi/radio` | `scan` 🔒 | `net.wifi.scan` | benign | — | — | — | — | ✅ | — |
+| `nema:wifi/radio` | `monitor-open` 🔑 | `net.wifi.monitor` | sensitive | — | — | — | — | ✅ | — |
+| `nema:wifi/radio` | `monitor-read` 🔒 🔑 | `net.wifi.monitor` | sensitive | — | — | — | — | ✅ | — |
+| `nema:wifi/radio` | `monitor-close` 🔑 | `net.wifi.monitor` | sensitive | — | — | — | — | ✅ | — |
+| `nema:wifi/radio` | `inject` 🔑 | `net.wifi.inject` | sensitive | — | — | — | — | ✅ | — |
 
 ## Legend
 
@@ -67,3 +76,4 @@
 | ✅ | Generated / implemented |
 | — | Not yet generated (pending phase) |
 | 🔒 | `@blocking` — must run on TaskRunner worker |
+| 🔑 | `@lease` — requires ResourceBroker exclusive grant |

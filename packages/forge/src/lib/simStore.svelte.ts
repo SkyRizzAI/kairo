@@ -1,5 +1,5 @@
 import { wasmSession } from './wasmSim';
-import type { ScreenFrame, LogEntry, EventEntry, BoardProfile, CliChunk } from '@palanu/link';
+import type { ScreenFrame, LogEntry, EventEntry, BoardProfile, CliChunk, PaletteInfo } from '@palanu/link';
 
 // Reactive WASM simulator store — wraps the shared wasmSession() and exposes the
 // firmware's telemetry (screen / logs / events / services) + control commands.
@@ -7,6 +7,9 @@ import type { ScreenFrame, LogEntry, EventEntry, BoardProfile, CliChunk } from '
 // /simulator UI binds to this.
 class SimStore {
 	frame = $state<ScreenFrame | null>(null);
+	// Device theme palette (Plan 92 Fase B) — the firmware drives the screen colours;
+	// the sim mirror follows Settings → Appearances → Theme, not a web selection.
+	palette = $state<PaletteInfo | null>(null);
 	profile = $state<BoardProfile | null>(null);
 	logs = $state<LogEntry[]>([]);
 	events = $state<EventEntry[]>([]);
@@ -33,6 +36,7 @@ class SimStore {
 		});
 		this.#s.on('profile', (p) => (this.profile = p));
 		this.#s.on('screen', (f) => (this.frame = f));
+		this.#s.on('palette', (p) => (this.palette = p));
 		this.#s.on('log', (l) => (this.logs = [...this.logs.slice(-300), l]));
 		this.#s.on('event', (e) => {
 			this.events = [...this.events.slice(-300), e];

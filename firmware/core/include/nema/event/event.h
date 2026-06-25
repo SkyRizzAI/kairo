@@ -25,6 +25,9 @@ namespace events {
     // WiFi connection lifecycle (Plan 72). payload: {{"state","connecting"|...},{"err","none"|...}}
     inline constexpr const char* WifiStateChanged     = "WifiStateChanged";
     inline constexpr const char* ClockTick            = "ClockTick";
+    // Display rotation changed (Plan 92 Fase A). A board's IKeyMap subscribes and
+    // remaps directional buttons per orientation. payload: {{"rotation","0".."3"}}
+    inline constexpr const char* DisplayRotationChanged = "DisplayRotationChanged";
     // Bluetooth/BLE (Plan 34)
     inline constexpr const char* BtEnabled            = "BtEnabled";
     inline constexpr const char* BtDisabled           = "BtDisabled";

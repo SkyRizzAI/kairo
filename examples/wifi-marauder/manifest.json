@@ -1,7 +1,7 @@
 {
-  "id": "com.palanu.wifi-marauder",
+  "id": "wifi-marauder",
   "name": "WiFi Marauder",
-  "version": "1.0.0",
+  "version": "3.3.3",
   "runtime": "wasm",
   "mode": "ui",
   "entry": "wifi-marauder.wasm",

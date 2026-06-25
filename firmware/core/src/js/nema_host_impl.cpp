@@ -259,31 +259,9 @@ public:
         return {true, {}};
     }
 
-    NemaResult<void, std::string> radio_deauth_start(std::string_view bssid, uint8_t ch) override {
-        auto* r = radio();
-        if (!r || !r->deauthStart(bssid, ch)) return {false, "failed"};
-        return {true, {}};
-    }
-    NemaResult<void, std::string> radio_deauth_stop() override {
-        if (auto* r = radio()) r->deauthStop();
-        return {true, {}};
-    }
-    NemaResult<void, std::string> radio_beacon_spam_start(const std::vector<std::string>& ssids) override {
-        auto* r = radio();
-        if (!r || !r->beaconSpamStart(ssids)) return {false, "failed"};
-        return {true, {}};
-    }
-    NemaResult<void, std::string> radio_beacon_spam_stop() override {
-        if (auto* r = radio()) r->beaconSpamStop();
-        return {true, {}};
-    }
-    NemaResult<std::vector<uint8_t>, std::string> radio_wait_event(uint32_t timeoutMs) override {
-        auto* r = radio();
-        if (!r) return {false, {}, "no_radio"};
-        auto ev = r->waitEvent(timeoutMs);
-        if (ev.empty()) return {false, {}, "timeout"};
-        return {true, std::move(ev), {}};
-    }
+    // deauth/beacon-spam/wait-event removed (Plan 91): apps build attack frames
+    // and inject() them themselves; captive portals use apStart()+sockets. The
+    // host no longer exposes attack verbs or the matured-event ring.
 
     // ── nema:profile ──────────────────────────────────────────────────
 

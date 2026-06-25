@@ -52,8 +52,9 @@ static void measure(UiNode* n, const TextMetrics& tm) {
     if (n->type == NodeType::Icon) {
         // Leaf: fixed size from the bitmap dimensions + padding.
         const uint16_t pad2 = (uint16_t)(s.padding * 2);
-        n->w = (s.width  == SIZE_AUTO) ? (uint16_t)(n->iconW + pad2) : s.width;
-        n->h = (s.height == SIZE_AUTO) ? (uint16_t)(n->iconH + pad2) : s.height;
+        const uint8_t  sc   = n->iconScale ? n->iconScale : 1;
+        n->w = (s.width  == SIZE_AUTO) ? (uint16_t)(n->iconW * sc + pad2) : s.width;
+        n->h = (s.height == SIZE_AUTO) ? (uint16_t)(n->iconH * sc + pad2) : s.height;
         // F2.2: apply min/max constraints
         if (s.minW > 0 && n->w < s.minW) n->w = s.minW;
         if (s.maxW != SIZE_AUTO && n->w > s.maxW) n->w = s.maxW;

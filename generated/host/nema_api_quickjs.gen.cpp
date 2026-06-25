@@ -838,96 +838,6 @@ static JSValue nema_radio_inject(JSContext* ctx, JSValueConst, int argc, JSValue
     return marshalResultVoid(ctx, __ret, [ctx](JSContext* c, auto& e) { return JS_ThrowTypeError(c, "%s", e.c_str()); });
 }
 
-// radio.deauth-start
-static JSValue nema_radio_deauth_start(JSContext* ctx, JSValueConst, int argc, JSValueConst* argv) {
-    (void)argc; (void)argv;
-    auto* e = engineOf(ctx);
-    auto* host = e->hostApi();
-    if (!host) return JS_UNDEFINED;
-
-    // @capability("net.wifi.inject") @tier(sensitive) @lease
-    if (!host->perm_check(e->appId(), "net.wifi.inject"))
-        return JS_ThrowTypeError(ctx, "ERR_PERMISSION: net.wifi.inject");
-    if (!host->lease_check(e->appId(), "net.wifi.inject"))
-        return JS_ThrowTypeError(ctx, "ERR_NO_LEASE: net.wifi.inject");
-
-    std::string bssid = jsToString(ctx, argv[0]);
-    auto channel = jsToU32(ctx, argv[1]);
-    auto __ret = host->radio_deauth_start(bssid, channel);
-    return marshalResultVoid(ctx, __ret, [ctx](JSContext* c, auto& e) { return JS_ThrowTypeError(c, "%s", e.c_str()); });
-}
-
-// radio.deauth-stop
-static JSValue nema_radio_deauth_stop(JSContext* ctx, JSValueConst, int argc, JSValueConst* argv) {
-    (void)argc; (void)argv;
-    auto* e = engineOf(ctx);
-    auto* host = e->hostApi();
-    if (!host) return JS_UNDEFINED;
-
-    // @capability("net.wifi.inject") @tier(sensitive) @lease
-    if (!host->perm_check(e->appId(), "net.wifi.inject"))
-        return JS_ThrowTypeError(ctx, "ERR_PERMISSION: net.wifi.inject");
-    if (!host->lease_check(e->appId(), "net.wifi.inject"))
-        return JS_ThrowTypeError(ctx, "ERR_NO_LEASE: net.wifi.inject");
-
-    auto __ret = host->radio_deauth_stop();
-    return marshalResultVoid(ctx, __ret, [ctx](JSContext* c, auto& e) { return JS_ThrowTypeError(c, "%s", e.c_str()); });
-}
-
-// radio.beacon-spam-start
-static JSValue nema_radio_beacon_spam_start(JSContext* ctx, JSValueConst, int argc, JSValueConst* argv) {
-    (void)argc; (void)argv;
-    auto* e = engineOf(ctx);
-    auto* host = e->hostApi();
-    if (!host) return JS_UNDEFINED;
-
-    // @capability("net.wifi.inject") @tier(sensitive) @lease
-    if (!host->perm_check(e->appId(), "net.wifi.inject"))
-        return JS_ThrowTypeError(ctx, "ERR_PERMISSION: net.wifi.inject");
-    if (!host->lease_check(e->appId(), "net.wifi.inject"))
-        return JS_ThrowTypeError(ctx, "ERR_NO_LEASE: net.wifi.inject");
-
-    std::vector<std::string> ssid_list = {};
-    auto __ret = host->radio_beacon_spam_start(ssid_list);
-    return marshalResultVoid(ctx, __ret, [ctx](JSContext* c, auto& e) { return JS_ThrowTypeError(c, "%s", e.c_str()); });
-}
-
-// radio.beacon-spam-stop
-static JSValue nema_radio_beacon_spam_stop(JSContext* ctx, JSValueConst, int argc, JSValueConst* argv) {
-    (void)argc; (void)argv;
-    auto* e = engineOf(ctx);
-    auto* host = e->hostApi();
-    if (!host) return JS_UNDEFINED;
-
-    // @capability("net.wifi.inject") @tier(sensitive) @lease
-    if (!host->perm_check(e->appId(), "net.wifi.inject"))
-        return JS_ThrowTypeError(ctx, "ERR_PERMISSION: net.wifi.inject");
-    if (!host->lease_check(e->appId(), "net.wifi.inject"))
-        return JS_ThrowTypeError(ctx, "ERR_NO_LEASE: net.wifi.inject");
-
-    auto __ret = host->radio_beacon_spam_stop();
-    return marshalResultVoid(ctx, __ret, [ctx](JSContext* c, auto& e) { return JS_ThrowTypeError(c, "%s", e.c_str()); });
-}
-
-// radio.wait-event
-// @blocking — dispatched via TaskRunner (the host wraps as async).
-static JSValue nema_radio_wait_event(JSContext* ctx, JSValueConst, int argc, JSValueConst* argv) {
-    (void)argc; (void)argv;
-    auto* e = engineOf(ctx);
-    auto* host = e->hostApi();
-    if (!host) return JS_UNDEFINED;
-
-    // @capability("net.wifi.monitor") @tier(sensitive) @lease
-    if (!host->perm_check(e->appId(), "net.wifi.monitor"))
-        return JS_ThrowTypeError(ctx, "ERR_PERMISSION: net.wifi.monitor");
-    if (!host->lease_check(e->appId(), "net.wifi.monitor"))
-        return JS_ThrowTypeError(ctx, "ERR_NO_LEASE: net.wifi.monitor");
-
-    auto timeout_ms = jsToU32(ctx, argv[0]);
-    auto __ret = host->radio_wait_event(timeout_ms);
-    return marshalResult(ctx, __ret, [ctx](JSContext* c, auto& v) { (void)c; return marshalList(ctx, v, [ctx](JSContext* c, auto& v) { (void)c; return JS_NewInt32(ctx, v); }); }, [ctx](JSContext* c, auto& e) { return JS_ThrowTypeError(c, "%s", e.c_str()); });
-}
-
 } // anon namespace
 
 // ── Generated registration ────────────────────────────────
@@ -1052,11 +962,6 @@ void installNemaApi(JSContext* ctx, HostApi* host, nema::CapabilityRegistry& cap
     setFn(ctx, wifi_radio, "monitorRead", nema_radio_monitor_read, 1);
     setFn(ctx, wifi_radio, "monitorClose", nema_radio_monitor_close, 0);
     setFn(ctx, wifi_radio, "inject", nema_radio_inject, 2);
-    setFn(ctx, wifi_radio, "deauthStart", nema_radio_deauth_start, 2);
-    setFn(ctx, wifi_radio, "deauthStop", nema_radio_deauth_stop, 0);
-    setFn(ctx, wifi_radio, "beaconSpamStart", nema_radio_beacon_spam_start, 1);
-    setFn(ctx, wifi_radio, "beaconSpamStop", nema_radio_beacon_spam_stop, 0);
-    setFn(ctx, wifi_radio, "waitEvent", nema_radio_wait_event, 1);
 
     // device.name + device.caps (static properties)
     JS_SetPropertyStr(ctx, sys_device, "name", JS_NewString(ctx, host->device_name().c_str()));

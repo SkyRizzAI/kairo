@@ -13,6 +13,37 @@ set(EXTRA_COMPONENT_DIRS
     "${CMAKE_CURRENT_LIST_DIR}/../../vendor/wasm3_idf"   # → wasm3_idf — IDF wrapper (Plan 57)
 )
 
+# ---------------------------------------------------------------------------
+# Enable raw TX of deauth/disassoc management frames.
+# The closed-source WiFi blob's ieee80211_raw_frame_sanity_check() rejects
+# frame subtypes 0xC0 (deauth) / 0xA0 (disassoc) inside esp_wifi_80211_tx(),
+# producing "unsupport frame type: 0c0" — promiscuous mode does NOT bypass it.
+# We WEAKEN that symbol in the prebuilt archive (objcopy) so our strong override
+# in platforms/esp32/src/esp32_wifi_raw_override.c wins at link time. No
+# instruction bytes are patched (byte-patching leaves dangling Xtensa
+# relocations the linker cannot decode). Idempotent: skips if already weak.
+# Runs at configure time, before the library path is resolved.
+# ---------------------------------------------------------------------------
+set(_wifi_lib "$ENV{IDF_PATH}/components/esp_wifi/lib/esp32s3/libnet80211.a")
+find_program(_xt_ar NAMES xtensa-esp32s3-elf-ar
+    PATHS "$ENV{HOME}/.espressif/tools/xtensa-esp-elf/*/xtensa-esp-elf/bin" NO_DEFAULT_PATH)
+find_program(_xt_objcopy NAMES xtensa-esp32s3-elf-objcopy
+    PATHS "$ENV{HOME}/.espressif/tools/xtensa-esp-elf/*/xtensa-esp-elf/bin" NO_DEFAULT_PATH)
+if(_xt_ar AND _xt_objcopy AND EXISTS "${_wifi_lib}")
+    execute_process(
+        COMMAND "${CMAKE_CURRENT_LIST_DIR}/tools/patch_wifi_lib.py"
+            "${_wifi_lib}" "${_xt_objcopy}" "${_xt_ar}" "${_wifi_lib}"
+        RESULT_VARIABLE _patch_rc OUTPUT_VARIABLE _patch_out ERROR_VARIABLE _patch_err)
+    if(_patch_rc EQUAL 0)
+        message(STATUS "deauth patch: ${_patch_out}")
+    else()
+        message(WARNING "WiFi lib patch failed (deauth will not work): ${_patch_err}")
+    endif()
+else()
+    message(WARNING "WiFi lib patch skipped — toolchain or libnet80211.a not found; "
+                    "deauth/disassoc TX will fail with 'unsupport frame type'")
+endif()
+
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
 project(palanu-skyrizz-e32)
 

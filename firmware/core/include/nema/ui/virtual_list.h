@@ -25,6 +25,10 @@ struct VirtualListState : ScrollState {
     int      focusedIndex = 0;
     int      totalCount   = 0;
     uint16_t itemH        = 0;   // set by VirtualList() builder each frame
+    // Rows of context (buffer) kept visible above & below the focused item — like
+    // vim's scrolloff — so the next/previous item is always in view. Shrinks
+    // naturally at the list ends (clamp). 1 = one buffer row each side.
+    uint8_t  scrollOff    = 1;
 
     // Move focus by dir (−1 = up, +1 = down).
     // Adjusts scrollMain to keep the focused item in view.
@@ -44,17 +48,21 @@ struct VirtualListState : ScrollState {
         focusedIndex = std::max(0, std::min(focusedIndex, totalCount - 1));
     }
 
-    // Scroll so the focused item is fully inside the viewport.
+    // Scroll so the focused item — plus `scrollOff` buffer rows above & below — is
+    // inside the viewport. The clamp removes the buffer at the list ends naturally.
     void scrollToFocused() {
         if (itemH == 0 || totalCount == 0) return;
+        int vp = (int)viewportMain;
+        if (vp <= 0) return;
+        int off = (int)scrollOff * (int)itemH;
+        int room = (vp - (int)itemH) / 2;       // don't ask for more than fits
+        if (off > room) off = room < 0 ? 0 : room;
         int top    = focusedIndex * (int)itemH;
         int bottom = top + (int)itemH;
-        int vp     = (int)viewportMain;
-        if (vp <= 0) return;
-        if (top < (int)scrollMain)
-            scrollMain = (int16_t)top;
-        else if (bottom > (int)scrollMain + vp)
-            scrollMain = (int16_t)(bottom - vp);
+        if (top - off < (int)scrollMain)
+            scrollMain = (int16_t)(top - off);
+        else if (bottom + off > (int)scrollMain + vp)
+            scrollMain = (int16_t)(bottom + off - vp);
         int ms = (int)maxScroll();
         scrollMain = (int16_t)std::max(0, std::min((int)scrollMain, ms));
     }

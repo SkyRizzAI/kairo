@@ -353,25 +353,27 @@ static inline void printf(const char* fmt, ...) {
 //
 // Monitor/event read: returns raw bytes; 0 = timeout.
 
+// Radio takeover. Call once at app startup to claim the WiFi radio for the
+// app's whole lifetime: suspends the system WiFi connection and stops the radio
+// from being handed back to the system between features (no disconnect/reconnect
+// churn). Triggers the net.wifi.inject permission prompt. 0=ok / -1=denied.
+// After this, deauth/beacon/sniff/karma/portal switch instantly. Network tools
+// that need a normal STA connection (ARP/port scan) won't work while held.
+NEMA_IMPORT("wifi", "wifi_acquire")
+extern int wifi_acquire(void);
+
+// Give the radio back to the system (optional — app exit also releases it).
+NEMA_IMPORT("wifi", "wifi_release")
+extern int wifi_release(void);
+
 // Scan for visible APs (blocking). Returns bytes written, -1 on error.
 NEMA_IMPORT("wifi", "wifi_scan")
 extern int wifi_scan(char* out, int cap);
 
-// Start deauth flood on bssid (AA:BB:CC:DD:EE:FF) at channel. 0=ok/-1=err.
-NEMA_IMPORT("wifi", "wifi_deauth_start")
-extern int wifi_deauth_start(const char* bssid, int channel);
-
-// Stop the running deauth loop.
-NEMA_IMPORT("wifi", "wifi_deauth_stop")
-extern int wifi_deauth_stop(void);
-
-// Start beacon spam. ssids_buf is NUL-separated, count = number of SSIDs.
-NEMA_IMPORT("wifi", "wifi_beacon_spam_start")
-extern int wifi_beacon_spam_start(const char* ssids_buf, int count);
-
-// Stop the running beacon spam loop.
-NEMA_IMPORT("wifi", "wifi_beacon_spam_stop")
-extern int wifi_beacon_spam_stop(void);
+// NOTE: deauth / beacon-spam / probe-flood / karma are NOT kernel calls. Apps
+// build those 802.11 frames themselves and send them with wifi_inject() in their
+// own loop — the kernel exposes mechanism (inject/monitor), not attack policy
+// (Plan 91). See examples/wifi-marauder for reference implementations.
 
 // Open monitor (promiscuous) mode on channel. 0=ok/-1=not supported.
 NEMA_IMPORT("wifi", "wifi_monitor_open")
@@ -390,41 +392,57 @@ extern void wifi_monitor_close(void);
 NEMA_IMPORT("wifi", "wifi_inject")
 extern int wifi_inject(int channel, const unsigned char* frame, int len);
 
-// Block until next thick-loop event (deauth/beacon/probe tick).
-// JSON bytes written into out; 0 = timeout.
-NEMA_IMPORT("wifi", "wifi_wait_event")
-extern int wifi_wait_event(char* out, int max, int timeout_ms);
-
-// Start probe request flood on channel. ssid="" for wildcard (finds hidden APs).
-// Probe requests sent at ~20 Hz from firmware Core 0. 0=ok/-1=err.
-NEMA_IMPORT("wifi", "wifi_probe_flood_start")
-extern int wifi_probe_flood_start(const char* ssid, int channel);
-
-// Stop the running probe flood.
-NEMA_IMPORT("wifi", "wifi_probe_flood_stop")
-extern int wifi_probe_flood_stop(void);
+// Release the inject lease acquired by wifi_inject(). Call this after
+// one-shot injections (badmsg, sleep, etc.) that do not use a matching
+// _start()/_stop() pair, so the "Radio in use" banner clears and the
+// system WiFi can reconnect.
+NEMA_IMPORT("wifi", "wifi_inject_release")
+extern void wifi_inject_release(void);
 
 // Set the radio MAC address ("AA:BB:CC:DD:EE:FF"). Empty string = no-op.
 // Requires net.wifi.inject. 0=ok/-1=err.
 NEMA_IMPORT("wifi", "wifi_set_mac")
 extern int wifi_set_mac(const char* mac);
 
-// Karma attack: respond to every probe request with a matching fake AP.
-// Events ("karma_hit") pushed via wifi_wait_event(). 0=ok/-1=err.
-NEMA_IMPORT("wifi", "wifi_karma_start")
-extern int wifi_karma_start(void);
-NEMA_IMPORT("wifi", "wifi_karma_stop")
-extern int wifi_karma_stop(void);
+// ── Soft AP + generic sockets (Plan 91) ──────────────────────────────────────
+// Build a captive portal yourself: wifi_ap_start() + net_udp_*(53) DNS + a
+// net_tcp_*(80) HTTP server, all polled from your UI loop. The kernel has no
+// "evil portal" concept — it's just an AP plus sockets.
 
-// Evil portal: open soft-AP ssid + DNS hijack + captive HTTP portal.
-// html/html_len: custom HTML (0/0 = built-in login page).
-// Events ("ep_creds") pushed via wifi_wait_event() when form is submitted.
-// 0=ok/-1=err.
-NEMA_IMPORT("wifi", "wifi_evil_portal_start")
-extern int wifi_evil_portal_start(const char* ssid,
-                                   const char* html, int html_len);
-NEMA_IMPORT("wifi", "wifi_evil_portal_stop")
-extern int wifi_evil_portal_stop(void);
+// Start a soft AP broadcasting `ssid` on `channel` (open auth if open!=0).
+// Creates the AP netif + DHCP (192.168.4.1). Requires net.wifi.inject. 0/-1.
+NEMA_IMPORT("wifi", "wifi_ap_start")
+extern int wifi_ap_start(const char* ssid, int channel, int open);
+// Tear the AP down, restore STA.
+NEMA_IMPORT("wifi", "wifi_ap_stop")
+extern int wifi_ap_stop(void);
+
+// UDP: open bound to 0.0.0.0:port → handle/-1. recv writes sender IPv4 (host
+// order) + port into *out_ip / *out_port; returns bytes / 0 none / -1. send to
+// ip:port. All non-blocking.
+NEMA_IMPORT("wifi", "net_udp_open")
+extern int net_udp_open(int port);
+NEMA_IMPORT("wifi", "net_udp_recv")
+extern int net_udp_recv(int h, unsigned char* buf, int max,
+                        unsigned int* out_ip, unsigned int* out_port);
+NEMA_IMPORT("wifi", "net_udp_send")
+extern int net_udp_send(int h, unsigned int ip, int port,
+                        const unsigned char* buf, int len);
+
+// TCP server: listen → handle. accept → client handle/-1 (none). recv → bytes /
+// 0 none / -1 closed. send → bytes/-1. All non-blocking.
+NEMA_IMPORT("wifi", "net_tcp_listen")
+extern int net_tcp_listen(int port);
+NEMA_IMPORT("wifi", "net_tcp_accept")
+extern int net_tcp_accept(int h);
+NEMA_IMPORT("wifi", "net_tcp_recv")
+extern int net_tcp_recv(int h, unsigned char* buf, int max);
+NEMA_IMPORT("wifi", "net_tcp_send")
+extern int net_tcp_send(int h, const unsigned char* buf, int len);
+
+// Close any socket handle (udp / tcp listen / tcp client).
+NEMA_IMPORT("wifi", "net_close")
+extern void net_close(int h);
 
 // STA connection status. Writes "connected\t<IP>\n" or "disconnected\n".
 // Returns bytes written.

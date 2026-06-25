@@ -68,4 +68,23 @@ const StyleTokens& defaultTheme();   // standard Aether look
 const StyleTokens& compactTheme();   // tighter spacing for small displays
 const StyleTokens& largeTheme();     // larger targets for accessibility
 
+// ── Colour theme (Plan 92 Fase B) ──────────────────────────────────────────────
+// Colour is ORTHOGONAL to the size StyleTokens above. The 1-bit framebuffer is
+// expanded to these two RGB565 colours by the display driver, so the whole UI is
+// recoloured by swapping the palette. Dark mode swaps fg/bg. On a true B&W panel
+// (e-ink) the driver ignores the colours and shows on/off.
+struct ColorTokens {
+    const char* name;   // "mono" | "flipper" | ...
+    uint16_t    fg;     // RGB565 ink (foreground)
+    uint16_t    bg;     // RGB565 paper (background)
+};
+
+const ColorTokens& colorTheme();                 // active palette (mono if unset)
+void               setColorTheme(const ColorTokens& c);
+bool               darkMode();                   // swaps fg/bg when true
+void               setDarkMode(bool on);
+
+const ColorTokens& monoColors();     // white ink on black paper (default look)
+const ColorTokens& flipperColors();  // black ink on orange paper (Flipper)
+
 } // namespace aether

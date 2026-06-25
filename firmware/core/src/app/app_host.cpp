@@ -77,7 +77,13 @@ void AppHost::onResume() {
     h_    = rt_.canvas().height();
     size_ = (size_t)w_ * h_;
     drawBuf_  = allocBuf(size_);              // written by app thread (PSRAM ok)
-    readyBuf_ = allocBuf(size_, true);        // read every frame by blit → internal SRAM
+    // PSRAM, not internal. A 240×320 buffer is ~75 KB; forcing it internal was
+    // THE cause of internal-RAM exhaustion (free internal → ~18 KB) once an app
+    // ran, which made 8 KB task-stack allocations and SPI-DMA priv buffers fail
+    // (device reboot). The fullscreen present path (display_->flushBuffer) reads
+    // this once per frame into the LCD driver's own DMA staging buffer — fine
+    // from PSRAM on the S3. Only the rarely-taken scaled per-pixel blit is slower.
+    readyBuf_ = allocBuf(size_);
     std::memset(drawBuf_,  0, size_);
     std::memset(readyBuf_, 0, size_);
     bufDisplay_ = new BufferDisplay(drawBuf_, w_, h_);

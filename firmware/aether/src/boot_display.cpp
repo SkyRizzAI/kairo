@@ -3,6 +3,8 @@
 #include "nema/services/gui_service.h"
 #include "nema/app/app_host_manager.h"
 #include "nema/screens/close_and_open_modal.h"
+#include "nema/screens/splash_screen.h"
+#include "nema/ui/view_dispatcher.h"
 #include "nema/ui/screen.h"
 #include "nema/ui/aether_server.h"
 #include "fbcon/fbcon_server.h"
@@ -28,12 +30,15 @@ void bootDisplay(nema::Runtime& rt) {
     bool bootAether = false;
     if (auto* cfg = rt.container().resolve<nema::IConfigStore>()) {
         aetherSrv.setShowFps(cfg->getIntOr("aether", "fps", 0) != 0);
+        // Size stays default; "aether/theme" now selects the COLOUR theme (Plan 92
+        // Fase B): default = mono (white/black), flipper = orange/black. Same fonts.
+        aetherSrv.setTheme(aether::defaultTheme());
         std::string t = cfg->getString("aether", "theme", "default");
-        if (t == "compact")     aetherSrv.setTheme(aether::compactTheme());
-        else if (t == "large")  aetherSrv.setTheme(aether::largeTheme());
-        else                    aetherSrv.setTheme(aether::defaultTheme());
+        aether::setColorTheme(t == "flipper" ? aether::flipperColors()
+                                             : aether::monoColors());
+        aether::setDarkMode(cfg->getIntOr("aether", "dark", 0) != 0);
         if (rt.canvas().scale() >= 1.0f) aetherSrv.setServerScale(rt.canvas().scale());
-        bootAether = (cfg->getString("display", "boot", "fbcon") == "aether");
+        bootAether = (cfg->getString("display", "boot", "aether") == "aether");
     }
 
     // Register backends with the kernel registry (Plan 80). The boot flag picks
@@ -50,6 +55,13 @@ void bootDisplay(nema::Runtime& rt) {
         });
 
     gui.start();   // spawn the UI thread (renders rt.displayServer())
+}
+
+void bootSplash(nema::Runtime& rt) {
+    // Owned here (aether), not by any target/board. Pushed on top of the desktop;
+    // pops itself after 2s (SplashScreen::Mode::Boot).
+    static nema::SplashScreen splash(rt);
+    rt.view().push(splash);
 }
 
 }  // namespace aether

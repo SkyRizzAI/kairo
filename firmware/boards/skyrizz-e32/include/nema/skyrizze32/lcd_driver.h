@@ -41,6 +41,27 @@ public:
                     uint16_t x, uint16_t y,
                     uint16_t w, uint16_t h) override;
 
+    // Live rotation (Plan 92 Fase A): swap logical dims + re-send MADCTL so the
+    // panel re-scans the (same-size) framebuffer. fullFlush_ forces a full repaint.
+    void    setRotation(uint8_t r) override;
+    uint8_t rotation() const override { return rotation_; }
+
+    // Theme palette (Plan 92 Fase B): the 1-bit framebuffer expands on→fg, off→bg.
+    // chunkbuf_ is sent little-endian but the panel reads each pixel big-endian, so
+    // an RGB565 value arrives byte-swapped (orange 0xFB20 → 0x20FB → blue/green).
+    // Byte-swap here so the panel receives the true colour. Symmetric colours
+    // (white 0xFFFF / black 0x0000) are swap-invariant and unaffected.
+    void setPalette(uint16_t fg, uint16_t bg) override {
+        auto bswap = [](uint16_t c) -> uint16_t { return (uint16_t)((c >> 8) | (c << 8)); };
+        setColors(bswap(fg), bswap(bg));
+    }
+    // ILI9341 is an RGB565 panel → colour themes are available.
+    bool supportsColor() const override { return true; }
+
+    // Backlight is a plain XL9535 GPIO (no PWM) → brightness maps >0→on, 0→off.
+    void    setBrightness(uint8_t level) override;
+    uint8_t brightness() const override { return brightness_; }
+
     // Fast full-screen blit of a 1-byte-per-pixel mono buffer (1=ink, 0=bg)
     // straight to the panel in one pass — skips the per-pixel drawPixel loop
     // AND the 1-bit framebuffer. Used by AppHost for fullscreen apps. Assumes
@@ -61,6 +82,7 @@ public:
 
 private:
     void panelInit();
+    void applyMadctl();   // send CMD_MADCTL for the current rotation_ (panel must be up)
     void setWindow(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1);
     void spiWrite(uint8_t* data, size_t len, bool isData);
 
@@ -69,6 +91,13 @@ private:
     // ILI9341 native portrait orientation on this board (matches Rust reference).
     uint16_t width_    = 240;
     uint16_t height_   = 320;
+    // Display rotation (Plan 92 Fase A): 0/1/2/3 → 0°/90°/180°/270°. 90°/270°
+    // swap width_/height_ (landscape); applyMadctl() sets the matching MADCTL.
+    // nativeW_/nativeH_ hold the portrait dims so setRotation() can recompute.
+    uint16_t nativeW_  = 240;
+    uint16_t nativeH_  = 320;
+    uint8_t  rotation_ = 0;
+    uint8_t  brightness_ = 255;   // Mission Control (on/off on this board)
 
     uint8_t* framebuf_ = nullptr;   // 1-bit monochrome: width*height/8 bytes
     void*    spiHandle_ = nullptr;  // spi_device_handle_t (opaque to avoid esp-idf in header)

@@ -24,7 +24,10 @@
 | [`nema:sys/log`](./nema_sys_log.md) | `nema:sys@1.0` | core | 1 |
 | [`nema:sys/device`](./nema_sys_device.md) | `nema:sys@1.0` | core | 4 |
 | [`nema:sys/events`](./nema_sys_events.md) | `nema:sys@1.0` | core | 3 |
+| [`nema:sys/perm`](./nema_sys_perm.md) | `nema:sys@1.0` | core | 2 |
+| [`nema:sys/lease`](./nema_sys_lease.md) | `nema:sys@1.0` | core | 2 |
 | [`nema:sys/tasks`](./nema_sys_tasks.md) | `nema:sys@1.0` | core | 4 |
+| [`nema:wifi/radio`](./nema_wifi_radio.md) | `nema:wifi@1.0` | core | 5 |
 
 ## Records
 
@@ -33,3 +36,5 @@
 | `http-response` | `nema:net` | `status: u16`, `body: string` |
 | `wifi-ap` | `nema:net` | `ssid: string`, `rssi: s32`, `auth: string` |
 | `field` | `nema:sys` | `key: string`, `value: string` |
+| `lease-error` | `nema:sys` | `code: string`, `owner: string` |
+| `scan-result` | `nema:wifi` | `bssid: string`, `ssid: string`, `channel: u8`, `rssi: s32`, `auth: string` |

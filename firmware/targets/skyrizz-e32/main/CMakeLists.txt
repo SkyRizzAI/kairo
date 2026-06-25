@@ -1,6 +1,14 @@
 idf_component_register(
-    SRCS "main.cpp"
+    # wifi_raw_override.c MUST live in main: ESP-IDF links main with
+    # --whole-archive, so our strong ieee80211_raw_frame_sanity_check() is
+    # force-included and overrides the (weakened) libnet80211.a symbol. In a
+    # normal component it sits in an archive and is never pulled, because the
+    # weak blob symbol already satisfies the reference. See ADR 0011.
+    SRCS "main.cpp" "wifi_raw_override.c"
     INCLUDE_DIRS "."
+    WHOLE_ARCHIVE          # force-link wifi_raw_override.c — its only symbol is
+                           # already weakly defined by libnet80211.a, so without
+                           # this it is never pulled and the override is dead.
     REQUIRES
         core
         aether

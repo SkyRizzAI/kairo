@@ -27,7 +27,10 @@
 		Upload
 	} from '@lucide/svelte';
 
-	// ── device screen (themes) ──
+	// ── device screen (fallback glass tint) ──
+	// The DEVICE drives the screen colours now (Plan 92 Fase B): simStore.palette
+	// follows Settings → Appearances → Theme. These presets are only a fallback tint
+	// used until the firmware sends its palette (e.g. before boot).
 	type Theme = 'eink' | 'phosphor' | 'amber';
 	const THEMES: Record<Theme, { bg: [number, number, number]; fg: [number, number, number]; label: string }> = {
 		eink: { bg: [240, 237, 224], fg: [20, 20, 20], label: 'E-Ink' },
@@ -298,8 +301,8 @@
 				<BoardVisual
 					profile={simStore.profile}
 					frame={off ? null : simStore.frame}
-					on={THEMES[theme].fg}
-					off={THEMES[theme].bg}
+					on={simStore.palette?.fg ?? THEMES[theme].fg}
+					off={simStore.palette?.bg ?? THEMES[theme].bg}
 					reserve={250}
 					onkey={(k) => simStore.sendKey(k)}
 				>

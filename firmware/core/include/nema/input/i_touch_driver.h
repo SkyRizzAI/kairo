@@ -20,6 +20,10 @@ public:
     // Wire the funnel (mirrors IKeyMap::attachInput). Not owning.
     void attachInput(InputService* svc) { input_ = svc; }
 
+    // Match the active display rotation so touch coords stay aligned with the
+    // rotated UI (Plan 92 Fase A). Default no-op (boards without touch rotation).
+    virtual void setRotation(uint8_t /*r*/) {}
+
 protected:
     // Subclasses call this when a touch transition is detected. Coordinates
     // MUST already be logical (post-transform). Posts into InputService.

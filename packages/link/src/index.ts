@@ -8,4 +8,4 @@ export * from './types';
 export * from './tokens';
 export { channels, controlops, fileops, extops, otaops, systemops } from './types-generated';
 export { RemoteSession } from './session';
-export type { RemoteSessionOptions } from './session';
+export type { RemoteSessionOptions, PaletteInfo } from './session';

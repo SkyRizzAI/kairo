@@ -314,7 +314,10 @@ m3ApiRawFunction(wasm_ui_wait_event) {
         if (h->ctx->shouldExit()) m3ApiReturn(EV_BACK);
 
         InputEvent ev;
-        if (!h->surface->waitInput(ev, 30000)) continue;  // timeout keepalive
+        if (!h->surface->waitInput(ev, 200)) {
+            renderFrame(h, st);  // periodic redraw so marquee and animations advance
+            continue;
+        }
 
         if (ev.kind != InputEvent::Kind::Key) continue;
         if (ev.type != InputEvent::Type::Press) continue;

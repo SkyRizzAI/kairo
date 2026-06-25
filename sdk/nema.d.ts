@@ -5,32 +5,46 @@ declare namespace nema {
   namespace ui {
       // core
     namespace view {
-      /** Begin a container view (row or column flex direction). direction: "row" or "col" */
-            viewBegin(direction: string): number;
-      /** End the current container. Children added after this go to the parent. */
-            viewEnd(): void;
+      /**
+       * Begin a container view (row or column flex direction). direction: "row" or "col"
+       */
+      viewBegin(direction: string): number;
+      /**
+       * End the current container. Children added after this go to the parent.
+       */
+      viewEnd(): void;
     }
 
       // core
     namespace text {
-      /** Simple text label (body style). */
-            label(content: string): number;
-      /** Styled text. variant ∈ {"title", "subtitle", "body", "caption"}. */
-            styled(content: string, variant: string): number;
+      /**
+       * Simple text label (body style).
+       */
+      label(content: string): number;
+      /**
+       * Styled text. variant ∈ {"title", "subtitle", "body", "caption"}.
+       */
+      styled(content: string, variant: string): number;
     }
 
       // core
     namespace interactive {
-      /** Pressable button with label and on-press callback handle. */
-            button(label: string, onPress: number): number;
+      /**
+       * Pressable button with label and on-press callback handle.
+       */
+      button(label: string, onPress: number): number;
     }
 
       // core
     namespace scroll {
-      /** Begin a vertical scroll region. Returns handle for content children. */
-            scrollBegin(): number;
-      /** End the scroll region. */
-            scrollEnd(): void;
+      /**
+       * Begin a vertical scroll region. Returns handle for content children.
+       */
+      scrollBegin(): number;
+      /**
+       * End the scroll region.
+       */
+      scrollEnd(): void;
     }
 
   }
@@ -38,12 +52,18 @@ declare namespace nema {
   namespace bt {
       // gated: bt.ble
     namespace ble {
-      /** Whether the BLE controller is enabled. */
-            enable(): Promise<{ ok: true; value: void } | { ok: false; error: string }>;
-      /** Stop the BLE controller. */
-            disable(): void;
-      /** Whether BLE is active and advertising/connected. */
-            isEnabled(): boolean;
+      /**
+       * Whether the BLE controller is enabled.
+       */
+      enable(): Promise<{ ok: true; value: void } | { ok: false; error: string }>;
+      /**
+       * Stop the BLE controller.
+       */
+      disable(): void;
+      /**
+       * Whether BLE is active and advertising/connected.
+       */
+      isEnabled(): boolean;
     }
 
   }
@@ -51,10 +71,14 @@ declare namespace nema {
   namespace input {
       // gated: input
     namespace input {
-      /** Get the hardware-specific hint label for an Action. */
-            hint(action: string): string;
-      /** List all supported actions on this device. */
-            actions(): string[];
+      /**
+       * Get the hardware-specific hint label for an Action.
+       */
+      hint(action: string): string;
+      /**
+       * List all supported actions on this device.
+       */
+      actions(): string[];
     }
 
   }
@@ -62,22 +86,30 @@ declare namespace nema {
   namespace media {
       // gated: audio.input
     namespace audio-input {
-      /** List available audio input devices. */
-            list(): string[];
+      /**
+       * List available audio input devices.
+       */
+      list(): string[];
     }
 
       // gated: audio.output
     namespace audio-output {
-      /** List available audio output devices. */
-            list(): string[];
+      /**
+       * List available audio output devices.
+       */
+      list(): string[];
     }
 
       // gated: camera
     namespace camera {
-      /** List available camera devices. */
-            list(): string[];
-      /** Capture a frame from the default camera. @blocking — runs on worker. */
-            capture(): Promise<{ ok: true; value: string } | { ok: false; error: string }>;
+      /**
+       * List available camera devices.
+       */
+      list(): string[];
+      /**
+       * Capture a frame from the default camera. @blocking — runs on worker.
+       */
+      capture(): Promise<{ ok: true; value: string } | { ok: false; error: string }>;
     }
 
   }
@@ -85,26 +117,42 @@ declare namespace nema {
   namespace net {
       // gated: net.http
     namespace http {
-      /** HTTPS GET. Returns the response or an error string on transport failure. */
-            get(url: string): Promise<{ ok: true; value: http-response } | { ok: false; error: string }>;
-      /** HTTPS POST with a body and Content-Type header. */
-            post(url: string, body: string, contentType: string): Promise<{ ok: true; value: http-response } | { ok: false; error: string }>;
+      /**
+       * HTTPS GET. Returns the response or an error string on transport failure.
+       */
+      get(url: string): Promise<{ ok: true; value: http-response } | { ok: false; error: string }>;
+      /**
+       * HTTPS POST with a body and Content-Type header.
+       */
+      post(url: string, body: string, contentType: string): Promise<{ ok: true; value: http-response } | { ok: false; error: string }>;
     }
 
       // gated: net.wifi
     namespace wifi {
-      /** Whether the device is currently connected to an AP. */
-            isConnected(): boolean;
-      /** The SSID of the currently connected AP, or empty string. */
-            ssid(): string;
-      /** The local IP address, or empty string. */
-            ip(): string;
-      /** Start a Wi-Fi scan. @blocking — runs on worker. */
-            scan(): Promise<wifi-ap[]>;
-      /** Connect to an AP. */
-            connect(ssid: string, password: string): Promise<{ ok: true; value: void } | { ok: false; error: string }>;
-      /** Disconnect from the current AP. */
-            disconnect(): void;
+      /**
+       * Whether the device is currently connected to an AP.
+       */
+      isConnected(): boolean;
+      /**
+       * The SSID of the currently connected AP, or empty string.
+       */
+      ssid(): string;
+      /**
+       * The local IP address, or empty string.
+       */
+      ip(): string;
+      /**
+       * Start a Wi-Fi scan. @blocking — runs on worker.
+       */
+      scan(): Promise<wifi-ap[]>;
+      /**
+       * Connect to an AP.
+       */
+      connect(ssid: string, password: string): Promise<{ ok: true; value: void } | { ok: false; error: string }>;
+      /**
+       * Disconnect from the current AP.
+       */
+      disconnect(): void;
     }
 
   }
@@ -112,14 +160,22 @@ declare namespace nema {
   namespace profile {
       // gated: profile
     namespace profile {
-      /** The device owner's display name (e.g. "Alice"). */
-            userName(): string;
-      /** The user-assigned device name (e.g. "My Palanu"). */
-            deviceName(): string;
-      /** Whether a password/PIN has been set. */
-            hasPassword(): boolean;
-      /** Verify a password/PIN candidate. Uses constant-time comparison. Returns false if no password is set. */
-            verifyPassword(input: string): boolean;
+      /**
+       * The device owner's display name (e.g. "Alice").
+       */
+      userName(): string;
+      /**
+       * The user-assigned device name (e.g. "My Palanu").
+       */
+      deviceName(): string;
+      /**
+       * Whether a password/PIN has been set.
+       */
+      hasPassword(): boolean;
+      /**
+       * Verify a password/PIN candidate. Uses constant-time comparison. Returns false if no password is set.
+       */
+      verifyPassword(input: string): boolean;
     }
 
   }
@@ -127,30 +183,50 @@ declare namespace nema {
   namespace storage {
       // core
     namespace kv {
-      /** Read a string value. Absent key → none. */
-            get(key: string): string | null;
-      /** Write a string value (commits immediately). */
-            set(key: string, value: string): void;
-      /** Read a 64-bit int. Absent key → none. */
-            getInt(key: string): number | null;
-      /** Write a 64-bit int (commits immediately). */
-            setInt(key: string, value: number): void;
-      /** Delete a key. Returns true if the key existed. */
-            remove(key: string): boolean;
+      /**
+       * Read a string value. Absent key → none.
+       */
+      get(key: string): string | null;
+      /**
+       * Write a string value (commits immediately).
+       */
+      set(key: string, value: string): void;
+      /**
+       * Read a 64-bit int. Absent key → none.
+       */
+      getInt(key: string): number | null;
+      /**
+       * Write a 64-bit int (commits immediately).
+       */
+      setInt(key: string, value: number): void;
+      /**
+       * Delete a key. Returns true if the key existed.
+       */
+      remove(key: string): boolean;
     }
 
       // core
     namespace fs {
-      /** Read a file as a UTF-8 string. Returns none if the file does not exist. */
-            readFile(name: string): string | null;
-      /** Write (create or overwrite) a file with UTF-8 content. */
-            writeFile(name: string, data: string): boolean;
-      /** List files in the app's storage directory. */
-            listFiles(): string[];
-      /** Delete a file. Returns true if it existed. */
-            removeFile(name: string): boolean;
-      /** Total bytes used across all files for this app (internal + SD). */
-            bytesUsed(): number;
+      /**
+       * Read a file as a UTF-8 string. Returns none if the file does not exist.
+       */
+      readFile(name: string): string | null;
+      /**
+       * Write (create or overwrite) a file with UTF-8 content.
+       */
+      writeFile(name: string, data: string): boolean;
+      /**
+       * List files in the app's storage directory.
+       */
+      listFiles(): string[];
+      /**
+       * Delete a file. Returns true if it existed.
+       */
+      removeFile(name: string): boolean;
+      /**
+       * Total bytes used across all files for this app (internal + SD).
+       */
+      bytesUsed(): number;
     }
 
   }
@@ -158,42 +234,122 @@ declare namespace nema {
   namespace sys {
       // core
     namespace log {
-      /** Log a message at the given level. level ∈ {"trace", "debug", "info", "warn", "error", "fatal"} */
-            log(level: string, tag: string, msg: string): void;
+      /**
+       * Log a message at the given level. level ∈ {"trace", "debug", "info", "warn", "error", "fatal"}
+       */
+      log(level: string, tag: string, msg: string): void;
     }
 
       // core
     namespace device {
-      /** Board/product name, e.g. "dev-board", "skyrizz-e32". */
-            name(): string;
-      /** All static capabilities this box was built with (Plan 42). */
-            caps(): string[];
-      /** Static: was this box built able to do X? */
-            has(cap: string): boolean;
-      /** Dynamic: is X up and usable right now? (Plan 42 liveness) */
-            available(cap: string): boolean;
+      /**
+       * Board/product name, e.g. "dev-board", "skyrizz-e32".
+       */
+      name(): string;
+      /**
+       * All static capabilities this box was built with (Plan 42).
+       */
+      caps(): string[];
+      /**
+       * Static: was this box built able to do X?
+       */
+      has(cap: string): boolean;
+      /**
+       * Dynamic: is X up and usable right now? (Plan 42 liveness)
+       */
+      available(cap: string): boolean;
     }
 
       // core
     namespace events {
-      /** Subscribe to an event name (or "*" for all). */
-            subscribe(name: string, handler: number): number;
-      /** Remove a subscription by handle returned from subscribe. */
-            unsubscribe(token: number): void;
-      /** Publish an event with optional string fields. */
-            publish(name: string, fields: field[]): void;
+      /**
+       * Subscribe to an event name (or "*" for all).
+       */
+      subscribe(name: string, handler: number): number;
+      /**
+       * Remove a subscription by handle returned from subscribe.
+       */
+      unsubscribe(token: number): void;
+      /**
+       * Publish an event with optional string fields.
+       */
+      publish(name: string, fields: field[]): void;
+    }
+
+      // core
+    namespace perm {
+      /**
+       * Query permission status for a capability. Returns: 0=not_asked  1=granted  2=denied
+       */
+      status(cap: string): number;
+      /**
+       * Request permission for a capability. For sensitive capabilities this triggers the Allow/Deny screen. Returns: 1=granted  2=denied
+       */
+      request(cap: string): number;
+    }
+
+      // core
+    namespace lease {
+      /**
+       * Acquire an exclusive lease for a capability. Returns a lease handle on success, or a lease-error if busy/denied.
+       */
+      acquire(cap: string): { ok: true; value: number } | { ok: false; error: lease-error };
+      /**
+       * Release a previously acquired lease.
+       */
+      release(leaseHandle: number): { ok: true; value: void } | { ok: false; error: string };
     }
 
       // core
     namespace tasks {
-      /** Submit a job to run on a worker thread; done() is called on the UI loop. @blocking marks that the job may block (http, wifi scan, ble enable). */
-            submit(job: number, done: number): void;
-      /** Schedule a callback after delay milliseconds (one-shot). */
-            timeout(ms: number, callback: number): number;
-      /** Schedule a repeating callback every interval milliseconds. */
-            interval(ms: number, callback: number): number;
-      /** Cancel a pending timeout/interval by handle. */
-            cancel(token: number): void;
+      /**
+       * Submit a job to run on a worker thread; done() is called on the UI loop. @blocking marks that the job may block (http, wifi scan, ble enable).
+       */
+      submit(job: number, done: number): void;
+      /**
+       * Schedule a callback after delay milliseconds (one-shot).
+       */
+      timeout(ms: number, callback: number): number;
+      /**
+       * Schedule a repeating callback every interval milliseconds.
+       */
+      interval(ms: number, callback: number): number;
+      /**
+       * Cancel a pending timeout/interval by handle.
+       */
+      cancel(token: number): void;
+    }
+
+  }
+
+  namespace wifi {
+      // core
+    namespace radio {
+      /**
+       * Scan for visible APs. @blocking — runs on worker. Auto-grant (benign): no permission prompt. No exclusive lease required.
+       * @requires net.wifi.scan (benign)
+       */
+      scan(): Promise<{ ok: true; value: scan-result[] } | { ok: false; error: string }>;
+      /**
+       * Open promiscuous/monitor mode on the given channel. Requires user permission (sensitive) and an exclusive lease.
+       * @requires net.wifi.monitor (sensitive +lease)
+       */
+      monitorOpen(channel: number): { ok: true; value: void } | { ok: false; error: string };
+      /**
+       * Read raw 802.11 frames from the ring buffer (up to max bytes). Drops frames when ring is full — radio never stalls.
+       * @requires net.wifi.monitor (sensitive +lease)
+       */
+      monitorRead(max: number): Promise<{ ok: true; value: number[] } | { ok: false; error: string }>;
+      /**
+       * Close monitor mode and release promiscuous capture.
+       * @requires net.wifi.monitor (sensitive +lease)
+       */
+      monitorClose(): { ok: true; value: void } | { ok: false; error: string };
+      /**
+       * Inject a raw 802.11 frame on the given channel.
+       * @requires net.wifi.inject (sensitive +lease)
+       */
+      inject(channel: number, frame: number[]): { ok: true; value: void } | { ok: false; error: string };
     }
 
   }

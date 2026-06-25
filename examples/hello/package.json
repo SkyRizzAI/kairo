@@ -1,6 +1,0 @@
-{
-  "name": "@palanu-apps/hello",
-  "devDependencies": {
-    "@palanu/app-sdk": "workspace:*"
-  }
-}

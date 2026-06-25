@@ -31,6 +31,9 @@ void RemoteScreenTap::fillRect(uint16_t x, uint16_t y, uint16_t w, uint16_t h, b
 }
 
 void RemoteScreenTap::clear(bool on) {
+    // Frame start: re-sync the shadow to the inner driver's current dims so a
+    // live rotation (dim swap) is picked up before this frame's pixels land.
+    ensureShadow();
     if (inner_) inner_->clear(on);
     if (!shadow_.empty()) std::memset(shadow_.data(), on ? 1 : 0, shadow_.size());
 }
@@ -76,6 +79,27 @@ void RemoteScreenTap::streamFrame() {
     payload_.push_back((uint8_t)(h_ >> 8));
     payload_.insert(payload_.end(), rle.begin(), rle.end());
     link_->send(plp::Channel::Screen, payload_.data(), payload_.size(), plp::Flags::Compressed);
+}
+
+// Plan 92 Fase B — forward to the inner driver and, on change, tell the host the
+// new colour palette so the Forge mirror recolours from the device's setting.
+void RemoteScreenTap::setPalette(uint16_t fg, uint16_t bg) {
+    if (inner_) inner_->setPalette(fg, bg);
+    if (fg != palFg_ || bg != palBg_) {
+        palFg_ = fg; palBg_ = bg;
+        sendPalette();
+    }
+}
+
+void RemoteScreenTap::sendPalette() {
+    if (!link_ || !link_->ready()) return;
+    // SYSTEM channel, SysOp::SetPalette (0x03): [op][fg:2 LE][bg:2 LE] RGB565.
+    uint8_t buf[5] = {
+        0x03,
+        (uint8_t)(palFg_ & 0xff), (uint8_t)(palFg_ >> 8),
+        (uint8_t)(palBg_ & 0xff), (uint8_t)(palBg_ >> 8),
+    };
+    link_->send(plp::Channel::System, buf, sizeof(buf));
 }
 
 void RemoteScreenTap::sleep() { if (inner_) inner_->sleep(); }

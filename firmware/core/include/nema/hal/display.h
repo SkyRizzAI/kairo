@@ -45,6 +45,31 @@ struct IDisplayDriver : IDriver {
     // Pixel density hint for auto scale-factor selection. 0 = unknown.
     // Canvas uses this to pick a logical scale when no explicit config is set.
     virtual uint16_t dpi() const { return 0; }
+
+    // Display rotation (Plan 92 Fase A): 0/1/2/3 → 0°/90°/180°/270°. 90°/270°
+    // swap width()/height() (landscape) so the resolution-independent UI reflows.
+    // Default: no-op (driver doesn't support runtime rotation; it may still apply
+    // a fixed rotation at init). A driver that overrides this enables live rotate.
+    virtual void    setRotation(uint8_t /*r*/) {}
+    virtual uint8_t rotation() const { return 0; }
+
+    // Two-colour palette for the 1-bit framebuffer (Plan 92 Fase B). The driver
+    // expands on→fg, off→bg when pushing pixels, so swapping the palette recolours
+    // the whole UI. Default no-op (a true B&W panel ignores it and shows on/off).
+    virtual void setPalette(uint16_t /*fgRgb565*/, uint16_t /*bgRgb565*/) {}
+
+    // Backlight brightness 0–255 (Mission Control). Default no-op. A PWM-capable
+    // backlight dims; a plain on/off backlight (skyrizz: XL9535 GPIO) maps >0→on,
+    // 0→off. The UI bar works either way; the dimming depth depends on the board.
+    virtual void    setBrightness(uint8_t /*level*/) {}
+    virtual uint8_t brightness() const { return 255; }
+
+    // Display colour capability (Plan 92 Fase B). false = true B&W panel (e-ink):
+    // only on/off, so a colour theme is pointless (UI hides it; dark mode = invert).
+    // true = the panel can show arbitrary colours (e.g. ILI9341 RGB565), so colour
+    // themes (Flipper orange/black, …) are offered. The framebuffer stays 1-bit
+    // either way — this just gates whether the 2 palette colours can be non-B&W.
+    virtual bool supportsColor() const { return false; }
 };
 
 } // namespace nema

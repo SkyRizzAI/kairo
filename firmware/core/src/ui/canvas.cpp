@@ -94,11 +94,15 @@ void Canvas::drawRect(uint16_t x, uint16_t y, uint16_t w, uint16_t h, bool on) {
 void Canvas::fillRoundRect(uint16_t x, uint16_t y, uint16_t w, uint16_t h,
                            uint8_t r, bool on) {
     if (r == 0 || w < 2 * r + 1 || h < 2 * r + 1) { fillRect(x, y, w, h, on); return; }
-    // Full-width middle band + top/bottom caps inset by r → the 2r×2r corners
-    // are left untouched (radius-r rounding, matches Flipper's canvas_draw_rbox).
-    fillRect(x,     (uint16_t)(y + r), w,                  (uint16_t)(h - 2 * r), on);
-    fillRect((uint16_t)(x + r), y,     (uint16_t)(w - 2 * r), r,                  on);
-    fillRect((uint16_t)(x + r), (uint16_t)(y + h - r), (uint16_t)(w - 2 * r), r,  on);
+    // Full-width middle band, then 45° chamfered top/bottom: each of the r corner
+    // rows narrows by one px per side → an octagonal (rounded) fill, not a square notch.
+    fillRect(x, (uint16_t)(y + r), w, (uint16_t)(h - 2 * r), on);
+    for (uint8_t i = 0; i < r; i++) {
+        uint16_t inset = (uint16_t)(r - i);
+        uint16_t bw    = (uint16_t)(w - 2 * inset);
+        fillRect((uint16_t)(x + inset), (uint16_t)(y + i),             bw, 1, on); // top diag row
+        fillRect((uint16_t)(x + inset), (uint16_t)(y + h - 1 - i),     bw, 1, on); // bottom diag row
+    }
 }
 
 void Canvas::drawRoundRect(uint16_t x, uint16_t y, uint16_t w, uint16_t h,
@@ -108,6 +112,12 @@ void Canvas::drawRoundRect(uint16_t x, uint16_t y, uint16_t w, uint16_t h,
     fillRect((uint16_t)(x + r), (uint16_t)(y + h - 1), (uint16_t)(w - 2 * r), 1, on); // bottom
     fillRect(x,                 (uint16_t)(y + r), 1, (uint16_t)(h - 2 * r), on);  // left
     fillRect((uint16_t)(x + w - 1), (uint16_t)(y + r), 1, (uint16_t)(h - 2 * r), on); // right
+    // 45° chamfer diagonals closing the four corners.
+    drawLine((uint16_t)(x + r), y, x, (uint16_t)(y + r), on);                              // TL
+    drawLine((uint16_t)(x + w - 1 - r), y, (uint16_t)(x + w - 1), (uint16_t)(y + r), on);  // TR
+    drawLine((uint16_t)(x + r), (uint16_t)(y + h - 1), x, (uint16_t)(y + h - 1 - r), on);  // BL
+    drawLine((uint16_t)(x + w - 1 - r), (uint16_t)(y + h - 1),
+             (uint16_t)(x + w - 1), (uint16_t)(y + h - 1 - r), on);                        // BR
 }
 
 void Canvas::drawLine(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, bool on) {

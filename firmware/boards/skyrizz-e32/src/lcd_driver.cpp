@@ -40,7 +40,26 @@ void LcdDriver::init(Runtime& rt, Xl9535& expander) {
         int h = (int)cfg->getIntOr("display", "height", (int64_t)height_);
         if (w > 0 && w <= 1024) width_  = (uint16_t)w;
         if (h > 0 && h <= 1024) height_ = (uint16_t)h;
+        nativeW_ = width_; nativeH_ = height_;   // portrait native (pre-rotation)
+
+        // Display rotation (Plan 92 Fase A): 0/1/2/3 → 0°/90°/180°/270°.
+        // 90°/270° are landscape — swap the logical framebuffer dims so the
+        // resolution-independent UI reflows. The framebuffer byte size is
+        // unchanged (w*h is identical), so start() allocates the same buffer;
+        // panelInit() sets the matching ILI9341 MADCTL so the panel scans it
+        // correctly. Touch is rotated in Ft6336Touch::toLogical().
+        rotation_ = (uint8_t)(cfg->getIntOr("display", "rotation", 0) & 3);
+        if (rotation_ == 1 || rotation_ == 3) {
+            uint16_t t = width_; width_ = height_; height_ = t;
+        }
+        brightness_ = (uint8_t)cfg->getIntOr("display", "brightness", 255);
     }
+}
+
+// Backlight has no PWM on this board (XL9535 GPIO) — map level >0 → on, 0 → off.
+void LcdDriver::setBrightness(uint8_t level) {
+    brightness_ = level;
+    setBacklight(level > 0);
 }
 
 void LcdDriver::start() {
@@ -87,7 +106,7 @@ void LcdDriver::start() {
     gpio_set_level((gpio_num_t)PIN_LCD_DC, 0);
 
     panelInit();
-    setBacklight(true);
+    setBacklight(brightness_ > 0);   // honour persisted brightness (on/off here)
 
     char ws[8], hs[8];
     snprintf(ws, sizeof(ws), "%d", (int)width_);
@@ -131,7 +150,7 @@ void LcdDriver::panelInit() {
     cmd(0xC5); data({0x3E, 0x28});       // VCOM control 1
     cmd(0xC7); data({0x86});             // VCOM control 2
 
-    cmd(CMD_MADCTL); data({0x48});       // MX | BGR → portrait 240×320
+    applyMadctl();                       // CMD_MADCTL for the current rotation_
     cmd(CMD_COLMOD); data({0x55});       // 16-bit RGB565
     cmd(0x21);                           // INVON — invert display at hardware level
                                         // (eliminates vignette at panel edges)
@@ -147,6 +166,31 @@ void LcdDriver::panelInit() {
                      0x48, 0x08, 0x0F, 0x0C, 0x31, 0x36, 0x0F});
 
     cmd(CMD_DISPON);              vTaskDelay(pdMS_TO_TICKS(100));
+}
+
+// ── MADCTL for current rotation ───────────────────────────────────────────
+// BGR bit (0x08) kept in every value so blitRgb565()'s R↔B swap stays valid.
+// Adafruit-standard set: 0°=0x48 (MX|BGR) · 90°=0x28 (MV|BGR) · 180°=0x88
+// (MY|BGR) · 270°=0xE8 (MX|MY|MV|BGR).
+void LcdDriver::applyMadctl() {
+    if (!spiHandle_) return;
+    static constexpr uint8_t kMadctl[4] = {0x48, 0x28, 0x88, 0xE8};
+    uint8_t c = CMD_MADCTL;            spiWrite(&c, 1, false);
+    uint8_t d = kMadctl[rotation_ & 3]; spiWrite(&d, 1, true);
+}
+
+// ── Live rotation ─────────────────────────────────────────────────────────
+// Swap logical dims (same framebuffer byte size, no realloc), re-send MADCTL so
+// the panel re-scans, and force a full repaint. Touch follows via
+// Ft6336Touch::setRotation(). NOTE: bench-untested on hardware; the boot-time
+// path (config display/rotation read in init()) is the verified one.
+void LcdDriver::setRotation(uint8_t r) {
+    rotation_ = (uint8_t)(r & 3);
+    const bool land = (rotation_ == 1 || rotation_ == 3);
+    width_  = land ? nativeH_ : nativeW_;
+    height_ = land ? nativeW_ : nativeH_;
+    applyMadctl();
+    fullFlush_ = true;
 }
 
 // ── Address window helper ─────────────────────────────────────────────────

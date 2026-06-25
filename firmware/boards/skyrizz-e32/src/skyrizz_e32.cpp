@@ -8,8 +8,12 @@
 #include "nema/service/service_container.h"
 #include "nema/hal/display.h"
 #include "nema/config/config_store.h"
+#include "nema/event/event_bus.h"
+#include "nema/event/event.h"
 #include <Wire.h>
 #include <Arduino.h>
+#include <cstring>
+#include <cstdlib>
 
 namespace nema::skyrizze32 {
 
@@ -40,6 +44,16 @@ void SkyRizzE32::describeHardware(Runtime& rt) {
     if (auto* cfg = rt.container().resolve<IConfigStore>())
         longMs = (uint32_t)cfg->getIntOr("input", "long_ms", (int64_t)longMs);
     keyMap_.setLongMs(longMs);
+
+    // Display rotation → remap directional buttons per orientation (Plan 92 Fase A).
+    // Seed from persisted config, then follow live changes via the event bus.
+    if (auto* cfg = rt.container().resolve<IConfigStore>())
+        keyMap_.setRotation((uint8_t)(cfg->getIntOr("display", "rotation", 0) & 3));
+    rt.events().subscribe(events::DisplayRotationChanged, [this](const Event& e) {
+        for (const auto& f : e.payload)
+            if (std::strcmp(f.key, "rotation") == 0)
+                keyMap_.setRotation((uint8_t)(std::atoi(f.value.c_str()) & 3));
+    });
 
     // LCD display
     lcd_.init(rt, expander_);

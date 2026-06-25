@@ -14,8 +14,7 @@ void SimWifiRadio::init(Runtime& rt) {
 }
 
 void SimWifiRadio::stop() {
-    doDeauth_ = false;
-    doBeacon_ = false;
+    doMonitor_ = false;
     loopThread_.requestStop();
     loopThread_.join();
 }
@@ -48,8 +47,6 @@ std::vector<RadioScanResult> SimWifiRadio::scan() {
 
 bool SimWifiRadio::monitorOpen(uint8_t ch) {
     monitorChannel_ = ch;
-    doDeauth_  = false;
-    doBeacon_  = false;
     doMonitor_ = true;
     return true;
 }
@@ -58,37 +55,9 @@ void SimWifiRadio::monitorClose() {
     doMonitor_ = false;
 }
 
-bool SimWifiRadio::inject(uint8_t ch, const uint8_t* /*frame*/, size_t len) {
-    char buf[64];
-    std::snprintf(buf, sizeof(buf), "{\"channel\":%d,\"len\":%zu}", (int)ch, len);
-    pushEvent("frame_injected", buf);
-    return true;
-}
-
-bool SimWifiRadio::deauthStart(std::string_view bssid, uint8_t channel) {
-    std::lock_guard<std::mutex> g(mu_);
-    deauthBssid_   = std::string(bssid);
-    deauthChannel_ = channel;
-    doBeacon_      = false;
-    doDeauth_      = true;
-    return true;
-}
-
-bool SimWifiRadio::deauthStop() {
-    doDeauth_ = false;
-    return true;
-}
-
-bool SimWifiRadio::beaconSpamStart(const std::vector<std::string>& ssids) {
-    std::lock_guard<std::mutex> g(mu_);
-    beaconSsids_ = ssids;
-    doDeauth_    = false;
-    doBeacon_    = true;
-    return true;
-}
-
-bool SimWifiRadio::beaconSpamStop() {
-    doBeacon_ = false;
+bool SimWifiRadio::inject(uint8_t /*ch*/, const uint8_t* /*frame*/, size_t /*len*/) {
+    // Sim has no real radio — injection is a no-op success. (The matured-event
+    // ring was removed in Plan 91; apps poll their own state.)
     return true;
 }
 
@@ -100,34 +69,7 @@ void SimWifiRadio::loopFn() {
     char buf[160];
 
     while (!loopThread_.shouldStop()) {
-        if (doDeauth_) {
-            std::string bssid;
-            uint8_t ch;
-            {
-                std::lock_guard<std::mutex> g(mu_);
-                bssid = deauthBssid_;
-                ch    = deauthChannel_;
-            }
-            std::snprintf(buf, sizeof(buf),
-                          "{\"bssid\":\"%s\",\"channel\":%d}",
-                          bssid.c_str(), static_cast<int>(ch));
-            pushEvent("deauth_sent", buf);
-            Thread::sleepMs(100);
-
-        } else if (doBeacon_) {
-            std::vector<std::string> ssids;
-            {
-                std::lock_guard<std::mutex> g(mu_);
-                ssids = beaconSsids_;
-            }
-            for (const auto& s : ssids) {
-                if (loopThread_.shouldStop() || !doBeacon_) break;
-                std::snprintf(buf, sizeof(buf), "{\"ssid\":\"%s\"}", s.c_str());
-                pushEvent("beacon_sent", buf);
-            }
-            Thread::sleepMs(100);
-
-        } else if (doMonitor_) {
+        if (doMonitor_) {
             // Generate a minimal fake 802.11 beacon frame so the app gets real
             // non-empty data from monitorRead() without real hardware.
             uint8_t ch;

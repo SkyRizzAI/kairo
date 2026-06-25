@@ -124,6 +124,10 @@ public:
                     uint16_t w, uint16_t h);
     bool supportsRgb565() const;  // true if driver overrides blitRgb565
 
+    // The underlying display driver (Plan 92 Fase B: lets the server push the
+    // theme palette). Logical drawing should still go through Canvas primitives.
+    IDisplayDriver& driver() const { return driver_; }
+
 private:
     // True if (x,y) lies within the current clip rectangle.
     bool inClip(uint16_t x, uint16_t y) const;

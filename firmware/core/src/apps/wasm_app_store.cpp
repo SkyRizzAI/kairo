@@ -5,6 +5,7 @@
 #include "nema/runtime.h"
 #include "nema/log/logger.h"
 #include <utility>
+#include <algorithm>
 
 namespace nema {
 
@@ -19,7 +20,14 @@ bool WasmAppStore::installApp(Runtime& rt, std::string id, std::string name,
                               std::vector<std::string> args,
                               std::vector<uint8_t> iconData) {
     if (id.empty() || wasm.empty()) return false;
-    for (auto& p : apps_) if (id == p->id()) return false;   // already installed
+    // Re-install with a known id → REPLACE the old module so `palanu cp` of a new
+    // build actually swaps the bytes. Previously this returned false ("already
+    // installed"), so an update left the app uninstalled-from-registry but never
+    // re-added — it vanished from the launcher until a reboot. (AppRegistry::add
+    // already replaces its own entry in place; only this store refused.)
+    apps_.erase(std::remove_if(apps_.begin(), apps_.end(),
+                    [&](const std::unique_ptr<WasmApp>& p) { return id == p->id(); }),
+                apps_.end());
     if (version.empty()) version = "1.0.0";
 
     apps_.push_back(std::make_unique<WasmApp>(std::move(id), std::move(name),

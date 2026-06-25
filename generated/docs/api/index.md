@@ -27,7 +27,7 @@
 | [`nema:sys/perm`](./nema_sys_perm.md) | `nema:sys@1.0` | core | 2 |
 | [`nema:sys/lease`](./nema_sys_lease.md) | `nema:sys@1.0` | core | 2 |
 | [`nema:sys/tasks`](./nema_sys_tasks.md) | `nema:sys@1.0` | core | 4 |
-| [`nema:wifi/radio`](./nema_wifi_radio.md) | `nema:wifi@1.0` | core | 10 |
+| [`nema:wifi/radio`](./nema_wifi_radio.md) | `nema:wifi@1.0` | core | 5 |
 
 ## Records
 

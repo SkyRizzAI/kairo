@@ -1,6 +1,0 @@
-{
-  "name": "@palanu-apps/deauth",
-  "dependencies": {
-    "@palanu/app-sdk": "workspace:*"
-  }
-}

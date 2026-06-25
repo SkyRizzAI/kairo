@@ -155,21 +155,6 @@ extern int32_t nema_wifi__radio_monitor_close(void);
 /* Inject a raw 802.11 frame on the given channel. */
 /* requires: @capability("net.wifi.inject") @tier(sensitive) @lease */
 extern int32_t nema_wifi__radio_inject(uint32_t channel, int32_t frame);
-/* Start continuous deauth loop (firmware-native, timing-critical). App receives events via wait-event; the loop itself never touches the sandbox. */
-/* requires: @capability("net.wifi.inject") @tier(sensitive) @lease */
-extern int32_t nema_wifi__radio_deauth_start(const char* bssid, uint32_t channel);
-/* Stop the deauth loop. */
-/* requires: @capability("net.wifi.inject") @tier(sensitive) @lease */
-extern int32_t nema_wifi__radio_deauth_stop(void);
-/* Start beacon spam (multiple fake SSIDs, firmware-native loop). */
-/* requires: @capability("net.wifi.inject") @tier(sensitive) @lease */
-extern int32_t nema_wifi__radio_beacon_spam_start(int32_t ssid_list);
-/* Stop the beacon spam loop. */
-/* requires: @capability("net.wifi.inject") @tier(sensitive) @lease */
-extern int32_t nema_wifi__radio_beacon_spam_stop(void);
-/* Block until the next matured radio event arrives (timeout_ms=0 → poll). Returns serialised event bytes; format is runtime-defined (JSON or binary). */
-/* requires: @capability("net.wifi.monitor") @tier(sensitive) @lease */
-extern int32_t nema_wifi__radio_wait_event(uint32_t timeout_ms, int32_t* out_value);
 
 #ifdef __cplusplus
 }

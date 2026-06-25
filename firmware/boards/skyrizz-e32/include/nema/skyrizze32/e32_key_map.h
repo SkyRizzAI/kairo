@@ -30,14 +30,22 @@ public:
     bool        hasCode(input::Code c)   const override;
     bool        canReach(input::Action a) const override;
 
+    // Remap the 4 directional buttons to match display rotation (Plan 92 Fase A).
+    void        setRotation(uint8_t r) override { rotation_ = (uint8_t)(r & 3); }
+
     // Gesture timing (set from Config Store at board init).
     void setLongMs(uint32_t ms)   { engine_.longMs   = ms; }
     void setRepeatMs(uint32_t ms) { engine_.repeatMs  = ms; }
 
 private:
     input::GestureEngine engine_;
+    uint8_t              rotation_ = 0;   // 0/1/2/3 → 0°/90°/180°/270°
 
     static void onGesture(void* ctx, uint8_t id, input::Gesture g, uint64_t now);
+
+    // Map a physical directional button id to the one that matches the current
+    // rotation (MIDDLE is orientation-independent). Plan 92 Fase A.
+    uint8_t rotateId(uint8_t id) const;
 
     static input::Code   idToCode  (uint8_t id, input::Gesture g);
     static input::Action idToAction(uint8_t id, input::Gesture g);

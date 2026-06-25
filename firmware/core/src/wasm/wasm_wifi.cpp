@@ -18,6 +18,7 @@
 #include "nema/app/app_context.h"
 #include "nema/runtime.h"
 #include "nema/hal/radio_wifi.h"
+#include "nema/hal/net_sockets.h"
 #include "nema/service/service_container.h"
 #include "nema/services/permission_service.h"
 #include "nema/services/resource_broker.h"
@@ -94,6 +95,14 @@ static uint8_t checkPerm(IM3Runtime rt, const char* cap) {
 static uint32_t s_monitorHandle = 0;
 static uint32_t s_injectHandle  = 0;
 
+// Session takeover: when an app calls wifi_acquire() it owns the radio for its
+// whole lifetime. While held, per-feature stop functions must NOT release the
+// lease — otherwise every deauth/beacon/sniff stop would yield the radio back to
+// the system, which reconnects STA, which re-suspends on the next feature… the
+// churn that crashed NtpService and flickered the WiFi banner. Releases are
+// suppressed until wifi_release() (or app exit via ResourceBroker::releaseAll).
+static bool s_sessionHeld = false;
+
 // Acquire an exclusive resource lease for `cap`. Returns true if granted or if
 // no ResourceBroker is registered (dev/permissive build).
 static bool acquireLease(IM3Runtime rt, const char* cap, uint32_t& handle) {
@@ -116,6 +125,14 @@ static void releaseLease(IM3Runtime rt, uint32_t& handle) {
         if (broker) broker->release(h->appId, handle);
     }
     handle = 0;
+}
+
+// Per-feature stop functions call this. It only really releases when the app has
+// NOT taken over the radio for the session — otherwise the radio stays owned
+// until wifi_release() / app exit. This is what eliminates the per-feature churn.
+static void releaseLeaseUnlessSession(IM3Runtime rt, uint32_t& handle) {
+    if (s_sessionHeld) return;
+    releaseLease(rt, handle);
 }
 
 // ── wifi_scan(out, cap) → bytes written (newline-sep lines) ─────────────────
@@ -152,75 +169,6 @@ m3ApiRawFunction(wasm_wifi_scan) {
     }
 
     m3ApiReturn(writeBuf(runtime, outOff, cap, out.c_str(), (int)out.size()));
-}
-
-// ── wifi_deauth_start(bssid, channel) → 0 ok / -1 err ──────────────────────
-
-m3ApiRawFunction(wasm_wifi_deauth_start) {
-    m3ApiReturnType(int32_t);
-    m3ApiGetArg(uint32_t, bssidOff);
-    m3ApiGetArg(int32_t,  ch);
-
-    if (checkPerm(runtime, "net.wifi.inject") != 1) m3ApiReturn(-1);
-    if (!acquireLease(runtime, "net.wifi.inject", s_injectHandle)) m3ApiReturn(-1);
-    IRadioWifi* r = radio(runtime);
-    if (!r) m3ApiReturn(-1);
-
-    std::string bssid;
-    if (!readCStr(runtime, bssidOff, bssid)) m3ApiReturn(-1);
-
-    m3ApiReturn(r->deauthStart(bssid, (uint8_t)ch) ? 0 : -1);
-}
-
-// ── wifi_deauth_stop() → 0 ──────────────────────────────────────────────────
-
-m3ApiRawFunction(wasm_wifi_deauth_stop) {
-    m3ApiReturnType(int32_t);
-    IRadioWifi* r = radio(runtime);
-    if (r) r->deauthStop();
-    releaseLease(runtime, s_injectHandle);
-    m3ApiReturn(0);
-}
-
-// ── wifi_beacon_spam_start(ssids_buf, count) → 0 ok / -1 err ───────────────
-// ssids_buf: NUL-separated SSID strings; count: number of SSIDs.
-
-m3ApiRawFunction(wasm_wifi_beacon_spam_start) {
-    m3ApiReturnType(int32_t);
-    m3ApiGetArg(uint32_t, bufsOff);
-    m3ApiGetArg(int32_t,  count);
-
-    if (checkPerm(runtime, "net.wifi.inject") != 1) m3ApiReturn(-1);
-    if (!acquireLease(runtime, "net.wifi.inject", s_injectHandle)) m3ApiReturn(-1);
-    IRadioWifi* r = radio(runtime);
-    if (!r || count <= 0) m3ApiReturn(-1);
-
-    uint32_t memSz = 0;
-    uint8_t* base  = m3_GetMemory(runtime, &memSz, 0);
-    if (!base || bufsOff >= memSz) m3ApiReturn(-1);
-
-    std::vector<std::string> ssids;
-    ssids.reserve((size_t)count);
-    uint32_t cur = bufsOff;
-    for (int i = 0; i < count && cur < memSz; i++) {
-        uint32_t end = cur;
-        while (end < memSz && base[end]) end++;
-        if (end >= memSz) break;
-        ssids.emplace_back(reinterpret_cast<const char*>(base + cur), end - cur);
-        cur = end + 1;
-    }
-
-    m3ApiReturn(r->beaconSpamStart(ssids) ? 0 : -1);
-}
-
-// ── wifi_beacon_spam_stop() → 0 ─────────────────────────────────────────────
-
-m3ApiRawFunction(wasm_wifi_beacon_spam_stop) {
-    m3ApiReturnType(int32_t);
-    IRadioWifi* r = radio(runtime);
-    if (r) r->beaconSpamStop();
-    releaseLease(runtime, s_injectHandle);
-    m3ApiReturn(0);
 }
 
 // ── wifi_monitor_open(channel) → 0 ok / -1 err ──────────────────────────────
@@ -263,7 +211,7 @@ m3ApiRawFunction(wasm_wifi_monitor_read) {
 m3ApiRawFunction(wasm_wifi_monitor_close) {
     IRadioWifi* r = radio(runtime);
     if (r) r->monitorClose();
-    releaseLease(runtime, s_monitorHandle);
+    releaseLeaseUnlessSession(runtime, s_monitorHandle);
     m3ApiSuccess();
 }
 
@@ -289,53 +237,15 @@ m3ApiRawFunction(wasm_wifi_inject) {
     m3ApiReturn(r->inject((uint8_t)ch, ptr, (size_t)len) ? 0 : -1);
 }
 
-// ── wifi_probe_flood_start(ssid, channel) → 0 ok / -1 err ──────────────────
-// ssid: NUL-terminated string (empty = wildcard — probes for any AP).
+// ── wifi_inject_release() → release inject lease without stopping radio loop ─
+// Call this after one-shot injections (e.g. inject_badmsg, inject_sleep) that
+// use wifi_inject() directly without a matching _start()/_stop() pair. Without
+// this, the net.wifi.inject lease stays held until app exit, leaving the
+// "Radio in use by:" banner visible in WiFi settings.
 
-m3ApiRawFunction(wasm_wifi_probe_flood_start) {
-    m3ApiReturnType(int32_t);
-    m3ApiGetArg(uint32_t, ssidOff);
-    m3ApiGetArg(int32_t,  ch);
-
-    if (checkPerm(runtime, "net.wifi.inject") != 1) m3ApiReturn(-1);
-    if (!acquireLease(runtime, "net.wifi.inject", s_injectHandle)) m3ApiReturn(-1);
-    IRadioWifi* r = radio(runtime);
-    if (!r) m3ApiReturn(-1);
-
-    std::string ssid;
-    if (!readCStr(runtime, ssidOff, ssid)) m3ApiReturn(-1);
-
-    m3ApiReturn(r->probeFloodStart(ssid, (uint8_t)ch) ? 0 : -1);
-}
-
-// ── wifi_probe_flood_stop() → 0 ─────────────────────────────────────────────
-
-m3ApiRawFunction(wasm_wifi_probe_flood_stop) {
-    m3ApiReturnType(int32_t);
-    IRadioWifi* r = radio(runtime);
-    if (r) r->probeFloodStop();
-    releaseLease(runtime, s_injectHandle);
-    m3ApiReturn(0);
-}
-
-// ── wifi_wait_event(out, max, timeout_ms) → bytes written ───────────────────
-
-m3ApiRawFunction(wasm_wifi_wait_event) {
-    m3ApiReturnType(int32_t);
-    m3ApiGetArg(uint32_t, outOff);
-    m3ApiGetArg(int32_t,  maxArg);
-    m3ApiGetArg(int32_t,  timeoutMs);
-
-    if (maxArg <= 0) m3ApiReturn(0);
-
-    IRadioWifi* r = radio(runtime);
-    if (!r) m3ApiReturn(0);
-
-    auto ev = r->waitEvent(timeoutMs > 0 ? (uint32_t)timeoutMs : 1u);
-    if (ev.empty()) m3ApiReturn(0);
-
-    m3ApiReturn(writeBuf(runtime, outOff, maxArg,
-                         ev.data(), (int)ev.size()));
+m3ApiRawFunction(wasm_wifi_inject_release) {
+    releaseLeaseUnlessSession(runtime, s_injectHandle);
+    m3ApiSuccess();
 }
 
 // ── wifi_set_mac(mac_str) → 0 ok / -1 err ───────────────────────────────────
@@ -349,61 +259,6 @@ m3ApiRawFunction(wasm_wifi_set_mac) {
     std::string mac;
     if (!readCStr(runtime, macOff, mac)) m3ApiReturn(-1);
     m3ApiReturn(r->setMac(mac) ? 0 : -1);
-}
-
-// ── wifi_karma_start() → 0 ok / -1 err ──────────────────────────────────────
-
-m3ApiRawFunction(wasm_wifi_karma_start) {
-    m3ApiReturnType(int32_t);
-    if (checkPerm(runtime, "net.wifi.inject") != 1) m3ApiReturn(-1);
-    if (!acquireLease(runtime, "net.wifi.inject", s_injectHandle)) m3ApiReturn(-1);
-    IRadioWifi* r = radio(runtime);
-    if (!r) m3ApiReturn(-1);
-    m3ApiReturn(r->karmaStart() ? 0 : -1);
-}
-
-// ── wifi_karma_stop() → 0 ────────────────────────────────────────────────────
-
-m3ApiRawFunction(wasm_wifi_karma_stop) {
-    m3ApiReturnType(int32_t);
-    IRadioWifi* r = radio(runtime);
-    if (r) r->karmaStop();
-    releaseLease(runtime, s_injectHandle);
-    m3ApiReturn(0);
-}
-
-// ── wifi_evil_portal_start(ssid, html, html_len) → 0 ok / -1 err ────────────
-// html=0 / html_len=0 → use built-in captive page.
-
-m3ApiRawFunction(wasm_wifi_evil_portal_start) {
-    m3ApiReturnType(int32_t);
-    m3ApiGetArg(uint32_t, ssidOff);
-    m3ApiGetArg(uint32_t, htmlOff);
-    m3ApiGetArg(int32_t,  htmlLen);
-    if (checkPerm(runtime, "net.wifi.inject") != 1) m3ApiReturn(-1);
-    if (!acquireLease(runtime, "net.wifi.inject", s_injectHandle)) m3ApiReturn(-1);
-    IRadioWifi* r = radio(runtime);
-    if (!r) m3ApiReturn(-1);
-    std::string ssid;
-    if (!readCStr(runtime, ssidOff, ssid)) m3ApiReturn(-1);
-    const char* html_ptr = nullptr;
-    if (htmlLen > 0) {
-        const uint8_t* raw = nullptr;
-        if (readBytes(runtime, htmlOff, (uint32_t)htmlLen, raw))
-            html_ptr = reinterpret_cast<const char*>(raw);
-    }
-    m3ApiReturn(r->evilPortalStart(ssid, html_ptr,
-                                   htmlLen > 0 ? (size_t)htmlLen : 0u) ? 0 : -1);
-}
-
-// ── wifi_evil_portal_stop() → 0 ─────────────────────────────────────────────
-
-m3ApiRawFunction(wasm_wifi_evil_portal_stop) {
-    m3ApiReturnType(int32_t);
-    IRadioWifi* r = radio(runtime);
-    if (r) r->evilPortalStop();
-    releaseLease(runtime, s_injectHandle);
-    m3ApiReturn(0);
 }
 
 // ── wifi_sta_status(out, max) → bytes written ────────────────────────────────
@@ -456,29 +311,192 @@ m3ApiRawFunction(wasm_wifi_tcp_probe) {
     m3ApiReturn((int32_t)res);
 }
 
+// ── wifi_acquire() → 0 ok / -1 denied ───────────────────────────────────────
+// Radio takeover: the app claims the WiFi radio for its whole lifetime. Call
+// once at startup. Suspends the system WiFi connection (via the inject lease's
+// exclusivity group) and suppresses per-feature lease churn until wifi_release()
+// or app exit. After this, deauth/beacon/sniff/karma/portal switch instantly
+// with no disconnect/reconnect between them.
+
+m3ApiRawFunction(wasm_wifi_acquire) {
+    m3ApiReturnType(int32_t);
+    if (checkPerm(runtime, "net.wifi.inject") != 1) m3ApiReturn(-1);
+    if (!acquireLease(runtime, "net.wifi.inject", s_injectHandle)) m3ApiReturn(-1);
+    s_sessionHeld = true;
+    m3ApiReturn(0);
+}
+
+// ── wifi_release() → 0 ──────────────────────────────────────────────────────
+// Give the radio back to the system before the app exits (optional — app exit
+// also frees it via ResourceBroker::releaseAll).
+
+m3ApiRawFunction(wasm_wifi_release) {
+    m3ApiReturnType(int32_t);
+    s_sessionHeld = false;
+    releaseLease(runtime, s_monitorHandle);
+    releaseLease(runtime, s_injectHandle);
+    m3ApiReturn(0);
+}
+
+// ── Soft AP (generic primitive; apps build the captive portal) ──────────────
+
+m3ApiRawFunction(wasm_wifi_ap_start) {
+    m3ApiReturnType(int32_t);
+    m3ApiGetArg(uint32_t, ssidOff);
+    m3ApiGetArg(int32_t,  channel);
+    m3ApiGetArg(int32_t,  open);
+    if (checkPerm(runtime, "net.wifi.inject") != 1) m3ApiReturn(-1);
+    if (!s_injectHandle && !acquireLease(runtime, "net.wifi.inject", s_injectHandle))
+        m3ApiReturn(-1);
+    IRadioWifi* r = radio(runtime);
+    if (!r) m3ApiReturn(-1);
+    std::string ssid;
+    if (!readCStr(runtime, ssidOff, ssid)) m3ApiReturn(-1);
+    m3ApiReturn(r->apStart(ssid, (uint8_t)channel, open != 0) ? 0 : -1);
+}
+
+m3ApiRawFunction(wasm_wifi_ap_stop) {
+    m3ApiReturnType(int32_t);
+    IRadioWifi* r = radio(runtime);
+    if (r) r->apStop();
+    m3ApiReturn(0);
+}
+
+// ── Generic UDP/TCP sockets (apps build DNS/HTTP/etc on top) ─────────────────
+
+static INetSockets* sockets(IM3Runtime rt) {
+    WasmHostCtx* h = hostOf(rt);
+    if (!h || !h->ctx) return nullptr;
+    return h->ctx->runtime().container().resolve<INetSockets>();
+}
+
+m3ApiRawFunction(wasm_net_udp_open) {
+    m3ApiReturnType(int32_t);
+    m3ApiGetArg(int32_t, port);
+    if (checkPerm(runtime, "net.wifi.inject") != 1) m3ApiReturn(-1);
+    INetSockets* s = sockets(runtime);
+    m3ApiReturn(s ? s->udpOpen((uint16_t)port) : -1);
+}
+
+// net_udp_recv(h, buf, max, *out_ip, *out_port) → bytes / 0 none / -1 err
+m3ApiRawFunction(wasm_net_udp_recv) {
+    m3ApiReturnType(int32_t);
+    m3ApiGetArg(int32_t,  h);
+    m3ApiGetArg(uint32_t, bufOff);
+    m3ApiGetArg(int32_t,  max);
+    m3ApiGetArg(uint32_t, ipOff);
+    m3ApiGetArg(uint32_t, portOff);
+    INetSockets* s = sockets(runtime);
+    if (!s || max <= 0) m3ApiReturn(-1);
+    uint32_t memSz = 0;
+    uint8_t* base  = m3_GetMemory(runtime, &memSz, 0);
+    if (!base || bufOff + (uint32_t)max > memSz) m3ApiReturn(-1);
+    uint32_t fromIp = 0; uint16_t fromPort = 0;
+    int n = s->udpRecv(h, base + bufOff, max, fromIp, fromPort);
+    if (n > 0) {
+        uint32_t fp = fromPort;
+        if (ipOff + 4 <= memSz)   std::memcpy(base + ipOff,   &fromIp, 4);
+        if (portOff + 4 <= memSz) std::memcpy(base + portOff, &fp,     4);
+    }
+    m3ApiReturn(n);
+}
+
+m3ApiRawFunction(wasm_net_udp_send) {
+    m3ApiReturnType(int32_t);
+    m3ApiGetArg(int32_t,  h);
+    m3ApiGetArg(uint32_t, ip);
+    m3ApiGetArg(int32_t,  port);
+    m3ApiGetArg(uint32_t, bufOff);
+    m3ApiGetArg(int32_t,  len);
+    INetSockets* s = sockets(runtime);
+    if (!s || len < 0) m3ApiReturn(-1);
+    const uint8_t* ptr = nullptr;
+    if (!readBytes(runtime, bufOff, (uint32_t)len, ptr)) m3ApiReturn(-1);
+    m3ApiReturn(s->udpSend(h, ip, (uint16_t)port, ptr, len));
+}
+
+m3ApiRawFunction(wasm_net_tcp_listen) {
+    m3ApiReturnType(int32_t);
+    m3ApiGetArg(int32_t, port);
+    if (checkPerm(runtime, "net.wifi.inject") != 1) m3ApiReturn(-1);
+    INetSockets* s = sockets(runtime);
+    m3ApiReturn(s ? s->tcpListen((uint16_t)port) : -1);
+}
+
+m3ApiRawFunction(wasm_net_tcp_accept) {
+    m3ApiReturnType(int32_t);
+    m3ApiGetArg(int32_t, h);
+    INetSockets* s = sockets(runtime);
+    m3ApiReturn(s ? s->tcpAccept(h) : -1);
+}
+
+m3ApiRawFunction(wasm_net_tcp_recv) {
+    m3ApiReturnType(int32_t);
+    m3ApiGetArg(int32_t,  h);
+    m3ApiGetArg(uint32_t, bufOff);
+    m3ApiGetArg(int32_t,  max);
+    INetSockets* s = sockets(runtime);
+    if (!s || max <= 0) m3ApiReturn(-1);
+    uint32_t memSz = 0;
+    uint8_t* base  = m3_GetMemory(runtime, &memSz, 0);
+    if (!base || bufOff + (uint32_t)max > memSz) m3ApiReturn(-1);
+    m3ApiReturn(s->tcpRecv(h, base + bufOff, max));
+}
+
+m3ApiRawFunction(wasm_net_tcp_send) {
+    m3ApiReturnType(int32_t);
+    m3ApiGetArg(int32_t,  h);
+    m3ApiGetArg(uint32_t, bufOff);
+    m3ApiGetArg(int32_t,  len);
+    INetSockets* s = sockets(runtime);
+    if (!s || len < 0) m3ApiReturn(-1);
+    const uint8_t* ptr = nullptr;
+    if (!readBytes(runtime, bufOff, (uint32_t)len, ptr)) m3ApiReturn(-1);
+    m3ApiReturn(s->tcpSend(h, ptr, len));
+}
+
+m3ApiRawFunction(wasm_net_close) {
+    m3ApiGetArg(int32_t, h);
+    INetSockets* s = sockets(runtime);
+    if (s) s->closeHandle(h);
+    m3ApiSuccess();
+}
+
 } // anon namespace
+
+// Reset per-run WiFi takeover state between WASM runs so a stale takeover flag
+// from a prior app can't leak into the next (broker leases themselves are freed
+// by ResourceBroker::releaseAll on AppHostExited).
+void resetWifiState() {
+    s_sessionHeld   = false;
+    s_injectHandle  = 0;
+    s_monitorHandle = 0;
+}
 
 void linkWifiImports(IM3Module mod) {
     auto link = [mod](const char* fn, const char* sig, M3RawCall cb) {
         m3_LinkRawFunction(mod, "wifi", fn, sig, cb);
     };
+    link("wifi_acquire",            "i()",      &wasm_wifi_acquire);
+    link("wifi_release",            "i()",      &wasm_wifi_release);
     link("wifi_scan",               "i(*i)",    &wasm_wifi_scan);
-    link("wifi_deauth_start",       "i(*i)",    &wasm_wifi_deauth_start);
-    link("wifi_deauth_stop",        "i()",      &wasm_wifi_deauth_stop);
-    link("wifi_beacon_spam_start",  "i(*i)",    &wasm_wifi_beacon_spam_start);
-    link("wifi_beacon_spam_stop",   "i()",      &wasm_wifi_beacon_spam_stop);
     link("wifi_monitor_open",       "i(i)",     &wasm_wifi_monitor_open);
     link("wifi_monitor_read",       "i(*ii)",   &wasm_wifi_monitor_read);
     link("wifi_monitor_close",      "v()",      &wasm_wifi_monitor_close);
     link("wifi_inject",             "i(i*i)",   &wasm_wifi_inject);
-    link("wifi_probe_flood_start",  "i(*i)",    &wasm_wifi_probe_flood_start);
-    link("wifi_probe_flood_stop",   "i()",      &wasm_wifi_probe_flood_stop);
-    link("wifi_wait_event",         "i(*ii)",   &wasm_wifi_wait_event);
+    link("wifi_inject_release",     "v()",      &wasm_wifi_inject_release);
     link("wifi_set_mac",            "i(*)",     &wasm_wifi_set_mac);
-    link("wifi_karma_start",        "i()",      &wasm_wifi_karma_start);
-    link("wifi_karma_stop",         "i()",      &wasm_wifi_karma_stop);
-    link("wifi_evil_portal_start",  "i(**i)",   &wasm_wifi_evil_portal_start);
-    link("wifi_evil_portal_stop",   "i()",      &wasm_wifi_evil_portal_stop);
+    // Generic soft-AP + sockets (Plan 91): apps build captive portals from these.
+    link("wifi_ap_start",           "i(*ii)",   &wasm_wifi_ap_start);
+    link("wifi_ap_stop",            "i()",      &wasm_wifi_ap_stop);
+    link("net_udp_open",            "i(i)",     &wasm_net_udp_open);
+    link("net_udp_recv",            "i(i*i**)", &wasm_net_udp_recv);
+    link("net_udp_send",            "i(iii*i)", &wasm_net_udp_send);
+    link("net_tcp_listen",          "i(i)",     &wasm_net_tcp_listen);
+    link("net_tcp_accept",          "i(i)",     &wasm_net_tcp_accept);
+    link("net_tcp_recv",            "i(i*i)",   &wasm_net_tcp_recv);
+    link("net_tcp_send",            "i(i*i)",   &wasm_net_tcp_send);
+    link("net_close",               "v(i)",     &wasm_net_close);
     link("wifi_sta_status",         "i(*i)",    &wasm_wifi_sta_status);
     link("wifi_arp_scan",           "i(*i)",    &wasm_wifi_arp_scan);
     link("wifi_tcp_probe",          "i(*ii)",   &wasm_wifi_tcp_probe);
