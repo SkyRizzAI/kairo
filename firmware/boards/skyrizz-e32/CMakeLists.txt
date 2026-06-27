@@ -17,4 +17,5 @@ idf_component_register(
         driver
         esp_driver_cam
         esp_driver_i2s
+        se05x          # NXP nano-package (SE050 real driver, Plan 96)
 )

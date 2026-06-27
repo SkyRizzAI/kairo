@@ -309,7 +309,9 @@ UiNode* ListItemRow(NodeArena& a, const ListEntry& e) {
     add(label);
     if (e.value && *e.value) add(Text(a, e.value, TextRole::Body));
     if (e.chevron)           add(Text(a, ">", TextRole::Body));
-    add(hspace(a, 4));                                  // clear the right rounding
+    // Right inset = GUTTER(5, the selectBox right inset for the scrollbar) + 5, so the
+    // chevron sits 5px inside the focus fill — symmetric with the 5px label inset on the left.
+    add(hspace(a, 10));
     // Display-only rows (no onPress) are NOT focus stops — focus rings belong only
     // on selectable rows. A trailing info block is revealed by the scroll that
     // top-aligns the last selectable item, not by focusing the info itself (Plan 79).
@@ -352,7 +354,7 @@ UiNode* ListInputRow(NodeArena& a, const ListInput& e) {
     // Flat row: [5px] label | < | value | > | [4px]
     Style s; s.dir = FlexDir::Row; s.align = Align::Center;
     s.height = listRowH(); s.selectBox = true;
-    UiNode* n = View(a, s, { hspace(a, 5), label, lchev, vbox, rchev, hspace(a, 4) });
+    UiNode* n = View(a, s, { hspace(a, 5), label, lchev, vbox, rchev, hspace(a, 10) });
     if (n) { n->focusable = true; n->onAdjust = e.onAdjust; n->userdata = e.user; }
     return n;
 }

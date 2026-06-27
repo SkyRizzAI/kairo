@@ -129,9 +129,10 @@ void Esp32Platform::postRegister(Runtime& rt) {
     cli_.add("ram", "free heap / PSRAM (live)",
         [](CliContext& c) {
             const auto& out = c.out;
-            out("free heap:  " + std::to_string(esp_get_free_heap_size()) + " B");
-            out("min free:   " + std::to_string(esp_get_minimum_free_heap_size()) + " B");
-            out("free psram: " + std::to_string(heap_caps_get_free_size(MALLOC_CAP_SPIRAM)) + " B");
+            auto kb = [](size_t b) { return std::to_string(b / 1024) + "K"; };
+            out("heap " + kb(esp_get_free_heap_size()) +
+                "  min " + kb(esp_get_minimum_free_heap_size()) +
+                "  psram " + kb(heap_caps_get_free_size(MALLOC_CAP_SPIRAM)));
         });
     remote_.attachCli(cli_);
     remote_.attachSessions(rt.cliSessions());   // multi-session shells (Plan 45)

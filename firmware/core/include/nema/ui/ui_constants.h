@@ -14,7 +14,10 @@ constexpr uint16_t CHAR_H = 9;   // 8px glyph + 1px spacing
 constexpr uint16_t STATUS_Y  = 3;   // status bar top — 2px inner padding from border
 constexpr uint16_t STATUS_H  = 9;   // 1 char row
 constexpr uint16_t SEP1_Y    = STATUS_Y + STATUS_H;  // separator after status
-constexpr uint16_t CONTENT_Y = SEP1_Y + 2;           // full value when status bar ON
+// Content starts right after the status bar — NO gap. Must equal the status bar's real
+// drawn height (barH = STATUS_H + 2 in status_bar.cpp); using SEP1_Y (= STATUS_Y+STATUS_H)
+// left a 1px gap because STATUS_Y(3) ≠ the bar's +2 base. There's no separator anymore.
+constexpr uint16_t CONTENT_Y = STATUS_H + 2;         // = barH; full value when status bar ON
 
 // Set to false by GuiService when display/statusbar=0; read by all layout code.
 // C++17 inline variable — one definition shared across all TUs.

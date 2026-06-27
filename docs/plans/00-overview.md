@@ -217,7 +217,8 @@ Kerjakan **berurutan**; tiap dok punya `Depends on`. Centang status di sini saat
 
 | # | Dokumen | Fitur / Stage | Depends on | Status |
 |---|---|---|---|---|
-| 94 | [`94-crypto-wallet-secure-element.md`](94-crypto-wallet-secure-element.md) | **Crypto wallet + SE**: arsitektur tiga-sumbu (Custody `IWalletBackend` × Chain `IChain` × Consent system-modal), trezor-crypto (BIP32/39/44, secp256k1/Ed25519), dua backend (SE050 wrapped-seed / software-NVS) + indikator backend, network=data (EVM multi-chain), WYSIWYS sign-consent (fail-closed, physical-only), isi TODO crypto `Se050Driver` (Plug&Trust), app Wallets + onboarding/PIN, dApp bridge (EIP-1193/Wallet Standard/PSBT → PLP), Phantom (next). ADR 0014 (key-mode/threat) + 0015 (arsitektur) | ADR0005,83,87,23,35,88,90 | ☐ |
+| 94 | [`94-crypto-wallet-secure-element.md`](94-crypto-wallet-secure-element.md) | **Crypto wallet + SE**: arsitektur tiga-sumbu (Custody `IWalletBackend` × Chain `IChain` × Consent system-modal), trezor-crypto (BIP32/39/44, secp256k1/Ed25519), dua backend (SE050 wrapped-seed / software-NVS) + indikator backend, network=data (EVM multi-chain), WYSIWYS sign-consent (fail-closed, physical-only), isi TODO crypto `Se050Driver` (Plug&Trust), app Wallets + onboarding/PIN, dApp bridge (EIP-1193/Wallet Standard/PSBT → PLP), Phantom (next). ADR 0014 (key-mode/threat) + 0015 (arsitektur) | ADR0005,83,87,23,35,88,90 | 🚧 Fase 1–7 ✓ (software) |
+| 96 | [`96-se050-nano-integration.md`](96-se050-nano-integration.md) | **SE050 real**: integrasi NXP **nano-package** (Apache-2.0, ~1KB, plain-session) + platform glue ESP32 (6 fungsi: I²C/reset/delay) → driver `ISecureElement` dengan **AES seed-seal (mode B)**; wallet (sudah SE-aware) auto-upgrade ke 🔒 saat self-test lolos. Hand-roll T=1'oI2C ditolak (CRC/boot-loop). secp256k1 in-chip + SCP03 = pre-ship. | 94,ADR0014 | ☐ |
 
 ---
 

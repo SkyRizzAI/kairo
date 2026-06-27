@@ -100,8 +100,7 @@ void StatusBar::draw(Canvas& c, const StatusBarData& d) {
     // Lock / hidden window
     if (d.locked) placeIcon(icLock);
 
-    if (!inv)
-        aether::ui::draw::separator(c, 0, barH, c.width(), true);
+    // No bottom separator/border — the status bar sits directly above content.
 }
 
 // WiFi — 4 standing signal bars (1px wide, heights 2/3/4/5), bottom-aligned. 7×5.

@@ -261,6 +261,9 @@ UiNode* JsEngine::reify(JSValueConst node, NodeArena& arena) {
     } else if (type == "Pressable") {
         n->type = NodeType::Pressable;
         n->focusable = true;
+        n->style.selectBox = true;   // Flipper/Settings-style rounded focus highlight (not a
+                                     // blocky full invert) — makes JS app menus match built-in
+                                     // list screens. Pair with borderless rows in the app.
         if (JS_IsObject(props)) {
             JSValue fn = JS_GetPropertyStr(ctx_, props, "onPress");
             if (JS_IsFunction(ctx_, fn)) {

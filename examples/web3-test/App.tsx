@@ -1,76 +1,102 @@
-// Web3 Test — a demo custom app (dApp) for the on-device wallet (Plan 94, Fase 7).
+// Web3 Test — a demo dApp for the on-device wallet (Plan 94). List-driven UX matching the
+// built-in Settings / Wallets screens: a home menu + a network-picker sub-screen. The rows
+// are borderless; the focused row gets the system's rounded selection highlight. Works across
+// chains — pick an EVM, Bitcoin or Solana network, read the address, or sign a message/tx.
 //
-// Shows the whole bridge without a phone/browser: pick a network, read the active
-// wallet's address, and request a message- or transaction-signature. Signing pops the
-// trusted-display consent (physical button) and NEVER exposes the private key — the app
-// only gets the address + signature, exactly like MetaMask/Phantom talking to a wallet.
+// The wallet API returns the value on success and THROWS on failure; signing pops the system's
+// trusted-display consent — the private key never leaves the device (sealed by the SE050 on
+// skyrizz-e32).
 import { View, Text, Pressable, ScrollView, useState } from "nema";
 
-// All network ids the device supports (eth-mainnet, sepolia, polygon, bnb, arbitrum,
-// optimism, base, avalanche, btc-mainnet, btc-testnet, sol-mainnet, sol-devnet).
 const NETWORKS: string[] = nema.wallet.networks();
 
-// A throwaway unsigned EVM (EIP-155, chainId 1) transfer used by "Sign transaction".
-// Only meaningful on EVM networks; BTC/SOL will report an error (good for testing).
+function chainOf(id: string): string {
+  if (id.indexOf("btc") === 0) return "Bitcoin";
+  if (id.indexOf("sol") === 0) return "Solana";
+  return "EVM";
+}
+
+// A throwaway unsigned EVM (EIP-155, chainId 1) transfer for the "Sign tx" demo.
 const DEMO_EVM_TX =
   "e4808504a817c8008252089400000000000000000000000000000000000000008080018080";
 
+// One borderless menu row — label left, optional hint right. The focused row is highlighted
+// by the system (selectBox), so no per-row border boxes.
+const row = {
+  padding: 3,
+  gap: 4,
+  flexDirection: "row" as const,
+  justifyContent: "space-between" as const,
+  alignItems: "center" as const,
+};
+
 export default function App() {
-  const [i, setI] = useState(0);
+  const [screen, setScreen] = useState("home");
+  const [net, setNet] = useState(NETWORKS[0] || "eth-mainnet");
   const [out, setOut] = useState("");
 
-  const net = NETWORKS.length ? NETWORKS[i % NETWORKS.length] : "eth-mainnet";
-  const cycle = () => setI((p) => (p + 1) % Math.max(NETWORKS.length, 1));
-
-  // Permissions follow the system model: request the capability first (this shows the
-  // Allow/Deny screen the first time, then is cached), then call the gated function.
-  // The wallet API returns the value on success and THROWS on failure (locked /
-  // rejected) — so use try/catch, not a result object.
   const ensure = (cap: string) => nema.sys.perm.request(cap) === 1;
 
   const showAddress = () => {
-    if (!ensure("wallet.read")) { setOut("permission denied"); return; }
+    if (!ensure("wallet.read")) return setOut("Permission denied");
     try { setOut(nema.wallet.address(net, 0)); }
-    catch (e) { setOut("error: " + e); }
+    catch (e) { setOut("Error: " + e); }
   };
-
   const signMessage = () => {
-    if (!ensure("wallet.sign")) { setOut("permission denied"); return; }
-    try {
-      const sig = nema.wallet.signMessage(net, 0, "Hello from Palanu");
-      setOut("sig " + sig.slice(0, 20) + "…");
-    } catch (e) { setOut("error: " + e); }
+    if (!ensure("wallet.sign")) return setOut("Permission denied");
+    try { setOut("sig " + nema.wallet.signMessage(net, 0, "Hello from Palanu").slice(0, 28) + "…"); }
+    catch (e) { setOut("Error: " + e); }
+  };
+  const signTx = () => {
+    if (chainOf(net) !== "EVM") return setOut("Tx demo is EVM-only — use Sign message for " + chainOf(net));
+    if (!ensure("wallet.sign")) return setOut("Permission denied");
+    try { setOut("tx " + nema.wallet.signTransaction(net, 0, DEMO_EVM_TX).slice(0, 28) + "…"); }
+    catch (e) { setOut("Error: " + e); }
   };
 
-  const signTransaction = () => {
-    if (!ensure("wallet.sign")) { setOut("permission denied"); return; }
-    try {
-      const tx = nema.wallet.signTransaction(net, 0, DEMO_EVM_TX);
-      setOut("tx " + tx.slice(0, 20) + "…");
-    } catch (e) { setOut("error: " + e); }
-  };
+  // ── Sub-screen: pick a network ──
+  if (screen === "net") {
+    return (
+      <View style={{ flexDirection: "column", padding: 2 }}>
+        <Text variant="caption">SELECT NETWORK</Text>
+        <ScrollView style={{ flexGrow: 1 }}>
+          <Pressable onPress={() => setScreen("home")} style={row}>
+            <Text>‹ Back</Text>
+          </Pressable>
+          {NETWORKS.map((n) => (
+            <Pressable key={n} onPress={() => { setNet(n); setScreen("home"); }} style={row}>
+              <Text>{(n === net ? "● " : "  ") + n}</Text>
+              <Text variant="caption">{chainOf(n)}</Text>
+            </Pressable>
+          ))}
+        </ScrollView>
+      </View>
+    );
+  }
 
+  // ── Home: action menu ──
   return (
-    <View style={{ flexDirection: "column", padding: 4, gap: 3 }}>
+    <View style={{ flexDirection: "column", padding: 2 }}>
       <Text variant="title">Web3 Test</Text>
-      <Text variant="caption">{nema.wallet.ready() ? "wallet ready" : "no wallet / locked"}</Text>
-
-      <Pressable onPress={cycle}>
-        <Text>{`Network: ${net}`}</Text>
-      </Pressable>
-      <Pressable onPress={showAddress}>
-        <Text>Show address</Text>
-      </Pressable>
-      <Pressable onPress={signMessage}>
-        <Text>Sign message</Text>
-      </Pressable>
-      <Pressable onPress={signTransaction}>
-        <Text>Sign transaction (EVM)</Text>
-      </Pressable>
-
+      <Text variant="caption">{net + " · " + chainOf(net)}</Text>
       <ScrollView style={{ flexGrow: 1 }}>
-        <Text variant="body">{out || "Pick a network, then an action."}</Text>
+        <Pressable onPress={() => setScreen("net")} style={row}>
+          <Text>Network</Text>
+          <Text variant="caption">{net + " ›"}</Text>
+        </Pressable>
+        <Pressable onPress={showAddress} style={row}>
+          <Text>Show address</Text>
+        </Pressable>
+        <Pressable onPress={signMessage} style={row}>
+          <Text>Sign message</Text>
+          <Text variant="caption">{chainOf(net)}</Text>
+        </Pressable>
+        <Pressable onPress={signTx} style={row}>
+          <Text>Sign transaction</Text>
+          <Text variant="caption">{chainOf(net) === "EVM" ? "EVM" : "EVM only"}</Text>
+        </Pressable>
       </ScrollView>
+      <Text variant="caption">{out || "Pick an action"}</Text>
     </View>
   );
 }
