@@ -10,7 +10,7 @@ using namespace nema;  // Plan 80: nema core symbols (Canvas/Key/input/anim/font
 // layout engine (layout.h), and painted by the renderer (renderer.h). Both the
 // C builder (widgets.h) and a future JS reconciler produce this same structure.
 
-enum class NodeType : uint8_t { View, Text, Pressable, Scroll, Slider, Icon, AnimatedIcon };
+enum class NodeType : uint8_t { View, Text, Pressable, Scroll, Slider, Icon, AnimatedIcon, Switch, Progress, Spinner };
 enum class FlexDir  : uint8_t { Row, Col };
 enum class Align    : uint8_t { Start, Center, End, Stretch };       // cross-axis
 enum class Justify  : uint8_t { Start, Center, End, SpaceBetween };  // main-axis
@@ -121,6 +121,13 @@ struct UiNode {
     int16_t sliderStep  = 1;
     bool    sliderVertical = false;   // draw the bar vertically (fill from bottom)
     void  (*onChange)(void* userdata, int value) = nullptr;
+
+    // Switch (type == Switch): on = filled track + knob hole on the right; off = outline
+    // track + filled knob on the left. Drawn natively so the knob can be a dark hole.
+    bool    switchOn = false;
+
+    // Progress (type == Progress): read-only bar; fill = progressPct (0..100) of the width.
+    uint8_t progressPct = 0;
 
     // Icon leaf (type == Icon, Plan 53): 1-bit packed XBM bitmap.
     // Also reused by Slider as a centred overlay glyph (drawn XOR).

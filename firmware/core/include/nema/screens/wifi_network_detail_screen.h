@@ -1,6 +1,7 @@
 #pragma once
 #include "nema/ui/component_screen.h"
 #include "nema/screens/wifi_ip_config_screen.h"
+#include "nema/screens/confirm_modal.h"
 #include <string>
 
 namespace nema {
@@ -29,19 +30,22 @@ private:
 
     bool autoJoinOf(const char* ssid);
 
-    static void cbForget(void* u);
+    static void cbForget(void* u);   // shows the confirm modal
+    static void doForget(void* u);   // runs after the user confirms
     static void cbJoin(void* u);
     static void cbToggleAutoJoin(void* u);
     static void cbConfigureIp(void* u);
 
     IWifiDriver*        drv_ = nullptr;
     WifiIpConfigScreen  ipConfig_;
+    ConfirmModal        confirm_;
     std::string         ssid_;
     bool                secured_ = false;
     bool                current_ = false;
     bool                saved_   = false;
     aether::ui::ScrollState     scroll_;
     char                rowbuf_[5][40] = {};   // stable backing for IP info rows
+    char                confirmBody_[64] = {};
 };
 
 } // namespace nema

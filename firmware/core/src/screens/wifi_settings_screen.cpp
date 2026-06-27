@@ -73,9 +73,9 @@ void WifiSettingsScreen::startConnect(const std::string& ssid, const std::string
     IWifiDriver* d = drv();
     if (!d) return;
     std::string s = ssid, p = pw;
-    rt_.tasks().submit([d, s, p] { d->connect(s.c_str(), p.c_str()); },
-                       [this] { redraw(); });
-    redraw();
+    runBusy("Connecting…",
+            [d, s, p] { d->connect(s.c_str(), p.c_str()); },
+            [this] { redraw(); });
 }
 
 void WifiSettingsScreen::openDetail(const Row& r) {
@@ -121,31 +121,10 @@ void WifiSettingsScreen::pick(const Row& r) {
     redraw();
 }
 
-void WifiSettingsScreen::cbToggleWifi(void* u) {
-    auto* s = static_cast<WifiSettingsScreen*>(u);
-    // Block toggle while an app holds the WiFi radio — toggling with the radio
-    // in monitor/inject mode panics the ESP32 WiFi stack (esp_wifi_stop while
-    // promiscuous is still active). The suspended banner already informs the user.
-    if (!s->wifiSuspendedBy_.empty()) return;
-    IWifiDriver* d = s->drv();
-    if (!d) return;
-    bool on = !d->isEnabled();
-    if (on) s->scanning_ = true;
-    s->rt_.tasks().submit([d, on] { d->setEnabled(on); if (on) d->scan(); },
-                          [s] { s->scanning_ = false; s->redraw(); });
-    s->redraw();
-}
 void WifiSettingsScreen::cbPick(void* u) {
     auto* r = static_cast<Row*>(u);
     if (r->act == Act::Detail) r->self->openDetail(*r);
     else                       r->self->pick(*r);
-}
-void WifiSettingsScreen::cbAddOther(void* u) {
-    auto* s = static_cast<WifiSettingsScreen*>(u);
-    s->pendingSsid_.clear();
-    s->startKeyboard(false, "Network Name", true);
-    s->st_ = St::EnterSsid;
-    s->redraw();
 }
 
 void WifiSettingsScreen::onAction(input::Action a) {
@@ -182,38 +161,53 @@ static const char* bars(int8_t rssi) {
     return "|";
 }
 
+#define S(u) static_cast<WifiSettingsScreen*>(u)
+
 UiNode* WifiSettingsScreen::build(NodeArena& a, Runtime& rt) {
     (void)rt;
     rows_.clear();
     IWifiDriver* d = drv();
 
-    Style root; root.dir = FlexDir::Col; root.flexGrow = 1; root.align = Align::Stretch;
-
-    UiNode* list = ListContainer(a, scroll_, {});
-    UiNode* prev = nullptr;
-    auto append = [&](UiNode* n) {
-        if (!n) return;
-        if (!prev) list->firstChild = n; else prev->nextSibling = n;
-        prev = n;
-    };
+    MenuBuilder m(a, scroll_, this);
 
     if (!d) {
         ListEntry e; e.label = "No Wi-Fi driver";
-        append(ListItemRow(a, e));
-        return View(a, root, { list });
+        m.add(ListItemRow(a, e));
+        return m.build();
     }
 
     bool on = d->isEnabled();
-    append(Toggle(a, "Wi-Fi", on, cbToggleWifi, this));
+    m.toggle("Wi-Fi", on, [](void* u){
+        auto* s = S(u);
+        // Block toggle while an app holds the WiFi radio — toggling with the radio
+        // in monitor/inject mode panics the ESP32 WiFi stack (esp_wifi_stop while
+        // promiscuous is still active). The suspended banner already informs the user.
+        if (!s->wifiSuspendedBy_.empty()) return;
+        IWifiDriver* d = s->drv();
+        if (!d) return;
+        bool on = !d->isEnabled();
+        if (on) s->scanning_ = true;
+        s->rt_.tasks().submit([d, on] { d->setEnabled(on); if (on) d->scan(); },
+                              [s] { s->scanning_ = false; s->redraw(); });
+        s->redraw();
+    });
 
     if (!wifiSuspendedBy_.empty()) {
         std::snprintf(suspendedBuf_, sizeof(suspendedBuf_),
                       "Radio in use by: %s", wifiSuspendedBy_.c_str());
-        append(ListSection(a, suspendedBuf_));
+        m.section(suspendedBuf_);
     }
 
     if (!on)
-        return View(a, root, { list });
+        return m.build();
+
+    m.nav("Add Other Network...", [](void* u){
+        auto* s = S(u);
+        s->pendingSsid_.clear();
+        s->startKeyboard(false, "Network Name", true);
+        s->st_ = St::EnterSsid;
+        s->redraw();
+    });
 
     const char* curSsid = d->isConnected() ? d->ssid() : "";
 
@@ -250,43 +244,40 @@ UiNode* WifiSettingsScreen::build(NodeArena& a, Runtime& rt) {
 
     size_t idx = 0;
     if (curSsid[0]) {
-        append(ListSection(a, "Connected"));
+        m.section("Connected");
         ListEntry e;
         e.label   = rows_[0].label.c_str();
         e.chevron = true;
         e.onPress = cbPick; e.user = &rows_[0];
-        append(ListItemRow(a, e));
+        m.add(ListItemRow(a, e));
         idx = 1;
     }
     if (idx < savedEnd) {
-        append(ListSection(a, "My Networks"));
+        m.section("My Networks");
         for (; idx < savedEnd; idx++) {
             ListEntry e;
             e.label   = rows_[idx].label.c_str();
             e.chevron = true;
             e.onPress = cbPick; e.user = &rows_[idx];
-            append(ListItemRow(a, e));
+            m.add(ListItemRow(a, e));
         }
     }
-    append(ListSection(a, scanning_ ? "Other Networks  (scanning...)" : "Other Networks"));
+    m.section(scanning_ ? "Other Networks  (scanning...)" : "Other Networks");
     if (idx >= rows_.size() && !scanning_) {
         ListEntry e; e.label = "No networks found";
-        append(ListItemRow(a, e));
+        m.add(ListItemRow(a, e));
     }
     for (; idx < rows_.size(); idx++) {
         ListEntry e;
         e.label   = rows_[idx].label.c_str();
         e.value   = rows_[idx].acc.c_str();
         e.onPress = cbPick; e.user = &rows_[idx];
-        append(ListItemRow(a, e));
-    }
-    {
-        ListEntry e; e.label = "Add Other Network..."; e.chevron = true;
-        e.onPress = cbAddOther; e.user = this;
-        append(ListItemRow(a, e));
+        m.add(ListItemRow(a, e));
     }
 
-    return View(a, root, { list });
+    return m.build();
 }
+
+#undef S
 
 } // namespace nema

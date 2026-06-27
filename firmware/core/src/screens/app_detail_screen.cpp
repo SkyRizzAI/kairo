@@ -20,7 +20,7 @@ using namespace aether::ui;
 // hand-maintained here, so it can't drift from the real permission set.
 
 AppDetailScreen::AppDetailScreen(Runtime& rt)
-    : ComponentScreen(rt, 384) {}
+    : ComponentScreen(rt, 384), confirm_(rt) {}
 
 void AppDetailScreen::setApp(std::string id, std::string displayName,
                               const uint8_t* iconBitmap,
@@ -33,8 +33,6 @@ void AppDetailScreen::setApp(std::string id, std::string displayName,
 }
 
 void AppDetailScreen::onResume() {
-    scroll_.scrollMain   = 0;
-    state_.focus.focused = 0;
     hasStorageInfo_  = false;
     loadingStorage_  = true;
     dirty_ = true;  // show "Loading…" in Storage section immediately
@@ -89,12 +87,18 @@ void AppDetailScreen::onCapToggle(void* u) {
 
 void AppDetailScreen::onResetPerms(void* u) {
     auto* self = static_cast<AppDetailScreen*>(u);
+    self->confirm_.setup("Reset Permissions", "Remove all permission\ngrants?",
+                         "Reset", doResetPerms, self, /*danger=*/true);
+    self->rt_.view().push(self->confirm_);
+}
+void AppDetailScreen::doResetPerms(void* u) {
+    auto* self = static_cast<AppDetailScreen*>(u);
+    self->rt_.view().goBack();   // pop the modal
     auto* perm = self->rt_.container().resolve<PermissionService>();
     if (!perm) return;
     for (int i = 0; i < kSensitiveCapCount; ++i)
         perm->revoke(self->appId_, kSensitiveCaps[i].id);
-    self->dirty_ = true;
-    self->rt_.view().requestRedraw();
+    self->markDirty();
 }
 
 void AppDetailScreen::onMove(void* u) {
@@ -105,14 +109,28 @@ void AppDetailScreen::onMove(void* u) {
         (self->storageInfo_.location == StorageLocation::External)
         ? StorageLocation::Internal
         : StorageLocation::External;
-    svc->move(self->appId_.c_str(), target);
-    self->rt_.view().requestRedraw();
+    std::string id = self->appId_;
+    self->runBusy("Moving…",
+                  [svc, id, target] { svc->move(id.c_str(), target); },
+                  [self] { self->onResume(); });  // reload storage info to reflect new location
 }
 
 void AppDetailScreen::onUninstall(void* u) {
     auto* self = static_cast<AppDetailScreen*>(u);
-    self->rt_.apps().uninstall(self->appId_.c_str());
-    self->rt_.view().pop();  // go back to app list
+    std::snprintf(self->confirmBody_, sizeof(self->confirmBody_),
+                  "Delete \"%s\" and\nits data?", self->displayName_.c_str());
+    self->confirm_.setup("Uninstall App", self->confirmBody_, "Uninstall",
+                         doUninstall, self, /*danger=*/true);
+    self->rt_.view().push(self->confirm_);
+}
+void AppDetailScreen::doUninstall(void* u) {
+    auto* self = static_cast<AppDetailScreen*>(u);
+    self->rt_.view().goBack();   // pop the modal
+    auto* apps = &self->rt_.apps();
+    std::string id = self->appId_;
+    self->runBusy("Uninstalling…",
+                  [apps, id] { apps->uninstall(id.c_str()); },
+                  [self] { self->rt_.view().pop(); });  // go back to app list
 }
 
 UiNode* AppDetailScreen::build(NodeArena& a, Runtime& rt) {
@@ -143,7 +161,7 @@ UiNode* AppDetailScreen::build(NodeArena& a, Runtime& rt) {
         if (st == 0) continue;  // never asked → don't show
         if (!anyPerm) { append(ListSection(a, "Permissions")); anyPerm = true; }
         capRows_[ci] = {this, cap};
-        append(Toggle(a, kSensitiveCaps[i].label, st == 1, onCapToggle, &capRows_[ci]));
+        append(SwitchRow(a, kSensitiveCaps[i].label, st == 1, onCapToggle, &capRows_[ci]));
         ++ci;
     }
     if (anyPerm) {
@@ -163,7 +181,9 @@ UiNode* AppDetailScreen::build(NodeArena& a, Runtime& rt) {
         return vals_.back().c_str();
     };
     if (loadingStorage_) {
-        ListEntry e; e.label = "Loading…";
+        // Non-focusable info row (no onPress) with a spinner accessory — the user
+        // can't highlight it; it just signals work in progress.
+        ListEntry e; e.label = "Loading…"; e.valueNode = Spinner(a, 11);
         append(ListItemRow(a, e));
     } else if (hasStorageInfo_) {
         auto* svc = rt.container().resolve<StorageService>();
@@ -179,7 +199,6 @@ UiNode* AppDetailScreen::build(NodeArena& a, Runtime& rt) {
             ListEntry e;
             e.label   = (storageInfo_.location == StorageLocation::External)
                         ? "Move to Internal" : "Move to SD Card";
-            e.chevron = true;
             e.onPress = onMove;
             e.user    = this;
             append(ListItemRow(a, e));
@@ -194,7 +213,6 @@ UiNode* AppDetailScreen::build(NodeArena& a, Runtime& rt) {
     {
         ListEntry e;
         e.label   = "Uninstall";
-        e.chevron = true;
         e.onPress = onUninstall;
         e.user    = this;
         append(ListItemRow(a, e));

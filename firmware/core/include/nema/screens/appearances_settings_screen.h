@@ -42,14 +42,6 @@ private:
     void openDesktopSetting();
     void scanFontPacks();
 
-    static void themeAdj       (void* u, int dir);
-    static void darkAdj        (void* u, int dir);
-    static void desktopAdj     (void* u, int dir);
-    static void launcherAdj    (void* u, int dir);
-    static void assetAdj       (void* u, int dir);
-    static void fontAdj        (void* u, int dir);
-    static void onDesktopSetting(void* u);
-
     DesktopSettingScreen    desktopSetting_;
     aether::ui::ScrollState scroll_;
     int themeIdx_ = 0;

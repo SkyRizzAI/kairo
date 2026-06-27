@@ -9,20 +9,13 @@ using namespace aether::ui;
 TouchSettingsScreen::TouchSettingsScreen(Runtime& rt) : ComponentScreen(rt) {}
 
 void TouchSettingsScreen::onResume() {
-    scroll_.scrollMain = 0;
-    state_.focus.focused = 0;
     rt_.view().requestRedraw();
 }
 
 UiNode* TouchSettingsScreen::build(NodeArena& a, Runtime&) {
-    Style root; root.dir = FlexDir::Col; root.flexGrow = 1; root.align = Align::Stretch;
-
-    ListEntry e; e.label = "No touch settings yet";
-    return View(a, root, {
-        ListContainer(a, scroll_, {
-            ListItemRow(a, e),
-        }),
-    });
+    MenuBuilder m(a, scroll_, this);
+    m.info("No touch settings yet", nullptr);
+    return m.build();
 }
 
 } // namespace nema

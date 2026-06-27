@@ -19,8 +19,10 @@ namespace nema {
 
 using namespace aether::ui;
 
-// Row height must match what ListItemRow produces (Plan 79 theme default).
-static constexpr uint16_t kItemH = 12;
+// Slot height = ListItemRow height (12) + 2px inter-row gap, matching ListContainer's
+// gap=2. VirtualList can't use Style::gap (it would desync the spacer math), so the gap is
+// baked into the slot height and added as a 2px bottom margin on each row (see renderAppItem).
+static constexpr uint16_t kItemH = 14;
 
 AppListScreen::AppListScreen(Runtime& rt) : ComponentScreen(rt, 512) {}
 
@@ -139,7 +141,10 @@ UiNode* AppListScreen::renderAppItem(NodeArena& a, int index,
     }
 
     UiNode* row = ListItemRow(a, e);
-    if (row) row->selfHighlight = focused;
+    if (row) {
+        row->selfHighlight = focused;   // VirtualList items aren't in the focus tree
+        row->style.mb      = 2;          // inter-row gap → fills kItemH (12 row + 2)
+    }
     return row;
 }
 
@@ -151,8 +156,11 @@ UiNode* AppListScreen::build(NodeArena& a, Runtime& /*rt*/) {
     root.flexGrow = 1;
     root.align   = Align::Stretch;
 
+    // 2px inset to match ListContainer (every other settings list). The row gap comes from
+    // kItemH/mb, not Style::gap (which would break VirtualList's spacer math).
+    Style ls; ls.padding = 2;
     UiNode* list = VirtualList(a, vlist_, (int)names_.size(), kItemH,
-                               renderAppItem, this);
+                               renderAppItem, this, ls);
 
     return View(a, root, { list });
 }

@@ -1,5 +1,6 @@
 #pragma once
 #include "nema/ui/component_screen.h"
+#include "nema/screens/confirm_modal.h"
 #include "nema/services/storage_service.h"
 #include <vector>
 #include <string>
@@ -19,7 +20,7 @@ public:
 
 private:
     static std::string fmtBytes(size_t bytes);
-    static void onEjectSd(void* u);
+    static void        doEject(void* u);   // runs after the user confirms
 
     // Cached data loaded asynchronously. `ready` is set by the done callback
     // (UI thread), never by the worker — so build() may safely read all fields
@@ -34,6 +35,7 @@ private:
     aether::ui::ScrollState  scroll_;
     std::vector<std::string> vals_;
     StorageData              cached_;
+    ConfirmModal             confirm_;
     int                      intCapPct_ = 0;   // 0-100, drives read-only Slider
     int                      sdCapPct_  = 0;
 };

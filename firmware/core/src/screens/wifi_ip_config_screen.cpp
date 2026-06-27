@@ -45,15 +45,17 @@ void WifiIpConfigScreen::onResume() {
     if (IWifiDriver* d = drv()) cfg_ = d->ipConfig();
     manual_ = !cfg_.dhcp;
     st_ = St::Form;
-    scroll_.scrollMain = 0;
-    state_.focus.focused = 0;
     redraw();
 }
 
 void WifiIpConfigScreen::apply() {
     cfg_.dhcp = !manual_;
-    if (IWifiDriver* d = drv()) d->setIpConfig(cfg_);
-    rt_.view().goBack();
+    IWifiDriver* d = drv();
+    if (!d) { rt_.view().goBack(); return; }
+    WifiIpConfig cfg = cfg_;
+    runBusy("Applying…",
+            [d, cfg] { d->setIpConfig(cfg); },
+            [this] { rt_.view().goBack(); });
 }
 
 void WifiIpConfigScreen::editField(Field f) {

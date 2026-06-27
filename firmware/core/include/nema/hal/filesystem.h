@@ -67,6 +67,22 @@ struct IFileSystem : IDriver {
         }
         return remove(path);
     }
+
+    // True if a file OR directory exists at `path`. Default implementation lists the parent
+    // directory and scans for the basename (works on any backend); backends with a native
+    // stat/exists should override for efficiency.
+    virtual bool exists(const std::string& path) {
+        if (path.empty() || path == "/") return true;
+        size_t slash = path.find_last_of('/');
+        std::string parent = (slash == 0) ? "/" :
+                             (slash == std::string::npos) ? "/" : path.substr(0, slash);
+        std::string name = (slash == std::string::npos) ? path : path.substr(slash + 1);
+        if (name.empty()) return true;
+        std::vector<FsEntry> children;
+        if (!list(parent, children)) return false;
+        for (const auto& c : children) if (c.name == name) return true;
+        return false;
+    }
 };
 
 } // namespace nema

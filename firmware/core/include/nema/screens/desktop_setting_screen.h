@@ -30,10 +30,6 @@ private:
     void cycleAnchor(int dir);
     void cycleWall(int dir);
 
-    static void fitAdj(void* u, int dir);
-    static void anchorAdj(void* u, int dir);
-    static void wallAdj(void* u, int dir);
-
     aether::ui::ScrollState scroll_;
     int fitIdx_ = 0, anchorIdx_ = 0, wallIdx_ = 0;
 };

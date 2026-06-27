@@ -12,11 +12,9 @@ namespace nema {
 using namespace aether::ui;
 
 StorageSettingsScreen::StorageSettingsScreen(Runtime& rt)
-    : ComponentScreen(rt, 160) {}
+    : ComponentScreen(rt, 160), confirm_(rt) {}
 
 void StorageSettingsScreen::onResume() {
-    scroll_.scrollMain = 0;
-    state_.focus.focused = 0;
     vals_.clear();
     cached_.ready = false;
     dirty_ = true;  // show "Loading…" immediately
@@ -66,23 +64,9 @@ static std::string fmtBytes64(uint64_t bytes) {
     return buf;
 }
 
-void StorageSettingsScreen::onEjectSd(void* u) {
-    auto* self = static_cast<StorageSettingsScreen*>(u);
-    auto* svc  = self->rt_.container().resolve<StorageService>();
-    if (svc) svc->ejectSd();
-    // Kick a fresh async load to reflect the ejected state.
-    self->onResume();
-}
-
+#define S(u) static_cast<StorageSettingsScreen*>(u)
 aether::ui::UiNode* StorageSettingsScreen::build(NodeArena& a, Runtime& /*rt*/) {
-    Style root; root.dir = FlexDir::Col; root.flexGrow = 1; root.align = Align::Stretch;
-    UiNode* list = ListContainer(a, scroll_, {});
-    UiNode* prev = nullptr;
-    auto append = [&](UiNode* n) {
-        if (!n) return;
-        if (!prev) list->firstChild = n; else prev->nextSibling = n;
-        prev = n;
-    };
+    MenuBuilder m(a, scroll_, this);
 
     // vals_ owns all formatted value strings — ListEntry holds const char* into them.
     vals_.clear();
@@ -91,12 +75,11 @@ aether::ui::UiNode* StorageSettingsScreen::build(NodeArena& a, Runtime& /*rt*/) 
         return vals_.back().c_str();
     };
 
-    append(ListSection(a, "Storage"));
+    m.section("Storage");
 
     if (!cached_.ready) {
-        ListEntry e; e.label = "Loading…";
-        append(ListItemRow(a, e));
-        return View(a, root, { list });
+        m.info("Loading…", nullptr);
+        return m.build();
     }
 
     // ── Internal flash ────────────────────────────────────────────────────────
@@ -107,18 +90,14 @@ aether::ui::UiNode* StorageSettingsScreen::build(NodeArena& a, Runtime& /*rt*/) 
             : fmtBytes(v.usedBytes) + " used";
         intCapPct_ = (v.totalBytes > 0)
             ? (int)((uint64_t)v.usedBytes * 100 / v.totalBytes) : 0;
-        ListEntry e; e.label = "Internal Flash"; e.value = pushVal(val);
-        append(ListItemRow(a, e));
-        auto* bar = Slider(a, &intCapPct_, 0, 100, 0, nullptr, nullptr);
-        if (bar) bar->focusable = false;
-        append(bar);
+        m.info("Internal Flash", pushVal(val));
+        m.progress(intCapPct_);
     }
 
     // ── SD card ───────────────────────────────────────────────────────────────
     const auto& sd = cached_.sdInfo;
     if (!sd.mounted) {
-        ListEntry e; e.label = "SD Card"; e.value = "Not mounted";
-        append(ListItemRow(a, e));
+        m.info("SD Card", "Not mounted");
     } else {
         // Show capacity if the backend reported it.
         std::string sdVal;
@@ -131,27 +110,29 @@ aether::ui::UiNode* StorageSettingsScreen::build(NodeArena& a, Runtime& /*rt*/) 
             sdVal = fmtBytes(cached_.extVol.usedBytes) + " used";
             sdCapPct_ = 0;
         }
-        {
-            ListEntry e; e.label = "SD Card"; e.value = pushVal(sdVal);
-            append(ListItemRow(a, e));
-        }
-        {
-            auto* bar = Slider(a, &sdCapPct_, 0, 100, 0, nullptr, nullptr);
-            if (bar) bar->focusable = false;
-            append(bar);
-        }
-        // Eject action row.
-        {
-            ListEntry e;
-            e.label   = "Eject SD Card";
-            e.chevron = true;
-            e.onPress = onEjectSd;
-            e.user    = this;
-            append(ListItemRow(a, e));
-        }
+        m.info("SD Card", pushVal(sdVal));
+        m.progress(sdCapPct_);
+        // Eject action row — gated behind a confirmation modal.
+        m.nav("Eject SD Card", [](void* u){
+            auto* self = S(u);
+            self->confirm_.setup("Eject SD Card", "Safely eject the\nSD card?", "Eject",
+                                 doEject, self, /*danger=*/false);
+            self->rt_.view().push(self->confirm_);
+        });
     }
 
-    return View(a, root, { list });
+    return m.build();
+}
+#undef S
+
+void StorageSettingsScreen::doEject(void* u) {
+    auto* self = static_cast<StorageSettingsScreen*>(u);
+    self->rt_.view().goBack();   // pop the modal
+    auto* svc = self->rt_.container().resolve<StorageService>();
+    if (!svc) return;
+    self->runBusy("Ejecting…",
+                  [svc] { svc->ejectSd(); },
+                  [self] { self->onResume(); });   // fresh async load reflects ejected state
 }
 
 } // namespace nema

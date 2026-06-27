@@ -11,29 +11,18 @@ using namespace aether::ui;
 CameraSettingsScreen::CameraSettingsScreen(Runtime& rt) : ComponentScreen(rt, 64) {}
 
 void CameraSettingsScreen::onResume() {
-    scroll_.scrollMain = 0;
-    state_.focus.focused = 0;
     rt_.view().requestRedraw();
 }
 
 UiNode* CameraSettingsScreen::build(NodeArena& a, Runtime& rt) {
     rows_.clear();
 
-    Style root; root.dir = FlexDir::Col; root.flexGrow = 1; root.align = Align::Stretch;
-
-    UiNode* list = ListContainer(a, scroll_, {});
-    UiNode* prev = nullptr;
-    auto append = [&](UiNode* n) {
-        if (!n) return;
-        if (!prev) list->firstChild = n; else prev->nextSibling = n;
-        prev = n;
-    };
-
-    append(ListSection(a, "Cameras"));
+    MenuBuilder m(a, scroll_, this);
+    m.section("Cameras");
 
     if (rt.camera().count() == 0) {
         ListEntry e; e.label = "No camera hardware";
-        append(ListItemRow(a, e));
+        m.add(ListItemRow(a, e));
     } else {
         rows_.reserve((size_t)rt.camera().count());
         for (int i = 0; i < rt.camera().count(); i++) {
@@ -43,15 +32,11 @@ UiNode* CameraSettingsScreen::build(NodeArena& a, Runtime& rt) {
                           (int)cam->frameWidth(), (int)cam->frameHeight());
             rows_.push_back(buf);
         }
-        for (int i = 0; i < rt.camera().count(); i++) {
-            ListEntry e;
-            e.label = rt.camera().desc(i);
-            e.value = rows_[(size_t)i].c_str();
-            append(ListItemRow(a, e));
-        }
+        for (int i = 0; i < rt.camera().count(); i++)
+            m.info(rt.camera().desc(i), rows_[(size_t)i].c_str());
     }
 
-    return View(a, root, { list });
+    return m.build();
 }
 
 } // namespace nema

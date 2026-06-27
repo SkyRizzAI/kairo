@@ -305,6 +305,10 @@ size_t Runtime::logCount() const {
     return ms ? ms->entries().size() : 0;
 }
 
+void Runtime::logClear() {
+    if (auto* ms = dynamic_cast<MemorySink*>(memorySink_.get())) ms->clear();
+}
+
 aether::ui::UiProfile Runtime::uiProfile() const {
     return aether::ui::UiProfile::fromCapabilities(*capabilities_);
 }

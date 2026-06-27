@@ -100,12 +100,6 @@ void SleepSettingsScreen::toggleStatusBar() {
     rt_.view().requestRedraw();
 }
 
-void SleepSettingsScreen::sleepAdj (void* u, int d) { static_cast<SleepSettingsScreen*>(u)->cycleSleep(d); }
-void SleepSettingsScreen::lockAdj  (void* u, int d) { static_cast<SleepSettingsScreen*>(u)->cycleLock(d); }
-void SleepSettingsScreen::scaleAdj (void* u, int d) { static_cast<SleepSettingsScreen*>(u)->cycleScale(d); }
-void SleepSettingsScreen::rotAdj   (void* u, int d) { static_cast<SleepSettingsScreen*>(u)->cycleRotation(d); }
-void SleepSettingsScreen::fpsAdj   (void* u, int)   { static_cast<SleepSettingsScreen*>(u)->toggleFps(); }
-void SleepSettingsScreen::statusAdj(void* u, int)   { static_cast<SleepSettingsScreen*>(u)->toggleStatusBar(); }
 
 void SleepSettingsScreen::onResume() {
     sleepIdx_ = findSleepIdx();
@@ -120,38 +114,26 @@ void SleepSettingsScreen::onResume() {
     std::snprintf(infoPhysical_, sizeof(infoPhysical_), "%ux%u", pw, ph);
     std::snprintf(infoScale_,    sizeof(infoScale_),    "%.4gx", (double)c.scale());
 
-    scroll_.scrollMain   = 0;
-    state_.focus.focused = 0;
     rt_.view().requestRedraw();
 }
 
+#define S(u) static_cast<SleepSettingsScreen*>(u)
+
 UiNode* SleepSettingsScreen::build(NodeArena& a, Runtime&) {
-    Style root; root.dir = FlexDir::Col; root.flexGrow = 1; root.align = Align::Stretch;
-
-    auto input = [&](const char* label, const char* value, void (*adj)(void*, int)) {
-        ListInput e; e.label = label; e.value = value; e.onAdjust = adj; e.user = this;
-        return ListInputRow(a, e);
-    };
-    auto info = [&](const char* label, const char* value) {
-        ListEntry e; e.label = label; e.value = value;
-        return ListItemRow(a, e);
-    };
-
-    return View(a, root, {
-        ListContainer(a, scroll_, {
-            input("Sleep After",       kSleepOpts[sleepIdx_].label, sleepAdj),
-            input("Lock Screen After", kLockOpts[lockIdx_].label,   lockAdj),
-            input("Debug FPS",         rt_.showFps() ? "ON" : "OFF", fpsAdj),
-            input("Status Bar",        rt_.config().getIntOr("aether", "statusbar", 1) ? "ON" : "OFF",
-                                                               statusAdj),
-            input("UI Scale",          kScaleLabels[scaleIdx_],     scaleAdj),
-            input("Rotation",          kRotLabels[rotIdx_],         rotAdj),
-            ListSection(a, "Info"),
-            info("Logical",  infoLogical_),
-            info("Physical", infoPhysical_),
-            info("Scale",    infoScale_),
-        }),
-    });
+    MenuBuilder m(a, scroll_, this);
+    m.input ("Sleep After",       kSleepOpts[sleepIdx_].label, [](void* u, int d){ S(u)->cycleSleep(d); });
+    m.input ("Lock Screen After", kLockOpts[lockIdx_].label,   [](void* u, int d){ S(u)->cycleLock(d); });
+    m.toggle("Debug FPS",         rt_.showFps(),                       [](void* u){ S(u)->toggleFps(); });
+    m.toggle("Status Bar",        rt_.config().getIntOr("aether", "statusbar", 1) != 0, [](void* u){ S(u)->toggleStatusBar(); });
+    m.input ("UI Scale",          kScaleLabels[scaleIdx_],     [](void* u, int d){ S(u)->cycleScale(d); });
+    m.input ("Rotation",          kRotLabels[rotIdx_],         [](void* u, int d){ S(u)->cycleRotation(d); });
+    m.section("Info");
+    m.info("Logical",  infoLogical_);
+    m.info("Physical", infoPhysical_);
+    m.info("Scale",    infoScale_);
+    return m.build();
 }
+
+#undef S
 
 } // namespace nema

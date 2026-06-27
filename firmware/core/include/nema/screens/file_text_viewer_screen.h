@@ -24,11 +24,15 @@ public:
     aether::ui::UiNode* build(aether::ui::NodeArena& a, Runtime& rt) override;
 
 private:
+    void finishRead();   // UI-thread: split readData_ into lines_ after the async read
+
     static constexpr size_t kMaxBytes = 16 * 1024;
     static constexpr size_t kMaxLines = 480;
 
     std::string              path_;
     std::vector<std::string> lines_;
+    std::vector<uint8_t>     readData_;       // async read buffer (worker → finishRead)
+    bool                     readOk_    = false;
     bool                     truncated_ = false;
     aether::ui::ScrollState  scroll_;
     char                     titleBuf_[64] = {};

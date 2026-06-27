@@ -20,12 +20,21 @@ export interface SliderProps extends Common {
   value: number; min?: number; max?: number; step?: number;
   onChange?: (v: number) => void;
 }
+// On/off switch — same native component the built-in settings use. <Switch on={...}/>
+export interface SwitchProps extends Common { on?: boolean }
+// Read-only progress/usage bar (0..100). <ProgressBar pct={60}/>
+export interface ProgressBarProps extends Common { pct: number }
+// Animated busy spinner. <Spinner size={13}/>
+export interface SpinnerProps extends Common { size?: number }
 
-export const View       = intrinsic("View")       as (p: ViewProps) => KElement;
-export const Text       = intrinsic("Text")       as (p: TextProps) => KElement;
-export const Pressable  = intrinsic("Pressable")  as (p: PressableProps) => KElement;
-export const ScrollView = intrinsic("Scroll")     as (p: ScrollViewProps) => KElement;
-export const Slider     = intrinsic("Slider")     as (p: SliderProps) => KElement;
+export const View        = intrinsic("View")        as (p: ViewProps) => KElement;
+export const Text        = intrinsic("Text")        as (p: TextProps) => KElement;
+export const Pressable   = intrinsic("Pressable")   as (p: PressableProps) => KElement;
+export const ScrollView  = intrinsic("Scroll")      as (p: ScrollViewProps) => KElement;
+export const Slider      = intrinsic("Slider")      as (p: SliderProps) => KElement;
+export const Switch      = intrinsic("Switch")      as (p: SwitchProps) => KElement;
+export const ProgressBar = intrinsic("ProgressBar") as (p: ProgressBarProps) => KElement;
+export const Spinner     = intrinsic("Spinner")     as (p: SpinnerProps) => KElement;
 
 // Row/Col are Views with a forced direction (sugar, like the C builders).
 export const Row: (p: ViewProps) => KElement = (p) =>

@@ -28,11 +28,6 @@ private:
     RemoteAuthStore* store();
     void redraw();
 
-    static void cbToggleEnabled(void* u);
-    static void cbSetPassword(void* u);
-    static void cbClearPassword(void* u);
-    static void cbLogoutAll(void* u);
-
     RemoteAuthStore*    store_ = nullptr;
     St                  st_    = St::List;
     bool                swallowCode_ = false;

@@ -4,10 +4,14 @@
 # each resulting .papp.zip to a Palanu device over palanu (serial/WS).
 #
 # Flow:
-#   1. Scan examples/ for apps (any dir with a manifest.json).
+#   1. Scan examples/ RECURSIVELY for apps (any dir with a manifest.json), at any
+#      nesting depth — so category subfolders work, e.g.:
+#          examples/ui/counter        examples/network/wifi-marauder
+#          examples/system/sysinfo    examples/hbd            (root, uncategorised)
 #   2. Build them all via the app-sdk builder (JS + WASM).
 #   3. Prompt for a device id (palanu alias) — press Enter to skip deploy (build only).
-#   4. palanu cp each dist/*.papp.zip → device:<id>:/sd/apps/ (palanu auto-unzips to .papp).
+#   4. palanu cp each dist/*.papp.zip → device:<id>:/sd/apps/<category>/ (preserving
+#      the examples/ subpath; palanu auto-unzips, the device scans /sd/apps recursively).
 #
 # Registered in package.json as "install-all-examples-apps".
 # Usage:  bun run install-all-examples-apps
@@ -22,16 +26,22 @@ BUILD=(bun run packages/app-sdk/bin/build.ts)
 TMP="${CLAUDE_JOB_DIR:-/tmp}/tmp"
 mkdir -p "$TMP" 2>/dev/null || TMP="/tmp"
 
-# ── 1. Scan ─────────────────────────────────────────────────────────────────
-echo "🔍 Scanning examples/ for apps (dirs with a manifest.json)…"
+# ── 1. Scan (recursive, any depth) ──────────────────────────────────────────
+# Each "app" is stored as its path RELATIVE to examples/ (e.g. "ui/counter",
+# "hbd"). dist/ and node_modules/ are pruned so build outputs aren't rescanned.
+echo "🔍 Scanning examples/ recursively for apps (dirs with a manifest.json)…"
 apps=()
-for m in examples/*/manifest.json; do
-  [ -e "$m" ] || continue
-  apps+=("$(basename "$(dirname "$m")")")
-done
+while IFS= read -r m; do
+  dir="$(dirname "$m")"
+  apps+=("${dir#examples/}")            # strip leading "examples/"
+done < <(
+  find examples \
+    \( -type d \( -name dist -o -name node_modules \) -prune \) -o \
+    -type f -name manifest.json -print | sort
+)
 
 if [ "${#apps[@]}" -eq 0 ]; then
-  echo "❌ No example apps found (no examples/*/manifest.json)."
+  echo "❌ No example apps found (no examples/**/manifest.json)."
   exit 1
 fi
 echo "   Found ${#apps[@]}: ${apps[*]}"
@@ -41,12 +51,13 @@ echo
 echo "🔨 Building…"
 built=()
 for app in "${apps[@]}"; do
-  printf "   • %-22s " "$app"
-  if "${BUILD[@]}" --dir "examples/$app" >"$TMP/build-$app.log" 2>&1; then
+  printf "   • %-30s " "$app"
+  log="$TMP/build-${app//\//-}.log"      # flatten slashes for the log filename
+  if "${BUILD[@]}" --dir "examples/$app" >"$log" 2>&1; then
     echo "✓"
     built+=("$app")
   else
-    echo "✗  (log: $TMP/build-$app.log)"
+    echo "✗  (log: $log)"
   fi
 done
 echo "   Built ${#built[@]}/${#apps[@]}."
@@ -69,25 +80,36 @@ fi
 read -rsp "   Device password (Enter for none): " PW; echo
 echo
 
-# ── 4. Deploy ───────────────────────────────────────────────────────────────
+# ── 4. Deploy (preserve category subpath) ───────────────────────────────────
 echo "🚀 Deploying to device:$DEVICE:/sd/apps/ …"
 ok=0; fail=0
 for app in "${built[@]}"; do
   zip="$(ls "examples/$app/dist/"*.papp.zip 2>/dev/null | head -1)"
   if [ -z "$zip" ]; then
-    printf "   • %-22s ✗  (no .papp.zip)\n" "$app"
+    printf "   • %-30s ✗  (no .papp.zip)\n" "$app"
     fail=$((fail + 1)); continue
   fi
-  printf "   • %-30s " "$(basename "$zip")"
-  if [ -n "$PW" ]; then
-    bun run palanu cp "$zip" "device:$DEVICE:/sd/apps/" --password "$PW" >"$TMP/cp-$app.log" 2>&1
+
+  # category = the directory part of the relative path ("ui/counter" → "ui",
+  # "hbd" → ""). Deploy into /sd/apps/<category>/ so the on-device recursive
+  # scanner keeps the same folder structure.
+  category="$(dirname "$app")"
+  if [ "$category" = "." ]; then
+    dest="device:$DEVICE:/sd/apps/"
   else
-    bun run palanu cp "$zip" "device:$DEVICE:/sd/apps/" >"$TMP/cp-$app.log" 2>&1
+    dest="device:$DEVICE:/sd/apps/$category/"
+  fi
+
+  printf "   • %-40s " "$category/$(basename "$zip")"
+  if [ -n "$PW" ]; then
+    bun run palanu cp "$zip" "$dest" --password "$PW" >"$TMP/cp-${app//\//-}.log" 2>&1
+  else
+    bun run palanu cp "$zip" "$dest" >"$TMP/cp-${app//\//-}.log" 2>&1
   fi
   if [ $? -eq 0 ]; then
     echo "✓"; ok=$((ok + 1))
   else
-    echo "✗  (log: $TMP/cp-$app.log)"; fail=$((fail + 1))
+    echo "✗  (log: $TMP/cp-${app//\//-}.log)"; fail=$((fail + 1))
   fi
 done
 

@@ -1,9 +1,10 @@
 #pragma once
 #include "nema/ui/component_screen.h"
+#include "nema/screens/confirm_modal.h"
 #include "nema/hal/bluetooth.h"
 #include <vector>
 #include <string>
-#include <atomic>
+#include <cstdint>
 
 namespace nema {
 
@@ -30,11 +31,8 @@ private:
     void setEnabled(bool on);
     void redraw();   // mark model dirty (rebuild tree) + request a view redraw
 
-    static void cbToggleEnable(void* u);
-    static void cbToggleAdv(void* u);
-    static void cbConfirmPair(void* u);
-    static void cbRejectPair(void* u);
-    static void cbForget(void* u);
+    static void cbForget(void* u);   // shows the confirm modal
+    static void doForget(void* u);   // runs after the user confirms
 
     IBluetoothController* ctrl_ = nullptr;
     IBleAdapter*          ble_  = nullptr;
@@ -44,7 +42,9 @@ private:
     std::string           passkey_;
     std::string           pairPrompt_;   // stable backing for the pairing Text node
     std::vector<BondRow>  bonds_;
-    std::atomic<bool>     busy_{false};
+    ConfirmModal          confirm_;
+    char                  confirmBody_[64] = {};
+    uint8_t               pendingAddr_[6] = {};   // device addr to forget (copied; survives rebuild)
 };
 
 } // namespace nema

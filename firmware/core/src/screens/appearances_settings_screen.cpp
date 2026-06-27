@@ -145,14 +145,6 @@ void AppearancesSettingsScreen::openDesktopSetting() {
     rt_.view().navigate(desktopSetting_);
 }
 
-void AppearancesSettingsScreen::themeAdj(void* u, int d)    { static_cast<AppearancesSettingsScreen*>(u)->cycleTheme(d); }
-void AppearancesSettingsScreen::darkAdj(void* u, int)      { static_cast<AppearancesSettingsScreen*>(u)->toggleDark(); }
-void AppearancesSettingsScreen::desktopAdj(void* u, int d)  { static_cast<AppearancesSettingsScreen*>(u)->cycleDesktop(d); }
-void AppearancesSettingsScreen::launcherAdj(void* u, int d) { static_cast<AppearancesSettingsScreen*>(u)->cycleLauncher(d); }
-void AppearancesSettingsScreen::assetAdj(void* u, int d)    { static_cast<AppearancesSettingsScreen*>(u)->cycleAsset(d); }
-void AppearancesSettingsScreen::fontAdj(void* u, int d)     { static_cast<AppearancesSettingsScreen*>(u)->cycleFont(d); }
-void AppearancesSettingsScreen::onDesktopSetting(void* u)   { static_cast<AppearancesSettingsScreen*>(u)->openDesktopSetting(); }
-
 void AppearancesSettingsScreen::onResume() {
     themeIdx_    = findThemeIdx();
     darkOn_      = rt_.config().getIntOr("aether", "dark", 0) != 0;
@@ -167,38 +159,29 @@ void AppearancesSettingsScreen::onResume() {
 
     scanFontPacks();
 
-    scroll_.scrollMain   = 0;
-    state_.focus.focused = 0;
     rt_.view().requestRedraw();
 }
 
+// Cast the MenuBuilder's user pointer back to this screen, inside the inline handler lambdas.
+#define S(u) static_cast<AppearancesSettingsScreen*>(u)
+
 UiNode* AppearancesSettingsScreen::build(NodeArena& a, Runtime&) {
-    Style root; root.dir = FlexDir::Col; root.flexGrow = 1; root.align = Align::Stretch;
-
-    auto input = [&](const char* label, const char* value, void (*adj)(void*, int)) {
-        ListInput e; e.label = label; e.value = value; e.onAdjust = adj; e.user = this;
-        return ListInputRow(a, e);
-    };
-    auto nav = [&](const char* label, void (*press)(void*)) {
-        ListEntry e; e.label = label; e.chevron = true; e.onPress = press; e.user = this;
-        return ListItemRow(a, e);
-    };
-
     // The colour-theme selector only makes sense on a colour-capable panel; a true
     // B&W display (e-ink) hides it. Dark mode (= invert/swap) stays on both.
     bool color = rt_.canvas().driver().supportsColor();
 
-    return View(a, root, {
-        ListContainer(a, scroll_, {
-            color ? input("Theme", kThemeNames[themeIdx_], themeAdj) : nullptr,
-            input("Dark Mode",      darkOn_ ? "On" : "Off",        darkAdj),
-            input("Desktop",        kDesktopLabels[desktopIdx_],   desktopAdj),
-            nav  ("Desktop Setting",                               onDesktopSetting),
-            input("Launcher",       kLauncherLabels[launcherIdx_], launcherAdj),
-            input("Asset Pack",     kAssetNames[assetIdx_],        assetAdj),
-            input("Font",           fontName_,                     fontAdj),
-        }),
-    });
+    MenuBuilder m(a, scroll_, this);
+    if (color)
+        m.input("Theme", kThemeNames[themeIdx_], [](void* u, int d){ S(u)->cycleTheme(d); });
+    m.toggle("Dark Mode",      darkOn_,                       [](void* u){ S(u)->toggleDark(); });
+    m.input ("Desktop",        kDesktopLabels[desktopIdx_],   [](void* u, int d){ S(u)->cycleDesktop(d); });
+    m.nav   ("Desktop Setting",                               [](void* u){ S(u)->openDesktopSetting(); });
+    m.input ("Launcher",       kLauncherLabels[launcherIdx_], [](void* u, int d){ S(u)->cycleLauncher(d); });
+    m.input ("Asset Pack",     kAssetNames[assetIdx_],        [](void* u, int d){ S(u)->cycleAsset(d); });
+    m.input ("Font",           fontName_,                     [](void* u, int d){ S(u)->cycleFont(d); });
+    return m.build();
 }
+
+#undef S
 
 } // namespace nema

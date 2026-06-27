@@ -157,6 +157,7 @@ public:
     // it avoids assuming contiguous storage (the sink is a std::deque).
     void logForEach(void (*fn)(void* ctx, const struct LogEntry&), void* ctx) const;
     size_t logCount() const;
+    void   logClear();   // empty the in-memory log ring buffer (LogsScreen "Clear logs")
 
     BootPhase phase()    const;
     int       exitCode() const;

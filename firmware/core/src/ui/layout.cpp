@@ -1,5 +1,6 @@
 #include "nema/ui/layout.h"
 #include "nema/ui/draw.h"
+#include "nema/ui/ui_constants.h"
 
 namespace aether::ui {
 using namespace nema;  // Plan 80: nema core symbols (Canvas/Key/input/anim/fonts) in scope
@@ -143,6 +144,17 @@ static void arrangeScroll(UiNode* n) {
         n->scroll->viewportMain = (uint16_t)(viewportMain > 0 ? viewportMain : 0);
     }
 
+    // Responsive scrollbar gutter: when a vertical scrollbar is shown (content overflows),
+    // reserve space on the cross axis so stretched rows stay clear of it — and reclaim that
+    // space when the bar disappears. The dashed bar sits ~5px in from the container's right
+    // edge; the inner box already drops `pad`, so reserve the remainder. This is why list
+    // rows need NO per-row scrollbar gutter: the row itself narrows, so its focus fill and
+    // right-aligned accessories (Switch/chevron) reposition automatically.
+    const bool vbar = !isRow && n->scroll && contentMain > viewportMain;
+    int reserve = vbar ? ((int)nema::display::SCROLLBAR_RESERVE - pad) : 0;
+    if (reserve < 0) reserve = 0;
+    const int crossUsable = crossAvail - reserve;
+
     // Lay children stacked at their natural main size, offset by the scroll pos.
     int cursor = (isRow ? innerX : innerY) - sc;
     for (UiNode* k = n->firstChild; k; k = k->nextSibling) {
@@ -153,15 +165,30 @@ static void arrangeScroll(UiNode* n) {
         cursor += isRow ? k->style.ml : k->style.mt;
 
         if (s.align == Align::Stretch) {
-            if (isRow) k->h = (uint16_t)crossAvail;
-            else       k->w = (uint16_t)crossAvail;
+            // Subtract the child's cross-axis margins so a stretched child with ml/mr (or
+            // mt/mb on a Row scroll) is inset on BOTH sides instead of overflowing — the
+            // position shift below adds ml/mt, so the width must drop ml+mr / mt+mb.
+            if (isRow) {
+                int hh = crossUsable - k->style.mt - k->style.mb;
+                k->h = (uint16_t)(hh > 0 ? hh : 0);
+            } else {
+                int ww = crossUsable - k->style.ml - k->style.mr;
+                k->w = (uint16_t)(ww > 0 ? ww : 0);
+            }
+        }
+        // A wrapped Text now has its final (stretched) width → recompute its height so the
+        // paragraph isn't clipped to one line. True <p>: width = container, height = auto.
+        if (!isRow && k->type == NodeType::Text && k->wrap && k->text && k->w > 0) {
+            uint16_t p2 = (uint16_t)(k->style.padding * 2);
+            uint16_t iw = (k->w > p2) ? (uint16_t)(k->w - p2) : k->w;
+            k->h = (uint16_t)(aether::ui::draw::measureMultilineH(k->text, iw, k->role) + p2);
         }
         int crossSize = isRow ? k->h : k->w;
         int crossOff = 0;
         switch (s.align) {
             case Align::Start:   crossOff = 0; break;
-            case Align::Center:  crossOff = (crossAvail - crossSize) / 2; break;
-            case Align::End:     crossOff = crossAvail - crossSize; break;
+            case Align::Center:  crossOff = (crossUsable - crossSize) / 2; break;
+            case Align::End:     crossOff = crossUsable - crossSize; break;
             case Align::Stretch: crossOff = 0; break;
         }
         if (crossOff < 0) crossOff = 0;
@@ -177,6 +204,14 @@ static void arrangeScroll(UiNode* n) {
         // F2.1: advance cursor by main-axis trailing margin after placing child
         cursor += isRow ? k->style.mr : k->style.mb;
         arrange(k);
+    }
+
+    // Re-derive content length from the ACTUAL laid-out children — heights may have grown
+    // (e.g. wrapped paragraphs) since measure(), so the scrollbar + clamp see the true size.
+    if (n->scroll) {
+        int startMain = (isRow ? innerX : innerY) - sc;
+        int extent = cursor - startMain - (int)s.gap;   // minus the trailing gap
+        n->scroll->contentMain = (uint16_t)(extent > 0 ? extent : 0);
     }
 
     // F2.4: place absolute children pinned to parent origin after relative flow
@@ -277,10 +312,18 @@ static void arrange(UiNode* n) {
         // F2.1: advance cursor by main-axis leading margin before placing child
         cursor += isRow ? k->style.ml : k->style.mt;
 
-        // Cross-axis sizing/positioning.
+        // Cross-axis sizing/positioning. Subtract the child's cross-axis margins so a
+        // stretched child with margins is inset on both sides (consistent with
+        // arrangeScroll) instead of overflowing when its position is shifted by ml/mt.
         if (s.align == Align::Stretch) {
-            if (isRow) k->h = (uint16_t)crossAvail;
-            else       k->w = (uint16_t)crossAvail;
+            if (isRow) { int hh = crossAvail - k->style.mt - k->style.mb; k->h = (uint16_t)(hh > 0 ? hh : 0); }
+            else       { int ww = crossAvail - k->style.ml - k->style.mr; k->w = (uint16_t)(ww > 0 ? ww : 0); }
+        }
+        // Wrapped Text: recompute height from the final stretched width (true <p>).
+        if (!isRow && k->type == NodeType::Text && k->wrap && k->text && k->w > 0) {
+            uint16_t p2 = (uint16_t)(k->style.padding * 2);
+            uint16_t iw = (k->w > p2) ? (uint16_t)(k->w - p2) : k->w;
+            k->h = (uint16_t)(aether::ui::draw::measureMultilineH(k->text, iw, k->role) + p2);
         }
         int crossSize = isRow ? k->h : k->w;
         int crossOff = 0;

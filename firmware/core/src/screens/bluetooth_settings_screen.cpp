@@ -13,7 +13,7 @@ namespace nema {
 
 using namespace aether::ui;
 
-BluetoothSettingsScreen::BluetoothSettingsScreen(Runtime& rt) : ComponentScreen(rt, 256) {
+BluetoothSettingsScreen::BluetoothSettingsScreen(Runtime& rt) : ComponentScreen(rt, 256), confirm_(rt) {
     rt_.events().subscribe(events::BtPairRequest, [this](const Event& e) {
         passkey_.clear();
         for (auto& f : e.payload) if (std::strcmp(f.key, "passkey") == 0) passkey_ = f.value;
@@ -47,103 +47,96 @@ void BluetoothSettingsScreen::onResume() {
 
 void BluetoothSettingsScreen::setEnabled(bool on) {
     IBluetoothController* c = ctrl();
-    if (!c || busy_) return;
-    busy_ = true;
-    if (on) {
-        IBleAdapter* b = ble();
-        rt_.tasks().submit([c, b] { if (c->enable(BtMode::Ble) && b) b->startAdvertising(); },
-                           [this] { busy_ = false; redraw(); });
-    } else {
-        rt_.tasks().submit([c] { c->disable(); },
-                           [this] { busy_ = false; redraw(); });
-    }
-    redraw();
+    if (!c) return;
+    IBleAdapter* b = on ? ble() : nullptr;
+    runBusy(on ? "Turning on…" : "Turning off…",
+            [c, b, on] { if (on) { if (c->enable(BtMode::Ble) && b) b->startAdvertising(); }
+                         else      c->disable(); },
+            [this] { redraw(); });
 }
 
-void BluetoothSettingsScreen::cbToggleEnable(void* u) {
-    auto* s = static_cast<BluetoothSettingsScreen*>(u);
-    s->setEnabled(!(s->ctrl() && s->ctrl()->isEnabled()));
-}
-void BluetoothSettingsScreen::cbToggleAdv(void* u) {
-    auto* s = static_cast<BluetoothSettingsScreen*>(u);
-    IBleAdapter* b = s->ble();
-    if (!b) return;
-    if (b->isAdvertising()) b->stopAdvertising(); else b->startAdvertising();
-    s->redraw();
-}
-void BluetoothSettingsScreen::cbConfirmPair(void* u) {
-    auto* s = static_cast<BluetoothSettingsScreen*>(u);
-    if (s->ble()) s->ble()->confirmPairing(true);
-    s->pendingPair_ = false; s->redraw();
-}
-void BluetoothSettingsScreen::cbRejectPair(void* u) {
-    auto* s = static_cast<BluetoothSettingsScreen*>(u);
-    if (s->ble()) s->ble()->confirmPairing(false);
-    s->pendingPair_ = false; s->redraw();
-}
 void BluetoothSettingsScreen::cbForget(void* u) {
     auto* r = static_cast<BondRow*>(u);
-    if (r->self->ble()) r->self->ble()->forget(r->addr);
-    r->self->redraw();
+    auto* s = r->self;
+    std::memcpy(s->pendingAddr_, r->addr, 6);   // bonds_ may rebuild; copy the target addr
+    std::snprintf(s->confirmBody_, sizeof(s->confirmBody_), "Forget \"%s\"?", r->name.c_str());
+    s->confirm_.setup("Forget Device", s->confirmBody_, "Forget", doForget, s, /*danger=*/true);
+    s->rt_.view().push(s->confirm_);
 }
+void BluetoothSettingsScreen::doForget(void* u) {
+    auto* s = static_cast<BluetoothSettingsScreen*>(u);
+    s->rt_.view().goBack();   // pop the modal
+    IBleAdapter* b = s->ble();
+    if (!b) return;
+    uint8_t addr[6];
+    std::memcpy(addr, s->pendingAddr_, 6);
+    s->runBusy("Forgetting…",
+               [b, addr] { b->forget(addr); },
+               [s] { s->redraw(); });
+}
+
+#define S(u) static_cast<BluetoothSettingsScreen*>(u)
 
 UiNode* BluetoothSettingsScreen::build(NodeArena& a, Runtime& rt) {
     bonds_.clear();
     IBluetoothController* c = ctrl();
     IBleAdapter*          b = ble();
 
-    Style root; root.dir = FlexDir::Col; root.flexGrow = 1; root.align = Align::Stretch;
-
-    UiNode* list = ListContainer(a, scroll_, {});
-    UiNode* prev = nullptr;
-    auto append = [&](UiNode* n) {
-        if (!n) return;
-        if (!prev) list->firstChild = n; else prev->nextSibling = n;
-        prev = n;
-    };
+    MenuBuilder m(a, scroll_, this);
 
     if (!c) {
         ListEntry e; e.label = "No Bluetooth driver";
-        append(ListItemRow(a, e));
-        return View(a, root, { list });
+        m.add(ListItemRow(a, e));
+        return m.build();
     }
     if (!rt.capabilities().available(caps::BtBle) && !c->isEnabled()) {
         if (rt.capabilities().stateOf(caps::BtBle) == ResourceState::Fault) {
             ListEntry e; e.label = "Bluetooth unavailable";
-            append(ListItemRow(a, e));
-            return View(a, root, { list });
+            m.add(ListItemRow(a, e));
+            return m.build();
         }
     }
 
     bool en = c->isEnabled();
-    append(Toggle(a, "Bluetooth", en, cbToggleEnable, this));
+    m.toggle("Bluetooth", en, [](void* u){
+        S(u)->setEnabled(!(S(u)->ctrl() && S(u)->ctrl()->isEnabled()));
+    });
 
-    if (busy_) {
-        ListEntry e; e.label = "Working...";
-        append(ListItemRow(a, e));
-    } else if (en && b && b->isAdvertising()) {
+    if (en && b && b->isAdvertising()) {
         std::snprintf(statusBuf_, sizeof(statusBuf_), "Advertising as %s", c->deviceName());
         ListEntry e; e.label = statusBuf_;
-        append(ListItemRow(a, e));
+        m.add(ListItemRow(a, e));
     }
 
     if (pendingPair_ && b) {
         pairPrompt_ = "Pair? code " + passkey_;
-        append(ListSection(a, "Pair Request"));
-        ListEntry confirm; confirm.label = "Confirm"; confirm.chevron = true;
-        confirm.onPress = cbConfirmPair; confirm.user = this;
-        append(ListItemRow(a, confirm));
-        ListEntry reject; reject.label = "Reject"; reject.chevron = true;
-        reject.onPress = cbRejectPair; reject.user = this;
-        append(ListItemRow(a, reject));
+        m.section("Pair Request");
+        m.nav("Confirm", [](void* u){
+            if (S(u)->ble()) S(u)->ble()->confirmPairing(true);
+            S(u)->pendingPair_ = false; S(u)->redraw();
+        });
+        m.nav("Reject", [](void* u){
+            if (S(u)->ble()) S(u)->ble()->confirmPairing(false);
+            S(u)->pendingPair_ = false; S(u)->redraw();
+        });
     }
 
     if (en && b) {
-        append(Toggle(a, "Discoverable", b->isAdvertising(), cbToggleAdv, this));
+        m.toggle("Discoverable", b->isAdvertising(), [](void* u){
+            auto* self = S(u);
+            IBleAdapter* bl = self->ble();
+            if (!bl) return;
+            bool adv = bl->isAdvertising();
+            self->runBusy("Working…",
+                          [bl, adv] { if (adv) bl->stopAdvertising(); else bl->startAdvertising(); },
+                          [self] { self->redraw(); });
+        });
 
         size_t n = b->bondedCount();
-        if (n > 0) {
-            append(ListSection(a, "Paired Devices"));
+        m.section("Paired Devices");
+        if (n == 0) {
+            m.info("No paired devices", nullptr);
+        } else {
             for (size_t i = 0; i < n; i++) {
                 BtPeer p;
                 if (!b->bondedAt(i, p)) continue;
@@ -156,12 +149,14 @@ UiNode* BluetoothSettingsScreen::build(NodeArena& a, Runtime& rt) {
                 e.label   = r.name.c_str();
                 e.value   = "forget";
                 e.onPress = cbForget; e.user = &r;
-                append(ListItemRow(a, e));
+                m.add(ListItemRow(a, e));
             }
         }
     }
 
-    return View(a, root, { list });
+    return m.build();
 }
+
+#undef S
 
 } // namespace nema

@@ -1,5 +1,6 @@
 #pragma once
 #include "nema/ui/component_screen.h"
+#include "nema/screens/confirm_modal.h"
 #include "nema/services/storage_service.h"
 #include <string>
 #include <vector>
@@ -35,9 +36,11 @@ private:
     };
 
     static void onCapToggle(void* u);
-    static void onResetPerms(void* u);
+    static void onResetPerms(void* u);   // shows the confirm modal
+    static void doResetPerms(void* u);   // runs after the user confirms
     static void onMove(void* u);
-    static void onUninstall(void* u);
+    static void onUninstall(void* u);   // shows the confirm modal
+    static void doUninstall(void* u);   // runs after the user confirms
     static std::string fmtBytes(size_t bytes);
 
     std::string  appId_;
@@ -53,6 +56,9 @@ private:
 
     // CapRow entries for Toggle callbacks (indices match kSensitiveCaps order).
     CapRow       capRows_[8];
+
+    ConfirmModal confirm_;
+    char         confirmBody_[80] = {};
 };
 
 } // namespace nema

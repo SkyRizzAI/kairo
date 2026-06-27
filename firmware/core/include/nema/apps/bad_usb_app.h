@@ -36,7 +36,7 @@ protected:
     size_t arenaCapacity() const override { return 256; }
 
 private:
-    enum State { kMain, kScriptList, kRunning, kError };
+    enum State { kMain, kScriptList, kConfirm, kRunning, kError };
 
     void scanScripts(IFileSystem* fs);
     void startExecution(IFileSystem* fs, Runtime& rt);
@@ -44,6 +44,8 @@ private:
     void selectFocused(AppContext& ctx);
 
     static void cbRunScript(void* u);
+    static void cbConfirmRun(void* u);     // confirmed → start the (offensive) script
+    static void cbConfirmCancel(void* u);  // back to the script list
     static aether::ui::UiNode* renderScriptItem(
         aether::ui::NodeArena& a, int idx, bool focused, void* ud);
 
@@ -67,8 +69,8 @@ private:
     aether::ui::VirtualListState vlistScripts_;
     char scriptCountBuf_[16] = {};
     char runProgressBuf_[32] = {};
+    char confirmBody_[72]    = {};
     char errorMsg_[64]       = {};
-    bool suppressNext_ = false;
 };
 
 } // namespace nema

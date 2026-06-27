@@ -291,6 +291,25 @@ UiNode* JsEngine::reify(JSValueConst node, NodeArena& arena) {
         n->sliderMax = (int16_t)(JS_IsObject(props) ? getInt(ctx_, props, "max", 100) : 100);
         n->sliderStep = (int16_t)(JS_IsObject(props) ? getInt(ctx_, props, "step", 1) : 1);
         sliderCursor_++;
+    } else if (type == "Switch") {
+        // Native on/off switch — same component the built-in settings use. <Switch on={...}/>
+        n->type     = NodeType::Switch;
+        n->switchOn = JS_IsObject(props) ? (getInt(ctx_, props, "on", 0) != 0) : false;
+        if (n->style.width  == SIZE_AUTO) n->style.width  = 18;
+        if (n->style.height == SIZE_AUTO) n->style.height = 9;
+    } else if (type == "Spinner") {
+        // Native animated busy spinner. <Spinner size={13}/>
+        n->type = NodeType::Spinner;
+        int sz  = JS_IsObject(props) ? getInt(ctx_, props, "size", 13) : 13;
+        if (n->style.width  == SIZE_AUTO) n->style.width  = (uint16_t)sz;
+        if (n->style.height == SIZE_AUTO) n->style.height = (uint16_t)sz;
+    } else if (type == "ProgressBar") {
+        // Native read-only progress bar — same component the built-in storage screen uses.
+        // <ProgressBar pct={0..100}/>
+        n->type        = NodeType::Progress;
+        int pct        = JS_IsObject(props) ? getInt(ctx_, props, "pct", 0) : 0;
+        n->progressPct = (uint8_t)(pct < 0 ? 0 : (pct > 100 ? 100 : pct));
+        if (n->style.height == SIZE_AUTO) n->style.height = 7;
     } else {
         n->type = NodeType::View;
     }

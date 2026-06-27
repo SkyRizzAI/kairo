@@ -15,12 +15,10 @@ namespace nema {
 using namespace aether::ui;
 
 ProfileSettingsScreen::ProfileSettingsScreen(Runtime& rt)
-    : ComponentScreen(rt, 160) {}
+    : ComponentScreen(rt, 160), confirm_(rt) {}
 
 void ProfileSettingsScreen::onResume() {
     editing_ = false;
-    scroll_.scrollMain = 0;
-    state_.focus.focused = 0;
     rt_.view().requestRedraw();
 }
 
@@ -30,8 +28,9 @@ void ProfileSettingsScreen::startEdit(Field f) {
     editField_ = f;
 
     if (f == Field::ClearPassword) {
-        p->clearPassword();
-        rt_.view().requestRedraw();
+        confirm_.setup("Clear Password", "Remove the device\npassword?", "Clear",
+                       doClearPassword, this, /*danger=*/true);
+        rt_.view().push(confirm_);
         return;
     }
 
@@ -66,6 +65,14 @@ void ProfileSettingsScreen::startEdit(Field f) {
 void ProfileSettingsScreen::onSelect(void* u) {
     auto* it = static_cast<Item*>(u);
     it->self->startEdit(it->field);
+}
+
+void ProfileSettingsScreen::doClearPassword(void* u) {
+    auto* s = static_cast<ProfileSettingsScreen*>(u);
+    s->rt_.view().goBack();   // pop the modal
+    if (auto* p = s->rt_.container().resolve<ProfileService>())
+        p->clearPassword();
+    s->rt_.view().requestRedraw();   // NVS-only op; no busy spinner needed
 }
 
 void ProfileSettingsScreen::onAction(input::Action a) {
@@ -116,20 +123,11 @@ aether::ui::UiNode* ProfileSettingsScreen::build(NodeArena& a, Runtime& rt) {
 
     auto* p = rt.container().resolve<ProfileService>();
 
-    Style root; root.dir = FlexDir::Col; root.flexGrow = 1; root.align = Align::Stretch;
-
-    UiNode* list = ListContainer(a, scroll_, {});
-    UiNode* prev = nullptr;
-    auto append = [&](UiNode* n) {
-        if (!n) return;
-        if (!prev) list->firstChild = n; else prev->nextSibling = n;
-        prev = n;
-    };
+    MenuBuilder m(a, scroll_, this);
 
     if (!p) {
-        ListEntry e; e.label = "Not available";
-        append(ListItemRow(a, e));
-        return View(a, root, { list });
+        m.info("Not available", nullptr);
+        return m.build();
     }
 
     auto add = [&](Field f, const char* label, const char* detail) {
@@ -143,17 +141,19 @@ aether::ui::UiNode* ProfileSettingsScreen::build(NodeArena& a, Runtime& rt) {
     if (p->hasPassword())
         add(Field::ClearPassword, "Clear Password", nullptr);
 
-    append(ListSection(a, "Identity"));
+    m.section("Identity");
+    // Each row carries per-item userdata (&it) for onSelect, which nav() can't express
+    // (it fans out the single screen pointer), so build the rows via the add() escape hatch.
     for (auto& it : items_) {
         ListEntry e;
         e.label   = it.label;
         e.value   = it.detail[0] ? it.detail : nullptr;
         e.chevron = true;
         e.onPress = onSelect; e.user = &it;
-        append(ListItemRow(a, e));
+        m.add(ListItemRow(a, e));
     }
 
-    return View(a, root, { list });
+    return m.build();
 }
 
 } // namespace nema

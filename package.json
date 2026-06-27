@@ -5,7 +5,8 @@
   "private": true,
   "workspaces": [
     "packages/*",
-    "examples/*"
+    "examples/*",
+    "examples/*/*"
   ],
   "scripts": {
     "test": "cmake -S firmware -B firmware/build -G \"Unix Makefiles\" && cmake --build firmware/build -j && ctest --test-dir firmware/build --output-on-failure",
@@ -27,13 +28,13 @@
     "idl:gen:check": "bun run packages/idl/src/gen.ts --ast api/build/nema-api.json --out . --check",
     "idl:test": "cd packages/idl && bun test",
     "app:build": "bun run packages/app-sdk/bin/build.ts",
-    "app:build:counter": "bun run packages/app-sdk/bin/build.ts --dir examples/counter",
-    "app:build:sysinfo": "bun run packages/app-sdk/bin/build.ts --dir examples/sysinfo",
-    "app:build:web3-test": "bun run packages/app-sdk/bin/build.ts --dir examples/web3-test",
-    "app:build:counter-wasm": "bun run packages/app-sdk/bin/build.ts --dir examples/counter-wasm",
-    "app:build:canvas-demo-wasm": "bun run packages/app-sdk/bin/build.ts --dir examples/canvas-demo-wasm",
-    "app:build:wifi-marauder": "bun run packages/app-sdk/bin/build.ts --dir examples/wifi-marauder",
-    "app:build:network-tools": "bun run packages/app-sdk/bin/build.ts --dir examples/network-tools",
+    "app:build:counter": "bun run packages/app-sdk/bin/build.ts --dir examples/ui/counter",
+    "app:build:sysinfo": "bun run packages/app-sdk/bin/build.ts --dir examples/system/sysinfo",
+    "app:build:web3-test": "bun run packages/app-sdk/bin/build.ts --dir examples/web3/web3-test",
+    "app:build:counter-wasm": "bun run packages/app-sdk/bin/build.ts --dir examples/ui/counter-wasm",
+    "app:build:canvas-demo-wasm": "bun run packages/app-sdk/bin/build.ts --dir examples/ui/canvas-demo-wasm",
+    "app:build:wifi-marauder": "bun run packages/app-sdk/bin/build.ts --dir examples/network/wifi-marauder",
+    "app:build:network-tools": "bun run packages/app-sdk/bin/build.ts --dir examples/network/network-tools",
     "app:build:hbd": "bun run packages/app-sdk/bin/build.ts --dir examples/hbd",
     "app:build:all": "bun run app:build:counter && bun run app:build:sysinfo",
     "app:build:all-wasm": "bun run app:build:counter-wasm && bun run app:build:canvas-demo-wasm && bun run app:build:wifi-marauder && bun run app:build:network-tools && bun run app:build:hbd",

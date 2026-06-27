@@ -74,37 +74,24 @@ void DesktopSettingScreen::cycleWall(int dir) {
     rt_.view().requestRedraw();
 }
 
-void DesktopSettingScreen::fitAdj(void* u, int dir)    { static_cast<DesktopSettingScreen*>(u)->cycleFit(dir); }
-void DesktopSettingScreen::anchorAdj(void* u, int dir) { static_cast<DesktopSettingScreen*>(u)->cycleAnchor(dir); }
-void DesktopSettingScreen::wallAdj(void* u, int dir)   { static_cast<DesktopSettingScreen*>(u)->cycleWall(dir); }
-
 void DesktopSettingScreen::onResume() {
     fitIdx_    = findFitIdx();
     anchorIdx_ = findAnchorIdx();
     scanWallpapers();          // discover anims + sync wallIdx_ from config
-    scroll_.scrollMain = 0;
-    state_.focus.focused = 0;
     requestRedraw();
 }
 
+#define S(u) static_cast<DesktopSettingScreen*>(u)
+
 UiNode* DesktopSettingScreen::build(NodeArena& a, Runtime&) {
-    Style root; root.dir = FlexDir::Col; root.flexGrow = 1; root.align = Align::Stretch;
-
-    auto input = [&](const char* label, const char* value, void (*adj)(void*, int)) {
-        ListInput e;
-        e.label = label; e.value = value;
-        e.onAdjust = adj; e.user = this;
-        return ListInputRow(a, e);
-    };
-
-    return View(a, root, {
-        ListContainer(a, scroll_, {
-            ListSection(a, "Wallpaper"),
-            input("Wallpaper", wallNames_[wallIdx_],            wallAdj),
-            input("Fit",       shell::fitNames()[fitIdx_],      fitAdj),
-            input("Anchor",    shell::anchorNames()[anchorIdx_], anchorAdj),
-        }),
-    });
+    MenuBuilder m(a, scroll_, this);
+    m.section("Wallpaper");
+    m.input("Wallpaper", wallNames_[wallIdx_],             [](void* u, int d){ S(u)->cycleWall(d); });
+    m.input("Fit",       shell::fitNames()[fitIdx_],       [](void* u, int d){ S(u)->cycleFit(d); });
+    m.input("Anchor",    shell::anchorNames()[anchorIdx_], [](void* u, int d){ S(u)->cycleAnchor(d); });
+    return m.build();
 }
+
+#undef S
 
 } // namespace nema

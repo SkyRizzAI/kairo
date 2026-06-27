@@ -216,6 +216,14 @@ UiNode* SmartLabel(NodeArena& a, const char* text) {
     return Text(a, text, TextRole::Smart);
 }
 
+UiNode* Paragraph(NodeArena& a, const char* text, TextRole role) {
+    // A Text that word-wraps: the layout stretches its width to the container and recomputes
+    // its height from the wrapped lines (true <p>). Must live in a stretch container.
+    UiNode* n = Text(a, text, role);
+    if (n) n->wrap = true;
+    return n;
+}
+
 UiNode* Icon(NodeArena& a, const uint8_t* bitmap, uint8_t w_px, uint8_t h_px,
              uint8_t padding) {
     UiNode* n = a.alloc();
@@ -301,17 +309,21 @@ UiNode* ListItemRow(NodeArena& a, const ListEntry& e) {
         if (!prev) row->firstChild = n; else prev->nextSibling = n;
         prev = n;
     };
-    add(hspace(a, 5));                                  // label 5px inside the box
+    // 3 + the row's 2px gap = 5px label inset, matching ListInputRow (whose row has no
+    // gap). Using 5 here put the label at 7px and misaligned nav rows vs adjuster rows.
+    add(hspace(a, 3));
     if (e.leftIcon && e.iconW && e.iconH) {
         add(Icon(a, e.leftIcon, e.iconW, e.iconH, 0));
         add(hspace(a, 3));
     }
     add(label);
-    if (e.value && *e.value) add(Text(a, e.value, TextRole::Body));
-    if (e.chevron)           add(Text(a, ">", TextRole::Body));
-    // Right inset = GUTTER(5, the selectBox right inset for the scrollbar) + 5, so the
-    // chevron sits 5px inside the focus fill — symmetric with the 5px label inset on the left.
-    add(hspace(a, 10));
+    if (e.valueNode)              add(e.valueNode);                  // custom accessory (e.g. Switch)
+    else if (e.value && *e.value) add(Text(a, e.value, TextRole::Body));
+    if (e.chevron)               add(Text(a, ">", TextRole::Body));
+    // 5px right inset → chevron/value/accessory sits 5px inside the focus fill, symmetric
+    // with the 5px label inset on the left. The scrollbar gutter is handled by the scroll
+    // container (it narrows the row), so no extra inset is needed here.
+    add(hspace(a, 5));
     // Display-only rows (no onPress) are NOT focus stops — focus rings belong only
     // on selectable rows. A trailing info block is revealed by the scroll that
     // top-aligns the last selectable item, not by focusing the info itself (Plan 79).
@@ -326,17 +338,20 @@ UiNode* ListInputRow(NodeArena& a, const ListInput& e) {
     // on EVERY row. The label clips/marquees inside its column.
     constexpr uint16_t LEFT_W  = 11;   // label column ≈55% of the grow space
     constexpr uint16_t RIGHT_W = 9;    // value column ≈45%
-    constexpr uint16_t CHEV_W  = 12;   // fixed chevron column (reserved either way)
+    constexpr uint16_t CHEV_W  = 8;    // fixed chevron column (reserved either way)
 
     UiNode* label = SmartLabel(a, e.label ? e.label : "");
     if (label) { label->style.flexGrow = LEFT_W; label->style.flexZero = true; }
 
-    // Fixed-width chevron columns — glyph centered; reserved even when not shown
-    // so the value stays vertically aligned across rows.
-    Style cv; cv.dir = FlexDir::Row; cv.align = Align::Center; cv.justify = Justify::Center;
-    cv.width = CHEV_W;
-    UiNode* lchev = View(a, cv, { e.canPrev ? Text(a, "<", TextRole::Body) : nullptr });
-    UiNode* rchev = View(a, cv, { e.canNext ? Text(a, ">", TextRole::Body) : nullptr });
+    // Fixed-width chevron columns (reserved even when hidden, so the value column lines
+    // up across rows). The glyph HUGS the value: '<' right-aligned, '>' left-aligned, so
+    // it reads "<value>" with no gap between chevron and value.
+    Style cvL; cvL.dir = FlexDir::Row; cvL.align = Align::Center; cvL.justify = Justify::End;
+    cvL.width = CHEV_W;
+    Style cvR; cvR.dir = FlexDir::Row; cvR.align = Align::Center; cvR.justify = Justify::Start;
+    cvR.width = CHEV_W;
+    UiNode* lchev = View(a, cvL, { e.canPrev ? Text(a, "<", TextRole::Body) : nullptr });
+    UiNode* rchev = View(a, cvR, { e.canNext ? Text(a, ">", TextRole::Body) : nullptr });
 
     // Value column — centered between the chevrons, also flex-basis:0. SmartLabel fills
     // the full column width (flexGrow+flexZero) so availW in the renderer = column width,
@@ -354,7 +369,7 @@ UiNode* ListInputRow(NodeArena& a, const ListInput& e) {
     // Flat row: [5px] label | < | value | > | [4px]
     Style s; s.dir = FlexDir::Row; s.align = Align::Center;
     s.height = listRowH(); s.selectBox = true;
-    UiNode* n = View(a, s, { hspace(a, 5), label, lchev, vbox, rchev, hspace(a, 10) });
+    UiNode* n = View(a, s, { hspace(a, 5), label, lchev, vbox, rchev, hspace(a, 5) });
     if (n) { n->focusable = true; n->onAdjust = e.onAdjust; n->userdata = e.user; }
     return n;
 }
@@ -369,12 +384,117 @@ static UiNode* labelGrow(NodeArena& a, const char* label) {
 
 UiNode* Toggle(NodeArena& a, const char* label, bool on,
                void (*onToggle)(void*), void* userdata) {
-    uint8_t pad = aether::theme().space.sm;
-    Style s; s.dir = FlexDir::Row; s.padding = pad; s.align = Align::Center;
-    s.justify = Justify::SpaceBetween;
-    return Pressable(a, onToggle, userdata, s,
-                     { Text(a, label, TextRole::Body),
-                       Text(a, on ? "ON" : "OFF", TextRole::Caption) });
+    // A toggle is just a list row whose value reads ON/OFF — so it gets the SAME rounded
+    // focus fill, row height and left/right insets as every other row. (It used to be a
+    // bespoke Pressable with SpaceBetween padding and no selectBox, which looked off.)
+    ListEntry e;
+    e.label   = label;
+    e.value   = on ? "ON" : "OFF";
+    e.onPress = onToggle;
+    e.user    = userdata;
+    return ListItemRow(a, e);
+}
+
+UiNode* Switch(NodeArena& a, bool on) {
+    // A native-drawn 1-bit switch (see the renderer's NodeType::Switch branch):
+    //   OFF → rounded outline track, filled knob parked on the LEFT.
+    //   ON  → rounded FILLED track, knob punched out as a dark HOLE on the RIGHT.
+    // Drawn directly (not composed Views) so the ON knob can be a hole in the fill — the
+    // only way to show a distinct knob on a filled track in 1-bit. The whole thing uses
+    // foreground pixels, so the row's focus XOR-invert keeps it legible in both states.
+    UiNode* n = a.alloc();
+    n->type         = NodeType::Switch;
+    n->switchOn     = on;
+    n->style.width  = 18;
+    n->style.height = 9;
+    return n;
+}
+
+UiNode* SwitchRow(NodeArena& a, const char* label, bool on,
+                  void (*onToggle)(void*), void* user) {
+    // A list row with a Switch accessory — same rounded focus fill, height and insets as
+    // every other ListItemRow; Activate flips the switch.
+    ListEntry e;
+    e.label     = label;
+    e.valueNode = Switch(a, on);
+    e.onPress   = onToggle;
+    e.user      = user;
+    return ListItemRow(a, e);
+}
+
+UiNode* Spinner(NodeArena& a, uint16_t size) {
+    // Native animated busy spinner (see renderer NodeType::Spinner). Square; animates from
+    // the global render tick, so the host screen must keep redrawing while it's visible.
+    UiNode* n = a.alloc();
+    n->type         = NodeType::Spinner;
+    n->style.width  = size;
+    n->style.height = size;
+    return n;
+}
+
+UiNode* ProgressBar(NodeArena& a, int pct) {
+    if (pct < 0) pct = 0; else if (pct > 100) pct = 100;
+    // Native read-only bar (see renderer NodeType::Progress): rounded outline track + a fill
+    // that's pct% of the width — resolution-independent, computed at paint. Inset 5px like a
+    // list row (left + right). Width stretches to the row; height fixed.
+    UiNode* n = a.alloc();
+    n->type            = NodeType::Progress;
+    n->progressPct     = (uint8_t)pct;
+    n->style.height    = 7;
+    n->style.ml        = 5;
+    n->style.mr        = 5;
+    n->style.mb        = 3;
+    return n;
+}
+
+// ── MenuBuilder ────────────────────────────────────────────────────────────
+MenuBuilder::MenuBuilder(NodeArena& a, ScrollState& scroll, void* user)
+    : a_(a), user_(user) {
+    list_ = ListContainer(a, scroll, {});   // empty scroll viewport; rows appended below
+}
+
+void MenuBuilder::appendRow(UiNode* n) {
+    if (!n || !list_) return;
+    if (!tail_) list_->firstChild = n; else tail_->nextSibling = n;
+    tail_ = n;
+}
+
+MenuBuilder& MenuBuilder::section(const char* title) {
+    appendRow(ListSection(a_, title));
+    return *this;
+}
+MenuBuilder& MenuBuilder::info(const char* label, const char* value) {
+    ListEntry e; e.label = label; e.value = value;   // no onPress → non-focusable info row
+    appendRow(ListItemRow(a_, e));
+    return *this;
+}
+MenuBuilder& MenuBuilder::nav(const char* label, void (*onPress)(void*)) {
+    ListEntry e; e.label = label; e.chevron = true; e.onPress = onPress; e.user = user_;
+    appendRow(ListItemRow(a_, e));
+    return *this;
+}
+MenuBuilder& MenuBuilder::toggle(const char* label, bool on, void (*onToggle)(void*)) {
+    appendRow(SwitchRow(a_, label, on, onToggle, user_));
+    return *this;
+}
+MenuBuilder& MenuBuilder::input(const char* label, const char* value,
+                                void (*onAdjust)(void*, int), bool canPrev, bool canNext) {
+    ListInput e; e.label = label; e.value = value; e.onAdjust = onAdjust; e.user = user_;
+    e.canPrev = canPrev; e.canNext = canNext;
+    appendRow(ListInputRow(a_, e));
+    return *this;
+}
+MenuBuilder& MenuBuilder::progress(int pct) {
+    appendRow(ProgressBar(a_, pct));
+    return *this;
+}
+MenuBuilder& MenuBuilder::add(UiNode* node) {
+    appendRow(node);
+    return *this;
+}
+UiNode* MenuBuilder::build() {
+    Style root; root.dir = FlexDir::Col; root.flexGrow = 1; root.align = Align::Stretch;
+    return View(a_, root, { list_ });
 }
 
 static UiNode* adjustRow(NodeArena& a, const char* label, const char* lo,
@@ -475,11 +595,16 @@ UiNode* Dialog(NodeArena& a, const char* title, const char* body,
         UiNode* btnRow = View(a, row, {});
         UiNode* prev = nullptr;
         for (uint8_t i = 0; i < buttonCount; i++) {
+            // All buttons render the same: rounded outline + lit label on the dark modal.
+            // Selection is shown by the focus highlight (invert → filled). We deliberately do
+            // NOT permanently fill the "danger" button: on a 1-bit focus-invert UI a filled
+            // button reads as "already selected", and focusing it would invert it back —
+            // confusing. The destructive intent is carried by the title/body + action label.
+            (void)buttons[i].danger;
             Style bs; bs.dir = FlexDir::Row; bs.border = true; bs.padding = aether::theme().space.sm;
             bs.align = Align::Center; bs.justify = Justify::Center;
-            if (buttons[i].danger) bs.background = true;  // F6.C2: filled/inverted for destructive actions
-            UiNode* btn = Pressable(a, buttons[i].onClick, buttons[i].userdata,
-                                    bs, {Text(a, buttons[i].label, TextRole::Body)});
+            UiNode* lbl = Text(a, buttons[i].label, TextRole::Body);
+            UiNode* btn = Pressable(a, buttons[i].onClick, buttons[i].userdata, bs, {lbl});
             if (!btn) break;
             if (!prev) btnRow->firstChild = btn;
             else       prev->nextSibling = btn;

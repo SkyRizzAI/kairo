@@ -80,4 +80,8 @@ void banner(nema::Canvas& c, uint16_t x, uint16_t y, uint16_t w, uint16_t h,
 void posbar(nema::Canvas& c, uint16_t x, uint16_t y, uint16_t w,
             uint16_t pos, uint16_t total);
 
+// Busy spinner: a 3-dot "comet" orbiting a ring of radius r centered at (cx, cy),
+// animated by `tick` (ms). Used by the Spinner node and the busy overlay.
+void spinner(nema::Canvas& c, uint16_t cx, uint16_t cy, uint16_t r, uint32_t tick);
+
 } // namespace aether::ui::draw

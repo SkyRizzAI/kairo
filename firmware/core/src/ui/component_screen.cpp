@@ -1,13 +1,30 @@
 #include "nema/ui/component_screen.h"
 #include "nema/ui/canvas.h"
 #include "nema/ui/text_style.h"
+#include "nema/ui/draw.h"
+#include "nema/ui/renderer.h"
 #include "nema/ui/ui_constants.h"
 #include "nema/ui/view_dispatcher.h"
 #include "nema/runtime.h"
+#include "nema/task_runner.h"
 
 namespace nema {
 
 void ComponentScreen::requestRedraw() { rt_.view().requestRedraw(); }
+
+void ComponentScreen::runBusy(const char* label, std::function<void()> work,
+                              std::function<void()> done) {
+    if (busy_) return;                       // ignore re-entry — anti double-action
+    busy_      = true;
+    busyLabel_ = label;
+    requestRedraw();                         // show the overlay immediately
+    rt_.tasks().submit(std::move(work), [this, done] {
+        busy_  = false;                      // Done runs on the UI thread
+        dirty_ = true;                        // the op changed model state → rebuild the tree
+        if (done) done();
+        requestRedraw();
+    });
+}
 
 void ComponentScreen::enter() {
     state_.modality = input::InputModality::Button;
@@ -58,9 +75,30 @@ void ComponentScreen::draw(Canvas& c) {
     int16_t  oy = fullscreen() ? 0 : (int16_t)nema::display::contentY();
     uint16_t ah = fullscreen() ? h : (uint16_t)(h - nema::display::contentY());
     aether::ui::renderComponentFrame(root_, c, state_, aether::ui::roleMetrics(), 0, oy, w, ah);
+
+    // Flipper-style busy overlay: centered spinner + label drawn on top while a runBusy()
+    // op is in flight. Input is ignored meanwhile (onAction/onPointer), so no double-action.
+    if (busy_) {
+        uint16_t bw = 96; if (bw > w) bw = w;
+        uint16_t bh = 38; if (bh > h) bh = h;
+        uint16_t bx = (uint16_t)((w - bw) / 2);
+        uint16_t by = (uint16_t)((h - bh) / 2);
+        c.fillRect(bx, by, bw, bh, false);                  // clear behind the box
+        c.drawRoundRect(bx, by, bw, bh, 3, true);           // outline
+        aether::ui::draw::spinner(c, (uint16_t)(bx + bw / 2), (uint16_t)(by + 14), 5,
+                                  aether::ui::renderTick());
+        if (busyLabel_) {
+            aether::ui::FontSpec fs = aether::ui::fontForRole(aether::ui::TextRole::Body);
+            c.setFont(fs.handle);
+            uint16_t tw = aether::ui::measureTextW(busyLabel_, aether::ui::TextRole::Body);
+            uint16_t tx = (uint16_t)(bx + (bw > tw ? (bw - tw) / 2 : 0));
+            c.drawText(tx, (uint16_t)(by + bh - 12), busyLabel_, true);
+        }
+    }
 }
 
 void ComponentScreen::onAction(input::Action a) {
+    if (busy_) return;          // busy overlay swallows input — anti double-action
     if (!root_) return;
     bool changed = false;
     using A = input::Action;
@@ -88,6 +126,7 @@ void ComponentScreen::onAction(input::Action a) {
 }
 
 void ComponentScreen::onPointer(const input::PointerEvent& e) {
+    if (busy_) return;          // busy overlay swallows input
     if (!root_) return;
     if (aether::ui::dispatchPointer(root_, state_, e)) {
         dirty_ = true;   // Plan 70: pointer interaction may have changed model data
@@ -104,6 +143,11 @@ void ComponentScreen::tick(uint64_t nowMs) {
     // flicker from continuous full-speed redraws. Marquee speed itself is
     // controlled by the tick/25 divisor in draw::marquee (~40px/sec).
     if (state_.focus.count > 0 && (nowMs - lastMarqueeMs_) >= 66) {
+        lastMarqueeMs_ = nowMs;
+        dirty = true;
+    }
+    // Animate the busy spinner while an op is in flight (~15fps).
+    if (busy_ && (nowMs - lastMarqueeMs_) >= 66) {
         lastMarqueeMs_ = nowMs;
         dirty = true;
     }

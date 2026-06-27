@@ -15,8 +15,6 @@ using namespace aether::ui;
 ControlsScreen::ControlsScreen(Runtime& rt) : ComponentScreen(rt, 96) {}
 
 void ControlsScreen::onResume() {
-    scroll_.scrollMain = 0;
-    state_.focus.focused = 0;
     rt_.view().requestRedraw();
 }
 
@@ -60,34 +58,21 @@ UiNode* ControlsScreen::build(NodeArena& a, Runtime& rt) {
     rows_.push_back(longBuf);    // actionBase + 7
     rows_.push_back(chordBuf);   // actionBase + 8
 
-    Style root; root.dir = FlexDir::Col; root.flexGrow = 1; root.align = Align::Stretch;
+    MenuBuilder m(a, scroll_, this);
 
-    auto infoRow = [&](const char* label, const char* value) {
-        ListEntry e; e.label = label; e.value = value;
-        return ListItemRow(a, e);
-    };
+    m.section("Board");
+    m.info("Board", rows_[0].c_str());
+    if (km) m.info("Buttons", rows_[1].c_str());
 
-    UiNode* list = ListContainer(a, scroll_, {});
-    UiNode* prev = nullptr;
-    auto append = [&](UiNode* n) {
-        if (!n) return;
-        if (!prev) list->firstChild = n; else prev->nextSibling = n;
-        prev = n;
-    };
-
-    append(ListSection(a, "Board"));
-    append(infoRow("Board",   rows_[0].c_str()));
-    if (km) append(infoRow("Buttons", rows_[1].c_str()));
-
-    append(ListSection(a, "Actions"));
+    m.section("Actions");
     for (size_t i = 0; i < sizeof(kActions)/sizeof(kActions[0]); i++)
-        append(infoRow(input::actionName(kActions[i]), rows_[actionBase + i].c_str()));
+        m.info(input::actionName(kActions[i]), rows_[actionBase + i].c_str());
 
-    append(ListSection(a, "Gestures"));
-    append(infoRow("Long Press",  rows_[actionBase + 7].c_str()));
-    append(infoRow("Chord",       rows_[actionBase + 8].c_str()));
+    m.section("Gestures");
+    m.info("Long Press", rows_[actionBase + 7].c_str());
+    m.info("Chord",      rows_[actionBase + 8].c_str());
 
-    return View(a, root, { list });
+    return m.build();
 }
 
 } // namespace nema

@@ -17,7 +17,7 @@ namespace nema {
 using namespace aether::ui;
 
 FileBrowserScreen::FileBrowserScreen(Runtime& rt)
-    : ComponentScreen(rt, 768), opsModal_(rt), viewer_(rt) {}
+    : ComponentScreen(rt, 768), opsModal_(rt), viewer_(rt), confirm_(rt) {}
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
@@ -88,6 +88,7 @@ static void formatPathBuf(char* buf, size_t n, const std::string& path) {
     }
 }
 
+
 // Recursive copy: handles both files and directories.
 static bool recursiveCopy(IFileSystem* fs, const std::string& src, const std::string& dst) {
     std::vector<FsEntry> children;
@@ -105,8 +106,23 @@ static bool recursiveCopy(IFileSystem* fs, const std::string& src, const std::st
 // ── directory model ─────────────────────────────────────────────────────────
 
 void FileBrowserScreen::reload() {
-    entries_.clear();
-    if (IFileSystem* fs = rt_.fs()) fs->list(cwd_, entries_);
+    // The directory listing can be slow on real storage (LittleFS / SD), so it
+    // runs on the task worker behind a busy overlay. We list into staging_ (not
+    // entries_) so build() keeps rendering the current, stable list until the
+    // load finishes and finishReload() swaps it in on the UI thread.
+    IFileSystem* fs  = rt_.fs();
+    std::string  dir = cwd_;
+    runBusy("Loading…",
+            [this, fs, dir] {
+                staging_.clear();
+                if (fs) fs->list(dir, staging_);
+            },
+            [this] { finishReload(); });
+}
+
+void FileBrowserScreen::finishReload() {
+    entries_ = std::move(staging_);
+    staging_.clear();
 
     std::sort(entries_.begin(), entries_.end(), [](const FsEntry& a, const FsEntry& b) {
         if (a.isDir != b.isDir) return a.isDir;
@@ -128,8 +144,19 @@ void FileBrowserScreen::reload() {
         }
     }
 
-    vlist_.scrollMain   = 0;
-    vlist_.focusedIndex = 0;
+    // Focus handling: only reset to the top when the directory actually changed.
+    // Re-entering the same directory after a file op (rename/delete/paste/view)
+    // preserves the user's position; we just clamp it in case the count shrank.
+    vlist_.totalCount = (int)entries_.size() + (cwd_ != "/" ? 1 : 0);
+    if (cwd_ != focusCwd_) {
+        vlist_.scrollMain   = 0;
+        vlist_.focusedIndex = 0;
+        focusCwd_           = cwd_;
+    } else {
+        vlist_.clampFocus();
+        vlist_.scrollToFocused();
+    }
+    markDirty();
 }
 
 void FileBrowserScreen::goUp() {
@@ -137,8 +164,6 @@ void FileBrowserScreen::goUp() {
     size_t slash = cwd_.find_last_of('/');
     cwd_ = (slash == std::string::npos || slash == 0) ? "/" : cwd_.substr(0, slash);
     reload();
-    dirty_ = true;
-    requestRedraw();
 }
 
 void FileBrowserScreen::openEntry(int entryIndex) {
@@ -148,8 +173,6 @@ void FileBrowserScreen::openEntry(int entryIndex) {
     if (e.isDir) {
         cwd_ = (cwd_ == "/") ? ("/" + e.name) : (cwd_ + "/" + e.name);
         reload();
-        dirty_ = true;
-        requestRedraw();
     } else {
         std::string path = (cwd_ == "/") ? ("/" + e.name) : (cwd_ + "/" + e.name);
         viewer_.setPath(path.c_str());
@@ -178,6 +201,20 @@ void FileBrowserScreen::onResume() {
 
     renaming_ = newFoldering_ = false;
     swallowCode_ = false;
+
+    // View: open the selected file in the text viewer. (Handled here, not in
+    // tick(), because goBack() from the ops modal calls onResume() synchronously
+    // and would otherwise clear pendingOp_ before tick() ever saw it.)
+    if (op == PendingOp::View) {
+        viewer_.setPath(pendingPath_.c_str());
+        rt_.view().navigate(viewer_);
+        return;
+    }
+    // Paste / Delete were deferred from the ops modal so their busy overlay
+    // (and any overwrite confirm) runs on this screen, now that it is active.
+    if (op == PendingOp::Paste)  { handlePaste();  return; }
+    if (op == PendingOp::Delete) { handleDelete(); return; }
+
     reload();
     ComponentScreen::onResume();
 }
@@ -190,11 +227,6 @@ void FileBrowserScreen::tick(uint64_t nowMs) {
             && (nowMs - lastMarqueeMs_) >= 66) {
         lastMarqueeMs_ = nowMs;
         requestRedraw();
-    }
-    if (pendingOp_ == PendingOp::View) {
-        pendingOp_ = PendingOp::None;
-        viewer_.setPath(pendingPath_.c_str());
-        rt_.view().navigate(viewer_);
     }
 }
 
@@ -322,25 +354,46 @@ void FileBrowserScreen::doCut() {
     clipboard_ = {pendingPath_, true, true};
 }
 
-void FileBrowserScreen::doPaste() {
-    if (!clipboard_.has) return;
+void FileBrowserScreen::handlePaste() {
     IFileSystem* fs = rt_.fs();
-    if (!fs) return;
+    if (!clipboard_.has || !fs) { reload(); return; }
 
     std::string dstName = basename(clipboard_.path);
-    std::string dst = (cwd_ == "/") ? ("/" + dstName) : (cwd_ + "/" + dstName);
+    pasteDst_ = (cwd_ == "/") ? ("/" + dstName) : (cwd_ + "/" + dstName);
 
-    if (recursiveCopy(fs, clipboard_.path, dst)) {
-        if (clipboard_.isCut) {
-            fs->removeAll(clipboard_.path);
-            clipboard_.has = false;
-        }
+    // Refuse to overwrite a destination without asking first.
+    if (fs->exists(pasteDst_)) {
+        char body[80];
+        std::snprintf(body, sizeof(body), "Overwrite \"%s\"?", dstName.c_str());
+        confirm_.setup("Overwrite", body, "Overwrite", doPasteConfirm, this, /*danger=*/true);
+        rt_.view().push(confirm_);
+        return;
     }
+    doPasteRun();
 }
 
-void FileBrowserScreen::doDelete() {
-    IFileSystem* fs = rt_.fs();
-    if (fs) fs->removeAll(pendingPath_);
+void FileBrowserScreen::doPasteRun() {
+    IFileSystem*      fs  = rt_.fs();
+    Clipboard         cb  = clipboard_;
+    const std::string dst = pasteDst_;
+    runBusy("Copying…",
+            [fs, cb, dst] {
+                if (fs && recursiveCopy(fs, cb.path, dst)) {
+                    if (cb.isCut) fs->removeAll(cb.path);
+                }
+            },
+            [this, cb] {
+                if (cb.isCut) clipboard_.has = false;
+                reload();   // re-list the (now changed) directory
+            });
+}
+
+void FileBrowserScreen::handleDelete() {
+    IFileSystem*      fs   = rt_.fs();
+    const std::string path = pendingPath_;
+    runBusy("Deleting…",
+            [fs, path] { if (fs) fs->removeAll(path); },
+            [this] { reload(); });
 }
 
 // ── rename ────────────────────────────────────────────────────────────────────
@@ -363,13 +416,25 @@ void FileBrowserScreen::applyRename(bool done, bool cancel) {
     if (done) {
         std::string newName(kbd_.buf, (size_t)kbd_.len);
         if (!newName.empty() && newName != pendingName_) {
-            std::string dst = (cwd_ == "/") ? ("/" + newName) : (cwd_ + "/" + newName);
-            if (IFileSystem* fs = rt_.fs()) fs->rename(pendingPath_, dst);
+            renameDst_ = (cwd_ == "/") ? ("/" + newName) : (cwd_ + "/" + newName);
+            IFileSystem* fs = rt_.fs();
+            if (fs && fs->exists(renameDst_)) {
+                char body[80];
+                std::snprintf(body, sizeof(body), "Overwrite \"%s\"?", newName.c_str());
+                confirm_.setup("Overwrite", body, "Overwrite", doRenameConfirm, this, /*danger=*/true);
+                rt_.view().push(confirm_);
+                return;   // reload happens after the rename runs
+            }
+            doRenameRun();
+            return;
         }
     }
     reload();
-    dirty_ = true;
-    requestRedraw();
+}
+
+void FileBrowserScreen::doRenameRun() {
+    if (IFileSystem* fs = rt_.fs()) fs->rename(pendingPath_, renameDst_);
+    reload();
 }
 
 // ── new folder ────────────────────────────────────────────────────────────────
@@ -393,8 +458,6 @@ void FileBrowserScreen::applyNewFolder(bool done, bool cancel) {
         }
     }
     reload();
-    dirty_ = true;
-    requestRedraw();
 }
 
 // ── FileOpsModal static callbacks ─────────────────────────────────────────────
@@ -410,22 +473,36 @@ void FileBrowserScreen::cbCut(void* u) {
     static_cast<FileBrowserScreen*>(u)->doCut();
 }
 void FileBrowserScreen::cbPaste(void* u) {
-    auto* self = static_cast<FileBrowserScreen*>(u);
-    self->doPaste();
-    self->reload();
-    self->dirty_ = true;
-    self->requestRedraw();
+    // Deferred: the ops modal pops next, then onResume() runs handlePaste() so
+    // the "Copying…" overlay (and any overwrite confirm) lives on this screen.
+    static_cast<FileBrowserScreen*>(u)->pendingOp_ = PendingOp::Paste;
 }
 void FileBrowserScreen::cbRename(void* u) {
     auto* self = static_cast<FileBrowserScreen*>(u);
     self->pendingOp_ = PendingOp::StartRename;
 }
 void FileBrowserScreen::cbDelete(void* u) {
-    static_cast<FileBrowserScreen*>(u)->doDelete();
+    // Deferred (see cbPaste): handled by handleDelete() in onResume().
+    static_cast<FileBrowserScreen*>(u)->pendingOp_ = PendingOp::Delete;
 }
 void FileBrowserScreen::cbNewFolder(void* u) {
     auto* self = static_cast<FileBrowserScreen*>(u);
     self->pendingOp_ = PendingOp::StartNewFolder;
+}
+
+// ── overwrite-confirm thunks ──────────────────────────────────────────────────
+// Start the busy op BEFORE popping the confirm modal: goBack() synchronously
+// calls onResume() → reload(), and runBusy() ignores re-entry while busy, so the
+// resume's stray reload is harmlessly dropped and our op's own reload wins.
+void FileBrowserScreen::doPasteConfirm(void* u) {
+    auto* self = static_cast<FileBrowserScreen*>(u);
+    self->doPasteRun();
+    self->rt_.view().goBack();
+}
+void FileBrowserScreen::doRenameConfirm(void* u) {
+    auto* self = static_cast<FileBrowserScreen*>(u);
+    self->doRenameRun();
+    self->rt_.view().goBack();
 }
 
 // ── VirtualList renderItem callback ───────────────────────────────────────────

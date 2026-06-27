@@ -1,6 +1,7 @@
 #pragma once
 #include "nema/ui/component_screen.h"
 #include "nema/ui/virtual_keyboard.h"
+#include "nema/screens/confirm_modal.h"
 #include <vector>
 
 namespace nema {
@@ -30,9 +31,11 @@ private:
     void        startEdit(Field f);
     void        applyKbdResult(bool done, bool cancel);
     static void onSelect(void* u);
+    static void doClearPassword(void* u);   // runs after the user confirms
 
     aether::ui::VirtualKeyboard kbd_;
     aether::ui::ScrollState     scroll_;
+    ConfirmModal      confirm_;
     std::vector<Item> items_;
     Field             editField_ = Field::UserName;
     bool              editing_     = false;

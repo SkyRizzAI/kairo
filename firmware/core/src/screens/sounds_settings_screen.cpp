@@ -20,12 +20,6 @@ void SoundsSettingsScreen::tick(uint64_t) {
     rt_.view().requestRedraw();
 }
 
-void SoundsSettingsScreen::onTestBeep(void* u) {
-    auto* s = static_cast<SoundsSettingsScreen*>(u);
-    if (s->rt_.audio().outputCount() > 0)
-        s->rt_.audio().output(0)->playTone(440, 300);
-}
-
 static void formatMeterVal(char* buf, size_t sz, float level) {
     if (level < 0) level = 0;
     if (level > 1) level = 1;
@@ -35,6 +29,8 @@ static void formatMeterVal(char* buf, size_t sz, float level) {
     bar[8] = '\0';
     std::snprintf(buf, sz, "[%s] %d%%", bar, (int)(level * 100 + 0.5f));
 }
+
+#define S(u) static_cast<SoundsSettingsScreen*>(u)
 
 UiNode* SoundsSettingsScreen::build(NodeArena& a, Runtime& rt) {
     rows_.clear();
@@ -54,46 +50,32 @@ UiNode* SoundsSettingsScreen::build(NodeArena& a, Runtime& rt) {
         rows_.push_back(buf);
     }
 
-    Style root; root.dir = FlexDir::Col; root.flexGrow = 1; root.align = Align::Stretch;
+    MenuBuilder m(a, scroll_, this);
 
-    UiNode* list = ListContainer(a, scroll_, {});
-    UiNode* prev = nullptr;
-    auto append = [&](UiNode* n) {
-        if (!n) return;
-        if (!prev) list->firstChild = n; else prev->nextSibling = n;
-        prev = n;
-    };
-
-    append(ListSection(a, "Input"));
+    m.section("Input");
     if (audio.inputCount() == 0) {
-        ListEntry e; e.label = "No input devices";
-        append(ListItemRow(a, e));
+        m.info("No input devices", nullptr);
     } else {
-        for (int i = 0; i < audio.inputCount(); i++) {
-            ListEntry e;
-            e.label = audio.input(i)->label();
-            e.value = rows_[(size_t)i].c_str();
-            append(ListItemRow(a, e));
-        }
+        for (int i = 0; i < audio.inputCount(); i++)
+            m.info(audio.input(i)->label(), rows_[(size_t)i].c_str());
     }
 
-    append(ListSection(a, "Output"));
+    m.section("Output");
     if (audio.outputCount() == 0) {
-        ListEntry e; e.label = "No output devices";
-        append(ListItemRow(a, e));
+        m.info("No output devices", nullptr);
     } else {
-        for (int i = 0; i < audio.outputCount(); i++) {
-            ListEntry e;
-            e.label = audio.output(i)->label();
-            e.value = rows_[(size_t)(audio.inputCount() + i)].c_str();
-            append(ListItemRow(a, e));
-        }
-        ListEntry beep; beep.label = "Test Beep 440Hz"; beep.chevron = true;
-        beep.onPress = onTestBeep; beep.user = this;
-        append(ListItemRow(a, beep));
+        for (int i = 0; i < audio.outputCount(); i++)
+            m.info(audio.output(i)->label(), rows_[(size_t)(audio.inputCount() + i)].c_str());
+        m.nav("Test Beep 440Hz", [](void* u){
+            auto* s = S(u);
+            if (s->rt_.audio().outputCount() > 0)
+                s->rt_.audio().output(0)->playTone(440, 300);
+        });
     }
 
-    return View(a, root, { list });
+    return m.build();
 }
+
+#undef S
 
 } // namespace nema

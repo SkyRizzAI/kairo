@@ -18,7 +18,6 @@ void BadUsbApp::onStart(AppContext& ctx) {
     running_  = false;
     selected_ = 0;
     state_        = kMain;
-    suppressNext_ = true;
     errorMsg_[0]  = '\0';
     scrollMain_.scrollMain     = 0;
     vlistScripts_.focusedIndex = 0;
@@ -70,11 +69,13 @@ bool BadUsbApp::onKey(Key k, AppContext& ctx) {
         }
     }
 
-    if (state_ == kError && k == Key::Cancel) { state_ = kScriptList; return true; }
-    return false;
+    if (state_ == kConfirm && k == Key::Cancel) { state_ = kScriptList; return true; }
+    if (state_ == kError && k == Key::Cancel)   { state_ = kScriptList; return true; }
+    return false;   // kMain/kConfirm: base component focus handles nav + Activate
 }
 
 void BadUsbApp::selectFocused(AppContext& ctx) {
+    (void)ctx;
     if (scripts_.empty()) return;
     int i = vlistScripts_.focusedIndex;
     if (i < 0 || i >= (int)scripts_.size()) return;
@@ -86,19 +87,33 @@ void BadUsbApp::selectFocused(AppContext& ctx) {
         state_ = kError;
         return;
     }
-    auto& rt = ctx.runtime();
-    startExecution(rt.fs(), rt);
-    if (running_) {
-        state_ = kRunning;
+    // Running a BadUSB script injects keystrokes into the connected computer — an offensive
+    // action. Gate it behind an explicit confirmation instead of firing on Select.
+    std::snprintf(confirmBody_, sizeof(confirmBody_),
+                  "Type into the connected\ncomputer? This runs\n\"%s\".",
+                  scripts_[(size_t)selected_].name.c_str());
+    state_ = kConfirm;
+}
+
+void BadUsbApp::cbConfirmRun(void* u) {
+    auto* self = static_cast<BadUsbApp*>(u);
+    if (!self->ctx_) { self->state_ = self->kScriptList; return; }
+    auto& rt = self->ctx_->runtime();
+    self->startExecution(rt.fs(), rt);
+    if (self->running_) {
+        self->state_ = kRunning;
     } else {
-        std::snprintf(errorMsg_, sizeof(errorMsg_), "Failed to load script");
-        state_ = kError;
+        std::snprintf(self->errorMsg_, sizeof(self->errorMsg_), "Failed to load script");
+        self->state_ = kError;
     }
+}
+
+void BadUsbApp::cbConfirmCancel(void* u) {
+    static_cast<BadUsbApp*>(u)->state_ = kScriptList;
 }
 
 void BadUsbApp::cbRunScript(void* u) {
     auto* self = static_cast<BadUsbApp*>(u);
-    if (self->suppressNext_) { self->suppressNext_ = false; return; }
     self->state_ = kScriptList;
     self->vlistScripts_.focusedIndex = 0;
     self->vlistScripts_.scrollMain   = 0;
@@ -141,18 +156,31 @@ aether::ui::UiNode* BadUsbApp::build(NodeArena& arena, AppContext& ctx) {
         });
     }
 
+    // ── Confirm (run = inject keystrokes into the host = offensive action) ─────
+    if (state_ == kConfirm) {
+        DialogButton btns[2] = {
+            { "Cancel", cbConfirmCancel, this, false },
+            { "Run",    cbConfirmRun,    this, true  },
+        };
+        return View(arena, root, {
+            Dialog(arena, "Run script?", confirmBody_, nullptr, 0, 0, btns, 2),
+        });
+    }
+
     // ── Running ──────────────────────────────────────────────────────────────
     if (state_ == kRunning) {
         const char* scriptName = (selected_ >= 0 && selected_ < (int)scripts_.size())
             ? scripts_[(size_t)selected_].name.c_str() : "?";
+        int pct = cmdTotal_ ? (int)((cmdIndex_ * 100) / cmdTotal_) : 0;
         std::snprintf(runProgressBuf_, sizeof(runProgressBuf_),
-                      "%zu cmds", cmdTotal_);
+                      "%zu / %zu", cmdIndex_, cmdTotal_);
         return View(arena, root, {
             ListContainer(arena, scrollMain_, {
                 ListSection(arena, "Injecting"),
                 info("Script",   scriptName),
-                info("Commands", runProgressBuf_),
-                info("Back",     "cancel"),
+                info("Progress", runProgressBuf_),
+                ProgressBar(arena, pct),
+                info("Stop",     "press Cancel"),
             }),
         });
     }
@@ -199,18 +227,22 @@ void BadUsbApp::startExecution(IFileSystem* fs, Runtime& rt) {
 }
 
 void BadUsbApp::execNextCommand() {
-    while (cmdIndex_ < cmdTotal_) {
+    // ONE command per tick (not the whole script in one blocking loop): the progress bar
+    // advances visibly and Cancel can interrupt between commands.
+    if (cmdIndex_ < cmdTotal_) {
         auto& cmd = parsedScript_[cmdIndex_];
         cmdIndex_++;
         switch (cmd.type) {
-            case badusb::Command::Key:    hid_->sendKey(cmd.modifier, cmd.keycode);         break;
+            case badusb::Command::Key:    hid_->sendKey(cmd.modifier, cmd.keycode);        break;
             case badusb::Command::String: hid_->sendString(cmd.text.c_str(), cmd.delayMs); break;
             case badusb::Command::Delay:  hid_->delay(cmd.delayMs);                        break;
             default: break;
         }
     }
-    running_ = false;
-    hid_->releaseAll();
+    if (cmdIndex_ >= cmdTotal_) {
+        running_ = false;
+        hid_->releaseAll();
+    }
 }
 
 } // namespace nema

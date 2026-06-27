@@ -160,6 +160,12 @@ struct FooterLegendsState {
 UiNode* FooterLegends(NodeArena& a, const LegendItem* items, int count,
                       FooterLegendsState& st);
 
+// Paragraph — multi-line wrapped text block (like HTML <p>). Fills its container's width
+// and auto-sizes height by word-wrapping (the layout recomputes height from the stretched
+// width). Put it in a stretch container (ListContainer / a Col with align=Stretch). Use for
+// long text: addresses, private keys (role=Mono), descriptions.
+UiNode* Paragraph(NodeArena& a, const char* text, TextRole role = TextRole::Body);
+
 // SmartLabel (Plan 52): a Text node with TextRole::Smart. Ellipsis when its
 // parent Pressable is not focused; marquee-scrolls when focused. Use inside a
 // ListItemRow to handle long strings gracefully.
@@ -192,16 +198,30 @@ UiNode* ListSection(NodeArena& a, const char* title);
 //   leftIcon — XBM drawn before the label (file/app lists); set iconW/iconH
 //   chevron  — append a ">" affordance at the far right
 struct ListEntry {
-    const char*    label    = nullptr;
-    const char*    value    = nullptr;
-    const uint8_t* leftIcon = nullptr;
-    uint8_t        iconW    = 0;
-    uint8_t        iconH    = 0;
-    bool           chevron  = false;
+    const char*    label     = nullptr;
+    const char*    value     = nullptr;
+    UiNode*        valueNode = nullptr;  // custom right-side accessory (e.g. a Switch); overrides value
+    const uint8_t* leftIcon  = nullptr;
+    uint8_t        iconW     = 0;
+    uint8_t        iconH     = 0;
+    bool           chevron   = false;
     void         (*onPress)(void*) = nullptr;
-    void*          user     = nullptr;
+    void*          user      = nullptr;
 };
 UiNode* ListItemRow(NodeArena& a, const ListEntry& e);
+
+// Spinner — a native animated busy indicator (3-dot comet orbiting). Square `size` px.
+// Animates from the global render tick, so keep the screen redrawing while it's shown.
+UiNode* Spinner(NodeArena& a, uint16_t size = 13);
+
+// Switch — a graphical on/off toggle accessory (rounded track + knob: knob left = off,
+// right = on). Use as a row's right-side accessory via SwitchRow (consistent list look).
+UiNode* Switch(NodeArena& a, bool on);
+
+// SwitchRow — a list row with a Switch accessory on the right. Same rounded focus fill,
+// height and insets as every other ListItemRow. Tap (Activate) calls onToggle.
+UiNode* SwitchRow(NodeArena& a, const char* label, bool on,
+                  void (*onToggle)(void*), void* user);
 
 // ListInputRow: the split "label  < value >" row (Flipper variable-item style).
 // The row is divided at a center point — label fills the left half, value the
@@ -217,6 +237,43 @@ struct ListInput {
     void*       user     = nullptr;
 };
 UiNode* ListInputRow(NodeArena& a, const ListInput& e);
+
+// ── MenuBuilder ────────────────────────────────────────────────────────────
+// Ergonomic fluent builder for settings-style lists. Wraps ListContainer + the standard
+// rows and auto-fills the `user` pointer once, so a screen stops re-declaring per-screen
+// input/nav/sw lambda helpers and stops writing named `static void xAdj(void*)` thunks
+// (callbacks are inline lambdas at the call site). The focused row's look is handled
+// automatically by the renderer's XOR highlight — no per-row focus wiring needed.
+//
+//   #define S(u) static_cast<MyScreen*>(u)
+//   return MenuBuilder(a, scroll_, this)
+//       .section("Display")
+//       .input ("Theme",  themeName, [](void* u, int d){ S(u)->cycleTheme(d); })
+//       .toggle("Dark",   darkOn_,   [](void* u){ S(u)->toggleDark(); })
+//       .nav   ("Desktop",           [](void* u){ S(u)->openDesktop(); })
+//       .build();
+class MenuBuilder {
+public:
+    MenuBuilder(NodeArena& a, ScrollState& scroll, void* user);
+
+    MenuBuilder& section(const char* title);                                  // non-focusable subheader
+    MenuBuilder& info   (const char* label, const char* value);              // non-focusable info row
+    MenuBuilder& nav    (const char* label, void (*onPress)(void*));         // chevron nav row
+    MenuBuilder& toggle (const char* label, bool on, void (*onToggle)(void*));
+    MenuBuilder& input  (const char* label, const char* value,
+                         void (*onAdjust)(void*, int), bool canPrev = true, bool canNext = true);
+    MenuBuilder& progress(int pct);                                          // non-focusable ProgressBar
+    MenuBuilder& add    (UiNode* node);                                      // raw escape hatch
+
+    UiNode* build();   // returns the root View wrapping the list
+
+private:
+    void appendRow(UiNode* n);
+    NodeArena&   a_;
+    void*        user_;
+    UiNode*      list_;          // the ListContainer (Scroll) node
+    UiNode*      tail_ = nullptr;
+};
 
 // ── Native input controls (Plan 30/31) ────────────────────────────────────
 // All are composed from primitives (except Slider, a native node) so the same
@@ -244,6 +301,12 @@ UiNode* Select(NodeArena& a, const char* label, const char* value,
 // fires on every change. Wrap with a label in a Row/Col as needed.
 UiNode* Slider(NodeArena& a, int* value, int min, int max, int step,
                void (*onChange)(void*, int), void* userdata);
+
+// ProgressBar (read-only): a rounded outline track with a proportional fill (0..100%).
+// NOT focusable or interactive — for capacity/usage/progress display. Use this instead of
+// a knob-less Slider (a Slider is a control; a progress bar is an indicator). Inset like a
+// list row so it sits under a "label  value" row.
+UiNode* ProgressBar(NodeArena& a, int pct);
 
 // TextField: a focusable row "label: <text>" that fires onPress (the caller
 // opens an editor, e.g. the VirtualKeyboard, at app level). Inline display only.

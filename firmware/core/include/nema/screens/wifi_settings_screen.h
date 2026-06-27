@@ -49,9 +49,7 @@ private:
     void openDetail(const Row& r);
     void pick(const Row& r);
 
-    static void cbToggleWifi(void* u);
     static void cbPick(void* u);
-    static void cbAddOther(void* u);
     void startKeyboard(bool password, const char* prompt, bool swallow);
     void handleKbdResult(bool done, bool cancel);
 

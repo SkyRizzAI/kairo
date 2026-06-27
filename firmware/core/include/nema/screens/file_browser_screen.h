@@ -13,6 +13,7 @@
 #include "nema/hal/filesystem.h"
 #include "nema/screens/file_ops_modal.h"
 #include "nema/screens/file_text_viewer_screen.h"
+#include "nema/screens/confirm_modal.h"
 #include <vector>
 #include <string>
 
@@ -37,7 +38,8 @@ private:
     static constexpr uint16_t kItemH      = 12;
 
     // ── directory navigation ──────────────────────────────────────────────
-    void reload();
+    void reload();          // async: lists cwd_ behind a "Loading…" busy overlay
+    void finishReload();    // UI-thread: sorts/format staging_ → entries_, fixes focus
     void openEntry(int entryIndex);
     void goUp();
     void showOpsMenu(int focused);
@@ -52,8 +54,10 @@ private:
 
     void doCopy();
     void doCut();
-    void doPaste();
-    void doDelete();
+    void handlePaste();           // resolve dst, confirm overwrite, then doPasteRun()
+    void doPasteRun();            // runBusy("Copying…") copy (+remove on cut) → reload
+    void handleDelete();          // runBusy("Deleting…") removeAll → reload
+    void doRenameRun();           // fs->rename → reload
 
     // ── keyboard overlay (rename + new folder) ────────────────────────────
     void startRenameKeyboard();
@@ -68,11 +72,13 @@ private:
     char  renamePrompt_[64] = {};
 
     // ── deferred ops (set before goBack on modal, consumed in onResume/tick)
-    enum class PendingOp { None, View, StartRename, StartNewFolder };
+    enum class PendingOp { None, View, StartRename, StartNewFolder, Paste, Delete };
     PendingOp   pendingOp_  = PendingOp::None;
     std::string pendingPath_;
     std::string pendingName_;
     bool        pendingIsDir_ = false;
+    std::string pasteDst_;        // destination path for a pending paste/overwrite
+    std::string renameDst_;       // destination path for a pending rename/overwrite
 
     // ── FileOpsModal callbacks ────────────────────────────────────────────
     static void cbView     (void* u);
@@ -83,13 +89,20 @@ private:
     static void cbDelete   (void* u);
     static void cbNewFolder(void* u);
 
+    // ── overwrite-confirm thunks (ConfirmModal::onConfirm) ────────────────
+    static void doPasteConfirm (void* u);
+    static void doRenameConfirm(void* u);
+
     // ── sub-screens (owned, stable addresses) ────────────────────────────
     FileOpsModal      opsModal_;
     TextViewerScreen  viewer_;
+    ConfirmModal      confirm_;
 
     // ── model ─────────────────────────────────────────────────────────────
     std::string                  cwd_ = "/";
+    std::string                  focusCwd_;   // dir the list focus was last reset for
     std::vector<FsEntry>         entries_;
+    std::vector<FsEntry>         staging_;    // async list result (worker thread → finishReload)
     std::vector<std::string>     accStrs_;   // formatted file sizes, indexed with entries_
     aether::ui::VirtualListState vlist_;
     char                         pathBuf_[128] = "/";

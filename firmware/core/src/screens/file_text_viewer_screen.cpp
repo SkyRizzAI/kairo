@@ -22,6 +22,7 @@ void TextViewerScreen::onResume() {
     scroll_.scrollMain = 0;
     lines_.clear();
     truncated_ = false;
+    readOk_    = false;
 
     IFileSystem* fs = rt_.fs();
     if (!fs || path_.empty()) {
@@ -30,13 +31,27 @@ void TextViewerScreen::onResume() {
         return;
     }
 
-    std::vector<uint8_t> data;
-    if (!fs->read(path_, data)) {
+    // The file read can be slow on real storage, so it runs on the task worker
+    // behind a "Reading…" overlay; finishRead() splits it into lines afterwards.
+    std::string path = path_;
+    runBusy("Reading…",
+            [this, fs, path] {
+                readData_.clear();
+                readOk_ = fs->read(path, readData_);
+            },
+            [this] { finishRead(); });
+    ComponentScreen::onResume();
+}
+
+void TextViewerScreen::finishRead() {
+    if (!readOk_) {
         lines_.push_back("(read error)");
-        ComponentScreen::onResume();
+        readData_.clear();
+        markDirty();
         return;
     }
 
+    std::vector<uint8_t>& data = readData_;
     if (data.size() > kMaxBytes) {
         data.resize(kMaxBytes);
         truncated_ = true;
@@ -63,7 +78,9 @@ void TextViewerScreen::onResume() {
     else
         std::snprintf(titleBuf_, sizeof(titleBuf_), "%s (%u lines)", name, (unsigned)lines_.size());
 
-    ComponentScreen::onResume();
+    readData_.clear();
+    readData_.shrink_to_fit();
+    markDirty();
 }
 
 aether::ui::UiNode* TextViewerScreen::build(NodeArena& a, Runtime&) {

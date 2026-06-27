@@ -413,7 +413,7 @@ I6). Apps must use `canvas_width()/height()`, never hardcode size (invariant I2)
 > stay on-brand.
 
 **Source files:** `packages/app-sdk/include/nema_api.h`,
-`firmware/core/src/wasm/wasm_ui.cpp`, `examples/wifi-marauder/main.c` (reference app).
+`firmware/core/src/wasm/wasm_ui.cpp`, `examples/network/wifi-marauder/main.c` (reference app).
 
 ---
 
@@ -578,7 +578,7 @@ tokens; hand-tuned bitmaps. Status-bar redesign: simpler battery glyph; clock mo
 | System screens | `firmware/core/include/nema/screens/*` |
 | Shell (desktop/launcher) | `firmware/aether/include/aether/screens/*` |
 | App UI ABI | `packages/app-sdk/include/nema_api.h`, `firmware/core/src/wasm/wasm_ui.cpp` |
-| Reference app | `examples/wifi-marauder/main.c`, `examples/wifi-marauder/manifest.json` |
+| Reference app | `examples/network/wifi-marauder/main.c`, `examples/network/wifi-marauder/manifest.json` |
 
 **Companion architecture docs:** [`aether-ui.md`](aether-ui.md),
 [`font-system.md`](font-system.md), [`shell-desktop-launcher.md`](shell-desktop-launcher.md),

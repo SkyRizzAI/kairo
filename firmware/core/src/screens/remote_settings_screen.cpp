@@ -27,35 +27,7 @@ void RemoteSettingsScreen::redraw() { dirty_ = true; requestRedraw(); }
 
 void RemoteSettingsScreen::onResume() {
     st_ = St::List;
-    scroll_.scrollMain = 0;
-    state_.focus.focused = 0;
     redraw();
-}
-
-void RemoteSettingsScreen::cbToggleEnabled(void* u) {
-    auto* s = static_cast<RemoteSettingsScreen*>(u);
-    if (RemoteAuthStore* a = s->store()) a->setEnabled(!a->enabled());
-    s->rt_.events().publish({events::RemoteToggled, {}});
-    s->redraw();
-}
-void RemoteSettingsScreen::cbSetPassword(void* u) {
-    auto* s = static_cast<RemoteSettingsScreen*>(u);
-    s->kbd_.clear();
-    s->kbd_.setPassword(true);
-    s->kbd_.linear = !s->rt_.capabilities().has(caps::Input2D);
-    s->swallowCode_ = true;
-    s->st_ = St::EnterPass;
-    s->redraw();
-}
-void RemoteSettingsScreen::cbClearPassword(void* u) {
-    auto* s = static_cast<RemoteSettingsScreen*>(u);
-    if (RemoteAuthStore* a = s->store()) a->clearPassword();
-    s->redraw();
-}
-void RemoteSettingsScreen::cbLogoutAll(void* u) {
-    auto* s = static_cast<RemoteSettingsScreen*>(u);
-    if (RemoteAuthStore* a = s->store()) a->revokeAllTokens();
-    s->redraw();
 }
 
 void RemoteSettingsScreen::onAction(input::Action a) {
@@ -94,64 +66,60 @@ void RemoteSettingsScreen::draw(Canvas& c) {
     ComponentScreen::draw(c);
 }
 
+#define S(u) static_cast<RemoteSettingsScreen*>(u)
+
 UiNode* RemoteSettingsScreen::build(NodeArena& a, Runtime& rt) {
     (void)rt;
     RemoteAuthStore* st = store();
 
-    Style root; root.dir = FlexDir::Col; root.flexGrow = 1; root.align = Align::Stretch;
-
-    UiNode* list = ListContainer(a, scroll_, {});
-    UiNode* prev = nullptr;
-    auto append = [&](UiNode* n) {
-        if (!n) return;
-        if (!prev) list->firstChild = n; else prev->nextSibling = n;
-        prev = n;
-    };
+    MenuBuilder m(a, scroll_, this);
 
     if (!st) {
         ListEntry e; e.label = "Remote unavailable";
-        append(ListItemRow(a, e));
-        return View(a, root, { list });
+        m.add(ListItemRow(a, e));
+        return m.build();
     }
 
     bool en = st->enabled();
     bool pw = st->hasPassword();
 
-    append(ListSection(a, "Connection"));
-    append(Toggle(a, "Remote Enabled", en, cbToggleEnabled, this));
+    m.section("Connection");
+    m.toggle("Remote Enabled", en, [](void* u){
+        if (RemoteAuthStore* st = S(u)->store()) st->setEnabled(!st->enabled());
+        S(u)->rt_.events().publish({events::RemoteToggled, {}});
+        S(u)->redraw();
+    });
 
-    append(ListSection(a, "Security"));
-    {
-        ListEntry e; e.label = "Password"; e.value = pw ? "Set" : "None";
-        append(ListItemRow(a, e));
-    }
-    {
-        ListEntry e;
-        e.label   = pw ? "Change Password" : "Set Password";
-        e.chevron = true;
-        e.onPress = cbSetPassword; e.user = this;
-        append(ListItemRow(a, e));
-    }
-    if (pw) {
-        ListEntry e; e.label = "Clear Password"; e.chevron = true;
-        e.onPress = cbClearPassword; e.user = this;
-        append(ListItemRow(a, e));
-    }
+    m.section("Security");
+    m.info("Password", pw ? "Set" : "None");
+    m.nav(pw ? "Change Password" : "Set Password", [](void* u){
+        auto* s = S(u);
+        s->kbd_.clear();
+        s->kbd_.setPassword(true);
+        s->kbd_.linear = !s->rt_.capabilities().has(caps::Input2D);
+        s->swallowCode_ = true;
+        s->st_ = St::EnterPass;
+        s->redraw();
+    });
+    if (pw) m.nav("Clear Password", [](void* u){
+        if (RemoteAuthStore* st = S(u)->store()) st->clearPassword();
+        S(u)->redraw();
+    });
 
-    append(ListSection(a, "Sessions"));
+    m.section("Sessions");
     {
         int n = (int)st->tokenCount();
         std::snprintf(statusBuf_, sizeof(statusBuf_), "%d", n);
-        ListEntry e; e.label = "Authorized Devices"; e.value = statusBuf_;
-        append(ListItemRow(a, e));
+        m.info("Authorized Devices", statusBuf_);
     }
-    if (st->tokenCount() > 0) {
-        ListEntry e; e.label = "Log Out All Devices"; e.chevron = true;
-        e.onPress = cbLogoutAll; e.user = this;
-        append(ListItemRow(a, e));
-    }
+    if (st->tokenCount() > 0) m.nav("Log Out All Devices", [](void* u){
+        if (RemoteAuthStore* st = S(u)->store()) st->revokeAllTokens();
+        S(u)->redraw();
+    });
 
-    return View(a, root, { list });
+    return m.build();
 }
+
+#undef S
 
 } // namespace nema

@@ -19,6 +19,13 @@ constexpr uint16_t SEP1_Y    = STATUS_Y + STATUS_H;  // separator after status
 // left a 1px gap because STATUS_Y(3) ≠ the bar's +2 base. There's no separator anymore.
 constexpr uint16_t CONTENT_Y = STATUS_H + 2;         // = barH; full value when status bar ON
 
+// Vertical scrollbar geometry — single source of truth shared by the layout engine
+// (reserves space so rows clear the bar) and the renderer (draws the bar). The dashed bar
+// is drawn SCROLLBAR_BAR_INSET px in from a scroll node's right edge; the container reserves
+// SCROLLBAR_RESERVE px on the cross axis when the bar shows (bar width + a small gap).
+constexpr uint16_t SCROLLBAR_BAR_INSET = 3;
+constexpr uint16_t SCROLLBAR_RESERVE   = 5;
+
 // Set to false by GuiService when display/statusbar=0; read by all layout code.
 // C++17 inline variable — one definition shared across all TUs.
 inline bool statusBarVisible = true;

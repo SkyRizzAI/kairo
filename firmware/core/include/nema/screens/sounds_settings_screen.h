@@ -18,8 +18,6 @@ public:
 private:
     aether::ui::ScrollState          scroll_;
     std::vector<std::string> rows_;
-
-    static void onTestBeep(void* u);
 };
 
 } // namespace nema

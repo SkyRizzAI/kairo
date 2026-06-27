@@ -22,6 +22,7 @@
 | Display rotation (0/90/180/270, input + touch follow) | [`display-rotation.md`](display-rotation.md) |
 | Colour themes + dark mode (mono/Flipper palette) | [`colour-themes.md`](colour-themes.md) |
 | Splash screen (boot + restart logo & progress bar) | [`splash-screen.md`](splash-screen.md) |
+| UI components (Switch, ProgressBar, SwitchRow, MenuBuilder) | [`ui-components.md`](ui-components.md) |
 
 > Not yet documented as standalone features (covered in architecture docs): settings
 > screens, lock/sleep, owner profile, audio (mic/speaker) and camera on SkyRizz E32, BLE

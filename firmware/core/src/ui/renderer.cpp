@@ -7,6 +7,7 @@
 #include "nema/ui/animation_player.h"
 #include "nema/ui/canvas.h"
 #include "nema/ui/node.h"
+#include "nema/ui/ui_constants.h"
 #include <cstring>
 
 namespace aether::ui {
@@ -24,9 +25,10 @@ namespace {
 static void highlightBox(Canvas& c, const UiNode* n) {
     uint8_t r = n->style.cornerRadius;
     if (n->style.selectBox && n->w >= 10 && n->h >= 3) {
-        // Inset the right edge so the rounded box clears the dashed scrollbar.
-        const uint16_t GUTTER = 5;
-        uint16_t w = (uint16_t)(n->w - GUTTER);
+        // The focus fill spans the full row. No per-row scrollbar gutter is needed: the
+        // scroll container reserves the scrollbar strip in layout (arrangeScroll), so the
+        // row is already narrowed to clear the bar when it's shown, and full-width when not.
+        uint16_t w = n->w;
         c.invertRect(n->x, (uint16_t)(n->y + 1), w, (uint16_t)(n->h - 2)); // middle band
         c.invertRect((uint16_t)(n->x + 1), n->y, (uint16_t)(w - 2), 1);    // top cap
         c.invertRect((uint16_t)(n->x + 1), (uint16_t)(n->y + n->h - 1), (uint16_t)(w - 2), 1); // bottom cap
@@ -40,6 +42,13 @@ static void highlightBox(Canvas& c, const UiNode* n) {
             c.invertRect((uint16_t)(n->x + inset), (uint16_t)(n->y + i),         bw, 1);
             c.invertRect((uint16_t)(n->x + inset), (uint16_t)(n->y + n->h - 1 - i), bw, 1);
         }
+    } else if (n->style.border && n->w > 2 && n->h > 2) {
+        // Bordered control (e.g. a Dialog button): invert only the INTERIOR so the outline
+        // stays drawn in both states — focused and unfocused keep the same border/size,
+        // just the inside fills (and child text flips). Without this the full invert eats
+        // the border on focus, so the button looks like it changes size.
+        c.invertRect((uint16_t)(n->x + 1), (uint16_t)(n->y + 1),
+                     (uint16_t)(n->w - 2), (uint16_t)(n->h - 2));
     } else {
         c.invertRect(n->x, n->y, n->w, n->h);
     }
@@ -47,7 +56,8 @@ static void highlightBox(Canvas& c, const UiNode* n) {
 
 // inFocused: true when this node is a descendant of the focused Pressable.
 // Propagated downward so SmartLabel children of a focused row know to marquee.
-static void paint(const UiNode* n, Canvas& c, const UiNode* focused, bool inFocused = false) {
+static void paint(const UiNode* n, Canvas& c, const UiNode* focused,
+                  bool inFocused = false) {
     const Style& s = n->style;
 
     // Background / border: rounded-rect with the node's corner radius (default 1).
@@ -153,6 +163,46 @@ static void paint(const UiNode* n, Canvas& c, const UiNode* focused, bool inFocu
         return;
     }
 
+    if (n->type == NodeType::Switch) {
+        uint16_t x = n->x, y = n->y, w = n->w, h = n->h;
+        if (w >= 8 && h >= 5) {
+            uint8_t  r  = (h >= 8) ? 3 : 2;          // rounded ends, not pointy
+            uint16_t kd = (uint16_t)(h - 4);          // knob diameter (2px inset top/bottom)
+            uint8_t  kr = (uint8_t)(kd / 2);
+            uint16_t ky = (uint16_t)(y + 2);
+            if (n->switchOn) {
+                c.fillRoundRect(x, y, w, h, r, true);                    // filled track
+                uint16_t kx = (uint16_t)(x + w - 2 - kd);               // knob HOLE, right
+                c.fillRoundRect(kx, ky, kd, kd, kr, false);
+            } else {
+                c.drawRoundRect(x, y, w, h, r, true);                    // outline track
+                uint16_t kx = (uint16_t)(x + 2);                        // filled knob, left
+                c.fillRoundRect(kx, ky, kd, kd, kr, true);
+            }
+        }
+        return;
+    }
+
+    if (n->type == NodeType::Spinner) {
+        uint16_t cx = (uint16_t)(n->x + n->w / 2);
+        uint16_t cy = (uint16_t)(n->y + n->h / 2);
+        uint16_t r  = (uint16_t)((n->w < n->h ? n->w : n->h) / 2);
+        if (r > 1) aether::ui::draw::spinner(c, cx, cy, (uint16_t)(r - 1), s_renderTick);
+        return;
+    }
+
+    if (n->type == NodeType::Progress) {
+        uint16_t x = n->x, y = n->y, w = n->w, h = n->h;
+        if (w >= 4 && h >= 3) {
+            c.drawRoundRect(x, y, w, h, 2, true);                        // outline track
+            int pct = n->progressPct > 100 ? 100 : n->progressPct;
+            int fillW = (int)(w - 4) * pct / 100;                        // 2px inset each side
+            if (fillW > 0)
+                c.fillRoundRect((uint16_t)(x + 2), (uint16_t)(y + 2), (uint16_t)fillW, (uint16_t)(h - 4), 1, true);
+        }
+        return;
+    }
+
     if (n->type == NodeType::Slider) {
         int range = n->sliderMax - n->sliderMin;
         int val   = n->sliderValue ? *n->sliderValue : n->sliderMin;
@@ -219,7 +269,7 @@ static void paint(const UiNode* n, Canvas& c, const UiNode* focused, bool inFocu
         if (n->scroll && n->scroll->contentMain > n->scroll->viewportMain &&
             n->style.dir == FlexDir::Col && n->scroll->viewportMain > 0) {
             const ScrollState& sc = *n->scroll;
-            uint16_t bx = (uint16_t)(n->x + n->w - 3);
+            uint16_t bx = (uint16_t)(n->x + n->w - nema::display::SCROLLBAR_BAR_INSET);
             aether::ui::draw::scrollbar(c, bx, n->y, n->h,
                                         (uint16_t)(sc.scrollMain < 0 ? 0 : sc.scrollMain),
                                         sc.viewportMain,

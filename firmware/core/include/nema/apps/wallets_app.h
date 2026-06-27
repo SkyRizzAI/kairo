@@ -40,19 +40,13 @@ private:
         Accounts,     // list of accounts (Account 1..N) in the active wallet
         AcctDetail,   // one account's addresses per chain + export
         Receive,      // full address of one chain
-        ExportKey,    // revealed private key (after confirm)
+        ExportPin,    // PIN re-auth before revealing a private key
+        ExportKey,    // revealed private key (after confirm + PIN)
+        WipePin,      // PIN re-auth before wiping all wallets
         Settings, About
     };
 
     void refreshAccounts(uint32_t accountIndex = 0);
-
-    // Swallow the single Activate that bled in from the launcher when the app was
-    // opened (otherwise it fires the first-focused Home button → jumps into a flow).
-    // Returns true exactly once (the bleed); re-armed on each onStart.
-    bool swallowFirst() {
-        if (suppressActivate_) { suppressActivate_ = false; return true; }
-        return false;
-    }
 
     // onPress trampolines (userdata = this, or a RowCtx*).
     static void cbCreate(void*);
@@ -73,7 +67,6 @@ private:
     static void cbWipeCancel(void*);
 
     State state_ = State::Home;
-    bool  suppressActivate_ = true;  // eat the launcher's Activate on first frame
 
     wallet::WalletController* ctl_ = nullptr;   // shared system wallet (resolved at onStart)
 
@@ -82,11 +75,14 @@ private:
 
     std::string revealMnemonic_;   // generated phrase being shown
     std::string pendingMnemonic_;  // phrase awaiting a PIN (create or restore)
+    std::string pendingPin_;       // PIN captured BEFORE the phrase reveal (create flow)
+    bool        pinForCreate_ = false; // SetPin entered from Create → go to Reveal, not commit
     std::string errorMsg_;
     bool        wantWipe_ = false; // drives the confirm modal
 
     std::vector<wallet::WalletController::AccountView> accounts_;
-    std::vector<std::string> rowVal_;  // persistent truncated-address strings for rows
+    std::vector<std::string> rowVal_;  // persistent truncated-address strings (row value)
+    std::vector<std::string> rowSym_;  // persistent chain tickers ETH/BTC/SOL (row label)
     struct RowCtx { WalletsApp* self; int idx; };
     std::vector<RowCtx> rowCtx_;        // chain-address rows (one account)
     std::vector<RowCtx> walletRowCtx_;  // wallet rows (wallet list)

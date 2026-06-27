@@ -344,4 +344,18 @@ void posbar(Canvas& c, uint16_t x, uint16_t y, uint16_t w,
     }
 }
 
+void spinner(Canvas& c, uint16_t cx, uint16_t cy, uint16_t r, uint32_t tick) {
+    // 8 ring positions (tenths of r): top, going clockwise.
+    static const int8_t DX[8] = {  0,  7, 10,  7,  0, -7,-10, -7};
+    static const int8_t DY[8] = {-10, -7,  0,  7, 10,  7,  0, -7};
+    int head = (int)((tick / 90) % 8);          // ~1 rev / 0.7s
+    for (int t = 0; t < 3; t++) {               // 3-dot comet (head brightest/biggest)
+        int i  = ((head - t) % 8 + 8) % 8;
+        int px = (int)cx + DX[i] * (int)r / 10;
+        int py = (int)cy + DY[i] * (int)r / 10;
+        uint16_t sz = (t == 0) ? 2 : 1;
+        c.fillRect((uint16_t)(px - sz / 2), (uint16_t)(py - sz / 2), sz, sz, true);
+    }
+}
+
 } // namespace aether::ui::draw
