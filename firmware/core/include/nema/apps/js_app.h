@@ -17,12 +17,16 @@ namespace nema {
 class JsApp : public ComponentApp {
 public:
     JsApp(std::string id, std::string name, std::string version, std::string bundleJs,
-          std::string displayServer = "");
+          std::string displayServer = "", std::string category = "");
     ~JsApp() override;
 
     const char* id()            const override { return id_.c_str(); }
     const char* name()          const override { return name_.c_str(); }
     const char* version()       const { return version_.c_str(); }
+
+    // Launcher group (Launchpad folders). Empty → "Apps" (top-level).
+    // Derived from the .papp's subfolder under the app root (or manifest category).
+    const char* category()      const override { return category_.empty() ? "Apps" : category_.c_str(); }
     const char* displayServer() const { return displayServer_.empty() ? nullptr : displayServer_.c_str(); }
 
     // App thread stack (FreeRTOS task on ESP; pthread on host/WASM — see
@@ -65,7 +69,7 @@ protected:
     size_t      arenaCapacity() const override { return 1024; }
 
 private:
-    std::string id_, name_, version_, js_, displayServer_;
+    std::string id_, name_, version_, js_, displayServer_, category_;
     std::unique_ptr<js::JsEngine> eng_;
     bool        loaded_ = false;
     char        errLine_[96] = "";

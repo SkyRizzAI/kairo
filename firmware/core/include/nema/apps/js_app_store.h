@@ -33,7 +33,8 @@ public:
                     std::string version, std::string js,
                     std::string displayServer = "",
                     std::vector<std::string> args = {},
-                    std::vector<uint8_t> iconData = {});
+                    std::vector<uint8_t> iconData = {},
+                    std::string category = "");
 
     // Install from a single-file PAPP1 container (Plan 59):
     //   PAPP1\n<manifest-json>\n<entry-filename>\n<js>

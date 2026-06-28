@@ -50,6 +50,10 @@ private:
     // Activate the currently focused item (launch or open detail based on mode).
     void activateFocused();
 
+    // switch the Launchpad view to `folder` ("" = root), rebuild the
+    // list, reset focus/scroll and redraw.
+    void enterFolder(const std::string& folder);
+
     // VirtualList renderItem callback (passed as function pointer to VirtualList()).
     static aether::ui::UiNode* renderAppItem(aether::ui::NodeArena& a, int index,
                                               bool focused, void* userdata);
@@ -59,6 +63,13 @@ private:
     std::vector<std::string>                 ids_;
     std::vector<const aether::ui::IconDef*>  icons_;       // Plan 53: icon_pack icon
     std::vector<CustomIcon>                  customIcons_;  // Plan 84: bundled raw icon
+
+    // Launchpad folders. Each row is an APP, a FOLDER (drill in), or the
+    // ".." BACK row. For a folder row, names_ holds the folder name and ids_ is
+    // empty; for the back row both isBack_ is set and ids_ is empty.
+    std::vector<bool>                        isFolder_;
+    std::vector<bool>                        isBack_;
+    std::string                              curFolder_;   // "" = root view
 
     AppDetailScreen* detailScreen_ = nullptr;
     AppDetailScreen* launchDetail_ = nullptr;  // detail screen for Hold-OK in Launch mode

@@ -25,7 +25,8 @@ public:
                     std::string version, std::vector<uint8_t> wasm,
                     std::string displayServer = "",
                     std::vector<std::string> args = {},
-                    std::vector<uint8_t> iconData = {});
+                    std::vector<uint8_t> iconData = {},
+                    std::string category = "");
 
     int count() const { return (int)apps_.size(); }
 

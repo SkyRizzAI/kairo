@@ -24,12 +24,16 @@ namespace nema {
 class WasmApp : public ComponentApp {
 public:
     WasmApp(std::string id, std::string name, std::string version,
-            std::vector<uint8_t> wasm, std::string displayServer = "");
+            std::vector<uint8_t> wasm, std::string displayServer = "",
+            std::string category = "");
     ~WasmApp() override;
 
     const char* id()            const override { return id_.c_str(); }
     const char* name()          const override { return name_.c_str(); }
     const char* version()       const { return version_.c_str(); }
+
+    // Launcher group (Launchpad folders). Empty → "Apps" (top-level).
+    const char* category()      const override { return category_.empty() ? "Apps" : category_.c_str(); }
     const char* displayServer() const { return displayServer_.empty() ? nullptr : displayServer_.c_str(); }
 
     // wasm3's interpreter recurses; give it a comfortable native stack.
@@ -73,7 +77,7 @@ protected:
 private:
     void runWasm(ProcessContext& ctx, ISurface* surface = nullptr);   // shared impl
 
-    std::string          id_, name_, version_, displayServer_;
+    std::string          id_, name_, version_, displayServer_, category_;
     std::vector<uint8_t> wasm_;
 
     std::vector<uint8_t> iconData_;

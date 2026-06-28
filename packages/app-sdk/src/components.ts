@@ -36,6 +36,17 @@ export const Switch      = intrinsic("Switch")      as (p: SwitchProps) => KElem
 export const ProgressBar = intrinsic("ProgressBar") as (p: ProgressBarProps) => KElement;
 export const Spinner     = intrinsic("Spinner")     as (p: SpinnerProps) => KElement;
 
+// ── Native list components (identical look to the built-in Settings/Wallets screens) ──
+// Compose: <ListContainer><ListSection title/><ListItemRow label value chevron onPress/>…</ListContainer>
+export interface ListContainerProps extends Common {}              // scroll viewport (2px inset + gap)
+export interface ListSectionProps extends Common { title: string } // bold subheader
+export interface ListItemRowProps extends Common {                 // one row, rounded focus fill
+  label: string; value?: string; chevron?: boolean; onPress?: () => void;
+}
+export const ListContainer = intrinsic("ListContainer") as (p: ListContainerProps) => KElement;
+export const ListSection   = intrinsic("ListSection")   as (p: ListSectionProps) => KElement;
+export const ListItemRow   = intrinsic("ListItemRow")   as (p: ListItemRowProps) => KElement;
+
 // Row/Col are Views with a forced direction (sugar, like the C builders).
 export const Row: (p: ViewProps) => KElement = (p) =>
   View({ ...p, style: { ...(p.style || {}), flexDirection: "row" } });

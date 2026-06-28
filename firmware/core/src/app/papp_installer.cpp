@@ -128,6 +128,28 @@ static bool installFromDir(Runtime& rt, IFileSystem* fs,
 
     const bool isWasm = (rtStr == "wasm");
 
+    // Launchpad folders. A .papp installed in a SUBFOLDER under an app
+    // root (e.g. "/sd/apps/Web3/Foo.papp") is grouped into a navigable "Web3"
+    // folder in the Apps list; one directly under a root stays top-level. The
+    // group is carried as the app's category (AppListScreen reads m.category).
+    //   parent      = dir without the trailing "/Foo.papp"
+    //   parent==root → top-level (group "")
+    //   else          group = basename(parent)  (the subfolder name)
+    // Falls back to the manifest's optional "category" when there is no subfolder.
+    std::string group;
+    {
+        auto slash = dir.rfind('/');
+        std::string parent = (slash == std::string::npos) ? "" : dir.substr(0, slash);
+        bool parentIsRoot = false;
+        for (int i = 0; i < kRootCount; i++)
+            if (parent == kAppRoots[i]) { parentIsRoot = true; break; }
+        if (!parentIsRoot && !parent.empty()) {
+            auto ps = parent.rfind('/');
+            group = (ps == std::string::npos) ? parent : parent.substr(ps + 1);
+        }
+    }
+    std::string category = !group.empty() ? group : mj.value("category", "");
+
     // Plan 86 — default argv injected when launched from icon (analogous to
     // Exec= args in a Linux .desktop shortcut). "mode" field is ignored.
     std::vector<std::string> args;
@@ -179,7 +201,8 @@ static bool installFromDir(Runtime& rt, IFileSystem* fs,
         return WasmAppStore::instance().installApp(rt, id, name, version,
                                                    std::move(wasm), dsrv,
                                                    std::move(args),
-                                                   std::move(iconData));
+                                                   std::move(iconData),
+                                                   std::move(category));
     }
 
     // ── JS: load the bundle and install via JsAppStore ─────────────────────
@@ -211,7 +234,8 @@ static bool installFromDir(Runtime& rt, IFileSystem* fs,
                   {{"id", id}, {"name", name}, {"runtime", "js"},
                    {"icon", iconData.empty() ? "none" : iconFile}});
     return JsAppStore::instance().installApp(rt, id, name, version, js, dsrv,
-                                             std::move(args), std::move(iconData));
+                                             std::move(args), std::move(iconData),
+                                             std::move(category));
 }
 
 // Install from a single-file .papp FILE.

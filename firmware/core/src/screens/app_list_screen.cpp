@@ -42,62 +42,110 @@ static const IconDef* iconForApp(const AppManifest& m) {
 
 // ── Data loading ──────────────────────────────────────────────────────────────
 
+// Case-insensitive name ordering, matching the previous alphabetical sort.
+static bool nameLess(const std::string& a, const std::string& b) {
+    size_t n = std::min(a.size(), b.size());
+    for (size_t i = 0; i < n; i++) {
+        char ca = (char)std::tolower((unsigned char)a[i]);
+        char cb = (char)std::tolower((unsigned char)b[i]);
+        if (ca != cb) return ca < cb;
+    }
+    return a.size() < b.size();
+}
+
+// The Launchpad folder an app belongs to: its category, unless that is empty /
+// "Apps" / "System" → "" (top-level, no folder).
+static std::string folderOf(const AppManifest& m) {
+    if (!m.category) return "";
+    if (std::strcmp(m.category, "Apps")   == 0) return "";
+    if (std::strcmp(m.category, "System") == 0) return "";
+    return std::string(m.category);
+}
+
 void AppListScreen::loadInstalledPapps() {
     names_.clear(); ids_.clear(); icons_.clear(); customIcons_.clear();
+    isFolder_.clear(); isBack_.clear();
 
-    for (const auto& m : rt_.apps().list()) {
-        if (m.type != AppType::App) continue;
-        if (m.category && std::strcmp(m.category, "System") == 0) continue;
-        names_.push_back(m.name);
-        ids_.push_back(m.id);
-        if (m.iconBitmap && m.iconW && m.iconH) {
-            customIcons_.push_back({m.iconBitmap, m.iconW, m.iconH});
-            icons_.push_back(nullptr);
-        } else {
-            customIcons_.push_back({nullptr, 0, 0});
-            icons_.push_back(iconForApp(m));
-        }
-    }
+    // A flat app row gathered from the registry, ready to be sorted/emitted.
+    struct AppRow {
+        std::string    name;
+        std::string    id;
+        const IconDef* icon;
+        CustomIcon     customIcon;
+    };
+    auto makeRow = [](const AppManifest& m) -> AppRow {
+        AppRow r{m.name, m.id, nullptr, {nullptr, 0, 0}};
+        if (m.iconBitmap && m.iconW && m.iconH)
+            r.customIcon = {m.iconBitmap, m.iconW, m.iconH};
+        else
+            r.icon = iconForApp(m);
+        return r;
+    };
+    auto pushApp = [&](AppRow& r) {
+        names_.push_back(std::move(r.name));
+        ids_.push_back(std::move(r.id));
+        icons_.push_back(r.icon);
+        customIcons_.push_back(r.customIcon);
+        isFolder_.push_back(false);
+        isBack_.push_back(false);
+    };
+    auto pushFolder = [&](const std::string& folder) {
+        names_.push_back(folder);
+        ids_.push_back("");                       // folders aren't launchable
+        icons_.push_back(findIcon("feature.apps"));
+        customIcons_.push_back({nullptr, 0, 0});
+        isFolder_.push_back(true);
+        isBack_.push_back(false);
+    };
 
-    // Sort all parallel arrays together alphabetically, case-insensitive.
-    if (names_.size() > 1) {
-        // Build a temporary flat list, sort, then unpack back.
-        struct Entry {
-            std::string      name;
-            std::string      id;
-            const IconDef*   icon;
-            CustomIcon       customIcon;
-        };
-        std::vector<Entry> entries;
-        entries.reserve(names_.size());
-        for (size_t i = 0; i < names_.size(); i++) {
-            entries.push_back({std::move(names_[i]), std::move(ids_[i]),
-                               icons_[i], customIcons_[i]});
-        }
-        std::sort(entries.begin(), entries.end(), [](const Entry& a, const Entry& b) {
-            size_t n = std::min(a.name.size(), b.name.size());
-            for (size_t i = 0; i < n; i++) {
-                char ca = (char)std::tolower((unsigned char)a.name[i]);
-                char cb = (char)std::tolower((unsigned char)b.name[i]);
-                if (ca != cb) return ca < cb;
+    if (curFolder_.empty()) {
+        // ── Root view: distinct folders (alpha), then top-level apps (alpha). ──
+        std::vector<std::string> folders;
+        std::vector<AppRow>      topApps;
+        for (const auto& m : rt_.apps().list()) {
+            if (m.type != AppType::App) continue;
+            if (m.category && std::strcmp(m.category, "System") == 0) continue;
+            std::string f = folderOf(m);
+            if (f.empty()) {
+                topApps.push_back(makeRow(m));
+            } else if (std::find(folders.begin(), folders.end(), f) == folders.end()) {
+                folders.push_back(f);
             }
-            return a.name.size() < b.name.size();
-        });
-        names_.clear(); ids_.clear(); icons_.clear(); customIcons_.clear();
-        for (auto& e : entries) {
-            names_.push_back(std::move(e.name));
-            ids_.push_back(std::move(e.id));
-            icons_.push_back(e.icon);
-            customIcons_.push_back(e.customIcon);
         }
+        std::sort(folders.begin(), folders.end(), nameLess);
+        std::sort(topApps.begin(), topApps.end(),
+                  [](const AppRow& a, const AppRow& b) { return nameLess(a.name, b.name); });
+        for (const auto& f : folders) pushFolder(f);
+        for (auto& r : topApps)       pushApp(r);
+    } else {
+        // ── Folder view: ".." back row, then the apps inside curFolder_ (alpha). ──
+        names_.push_back("Back");
+        ids_.push_back("");
+        icons_.push_back(findIcon("nav.up"));
+        customIcons_.push_back({nullptr, 0, 0});
+        isFolder_.push_back(false);
+        isBack_.push_back(true);
+
+        std::vector<AppRow> folderApps;
+        for (const auto& m : rt_.apps().list()) {
+            if (m.type != AppType::App) continue;
+            if (m.category && std::strcmp(m.category, "System") == 0) continue;
+            if (folderOf(m) == curFolder_) folderApps.push_back(makeRow(m));
+        }
+        std::sort(folderApps.begin(), folderApps.end(),
+                  [](const AppRow& a, const AppRow& b) { return nameLess(a.name, b.name); });
+        for (auto& r : folderApps) pushApp(r);
     }
 
-    // Placeholder when no apps are installed.
+    // Placeholder when there is nothing to show (only at the root — a folder view
+    // always has at least the back row).
     if (names_.empty()) {
         names_.push_back("No apps installed");
         ids_.push_back("");
         icons_.push_back(nullptr);
         customIcons_.push_back({nullptr, 0, 0});
+        isFolder_.push_back(false);
+        isBack_.push_back(false);
     }
 }
 
@@ -109,6 +157,7 @@ void AppListScreen::onResume() {
     // disappear, and updated ones (changed signature) are reinstalled — all
     // without a reboot. Then rebuild the on-screen list from the fresh registry.
     nema::loadInstalledPapps(rt_);
+    curFolder_.clear();              // always reopen at the root
     loadInstalledPapps();
     vlist_.scrollMain   = 0;
     vlist_.focusedIndex = 0;
@@ -125,11 +174,15 @@ UiNode* AppListScreen::renderAppItem(NodeArena& a, int index,
     auto* self = static_cast<AppListScreen*>(userdata);
     if (index < 0 || index >= (int)self->names_.size()) return nullptr;
 
-    bool selectable = !self->ids_[index].empty();
+    bool isFolder = self->isFolder_[index];
+    bool isBack   = self->isBack_[index];
+    // Folders and the back row are navigable even though they have no app id.
+    bool selectable = isFolder || isBack || !self->ids_[index].empty();
 
     ListEntry e;
     e.label   = self->names_[index].c_str();
-    e.chevron = selectable;
+    // A chevron signals "drill in" (apps + folders); the back row points up, not in.
+    e.chevron = selectable && !isBack;
 
     const auto& ci = self->customIcons_[index];
     if (ci.bitmap) {
@@ -185,7 +238,10 @@ void AppListScreen::onAction(input::Action a) {
             openDetailForFocused();
             break;
         case A::Back:
-            rt_.view().goBack();
+            // Inside a folder, Back goes up to the root instead of exiting the
+            // launcher; at the root, the existing exit/goBack behaviour.
+            if (!curFolder_.empty()) enterFolder("");
+            else                     rt_.view().goBack();
             break;
         default:
             break;
@@ -204,9 +260,23 @@ void AppListScreen::tick(uint64_t nowMs) {
 
 // ── Actions ───────────────────────────────────────────────────────────────────
 
+void AppListScreen::enterFolder(const std::string& folder) {
+    curFolder_ = folder;
+    loadInstalledPapps();
+    vlist_.scrollMain   = 0;
+    vlist_.focusedIndex = 0;
+    dirty_ = true;
+    requestRedraw();
+}
+
 void AppListScreen::activateFocused() {
     int i = vlist_.focusedIndex;
-    if (i < 0 || i >= (int)ids_.size() || ids_[i].empty()) return;
+    if (i < 0 || i >= (int)ids_.size()) return;
+
+    // Launchpad navigation: back row → root, folder row → drill in.
+    if (isBack_[i])   { enterFolder("");          return; }
+    if (isFolder_[i]) { enterFolder(names_[i]);   return; }
+    if (ids_[i].empty()) return;   // placeholder ("No apps installed")
 
     if (detailScreen_) {
         // Detail mode (Settings → Apps): push the detail screen.
@@ -220,11 +290,17 @@ void AppListScreen::activateFocused() {
 }
 
 void AppListScreen::openDetailForFocused() {
+    int i = vlist_.focusedIndex;
+    if (i < 0 || i >= (int)ids_.size()) return;
+
+    // Folder/back rows have no detail — navigate instead.
+    if (isBack_[i])   { enterFolder("");          return; }
+    if (isFolder_[i]) { enterFolder(names_[i]);   return; }
+    if (ids_[i].empty()) return;   // placeholder
+
     // Hold-OK in Launch mode uses launchDetail_; in Detail mode falls back to detailScreen_.
     AppDetailScreen* detail = launchDetail_ ? launchDetail_ : detailScreen_;
     if (!detail) return;
-    int i = vlist_.focusedIndex;
-    if (i < 0 || i >= (int)ids_.size() || ids_[i].empty()) return;
     const auto& ci = customIcons_[i];
     detail->setApp(ids_[i], names_[i], ci.bitmap, ci.w, ci.h);
     rt_.view().push(*detail);

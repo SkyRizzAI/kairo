@@ -14,9 +14,10 @@ namespace nema {
 using namespace aether::ui;
 
 JsApp::JsApp(std::string id, std::string name, std::string version, std::string bundleJs,
-             std::string displayServer)
+             std::string displayServer, std::string category)
     : id_(std::move(id)), name_(std::move(name)), version_(std::move(version)),
-      js_(std::move(bundleJs)), displayServer_(std::move(displayServer)) {}
+      js_(std::move(bundleJs)), displayServer_(std::move(displayServer)),
+      category_(std::move(category)) {}
 
 JsApp::~JsApp() = default;
 

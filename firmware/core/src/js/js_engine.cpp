@@ -310,6 +310,44 @@ UiNode* JsEngine::reify(JSValueConst node, NodeArena& arena) {
         int pct        = JS_IsObject(props) ? getInt(ctx_, props, "pct", 0) : 0;
         n->progressPct = (uint8_t)(pct < 0 ? 0 : (pct > 100 ? 100 : pct));
         if (n->style.height == SIZE_AUTO) n->style.height = 7;
+    } else if (type == "ListContainer") {
+        // Same scroll viewport preset as the built-in lists (2px inset + gap). Children
+        // (ListItemRow/ListSection/...) are attached by the loop below.
+        n->type           = NodeType::Scroll;
+        n->style.dir      = FlexDir::Col;
+        n->style.align    = Align::Stretch;
+        if (n->style.flexGrow == 0) n->style.flexGrow = 1;
+        n->style.padding  = 2;
+        n->style.gap      = 2;
+        if (scrollCursor_ >= (int)scrolls_.size()) scrolls_.push_back(new ScrollState());
+        n->scroll = scrolls_[scrollCursor_++];
+    } else if (type == "ListSection") {
+        // Native bold subheader — identical to the built-in screens. <ListSection title="…"/>
+        g_textPool.emplace_back(JS_IsObject(props) ? getStr(ctx_, props, "title") : "");
+        const char* title = g_textPool.back().c_str();
+        JS_FreeValue(ctx_, props);
+        return ListSection(arena, title);   // composed subtree; no JSX children
+    } else if (type == "ListItemRow") {
+        // Native list row (label + optional value/chevron, rounded focus fill) — exactly the
+        // built-in look. <ListItemRow label="…" value="…" chevron onPress={…}/>
+        ListEntry e;
+        if (JS_IsObject(props)) {
+            g_textPool.emplace_back(getStr(ctx_, props, "label"));
+            e.label = g_textPool.back().c_str();
+            std::string v = getStr(ctx_, props, "value");
+            if (!v.empty()) { g_textPool.emplace_back(v); e.value = g_textPool.back().c_str(); }
+            e.chevron = getInt(ctx_, props, "chevron", 0) != 0;
+            JSValue fn = JS_GetPropertyStr(ctx_, props, "onPress");
+            if (JS_IsFunction(ctx_, fn)) {
+                int id = (int)handlers_.size();
+                handlers_.push_back(JS_DupValue(ctx_, fn));
+                refs_[id] = { this, id };
+                e.onPress = handler_thunk; e.user = &refs_[id];
+            }
+            JS_FreeValue(ctx_, fn);
+        }
+        JS_FreeValue(ctx_, props);
+        return ListItemRow(arena, e);       // composed subtree; no JSX children
     } else {
         n->type = NodeType::View;
     }

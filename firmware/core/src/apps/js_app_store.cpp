@@ -21,7 +21,8 @@ bool JsAppStore::installApp(Runtime& rt, std::string id, std::string name,
                             std::string version, std::string js,
                             std::string displayServer,
                             std::vector<std::string> args,
-                            std::vector<uint8_t> iconData) {
+                            std::vector<uint8_t> iconData,
+                            std::string category) {
     if (id.empty() || js.empty()) return false;
     // Re-install with a known id → REPLACE in place so `palanu cp` of a new build
     // swaps the bytes instead of vanishing the app until reboot (same fix as
@@ -32,7 +33,8 @@ bool JsAppStore::installApp(Runtime& rt, std::string id, std::string name,
     if (version.empty()) version = "1.0.0";
     apps_.push_back(std::make_unique<JsApp>(std::move(id), std::move(name),
                                             std::move(version), std::move(js),
-                                            std::move(displayServer)));
+                                            std::move(displayServer),
+                                            std::move(category)));
     JsApp& app = *apps_.back();
 
     if (!iconData.empty()) app.setIcon(std::move(iconData));
@@ -43,6 +45,7 @@ bool JsAppStore::installApp(Runtime& rt, std::string id, std::string name,
     m.name          = app.name();
     m.version       = app.version();
     m.runtimeTier   = RuntimeTier::Js;
+    m.category      = app.category();        // Launchpad folder; "Apps" = top-level
     m.displayServer = app.displayServer();   // nullptr if not set
     m.args          = std::move(args);
     m.iconBitmap    = app.iconBitmap();      // nullptr if no custom icon

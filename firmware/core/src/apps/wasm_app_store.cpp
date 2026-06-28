@@ -18,7 +18,8 @@ bool WasmAppStore::installApp(Runtime& rt, std::string id, std::string name,
                               std::string version, std::vector<uint8_t> wasm,
                               std::string displayServer,
                               std::vector<std::string> args,
-                              std::vector<uint8_t> iconData) {
+                              std::vector<uint8_t> iconData,
+                              std::string category) {
     if (id.empty() || wasm.empty()) return false;
     // Re-install with a known id → REPLACE the old module so `palanu cp` of a new
     // build actually swaps the bytes. Previously this returned false ("already
@@ -32,7 +33,8 @@ bool WasmAppStore::installApp(Runtime& rt, std::string id, std::string name,
 
     apps_.push_back(std::make_unique<WasmApp>(std::move(id), std::move(name),
                                               std::move(version), std::move(wasm),
-                                              std::move(displayServer)));
+                                              std::move(displayServer),
+                                              std::move(category)));
     WasmApp& app = *apps_.back();
 
     if (!iconData.empty()) app.setIcon(std::move(iconData));
@@ -42,6 +44,7 @@ bool WasmAppStore::installApp(Runtime& rt, std::string id, std::string name,
     m.name          = app.name();
     m.version       = app.version();
     m.runtimeTier   = RuntimeTier::Wasm;
+    m.category      = app.category();        // Launchpad folder; "Apps" = top-level
     m.displayServer = app.displayServer();
     m.args          = std::move(args);
     m.iconBitmap    = app.iconBitmap();

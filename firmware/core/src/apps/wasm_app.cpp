@@ -12,9 +12,11 @@ namespace nema {
 using namespace aether::ui;
 
 WasmApp::WasmApp(std::string id, std::string name, std::string version,
-                 std::vector<uint8_t> wasm, std::string displayServer)
+                 std::vector<uint8_t> wasm, std::string displayServer,
+                 std::string category)
     : id_(std::move(id)), name_(std::move(name)), version_(std::move(version)),
-      displayServer_(std::move(displayServer)), wasm_(std::move(wasm)) {}
+      displayServer_(std::move(displayServer)), category_(std::move(category)),
+      wasm_(std::move(wasm)) {}
 
 WasmApp::~WasmApp() = default;
 
