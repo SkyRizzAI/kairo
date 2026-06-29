@@ -2,6 +2,7 @@
 #include "nema/app/app_context.h"
 #include "nema/ui/canvas.h"
 #include "nema/ui/component_runtime.h"
+#include "nema/ui/renderer.h"
 #include "nema/ui/text_style.h"
 #include "nema/ui/ui_constants.h"
 #include "nema/ui/aether_abi.h"
@@ -28,6 +29,12 @@ void ComponentApp::run(AppContext& ctx) {
     aether::ui::UiNode* root  = nullptr;
     aether::ui::UiNode* modal = nullptr;
     bool dirty = true;
+    // `repaint` re-renders the EXISTING tree (advancing the marquee) WITHOUT
+    // rebuilding it — crucial for JS apps, where a rebuild re-runs the whole JS
+    // component. ComponentScreen gets its render tick from GuiService; an app runs
+    // its own loop, so it advances `marqueeMs` itself.
+    bool repaint = false;
+    uint32_t marqueeMs = 0;
 
     // Shared interaction state (Plan 30 runtime): focus + dual modality +
     // tap/drag/momentum. A SEPARATE state drives the modal layer so the base's
@@ -38,24 +45,29 @@ void ComponentApp::run(AppContext& ctx) {
     onStart(ctx);
 
     while (!ctx.shouldExit()) {
-        if (dirty) {
+        if (dirty || repaint) {
             Canvas& c = ctx.canvas();
             c.clear();
             if (drawRaw(c, ctx)) {
                 root = nullptr; modal = nullptr;   // custom-drawn frame (e.g. keyboard)
             } else {
-                arena.reset();
-                st.pressed = nullptr;        // arena reset invalidates node pointers
-                modalSt.pressed = nullptr;
-                aether_set_arena(&arena);    // Plan 50: expose arena to ABI functions
-                root  = build(arena, ctx);
-                modal = buildModal(arena, ctx);
-                aether_set_arena(nullptr);
+                if (dirty) {                 // rebuild only on a real state change…
+                    arena.reset();
+                    st.pressed = nullptr;        // arena reset invalidates node pointers
+                    modalSt.pressed = nullptr;
+                    aether_set_arena(&arena);    // Plan 50: expose arena to ABI functions
+                    root  = build(arena, ctx);
+                    modal = buildModal(arena, ctx);
+                    aether_set_arena(nullptr);
+                }
+                // …a marquee-only frame falls through here and just re-renders `root`.
 
                 uint16_t w = c.width();
                 uint16_t h = c.height();
                 int16_t  oy = fullscreen() ? 0 : (int16_t)nema::display::contentY();
                 uint16_t ah = fullscreen() ? h : (uint16_t)(h - nema::display::contentY());
+
+                aether::ui::setRenderTick(marqueeMs);   // marquee phase for this frame
 
                 if (root) {
                     // Base frame. When a modal is up, suppress the base focus ring
@@ -81,6 +93,7 @@ void ComponentApp::run(AppContext& ctx) {
             }
             ctx.present();
             dirty = false;
+            repaint = false;
         }
 
         // While a modal is up it captures all interaction.
@@ -89,7 +102,9 @@ void ComponentApp::run(AppContext& ctx) {
 
         uint32_t tick = tickIntervalMs();
         bool gliding = ast.dragScroll && ast.dragScroll->velocity != 0.0f;
-        uint32_t timeout = gliding ? 16 : (tick ? tick : 80);
+        // A focused, possibly-overflowing label wants ~15fps to scroll its marquee.
+        bool focusPresent = ast.focus.count > 0;
+        uint32_t timeout = gliding ? 16 : (focusPresent ? 66 : (tick ? tick : 80));
 
         // Process one input event (updates dirty/ast by reference).
         auto processEvent = [&](const InputEvent& ev) {
@@ -127,11 +142,11 @@ void ComponentApp::run(AppContext& ctx) {
             // Drain the WHOLE pending burst, then render once.
             processEvent(ev);
             while (ctx.nextInput(ev)) processEvent(ev);
-        } else if (gliding) {
-            if (aether::ui::tickMomentum(ast)) dirty = true;   // animate flick inertia
-        } else if (tick) {
-            // Periodic wake (no input) — rebuild only if state changed.
-            if (onTick(ctx)) dirty = true;
+        } else {
+            // Timed out (no input) — advance whatever needs animating this frame.
+            if (gliding && aether::ui::tickMomentum(ast)) dirty = true;   // flick inertia
+            if (focusPresent) { marqueeMs += 66; repaint = true; }        // marquee: repaint only
+            if (tick && onTick(ctx)) dirty = true;                        // app periodic wake
         }
     }
 }

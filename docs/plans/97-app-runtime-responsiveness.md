@@ -1,6 +1,6 @@
 # Plan 97 — App Runtime Responsiveness, Throughput & RAM Efficiency
 
-**Status:** analysis (not started) · **Owner:** TBD · **Created:** 2026-06-27
+**Status:** in progress (P0+P1 shipped) · **Owner:** TBD · **Created:** 2026-06-27
 
 > Goal of this plan: make custom apps feel **instant** (no perceived delay on
 > action), raise render/IPC throughput, and keep RAM/PSRAM usage lean so the app
@@ -120,33 +120,70 @@ avoid watchdog-starving busy-spin (`message_queue.h:42`).
 
 ### 🎯 Responsiveness (kill the app-vs-Settings gap)
 
-- [ ] **P0 — Collapse the app render handoff to same-frame.** After the GUI loop
-      sends input to the app mailbox, give the app thread a brief window to produce
-      its frame *before* this GUI frame renders (e.g. GUI waits on a per-app
-      "frame-ready" signal with a small bounded timeout, ~4–8 ms), so a fast app
-      responds in the same frame like a system screen does. Removes the guaranteed
-      +1 frame for the common case. *(Core 0 jitter remains; see P0b.)*
-- [ ] **P0b — Raise app-thread priority / core placement.** Evaluate moving the app
-      thread off the WiFi/BLE-shared core or bumping its priority so radio bursts
-      don't stall app input handling. Measure against WiFi/BLE throughput first
-      (must not regress radio).
-- [ ] **P1 — Event-driven GUI loop.** Replace the fixed `sleepMs(budget)` with a
-      blocking wake on input-posted / redraw-requested / nearest-animation-deadline
-      (Flipper pattern). `InputService` already owns a `cv`; use `receive(timeout)`
-      instead of per-frame `tryReceive`. Cuts 0–33 ms input + 0–33 ms render and
-      drops idle CPU (battery win).
-- [ ] **P2 — Gesture latency (baseline, affects both paths).** Either drop `doubleMs`
-      280→180 ms (1-line mitigation) or make the primary confirm fire on release.
-      *Note: user reports Settings OK feels fine, so this is secondary — do after
-      P0/P1.*
+- [x] **P0+P1 — Event-driven GUI loop (shipped 2026-06-29).** Added a `Waker`
+      primitive (`core/include/nema/waker.h`) and replaced the GUI loop's blind
+      `sleepMs(budget)` with `rt_.guiWaker().wait(budget)`
+      (`gui_service.cpp`). The loop now wakes **early** when a cross-thread
+      producer signals: input posted (`InputService::post*`) or an app finished a
+      frame (`AppHost::present`). This removes the up-to-33 ms poll latency on the
+      input edge **and** the app-present edge (the old guaranteed +1 frame): a
+      fast app's frame now reaches the panel ~immediately after `present()` instead
+      of waiting out the budget. The 30 fps ceiling and DPM/animation/status cadence
+      are unchanged (wait is still capped at `TARGET_FRAME_MS`). **Critical design
+      choice:** only cross-thread producers signal — GUI-thread-internal redraws
+      (animation/status/navigation) do NOT, because they already render in the
+      current frame and signalling per-frame would busy-spin the loop. See ADR 0019.
+      Validated: host build + 27/27 tests + WASM simulator build all green.
+- [~] **P0b — App-thread core/priority now TUNABLE (shipped 2026-06-29; default
+      unchanged).** `AppHost::onResume` reads `app/thread_prio` (default 5) and
+      `app/thread_core` (default 0) from config and passes them to the thread start.
+      Defaults reproduce the original {prio 5, core 0}, so behavior is unchanged
+      until someone opts in. This makes the "move app off the WiFi/BLE core 0"
+      experiment a config flip (`app/thread_core=1` → app shares the GUI core 1,
+      freeing core 0 for radio) instead of a code change — so it can be A/B tested
+      on hardware (measure radio throughput + the `AppLatency in→present` jitter)
+      before adopting any non-default value. **Decision still pending hardware
+      measurement** — must not regress WiFi/BLE.
+- [x] **P2 — Gesture latency (shipped 2026-06-29).** `doubleMs` default 280→220
+      (`gesture.h`). A single tap on a double-mode button (E32 OK→Activate) fires
+      ~60 ms sooner; the double-tap=Back mapping is unchanged (window still 220 ms,
+      comfortable for a deliberate double-tap). Non-breaking, 1-line. Validated:
+      host + 27/27 tests. *(Did not pursue fire-on-release — that changes the Back
+      mapping and is more invasive.)*
 
 ### 🎯 RAM efficiency (cooperate with PSRAM, don't disturb radios)
 
-- [ ] **P3 — Pack app framebuffer to 1bpp.** `drawBuf_`/`readyBuf_` store mono
-      content at **1 byte/pixel** (`app_host.cpp:79-89,183-185`): 320×240×2 ≈ 150 KB
-      PSRAM/app. Packing to 1bpp ≈ 19 KB (8× saving). Already in PSRAM (internal RAM
-      untouched), but lowers pressure on PSRAM shared with camera/audio. Trade-off:
-      unpack bits on the non-fullscreen blit (cheap).
+- [x] **P3a — Lazy framebuffer allocation (shipped 2026-06-29).** The two
+      full-screen buffers (~150 KB PSRAM) were allocated in `onResume()` for *every*
+      app at launch — wasted on terminal/CLI apps (BadUSB, shells, compute-only
+      WASM/JS) that never draw. Now deferred to a new `AppHost::ensureCanvas()`
+      called on first `canvas()`/`present()` (`app_host.cpp`). Non-GUI apps allocate
+      0 framebuffer RAM; GUI apps unchanged. Validated: host + 27/27 tests + WASM.
+- [~] **P3b (app buffers) — Pack the per-app framebuffer to 1bpp (code done
+      2026-06-29; awaiting hardware visual-check).** New shared helper
+      `core/include/nema/hal/mono1.h` defines the packed layout (contiguous bit idx
+      `y*w+x`, MSB-first) — the SAME convention `LcdDriver::framebuf_` already used,
+      so this unifies the format rather than inventing one. `BufferDisplay` now packs
+      (drawPixel/fillRect/clear/invertRect via `mono1`), `AppHost` allocates/blits
+      packed (`byteSize`, `mono1::get`), and skyrizz `LcdDriver::flushBuffer` +
+      `prevBuf_` read packed bits. **dev-board needs no change** (async-display →
+      slow-blit path). Saving ≈ **130 KB PSRAM per GUI app** (150 KB → ~19 KB).
+      Forward-compat: a future RGB UI mode is an additive `PixelFormat::Rgb565` path;
+      Mono1 stays the default (see `mono1.h`). **Validated:** host + 27/27 tests +
+      WASM simulator (slow-blit `mono1::get`). **Not yet:** the skyrizz `lcd_driver`
+      fast-path could not be ESP32-compiled because a parallel `http_client` WIP
+      currently breaks the ESP32 build upstream — once that lands, build + flash and
+      visually confirm app rendering + colour themes (fg/bg palette) are correct.
+- [~] **P3b (system buffers) — Pack async_display + eink (dev-board) to 1bpp
+      (code done 2026-06-29; awaiting dev-board visual-check).** `AsyncDisplayDriver`
+      (core) and `EinkDisplay` (dev-board) now store/diff/flush 1-bit packed via
+      `mono1`: the 3 async buffers drop ~46 KB→~5.8 KB each (~120 KB saved) and the
+      eink buf/prev drop likewise. **Zero impact on skyrizz or the simulator** —
+      `AsyncDisplayDriver` is registered only by dev-board (skyrizz uses `lcd_`
+      directly, whose `framebuf_` was already 1-bit). Validated: host build compiles
+      `async_display`; `eink_display` is ESP32-only (matched the exact `mono1`
+      convention; dev-board flash + visual-check pending, low risk as e-ink is
+      natively 1-bit B&W).
 - [ ] **P5 — Deferred app-exit cleanup.** Move `thread_.join()` out of GUI
       `tick()` (`app_host.cpp:197-203`) onto `TaskRunner`/a workqueue (AkiraOS
       pattern) so app exit never stalls a GUI frame.
@@ -157,7 +194,10 @@ avoid watchdog-starving busy-spin (`message_queue.h:42`).
       (`view_dispatcher.cpp:144`) but only use it to clip the canvas. Extend it to
       narrow the present() memcpy **and** the `flushBuffer`/SPI-DMA to the dirty
       region (AkiraOS/LVGL pattern). Cuts per-frame memcpy + SPI traffic, raising
-      throughput headroom.
+      throughput headroom. ⚠️ **Needs device validation** (same reason as P3b):
+      `BufferDisplay`/`Canvas` have no dirty tracking today, so this adds a dirty
+      bounding box to the app canvas + a `flushRegion` path on the LCD drivers — all
+      rendering-visible, not covered by the logic-only tests.
 
 ### Effort / risk
 
@@ -177,8 +217,13 @@ avoid watchdog-starving busy-spin (`message_queue.h:42`).
 
 ## 5. Open questions / before implementing
 
-- Measure actual app input→pixel latency on hardware (instrument `mailbox_.send`
-  timestamp vs `draw()` blit) to quantify the +1 frame and core-0 jitter separately.
+- [x] **Measure app input→pixel latency (shipped 2026-06-29).** Opt-in
+  instrumentation in `AppHost` (config `aether/applatency=1`, default off). Stamps
+  the input as it enters the app mailbox (GUI thread), then logs two segments:
+  `in→present` (app reaction = scheduling + draw, exposes the core-0 jitter that
+  P0b targets) and `in→pixel` + `present→pixel` (the GUI handoff that P0+P1
+  collapsed to ~0). Tag `AppLatency`, info level. Enable: set config `aether`
+  `applatency` to `1`, then watch the serial/sim log while interacting with an app.
 - P0b: confirm WiFi/BLE throughput does not regress if the app thread is re-pinned
   or re-prioritized.
 - P3: verify all display backends are truly mono (1-bit) on every board before

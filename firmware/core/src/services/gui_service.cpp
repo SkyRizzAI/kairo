@@ -228,12 +228,19 @@ void GuiService::loop() {
             }
         }
 
-        // Plan 70 frame pacing: sleep only the remaining budget so frames
-        // arrive at a steady cadence. If we overshot the target the loop
-        // spins again immediately (sleepMs(0) is a yield).
+        // Plan 97 — event-driven pacing. Park for the remaining frame budget, but
+        // wake EARLY when a cross-thread producer signals: input posted
+        // (InputService::post) or an app finished a frame (AppHost::present). This
+        // removes the up-to-33 ms poll latency on both edges of the input→pixel
+        // path while preserving the 30 fps ceiling (animation/DPM/status keep
+        // ticking at most once per TARGET_FRAME_MS). GUI-thread-internal redraws
+        // (animation/status/navigation) deliberately do NOT signal — they already
+        // render in the current frame, and waking per-frame would busy-spin.
         uint64_t elapsed = rt_.clock().millis() - frameStart;
         if (elapsed < TARGET_FRAME_MS)
-            nema::Thread::sleepMs((uint32_t)(TARGET_FRAME_MS - elapsed));
+            rt_.guiWaker().wait((uint32_t)(TARGET_FRAME_MS - elapsed));
+        else
+            nema::Thread::sleepMs(0);   // overran budget: yield and spin
     }
 }
 

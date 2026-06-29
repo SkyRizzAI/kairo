@@ -1,6 +1,7 @@
 #pragma once
 #include "nema/input_event.h"
 #include "nema/message_queue.h"
+#include "nema/waker.h"
 #include "nema/input/input_code.h"
 #include "nema/input/input_action.h"
 #include "nema/ui/key.h"
@@ -24,7 +25,7 @@ public:
     void post(Key k, InputEvent::Type t = InputEvent::Type::Press);
 
     // Full-event post: used by IKeyMap after gesture resolution.
-    void post(const InputEvent& e) { queue_.send(e); }
+    void post(const InputEvent& e) { queue_.send(e); if (waker_) waker_->signal(); }
 
     // Pointer/touch post (Plan 29): same funnel, kind = Pointer. Coordinates
     // must be LOGICAL (the ITouchDriver transforms raw → logical). type=Press
@@ -36,6 +37,7 @@ public:
         e.pphase = ph;
         e.px = x; e.py = y;
         queue_.send(e);
+        if (waker_) waker_->signal();
     }
 
     // ── Drain (main task only) ────────────────────────────────────────────
@@ -44,6 +46,10 @@ public:
     // ── Keymap (set once at board init) ──────────────────────────────────
     void setKeyMap(input::IKeyMap* km);  // does NOT take ownership
     input::IKeyMap* keyMap() const { return keyMap_; }
+
+    // Plan 97 — GUI waker: posting input wakes the GUI loop immediately so the
+    // input→pixel path no longer waits out the frame poll. Set once by Runtime.
+    void setWaker(Waker* w) { waker_ = w; }
 
     // ── Registry / introspection (delegates to keymap if present) ────────
     const char* hintFor(input::Action a) const;
@@ -57,6 +63,7 @@ public:
 private:
     nema::MessageQueue<InputEvent> queue_{32};
     input::IKeyMap*                keyMap_ = nullptr;
+    Waker*                         waker_  = nullptr;   // Plan 97 (not owned)
 };
 
 } // namespace nema

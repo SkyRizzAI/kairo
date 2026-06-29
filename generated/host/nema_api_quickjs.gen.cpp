@@ -383,6 +383,22 @@ static JSValue nema_http_post(JSContext* ctx, JSValueConst, int argc, JSValueCon
     return marshalResult(ctx, __ret, [ctx](JSContext* c, auto& v) { (void)c; return marshalRecord(ctx, v); }, [ctx](JSContext* c, auto& e) { return JS_ThrowTypeError(c, "%s", e.c_str()); });
 }
 
+// http.request
+// @blocking — dispatched via TaskRunner (the host wraps as async).
+static JSValue nema_http_request(JSContext* ctx, JSValueConst, int argc, JSValueConst* argv) {
+    (void)argc; (void)argv;
+    auto* e = engineOf(ctx);
+    auto* host = e->hostApi();
+    if (!host) return JS_UNDEFINED;
+
+    std::string method = jsToString(ctx, argv[0]);
+    std::string url = jsToString(ctx, argv[1]);
+    std::string headers = jsToString(ctx, argv[2]);
+    std::string body = jsToString(ctx, argv[3]);
+    auto __ret = host->http_request(method, url, headers, body);
+    return marshalResult(ctx, __ret, [ctx](JSContext* c, auto& v) { (void)c; return marshalRecord(ctx, v); }, [ctx](JSContext* c, auto& e) { return JS_ThrowTypeError(c, "%s", e.c_str()); });
+}
+
 // wifi.is-connected
 static JSValue nema_wifi_is_connected(JSContext* ctx, JSValueConst, int argc, JSValueConst* argv) {
     (void)argc; (void)argv;
@@ -1028,6 +1044,7 @@ void installNemaApi(JSContext* ctx, HostApi* host, nema::CapabilityRegistry& cap
     }
     setFn(ctx, net_http, "get", nema_http_get, 1);
     setFn(ctx, net_http, "post", nema_http_post, 3);
+    setFn(ctx, net_http, "request", nema_http_request, 4);
 
     JSValue net_wifi = JS_NewObject(ctx);
     if (caps.has(nema::caps::NetWifi)) {

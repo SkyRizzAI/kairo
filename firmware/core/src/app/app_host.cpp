@@ -8,6 +8,7 @@
 #include "nema/hal/buffer_display.h"
 #include "nema/hal/display.h"
 #include "nema/service/service_container.h"
+#include "nema/config/config_store.h"
 #include "nema/event/event.h"
 #include "nema/event/async_event_poster.h"
 #include <cstdlib>
@@ -48,12 +49,15 @@ AppHost::AppHost(Runtime& rt, IApp& app, std::vector<std::string> args)
 {
     termOut_ = std::make_unique<LineOutputStream>([this](const std::string& line) {
         terminalLines_.push_back(line);
-        if (hostMode_ == HostMode::Terminal) rt_.view().requestRedraw();
+        if (hostMode_ == HostMode::Terminal) { rt_.view().requestRedraw(); rt_.guiWaker().signal(); }
     });
     termErr_ = std::make_unique<LineOutputStream>([this](const std::string& line) {
         terminalLines_.push_back("[err] " + line);
-        if (hostMode_ == HostMode::Terminal) rt_.view().requestRedraw();
+        if (hostMode_ == HostMode::Terminal) { rt_.view().requestRedraw(); rt_.guiWaker().signal(); }
     });
+    // Plan 97 — opt-in latency instrumentation (off unless aether/applatency=1).
+    if (auto* cfg = rt_.container().resolve<IConfigStore>())
+        latencyCfg_ = cfg->getIntOr("aether", "applatency", 0) != 0;
 }
 
 AppHost::~AppHost() {
@@ -75,19 +79,11 @@ void AppHost::onResume() {
     }
     w_    = rt_.canvas().width();
     h_    = rt_.canvas().height();
-    size_ = (size_t)w_ * h_;
-    drawBuf_  = allocBuf(size_);              // written by app thread (PSRAM ok)
-    // PSRAM, not internal. A 240×320 buffer is ~75 KB; forcing it internal was
-    // THE cause of internal-RAM exhaustion (free internal → ~18 KB) once an app
-    // ran, which made 8 KB task-stack allocations and SPI-DMA priv buffers fail
-    // (device reboot). The fullscreen present path (display_->flushBuffer) reads
-    // this once per frame into the LCD driver's own DMA staging buffer — fine
-    // from PSRAM on the S3. Only the rarely-taken scaled per-pixel blit is slower.
-    readyBuf_ = allocBuf(size_);
-    std::memset(drawBuf_,  0, size_);
-    std::memset(readyBuf_, 0, size_);
-    bufDisplay_ = new BufferDisplay(drawBuf_, w_, h_);
-    appCanvas_  = new Canvas(*bufDisplay_);
+    size_ = BufferDisplay::byteSize(w_, h_);   // Plan 97 P3b: 1-bit packed (~8× smaller)
+    // Plan 97 — lazy framebuffer alloc. The two full-screen buffers (~150 KB PSRAM)
+    // are NOT allocated here: a terminal/CLI app (BadUSB, shells, compute-only
+    // WASM/JS) never draws and would otherwise waste them. ensureCanvas() allocates
+    // them on first canvas()/present() (i.e. when the app actually goes GUI).
     display_    = rt_.container().resolve<IDisplayDriver>();  // for fast fullscreen path
 
     started_  = true;
@@ -97,9 +93,21 @@ void AppHost::onResume() {
     // app thread starts. JS/WASM app threads use PSRAM stacks; NVS flash reads
     // disable the SPI cache which also disables PSRAM → assert if called there.
     warmStorage();
-    // App thread on core 0 (off the GUI/core-1). May block freely.
+    // App thread on core 0 (off the GUI/core-1) by default. May block freely.
     // Stack size comes from the app: JS apps need more (QuickJS recurses deeply).
-    thread_.start({"nema_app", app_.stackBytes(), 5, 0}, &AppHost::threadEntry, this);
+    //
+    // Plan 97 P0b — core/priority are tunable so the app-vs-WiFi/BLE core-0 jitter
+    // can be A/B tested on hardware WITHOUT changing the default. Defaults reproduce
+    // the original {prio 5, core 0}. e.g. set config app/thread_core=1 to move the
+    // app onto the GUI core (frees core 0 for radio); measure radio + responsiveness
+    // before adopting. -1 = no affinity.
+    uint8_t prio = 5;
+    int8_t  core = 0;
+    if (auto* cfg = rt_.container().resolve<IConfigStore>()) {
+        prio = (uint8_t)cfg->getIntOr("app", "thread_prio", prio);
+        core = (int8_t) cfg->getIntOr("app", "thread_core", core);
+    }
+    thread_.start({"nema_app", app_.stackBytes(), prio, core}, &AppHost::threadEntry, this);
     rt_.view().requestRedraw();
 }
 
@@ -133,6 +141,7 @@ void AppHost::onCode(input::Code c) {
     ie.key    = input::keyFromCode(c);   // lossless: physical direction preserved
     ie.action = pendingAction_;          // board-resolved intent (None if unpaired)
     pendingAction_ = input::Action::None;
+    if (latencyOn()) lastInputMs_.store(rt_.clock().millis());
     mailbox_.send(ie);
 }
 
@@ -142,6 +151,7 @@ void AppHost::onPointer(const input::PointerEvent& e) {
     ie.type   = InputEvent::Type::Press;
     ie.pphase = e.phase;
     ie.px = e.x; ie.py = e.y;
+    if (latencyOn()) lastInputMs_.store(rt_.clock().millis());
     mailbox_.send(ie);   // delivered to app thread via waitInput()
 }
 
@@ -158,6 +168,17 @@ void AppHost::draw(Canvas& c) {
     }
     if (!hasFrame_) return;
     drawnSeq_ = frameSeq_.load(std::memory_order_acquire);   // this frame is being drawn
+
+    // Plan 97 — latency: full input→pixel, plus the present→pixel handoff that
+    // P0+P1 (event-driven GUI) collapsed from up-to-33 ms to ~0.
+    if (latencyOn()) {
+        if (uint64_t in = pendingInputMs_.exchange(0)) {
+            uint64_t now = rt_.clock().millis();
+            rt_.log().info("AppLatency", "in→pixel",
+                {{"ms", std::to_string(now - in)},
+                 {"present→pixel", std::to_string(now - presentMs_.load())}});
+        }
+    }
 
     // Fullscreen fast path: push the whole frame straight to the panel in one
     // pass (skips 76,800 per-pixel drawPixel calls). Only valid when the app
@@ -182,7 +203,7 @@ void AppHost::draw(Canvas& c) {
     uint16_t top = app_.fullscreen() ? 0 : (uint16_t)(nema::display::SEP1_Y + 2);
     for (uint16_t y = top; y < h_; y++)
         for (uint16_t x = 0; x < w_; x++)
-            c.drawPixel(x, y, readyBuf_[(size_t)y * w_ + x] != 0);
+            c.drawPixel(x, y, nema::mono1::get(readyBuf_, w_, x, y));  // Plan 97 P3b
 }
 
 bool AppHost::suppressCanvasFlush() const {
@@ -233,9 +254,30 @@ void AppHost::threadEntry(void* self) {
         {"exitCode", std::to_string(exitCode)}}});
 }
 
-Canvas& AppHost::canvas() { return *appCanvas_; }
+// Allocate the two full-screen frame buffers + Canvas on first use (app thread).
+// Idempotent. PSRAM, not internal: a 240×320 buffer is ~75 KB; forcing it internal
+// was THE cause of internal-RAM exhaustion (free internal → ~18 KB) once an app ran,
+// which made 8 KB task-stack allocations and SPI-DMA priv buffers fail (device
+// reboot). The fullscreen present path (display_->flushBuffer) reads this once per
+// frame into the LCD driver's own DMA staging buffer — fine from PSRAM on the S3.
+void AppHost::ensureCanvas() {
+    if (appCanvas_) return;
+    drawBuf_  = allocBuf(size_);   // written by app thread (PSRAM ok)
+    readyBuf_ = allocBuf(size_);
+    std::memset(drawBuf_,  0, size_);
+    std::memset(readyBuf_, 0, size_);
+    bufDisplay_ = new BufferDisplay(drawBuf_, w_, h_);
+    appCanvas_  = new Canvas(*bufDisplay_);
+}
+
+Canvas& AppHost::canvas() { ensureCanvas(); return *appCanvas_; }
+
+// Plan 97 — latency logging is on when explicitly configured OR when the FPS
+// overlay is enabled (the toggle the user already controls for "show me perf").
+bool AppHost::latencyOn() const { return latencyCfg_ || rt_.showFps(); }
 
 void AppHost::present() {
+    ensureCanvas();   // Plan 97: an app that present()s without canvas() still needs buffers
     // Diagnostic: on the first few presents, count non-zero pixels in drawBuf_
     // so we can tell whether the app renderer actually drew anything visible.
     if (dbgPresent_ < 4) {
@@ -253,7 +295,19 @@ void AppHost::present() {
         hasFrame_ = true;
     }
     frameSeq_.fetch_add(1, std::memory_order_release);
+    // Plan 97 — latency: time from input delivery to this app frame being produced
+    // (app reaction time, includes core-0 scheduling jitter vs WiFi/BLE — P0b).
+    if (latencyOn()) {
+        uint64_t now = rt_.clock().millis();
+        presentMs_.store(now);
+        if (uint64_t in = lastInputMs_.exchange(0)) {
+            pendingInputMs_.store(in);
+            rt_.log().info("AppLatency", "in→present",
+                {{"ms", std::to_string(now - in)}, {"app", app_.name()}});
+        }
+    }
     rt_.view().requestRedraw();   // ask GUI thread to re-blit
+    rt_.guiWaker().signal();      // Plan 97: wake it NOW (no +1-frame poll wait)
 }
 
 bool AppHost::nextInput(InputEvent& out) {

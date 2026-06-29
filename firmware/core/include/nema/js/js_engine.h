@@ -48,6 +48,10 @@ public:
     // the app requested a re-render (setState happened).
     bool callHandler(int id);
 
+    // Deliver a physical Back/Cancel press to the app's registered useBackHandler.
+    // Returns true if the app consumed it (don't exit); false → caller should exit.
+    bool handleBack();
+
     // True (and clears) if a re-render was requested since the last check.
     bool takeDirty();
 
@@ -117,6 +121,7 @@ private:
 
     JSValue      appComponent_ = JS_UNDEFINED;   // app default export
     JSValue      renderFn_     = JS_UNDEFINED;   // nema.renderToTree
+    JSValue      backFn_       = JS_UNDEFINED;   // nema.__callBack (Back key → app)
     JSValue      scheduleFn_   = JS_UNDEFINED;   // C fn passed to renderToTree
     JSModuleDef* nemaDef_     = nullptr;        // cached embedded-runtime module
 

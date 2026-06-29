@@ -4,12 +4,14 @@
 // BitcoinChain — UTXO family (Plan 94, ADR 0015). secp256k1, BIP84 native SegWit
 // (P2WPKH, bech32 addresses).
 //
-// SCOPE (Fase 2): address derivation + pathFor are complete and tested (the
-// app-critical "receive" path). Transaction decode/sign/encode require BIP143 segwit
-// sighashing and PSBT parsing — these MUST be verified against the official BIP143 test
-// vector before signing real value (a wrong sighash = lost funds), so they are
-// deliberately left as a focused follow-up and currently fail closed (blind-sign /
-// empty). BTC *sending* is not needed for initial app bring-up; receiving is.
+// SCOPE: address derivation + pathFor (receive path) and native-SegWit P2WPKH
+// transaction signing are implemented and tested. The signer uses BIP143 sighashing
+// over a compact "Palanu BTC v1" sign-request (see bitcoin.cpp) instead of full PSBT,
+// and is verified against the official BIP143 P2WPKH test vector in
+// firmware/tests/bitcoin_chain_test.cpp (a wrong sighash = lost funds). Message
+// signing uses the legacy "Bitcoin Signed Message" format. NOT yet covered: non-segwit
+// (P2PKH) and nested/taproot inputs, multi-key/PSBT, and BIP-322 — these fail closed
+// (decodeForDisplay → blind-sign, buildSigningPayload → empty), never signing blind.
 
 namespace nema::wallet {
 

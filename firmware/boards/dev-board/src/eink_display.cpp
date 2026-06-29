@@ -1,5 +1,6 @@
 #include "nema/devboard/eink_display.h"
 #include "nema/devboard/board_config.h"
+#include "nema/hal/mono1.h"
 #include "nema/log/logger.h"
 #include <GxEPD2_BW.h>
 #include <gdey/GxEPD2_270_GDEY027T91.h>
@@ -22,13 +23,14 @@ void EinkDisplay::start() {
     g_epd.setRotation(1);
 
     // Big buffers live in PSRAM — keep internal SRAM for stacks/WiFi.
-    const size_t n = (size_t)W * H;
+    // Plan 97 P3b: 1-bit packed (nema::mono1) — ~5.8 KB each instead of ~46 KB.
+    const size_t n = nema::mono1::byteSize(W, H);
     buf_      = (uint8_t*)heap_caps_malloc(n, MALLOC_CAP_SPIRAM);
     prev_buf_ = (uint8_t*)heap_caps_malloc(n, MALLOC_CAP_SPIRAM);
     if (!buf_)      buf_      = (uint8_t*)heap_caps_malloc(n, MALLOC_CAP_8BIT);
     if (!prev_buf_) prev_buf_ = (uint8_t*)heap_caps_malloc(n, MALLOC_CAP_8BIT);
-    std::memset(buf_, 0, n);
-    std::memset(prev_buf_, 1, n);  // force a full refresh on first flush
+    std::memset(buf_, 0x00, n);
+    std::memset(prev_buf_, 0xFF, n);  // differs from buf_ everywhere → full refresh on first flush
 
     // Initial clear — synchronous, runs once at boot before the async task exists.
     flushBuffer(buf_, W, H);
@@ -48,27 +50,25 @@ void EinkDisplay::stop() {
 
 void EinkDisplay::drawPixel(uint16_t x, uint16_t y, bool on) {
     if (x >= W || y >= H || !buf_) return;
-    buf_[y * W + x] = on ? 1 : 0;
+    nema::mono1::set(buf_, W, x, y, on);
 }
 
 void EinkDisplay::fillRect(uint16_t x, uint16_t y, uint16_t w, uint16_t h, bool on) {
     if (!buf_) return;
-    for (uint16_t row = y; row < y + h && row < H; row++) {
-        uint16_t x1 = x < W ? x : W;
-        uint16_t x2 = x + w < W ? x + w : W;
-        if (x1 < x2) std::memset(buf_ + row * W + x1, on ? 1 : 0, x2 - x1);
-    }
+    for (uint16_t row = y; row < y + h && row < H; row++)
+        for (uint16_t col = x; col < x + w && col < W; col++)
+            nema::mono1::set(buf_, W, col, row, on);
 }
 
 void EinkDisplay::clear(bool on) {
-    if (buf_) std::memset(buf_, on ? 1 : 0, (size_t)W * H);
+    if (buf_) std::memset(buf_, on ? 0xFF : 0x00, nema::mono1::byteSize(W, H));
 }
 
 void EinkDisplay::invertRect(uint16_t x, uint16_t y, uint16_t w, uint16_t h) {
     if (!buf_) return;
     for (uint16_t row = y; row < y + h && row < H; row++)
         for (uint16_t col = x; col < x + w && col < W; col++)
-            buf_[row * W + col] ^= 1;
+            nema::mono1::flip(buf_, W, col, row);
 }
 
 void EinkDisplay::flush() { flushBuffer(buf_, W, H); }
@@ -78,11 +78,11 @@ void EinkDisplay::flush() { flushBuffer(buf_, W, H); }
 void EinkDisplay::flushBuffer(const uint8_t* buf, uint16_t w, uint16_t h) {
     if (!buf || !prev_buf_) return;
 
-    // Dirty bounding box vs last-sent state.
+    // Dirty bounding box vs last-sent state (Plan 97 P3b: both 1-bit packed).
     uint16_t x0 = w, y0 = h, x1 = 0, y1 = 0;
     for (uint16_t y = 0; y < h; y++) {
         for (uint16_t x = 0; x < w; x++) {
-            if (buf[y * w + x] != prev_buf_[y * w + x]) {
+            if (nema::mono1::get(buf, w, x, y) != nema::mono1::get(prev_buf_, w, x, y)) {
                 if (x < x0) x0 = x;
                 if (x > x1) x1 = x;
                 if (y < y0) y0 = y;
@@ -109,10 +109,10 @@ void EinkDisplay::flushBuffer(const uint8_t* buf, uint16_t w, uint16_t h) {
     do {
         for (uint16_t y = 0; y < h; y++)
             for (uint16_t x = 0; x < w; x++)
-                g_epd.drawPixel(x, y, buf[y * w + x] ? GxEPD_BLACK : GxEPD_WHITE);
+                g_epd.drawPixel(x, y, nema::mono1::get(buf, w, x, y) ? GxEPD_BLACK : GxEPD_WHITE);
     } while (g_epd.nextPage());
 
-    std::memcpy(prev_buf_, buf, (size_t)w * h);
+    std::memcpy(prev_buf_, buf, nema::mono1::byteSize(w, h));
 }
 
 } // namespace nema

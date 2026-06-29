@@ -135,6 +135,10 @@ declare namespace nema {
        * HTTPS POST with a body and Content-Type header.
        */
       post(url: string, body: string, contentType: string): Promise<http-response>;
+      /**
+       * General request — the curl/fetch-style escape hatch. `method` is any HTTP verb (GET/POST/PUT/PATCH/DELETE/HEAD); `headers` is a raw "Name: Value" block, one per line (LF-separated; empty for none); `body` is the request body (empty for none). Returns status + response headers + body.
+       */
+      request(method: string, url: string, headers: string, body: string): Promise<http-response>;
     }
 
       // gated: net.wifi

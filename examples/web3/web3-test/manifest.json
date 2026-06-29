@@ -4,6 +4,6 @@
   "version": "1.0.0",
   "entry": "App.tsx",
   "api_version": "1.0",
-  "needs": ["wallet.read", "wallet.sign"],
-  "description": "Demo dApp: pick a network, read the wallet address, sign a message or transaction via nema.wallet (Plan 94, Fase 7)."
+  "needs": ["wallet.read", "wallet.sign", "net.http"],
+  "description": "Demo dApp: pick a network, read the wallet address, sign a message/transaction, and request a Solana devnet airdrop via nema.wallet + nema.net (Plan 94, Fase 7)."
 }

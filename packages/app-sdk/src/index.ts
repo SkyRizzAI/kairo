@@ -2,7 +2,10 @@
 // The device provides this module to the embedded JS engine (external at build
 // time) so app + host share one runtime (hooks/render identity).
 export * from "./components";
-export { useState, useRef, useEffect } from "./hooks";
+export { useState, useRef, useEffect, useBackHandler } from "./hooks";
+// __callBack is host-facing (the engine invokes it on a Back press); exported so it
+// lands in the `nema` module namespace the host reads.
+export { __callBack } from "./hooks";
 export { renderToTree } from "./render";
 // Also re-export the JSX runtime here so a SINGLE embedded bundle can serve both
 // the "nema" and "nema/jsx-runtime" module names on the device engine.

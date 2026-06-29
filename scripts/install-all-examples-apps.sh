@@ -10,8 +10,9 @@
 #          examples/system/sysinfo    examples/hbd            (root, uncategorised)
 #   2. Build them all via the app-sdk builder (JS + WASM).
 #   3. Prompt for a device id (palanu alias) — press Enter to skip deploy (build only).
-#   4. palanu cp each dist/*.papp.zip → device:<id>:/sd/apps/<category>/ (preserving
-#      the examples/ subpath; palanu auto-unzips, the device scans /sd/apps recursively).
+#   3b. Prompt for install location: SD card (/sd/apps) or system (/system/apps).
+#   4. palanu cp each dist/*.papp.zip → device:<id>:<approot>/<category>/ (preserving
+#      the examples/ subpath; palanu auto-unzips, the device scans the root recursively).
 #
 # Registered in package.json as "install-all-examples-apps".
 # Usage:  bun run install-all-examples-apps
@@ -80,8 +81,23 @@ fi
 read -rsp "   Device password (Enter for none): " PW; echo
 echo
 
+# ── 3b. Install location ────────────────────────────────────────────────────
+# Both are valid app roots the device scans (see kAppRoots). SD card is the usual
+# choice (removable, big); system is internal flash (survives a missing SD card).
+echo "💾 Install location:"
+echo "     1) SD card  →  /sd/apps        (default, removable)"
+echo "     2) System   →  /system/apps    (internal flash)"
+read -rp "   Choose [1/2, Enter=1]: " LOC
+case "${LOC:-1}" in
+  2) APPROOT="/system/apps" ;;
+  1|"") APPROOT="/sd/apps" ;;
+  *) echo "   ‼️  Invalid choice '$LOC' — defaulting to SD card."; APPROOT="/sd/apps" ;;
+esac
+echo "   → installing under $APPROOT"
+echo
+
 # ── 4. Deploy (preserve category subpath) ───────────────────────────────────
-echo "🚀 Deploying to device:$DEVICE:/sd/apps/ …"
+echo "🚀 Deploying to device:$DEVICE:$APPROOT/ …"
 ok=0; fail=0
 for app in "${built[@]}"; do
   zip="$(ls "examples/$app/dist/"*.papp.zip 2>/dev/null | head -1)"
@@ -91,13 +107,13 @@ for app in "${built[@]}"; do
   fi
 
   # category = the directory part of the relative path ("ui/counter" → "ui",
-  # "hbd" → ""). Deploy into /sd/apps/<category>/ so the on-device recursive
+  # "hbd" → ""). Deploy into <APPROOT>/<category>/ so the on-device recursive
   # scanner keeps the same folder structure.
   category="$(dirname "$app")"
   if [ "$category" = "." ]; then
-    dest="device:$DEVICE:/sd/apps/"
+    dest="device:$DEVICE:$APPROOT/"
   else
-    dest="device:$DEVICE:/sd/apps/$category/"
+    dest="device:$DEVICE:$APPROOT/$category/"
   fi
 
   printf "   • %-40s " "$category/$(basename "$zip")"
@@ -115,7 +131,7 @@ done
 
 echo
 if [ "$fail" -eq 0 ]; then
-  echo "✅ Deployed all $ok app(s) to device:$DEVICE:/sd/apps/ (appScan triggered)."
+  echo "✅ Deployed all $ok app(s) to device:$DEVICE:$APPROOT/ (appScan triggered)."
 else
   echo "⚠️  Deployed $ok, $fail failed — check the logs above."
 fi

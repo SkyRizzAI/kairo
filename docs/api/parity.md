@@ -5,7 +5,7 @@
 
 ## Coverage
 
-**Total functions:** 67
+**Total functions:** 68
 
 | Interface | Function | Cap | Tier | Host C++ | QuickJS | WASM .h | JS .d.ts | Docs | Impl |
 |---|---|---|---|---|---|---|---|---|---|
@@ -30,6 +30,7 @@
 | `nema:media/camera` | `capture` 🔒 | `camera` | — | — | — | — | — | ✅ | — |
 | `nema:net/http` | `get` 🔒 | `net.http` | — | — | — | — | — | ✅ | — |
 | `nema:net/http` | `post` 🔒 | `net.http` | — | — | — | — | — | ✅ | — |
+| `nema:net/http` | `request` 🔒 | `net.http` | — | — | — | — | — | ✅ | — |
 | `nema:net/wifi` | `is-connected` | `net.wifi` | — | — | — | — | — | ✅ | — |
 | `nema:net/wifi` | `ssid` | `net.wifi` | — | — | — | — | — | ✅ | — |
 | `nema:net/wifi` | `ip` | `net.wifi` | — | — | — | — | — | ✅ | — |

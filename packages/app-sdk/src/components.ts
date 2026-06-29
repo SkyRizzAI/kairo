@@ -13,7 +13,8 @@ function intrinsic(tag: string): IntrinsicFn {
 type Common = { style?: Style; children?: any; key?: string | number };
 
 export interface ViewProps extends Common {}
-export interface TextProps extends Common { variant?: TextVariant }
+// wrap: word-wrap to multiple lines (like the native Paragraph) instead of one line.
+export interface TextProps extends Common { variant?: TextVariant; wrap?: boolean }
 export interface PressableProps extends Common { onPress?: () => void }
 export interface ScrollViewProps extends Common {}
 export interface SliderProps extends Common {

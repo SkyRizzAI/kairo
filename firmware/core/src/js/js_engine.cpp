@@ -78,6 +78,7 @@ JsEngine::~JsEngine() {
         freeHandlers();
         JS_FreeValue(ctx_, scheduleFn_);
         JS_FreeValue(ctx_, renderFn_);
+        JS_FreeValue(ctx_, backFn_);
         JS_FreeValue(ctx_, appComponent_);
         JS_FreeContext(ctx_);
     }
@@ -181,6 +182,7 @@ bool JsEngine::loadApp(const char* js, const char* name) {
     if (nemaDef_) {
         JSValue kns = JS_GetModuleNamespace(ctx_, nemaDef_);
         renderFn_ = JS_GetPropertyStr(ctx_, kns, "renderToTree");
+        backFn_   = JS_GetPropertyStr(ctx_, kns, "__callBack");   // Back-key delivery
         JS_FreeValue(ctx_, kns);
     }
     if (!JS_IsFunction(ctx_, renderFn_)) { err_ = "nema runtime missing renderToTree"; return false; }
@@ -258,6 +260,9 @@ UiNode* JsEngine::reify(JSValueConst node, NodeArena& arena) {
         std::string variant = JS_IsObject(props) ? getStr(ctx_, props, "variant") : "";
         n->role = variant == "title" ? TextRole::Title
                 : variant == "caption" ? TextRole::Caption : TextRole::Body;
+        // wrap → multi-line word-wrap (mirrors the native Paragraph). Lets a result/
+        // address screen show full text instead of truncating to one line.
+        if (JS_IsObject(props) && getBool(ctx_, props, "wrap", false)) n->wrap = true;
     } else if (type == "Pressable") {
         n->type = NodeType::Pressable;
         n->focusable = true;
@@ -400,6 +405,17 @@ bool JsEngine::callHandler(int id) {
     JS_FreeValue(ctx_, r);
     pumpJobs();
     return dirty_;
+}
+
+bool JsEngine::handleBack() {
+    if (!ok() || !JS_IsFunction(ctx_, backFn_)) return false;   // no handler → caller exits
+    startMs_ = nowMs();
+    JSValue r = JS_Call(ctx_, backFn_, JS_UNDEFINED, 0, nullptr);
+    if (JS_IsException(r)) { captureError(); JS_FreeValue(ctx_, r); return false; }
+    bool handled = (JS_ToBool(ctx_, r) == 1);
+    JS_FreeValue(ctx_, r);
+    pumpJobs();   // settle the setState the handler likely scheduled
+    return handled;
 }
 
 } // namespace nema::js

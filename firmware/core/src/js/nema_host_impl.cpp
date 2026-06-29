@@ -271,17 +271,34 @@ public:
 
     // ── nema:net/http ─────────────────────────────────────────────────
 
-    NemaResult<HttpResponse, std::string> http_get(std::string_view url) override {
-        auto* client = rt_.container().resolve<nema::IHttpClient>();
-        if (!client) return {false, {}, "http not available"};
-        auto r = client->get(std::string(url).c_str());
-        HttpResponse resp{static_cast<uint16_t>(r.status), std::move(r.body)};
-        if (!r.ok()) return {false, resp, "transport error"};
+    // Wrap a hal HttpResponse into the generated API result (status/headers/body).
+    static NemaResult<HttpResponse, std::string> wrap(const nema::HttpResponse& r) {
+        HttpResponse resp{static_cast<uint16_t>(r.status), r.headers, r.body};
+        if (!r.ok()) return {false, std::move(resp), "transport error"};
         return {true, std::move(resp), {}};
     }
 
-    NemaResult<HttpResponse, std::string> http_post(std::string_view, std::string_view, std::string_view) override {
-        return {false, {}, "http post not yet implemented"};
+    NemaResult<HttpResponse, std::string> http_get(std::string_view url) override {
+        auto* client = rt_.container().resolve<nema::IHttpClient>();
+        if (!client) return {false, {}, "http not available"};
+        return wrap(client->get(std::string(url).c_str()));
+    }
+
+    NemaResult<HttpResponse, std::string> http_post(std::string_view url, std::string_view body,
+                                                     std::string_view contentType) override {
+        auto* client = rt_.container().resolve<nema::IHttpClient>();
+        if (!client) return {false, {}, "http not available"};
+        return wrap(client->post(std::string(url).c_str(), std::string(body).c_str(),
+                                 std::string(contentType).c_str()));
+    }
+
+    NemaResult<HttpResponse, std::string> http_request(std::string_view method, std::string_view url,
+                                                       std::string_view headers,
+                                                       std::string_view body) override {
+        auto* client = rt_.container().resolve<nema::IHttpClient>();
+        if (!client) return {false, {}, "http not available"};
+        return wrap(client->request(std::string(method).c_str(), std::string(url).c_str(),
+                                    std::string(headers).c_str(), std::string(body).c_str()));
     }
 
     // ── nema:net/wifi ─────────────────────────────────────────────────

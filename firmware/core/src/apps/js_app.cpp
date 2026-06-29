@@ -106,4 +106,15 @@ UiNode* JsApp::build(NodeArena& arena, AppContext& ctx) {
     return root;
 }
 
+bool JsApp::onKey(Key k, AppContext& ctx) {
+    (void)ctx;
+    // Only Back/Cancel is offered to the app; nav/Activate are handled by the base
+    // focus engine. If the app's useBackHandler consumes it (e.g. pops a sub-screen)
+    // we return true so the base does NOT exit the app. Otherwise return false →
+    // the base exits, preserving the "Back on home leaves the app" behaviour.
+    if (k == Key::Cancel && loaded_ && eng_)
+        return eng_->handleBack();
+    return false;
+}
+
 } // namespace nema

@@ -20,6 +20,7 @@
 #include "nema/sim/sim_wifi_radio.h"
 #include "nema/wasm/sim_secure_element.h"
 #include "nema/wasm/wasm_speaker.h"
+#include "nema/wasm/wasm_http_client.h"
 
 namespace nema {
 
@@ -60,6 +61,7 @@ private:
     SimWifiRadio       wifiRadio_;  // raw radio access (Plan 87 Fase 4)
     SimSecureElement   secure_;    // software-emulated SE050 (Plan: crypto wallet)
     WasmSpeaker        speaker_;    // audio output → Web Audio (Sounds test beep)
+    WasmHttpClient     http_;       // nema.net.http.* → browser XHR (Plan 94 faucet)
     Runtime*           rt_ = nullptr;
 };
 

@@ -51,7 +51,10 @@ public:
     uint32_t longMs   = 500;    // hold >= this → Long
     uint32_t repeatMs = 150;    // repeat interval after Long
     uint32_t holdMs   = 1000;   // two-stage/double: hold >= this → Hold (e.g. pause)
-    uint32_t doubleMs = 280;    // two taps within this → Double (else Short)
+    uint32_t doubleMs = 220;    // two taps within this → Double (else Short). Plan 97
+                                // P2: 280→220 — a single tap on a double-mode button
+                                // (e.g. E32 OK→Activate) fires ~60ms sooner; 220ms is
+                                // still a comfortable deliberate-double-tap window.
 
     using GestureCb = void(*)(void* ctx, uint8_t buttonId, Gesture g, uint64_t now);
 

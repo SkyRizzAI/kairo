@@ -66,6 +66,9 @@ public:
 protected:
     void        onStart(AppContext& ctx) override;
     aether::ui::UiNode* build(aether::ui::NodeArena& arena, AppContext& ctx) override;
+    // Back/Cancel → the app's useBackHandler (in-app navigation). Consumed only if
+    // the app registered a handler that returns true; otherwise the base exits.
+    bool        onKey(Key k, AppContext& ctx) override;
     size_t      arenaCapacity() const override { return 1024; }
 
 private:

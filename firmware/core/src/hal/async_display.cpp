@@ -1,4 +1,5 @@
 #include "nema/hal/async_display.h"
+#include "nema/hal/mono1.h"
 #include "nema/log/logger.h"
 #include <cstring>
 #include <cstdlib>
@@ -13,7 +14,8 @@
 
 namespace nema {
 
-// Buffer allocation: PSRAM on ESP32 (these are ~46KB each), plain heap on host.
+// Buffer allocation: PSRAM on ESP32, plain heap on host. Plan 97 P3b: buffers are
+// now 1-bit packed (nema::mono1), so each is ~5.8 KB (264×176/8) instead of ~46 KB.
 static uint8_t* allocBuf(size_t n) {
 #ifdef ESP_PLATFORM
     if (auto* p = (uint8_t*)heap_caps_malloc(n, MALLOC_CAP_SPIRAM)) return p;
@@ -28,7 +30,7 @@ void AsyncDisplayDriver::init(IDisplayDriver& inner, Logger& log) {
     log_   = &log;
     w_     = inner.width();
     h_     = inner.height();
-    size_  = (size_t)w_ * h_;
+    size_  = nema::mono1::byteSize(w_, h_);   // Plan 97 P3b: 1-bit packed
 
     draw_buf_  = allocBuf(size_);
     ready_buf_ = allocBuf(size_);
@@ -42,27 +44,25 @@ void AsyncDisplayDriver::init(IDisplayDriver& inner, Logger& log) {
 
 void AsyncDisplayDriver::drawPixel(uint16_t x, uint16_t y, bool on) {
     if (x >= w_ || y >= h_ || !draw_buf_) return;
-    draw_buf_[(size_t)y * w_ + x] = on ? 1 : 0;
+    nema::mono1::set(draw_buf_, w_, x, y, on);
 }
 
 void AsyncDisplayDriver::fillRect(uint16_t x, uint16_t y, uint16_t w, uint16_t h, bool on) {
     if (!draw_buf_) return;
-    for (uint16_t row = y; row < y + h && row < h_; row++) {
-        uint16_t x1 = x < w_ ? x : w_;
-        uint16_t x2 = x + w < w_ ? x + w : w_;
-        if (x1 < x2) std::memset(draw_buf_ + (size_t)row * w_ + x1, on ? 1 : 0, x2 - x1);
-    }
+    for (uint16_t row = y; row < y + h && row < h_; row++)
+        for (uint16_t col = x; col < x + w && col < w_; col++)
+            nema::mono1::set(draw_buf_, w_, col, row, on);
 }
 
 void AsyncDisplayDriver::clear(bool on) {
-    if (draw_buf_) std::memset(draw_buf_, on ? 1 : 0, size_);
+    if (draw_buf_) std::memset(draw_buf_, on ? 0xFF : 0x00, size_);
 }
 
 void AsyncDisplayDriver::invertRect(uint16_t x, uint16_t y, uint16_t w, uint16_t h) {
     if (!draw_buf_) return;
     for (uint16_t row = y; row < y + h && row < h_; row++)
         for (uint16_t col = x; col < x + w && col < w_; col++)
-            draw_buf_[(size_t)row * w_ + col] ^= 1;
+            nema::mono1::flip(draw_buf_, w_, col, row);
 }
 
 #ifdef ESP_PLATFORM

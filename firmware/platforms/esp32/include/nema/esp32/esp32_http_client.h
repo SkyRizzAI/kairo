@@ -15,6 +15,11 @@ public:
     void onRegister(Runtime& rt) override;
 
     HttpResponse get(const char* url, bool insecure = true) override;
+    HttpResponse post(const char* url, const char* body,
+                      const char* contentType, bool insecure = true) override;
+    HttpResponse request(const char* method, const char* url,
+                         const char* headers, const char* body,
+                         bool insecure = true) override;
 
     void start() override {}
     void stop()  override {}

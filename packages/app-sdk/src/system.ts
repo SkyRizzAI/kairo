@@ -48,6 +48,10 @@ export interface NemaSystem {
   net: {
     http?: {
       get(url: string): Promise<HttpResponse>;
+      post(url: string, body: string, contentType: string): Promise<HttpResponse>;
+      // The curl/fetch-style escape hatch: any verb, raw "Name: Value\n" request
+      // header block, and a body. Returns status + response headers + body.
+      request(method: string, url: string, headers: string, body: string): Promise<HttpResponse>;
     };
     wifi?: {
       scan(): Promise<Array<{ ssid: string; rssi: number }>>;
@@ -71,6 +75,7 @@ export interface NemaSystem {
 
 export interface HttpResponse {
   status: number;
+  headers: string;   // raw response headers, "Name: Value" per line (LF-separated)
   body: string;
 }
 

@@ -8,6 +8,7 @@ add_library(nema_platform_wasm STATIC
     src/sim_wifi_radio.cpp    # raw radio HAL (Plan 87 Fase 4)
     src/wasm_wallet_rng.cpp   # trezor-crypto RNG hooks (Plan 94)
     src/wasm_speaker.cpp      # audio output → Web Audio bridge (Sounds test beep)
+    src/wasm_http_client.cpp  # nema.net.http.* → synchronous browser XHR (Plan 94)
 )
 
 target_include_directories(nema_platform_wasm PUBLIC

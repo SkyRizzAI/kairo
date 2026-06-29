@@ -18,6 +18,8 @@
     "flash:dev-board": "bash firmware/tools/flash-dev-board.sh",
     "build:skyrizz-e32": "bash firmware/tools/build-skyrizz-e32.sh",
     "flash:skyrizz-e32": "bash firmware/tools/flash-skyrizz-e32.sh",
+    "build:skyrizz-solana": "bash firmware/tools/build-skyrizz-solana.sh",
+    "flash:skyrizz-solana": "bash firmware/tools/flash-skyrizz-solana.sh",
     "build:camtest": "bash firmware/tools/build-skyrizz-camtest.sh",
     "flash:camtest": "bash firmware/tools/flash-skyrizz-camtest.sh",
     "build:esp32": "bun run build:dev-board",

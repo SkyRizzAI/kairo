@@ -11,6 +11,7 @@ void InputService::post(Key k, InputEvent::Type t) {
     e.action = input::defaultAction(e.code);
     e.gesture = input::Gesture::Short;
     queue_.send(e);
+    if (waker_) waker_->signal();   // Plan 97: wake the GUI loop now
 }
 
 void InputService::setKeyMap(input::IKeyMap* km) {

@@ -76,6 +76,10 @@ void Runtime::initCore() {
     appHosts_       = std::make_unique<AppHostManager>(*this);
     viewDispatcher_ = std::make_unique<ViewDispatcher>();
 
+    // Plan 97 — event-driven GUI: input posts wake the GUI loop immediately
+    // instead of waiting out the frame poll. (AppHost::present wakes it too.)
+    inputService_.setWaker(&guiWaker_);
+
     logger_->info("Runtime", "Core ready",
         {{"platform", platform_->name()}, {"board", board_->name()}});
 
@@ -189,6 +193,7 @@ void Runtime::run() {
 
 AsyncEventPoster& Runtime::asyncPoster() { return asyncPoster_; }
 InputService&     Runtime::input()       { return inputService_; }
+Waker&            Runtime::guiWaker()    { return guiWaker_; }
 nema::TaskRunner& Runtime::tasks()       { return taskRunner_; }
 AudioService&     Runtime::audio()       { return audioService_; }
 CameraService&    Runtime::camera()      { return cameraService_; }

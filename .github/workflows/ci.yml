@@ -109,3 +109,54 @@ jobs:
           name: palanu-skyrizz-e32
           path: firmware/targets/skyrizz-e32/build/palanu-skyrizz-e32.bin
           retention-days: 7
+
+  # ── ESP32 firmware (skyrizz-solana) ───────────────────────────────────────────
+  esp32-skyrizz-solana:
+    name: ESP32 firmware (skyrizz-solana)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - name: Cache ESP-IDF tools
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.espressif
+            ~/esp-idf
+          key: esp-idf-v5.5.4-${{ runner.os }}
+
+      - name: Install system deps
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y --no-install-recommends \
+            git wget flex bison gperf python3 python3-pip python3-venv \
+            cmake ninja-build ccache libffi-dev libssl-dev dfu-util libusb-1.0-0
+
+      - name: Install ESP-IDF v5.5.4
+        run: |
+          if [ ! -f ~/esp-idf/export.sh ]; then
+            git clone --depth 1 --branch v5.5.4 https://github.com/espressif/esp-idf.git ~/esp-idf
+          fi
+          ~/esp-idf/install.sh esp32s3
+
+      - name: Cache skyrizz-solana build
+        uses: actions/cache@v4
+        with:
+          path: firmware/targets/skyrizz-solana/build
+          key: esp32-skyrizz-solana-${{ hashFiles('firmware/**/*.cpp', 'firmware/**/*.h', 'firmware/**/*.cmake', 'firmware/targets/skyrizz-solana/CMakeLists.txt', 'firmware/targets/skyrizz-solana/sdkconfig') }}
+          restore-keys: esp32-skyrizz-solana-
+
+      - name: Build skyrizz-solana
+        run: |
+          source ~/esp-idf/export.sh
+          cd firmware/targets/skyrizz-solana
+          idf.py build
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: palanu-skyrizz-solana
+          path: firmware/targets/skyrizz-solana/build/palanu-skyrizz-solana.bin
+          retention-days: 7

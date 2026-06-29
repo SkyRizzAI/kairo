@@ -74,6 +74,12 @@ void WasmPlatform::registerDrivers(Runtime& rt) {
     rt.container().registerService(&wifiRadio_);
     rt.container().registerAs<IRadioWifi>(&wifiRadio_);
 
+    // HTTP client → browser XHR, so nema.net.http.* works in the simulator just
+    // like esp_http_client does on device (1=1 parity for the wallet faucet etc).
+    rt.container().registerService(&http_);
+    rt.container().registerAs<IHttpClient>(&http_);
+    rt.capabilities().add(caps::NetHttp);
+
     authStore_.init(config_);                         // session auth (Plan 74)
     rt.container().registerService(&authStore_);
     remote_.init(link_, rt.input());

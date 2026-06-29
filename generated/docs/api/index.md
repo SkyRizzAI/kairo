@@ -16,7 +16,7 @@
 | [`nema:media/audio-input`](./nema_media_audio-input.md) | `nema:media@1.0` | `audio.input` | 1 |
 | [`nema:media/audio-output`](./nema_media_audio-output.md) | `nema:media@1.0` | `audio.output` | 4 |
 | [`nema:media/camera`](./nema_media_camera.md) | `nema:media@1.0` | `camera` | 2 |
-| [`nema:net/http`](./nema_net_http.md) | `nema:net@1.0` | `net.http` | 2 |
+| [`nema:net/http`](./nema_net_http.md) | `nema:net@1.0` | `net.http` | 3 |
 | [`nema:net/wifi`](./nema_net_wifi.md) | `nema:net@1.0` | `net.wifi` | 6 |
 | [`nema:profile/profile`](./nema_profile_profile.md) | `nema:profile@1.0` | `profile` | 4 |
 | [`nema:storage/kv`](./nema_storage_kv.md) | `nema:storage@1.0` | core | 5 |
@@ -34,7 +34,7 @@
 
 | Record | Package | Fields |
 |---|---|---|
-| `http-response` | `nema:net` | `status: u16`, `body: string` |
+| `http-response` | `nema:net` | `status: u16`, `headers: string`, `body: string` |
 | `wifi-ap` | `nema:net` | `ssid: string`, `rssi: s32`, `auth: string` |
 | `field` | `nema:sys` | `key: string`, `value: string` |
 | `lease-error` | `nema:sys` | `code: string`, `owner: string` |

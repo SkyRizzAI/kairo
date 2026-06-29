@@ -6,6 +6,7 @@
 #include "nema/services/audio_service.h"
 #include "nema/services/camera_service.h"
 #include "nema/task_runner.h"
+#include "nema/waker.h"
 #include "nema/proc/process_manager.h"
 #include "nema/services/display_power_manager.h"
 #include <memory>
@@ -79,6 +80,7 @@ public:
     const SystemInfo&   info() const;
     AsyncEventPoster&   asyncPoster();  // thread-safe cross-task event queue
     InputService&       input();        // single input funnel (any thread → main)
+    Waker&              guiWaker();      // wake the GUI loop from any thread (Plan 97)
     nema::TaskRunner&   tasks();        // offload blocking work off the UI thread
     AppRegistry&        apps();       // installed-app table: install/list/launch
     AppHostManager&     appHost();    // app loader: launch IApp + pause/resume (Plan 22)
@@ -195,6 +197,7 @@ private:
     std::atomic<IDisplayServer*>       pendingServer_{nullptr};
     AsyncEventPoster                   asyncPoster_;   // value member — always alive
     InputService                       inputService_;  // value member — always alive
+    Waker                              guiWaker_;      // value member — always alive (Plan 97)
     nema::TaskRunner                   taskRunner_;    // value member — always alive
     AudioService                       audioService_;  // value member — always alive
     CliService*                        cli_           = nullptr;

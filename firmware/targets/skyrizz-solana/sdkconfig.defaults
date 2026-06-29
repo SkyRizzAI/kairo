@@ -1,0 +1,129 @@
+# SkyRizz Solana ("Lanyard v2") — default sdkconfig overrides.
+# Same MCU/flash/PSRAM profile as SkyRizz E32 (ESP32-S3-WROOM-1-N16R8), so the
+# WiFi/BLE/PSRAM tuning below carries over verbatim. Applied on first build (or
+# after deleting sdkconfig). Change here, not in the generated sdkconfig.
+# NOTE: this board has no microSD socket — the FATFS section is harmless (unused).
+
+# ── Arduino-ESP32 requirements ────────────────────────────────────────────────
+CONFIG_FREERTOS_HZ=1000
+# arduino-esp32 provides app_main() which calls setup()/loop().
+CONFIG_AUTOSTART_ARDUINO=y
+
+# ── C++ features required by core ─────────────────────────────────────────────
+# service_container.h uses typeid (RTTI); service_manager.cpp catches std::exception.
+CONFIG_COMPILER_CXX_RTTI=y
+CONFIG_COMPILER_CXX_EXCEPTIONS=y
+
+# ── Arduino loop task ─────────────────────────────────────────────────────────
+# Default is 8192 bytes; setup() initialises LCD, touch, camera, audio, KLP stack
+# and can exhaust that easily. 16384 bytes gives comfortable headroom.
+CONFIG_ARDUINO_LOOP_STACK_SIZE=16384
+
+# ── Flash / partition table (ESP32-S3-WROOM-1-N16R8: 16 MB flash) ─────────────
+CONFIG_ESPTOOLPY_FLASHSIZE_16MB=y
+CONFIG_ESPTOOLPY_FLASHSIZE="16MB"
+# Use partitions.csv (A/B OTA, 5 MB slots). Binary is ~2.1 MB.
+CONFIG_PARTITION_TABLE_CUSTOM=y
+CONFIG_PARTITION_TABLE_CUSTOM_FILENAME="partitions.csv"
+
+# ── PSRAM (ESP32-S3-WROOM-1-N16R8: 8 MB Octal PSRAM) ─────────────────────────
+# Without this, malloc/new only sees ~290 KB DRAM; WiFi+BLE exhaust it before
+# the UI arena can allocate, causing std::bad_alloc → boot loop.
+CONFIG_SPIRAM=y
+CONFIG_SPIRAM_MODE_OCT=y
+CONFIG_SPIRAM_SPEED_80M=y
+CONFIG_SPIRAM_USE_MALLOC=y
+# Allocs ≤ 4 KB stay in fast DRAM; larger allocs (frame buffers, arenas) go to PSRAM.
+CONFIG_SPIRAM_MALLOC_ALWAYSINTERNAL=4096
+# Move framework .bss (WiFi/net80211/pp/lwip/BT) to PSRAM — frees a large chunk of
+# internal DRAM so the BLE controller (which MUST be internal) fits alongside WiFi + apps
+# + display. This is how refs/Flipper-Zero-ESP32-Port fits everything on the same S3+8MB.
+# (Plan 93 / ADR 0013. Task stacks may also go external — ALLOW_STACK_EXTERNAL already on.)
+CONFIG_SPIRAM_ALLOW_BSS_SEG_EXTERNAL_MEMORY=y
+# NOTE: we deliberately do NOT enable SPIRAM_TRY_ALLOCATE_WIFI_LWIP. IDF Kconfig
+# makes it mutually exclusive with ESP_WIFI_DYNAMIC_TX_BUFFER (a dynamic TX buffer
+# could land in non-DMA PSRAM): turning it on FORCES 16 static TX buffers permanently
+# into internal RAM (~26 KB). The dynamic-TX profile (below) frees far more internal
+# RAM than try-allocate saved, and it's the profile Flipper-ESP32 ships. See the WiFi
+# internal-RAM diet section.
+# CONFIG_SPIRAM_TRY_ALLOCATE_WIFI_LWIP is not set
+# Internal DMA reserve stays at the 32 KB default. (Raising it to 64 KB starved
+# WiFi/mDNS/httpd of internal RAM — they failed to allocate. The SD write NO_MEM is
+# better solved by a small persistent bounce buffer than by over-reserving.)
+CONFIG_SPIRAM_MALLOC_RESERVE_INTERNAL=32768
+
+# ── Main task stack (global C++ constructors run here) ────────────────────────
+# Default 3584 bytes is too small for the HID preloader which calls
+# esp_hid_parse_report_map() before app_main(). 8 KB gives comfortable headroom.
+CONFIG_ESP_MAIN_TASK_STACK_SIZE=8192
+
+# ── Bluetooth LE (NimBLE) — Plan 73/75 ───────────────────────────────────────
+# Without CONFIG_BT_ENABLED the esp32_ble driver compiles as no-op stubs, so the
+# Bluetooth settings + BLE remote (Forge web over BLE) do nothing. NimBLE is the
+# lightweight BLE-only host (ESP32-S3 has no Classic radio).
+CONFIG_BT_ENABLED=y
+CONFIG_BT_NIMBLE_ENABLED=y
+CONFIG_BT_CONTROLLER_ENABLED=y
+# BLE 4.2 ONLY — disable 5.0 link-layer features (2M PHY, Coded PHY, ext-adv). With
+# 5.0 enabled, esp_bt_controller_init() crashed deterministically in btdm_controller_init
+# on this ESP-IDF v5.5.4 + controller blob (b7de11e), regardless of RAM or WiFi (Plan 93).
+# refs/Flipper-Zero-ESP32-Port runs WiFi+BLE+coexistence fine with exactly this (4.2-only).
+# CONFIG_BT_NIMBLE_50_FEATURE_SUPPORT is not set
+# CONFIG_BT_NIMBLE_LL_CFG_FEAT_LE_2M_PHY is not set
+# CONFIG_BT_NIMBLE_LL_CFG_FEAT_LE_CODED_PHY is not set
+# BLE controller activity budget: 3 (= advertise + 1 phone connection + headroom),
+# down from the default 6. Each activity reserves internal controller RAM; on this
+# RAM-tight board the default starved esp_bt_controller_init → reboot (Plan 93).
+CONFIG_BT_CTRL_BLE_MAX_ACT=3
+# NimBLE HOST pools (ACL/HCI/GATT, ~10-25 KB) → PSRAM, freeing internal DRAM for the
+# BLE CONTROLLER, which MUST stay internal (ISR/DMA) and is what crashes when internal
+# RAM runs out (Plan 93 — esp_bt_controller_init fail → reboot). The host runs in task
+# context so PSRAM access is safe; a slight scan/pairing latency bump is acceptable for
+# the remote-over-BLE use case. NOT SPIRAM_TRY_ALLOCATE_WIFI_LWIP — that would force
+# 16 static WiFi TX buffers (~26 KB) back into internal RAM (see the SPIRAM note above).
+CONFIG_BT_NIMBLE_MEM_ALLOC_MODE_EXTERNAL=y
+# Bigger NimBLE host-task stack: GAP callbacks restart advertising (with adv+scan-rsp
+# fields) inline on disconnect; 4096 overflowed the host task → reboot (Plan 93).
+CONFIG_BT_NIMBLE_HOST_TASK_STACK_SIZE=6144
+# ── WiFi + BLE software coexistence ───────────────────────────────────────────
+# ESP32-S3 has ONE 2.4 GHz radio shared by WiFi and BLE. Without SW coexistence,
+# running both (WiFi scan/connect WHILE BLE advertises) starves each other. This
+# is the prerequisite for the "WiFi + BLE at the same time" goal.
+CONFIG_ESP_COEX_SW_COEXIST_ENABLE=y
+
+# ── WiFi internal-RAM diet (Plan 88 — mirrors Flipper-ESP32, but goes further) ──
+# Internal SRAM (~230 KB, the ONLY DMA-capable RAM) is shared by WiFi, SD-DMA, I2S,
+# LCD, mDNS, httpd. WiFi's STATIC buffers (TX 16×1600 + RX 16×1600 + a 16-deep block-
+# ack window) consumed ~55 KB internal, leaving only ~9 KB free → the SD DMA bounce,
+# the mDNS task, and the httpd/WS server all failed to allocate (`not enough mem`,
+# `wifi:m f null`). Fix: move WiFi TX buffers to DYNAMIC (PSRAM-backed, allocated on
+# demand instead of 16 permanent internal ones), trim static RX 16→10, shrink the BA
+# window 16→6. Frees ~35-40 KB internal. (Dynamic TX requires TRY_ALLOCATE_WIFI_LWIP
+# OFF — see the note above.) Throughput dips slightly; irrelevant for remote+files.
+# TX buffer is a Kconfig CHOICE — select the dynamic option (Kconfig then derives
+# TX_BUFFER_TYPE=1 and clears STATIC_TX_BUFFER). Setting TX_BUFFER_TYPE directly is
+# ignored (it's a derived symbol).
+CONFIG_ESP_WIFI_DYNAMIC_TX_BUFFER=y
+CONFIG_ESP_WIFI_DYNAMIC_TX_BUFFER_NUM=32
+CONFIG_ESP_WIFI_STATIC_RX_BUFFER_NUM=6
+CONFIG_ESP_WIFI_RX_BA_WIN=6
+
+# ── HTTP server WebSocket (PLP over WiFi — Plan 75) ──────────────────────────
+# Esp32WsTransport runs an esp_http_server WebSocket endpoint at /plp so Forge
+# web (browser) can remote the device over WiFi. Without this the WS handler
+# (is_websocket / httpd_ws_*) is compiled out.
+CONFIG_HTTPD_WS_SUPPORT=y
+
+# ── FATFS for microSD (TF1 on SPI3) ───────────────────────────────────────────
+# Long filenames (cards rarely use 8.3) + 512-byte sectors (standard for SD;
+# the default 4096 was for flash wear-levelling, which we don't use — internal
+# FS is LittleFS). Without LFN, ExFAT also can't mount and long names truncate.
+CONFIG_FATFS_LFN_HEAP=y
+CONFIG_FATFS_MAX_LFN=255
+CONFIG_FATFS_SECTOR_512=y
+# FATFS work buffers stay in PSRAM (this board's internal RAM is tight — WiFi+BLE+
+# camera+audio). Moving them internal exhausted it and broke f_open. Instead, the
+# SD backend uses a persistent internal DMA bounce buffer for the PSRAM→SD copy, so
+# writes never do per-call DMA allocations that fail under fragmentation (Plan 88,
+# mirrors Flipper-ESP32). See sd_fat_filesystem.cpp.
+CONFIG_FATFS_ALLOC_PREFER_EXTRAM=y

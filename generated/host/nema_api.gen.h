@@ -26,9 +26,10 @@ struct NemaResult<void, E> {
 
 
 // Records from nema:net
-// HTTP response returned by get/post.
+// HTTP response returned by get/post/request.
 struct HttpResponse {
     uint16_t status;
+    std::string headers;
     std::string body;
 };
 
@@ -145,6 +146,9 @@ struct HostApi {
     // net/http.post [@blocking]
     // HTTPS POST with a body and Content-Type header.
     virtual NemaResult<HttpResponse, std::string> http_post(std::string_view url, std::string_view body, std::string_view content_type) = 0;
+    // net/http.request [@blocking]
+    // General request — the curl/fetch-style escape hatch. `method` is any HTTP verb (GET/POST/PUT/PATCH/DELETE/HEAD); `headers` is a raw "Name: Value" block, one per line (LF-separated; empty for none); `body` is the request body (empty for none). Returns status + response headers + body.
+    virtual NemaResult<HttpResponse, std::string> http_request(std::string_view method, std::string_view url, std::string_view headers, std::string_view body) = 0;
     // net/wifi.is-connected
     // Whether the device is currently connected to an AP.
     virtual bool wifi_is_connected() = 0;

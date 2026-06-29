@@ -105,6 +105,7 @@ public:
 
 private:
     static void threadEntry(void* self);
+    void ensureCanvas();   // Plan 97 — lazy alloc of the app framebuffers on first draw
 
     Runtime& rt_;
     IApp&    app_;
@@ -133,6 +134,16 @@ private:
     input::Action            pendingAction_ = input::Action::None;
     uint32_t                 dbgPresent_ = 0;  // diagnostic: count first presents
     uint32_t                 dbgDraw_    = 0;  // diagnostic: count first draws
+
+    // Plan 97 — opt-in input→pixel latency instrumentation (config aether/applatency).
+    // Proves the P0+P1 event-driven win and exposes app-thread core-0 jitter (P0b).
+    // lastInputMs_: GUI thread stamps when an input enters the app mailbox.
+    // presentMs_/pendingInputMs_: app thread stamps at present(); GUI reads in draw().
+    bool                     latencyCfg_ = false;   // config aether/applatency
+    bool                     latencyOn() const;     // latencyCfg_ || rt_.showFps()
+    std::atomic<uint64_t>    lastInputMs_{0};
+    std::atomic<uint64_t>    presentMs_{0};
+    std::atomic<uint64_t>    pendingInputMs_{0};
 
     // Plan 86 — host mode + terminal output buffer
     HostMode                 hostMode_ = HostMode::Terminal;

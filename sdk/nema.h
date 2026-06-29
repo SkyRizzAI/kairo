@@ -66,6 +66,8 @@ extern int32_t nema_media__camera_capture(const char** out_value);
 extern int32_t nema_net__http_get(const char* url, int32_t* out_value);
 /* HTTPS POST with a body and Content-Type header. */
 extern int32_t nema_net__http_post(const char* url, const char* body, const char* content_type, int32_t* out_value);
+/* General request — the curl/fetch-style escape hatch. `method` is any HTTP verb (GET/POST/PUT/PATCH/DELETE/HEAD); `headers` is a raw "Name: Value" block, one per line (LF-separated; empty for none); `body` is the request body (empty for none). Returns status + response headers + body. */
+extern int32_t nema_net__http_request(const char* method, const char* url, const char* headers, const char* body, int32_t* out_value);
 /* Whether the device is currently connected to an AP. */
 extern uint32_t nema_net__wifi_is_connected(void);
 /* The SSID of the currently connected AP, or empty string. */

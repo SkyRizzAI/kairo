@@ -4,7 +4,13 @@
 > Detail per-stage ada di [`plans/`](plans/00-overview.md). Master plan: [`concept_plan.md`](concept_plan.md).
 > Reference arsitektur per-subsistem: [`architecture/`](architecture/README.md).
 >
-> **Last updated:** 2026-06-26 (**Simulator audio + app audio API** — `WasmSpeaker`
+> **Last updated:** 2026-06-29 (**New board: SkyRizz Solana** ("Lanyard v2") — second
+> ESP32-S3-WROOM-1-N16R8 variant. New board layer `firmware/boards/skyrizz-solana/`
+> + target `firmware/targets/skyrizz-solana/` (`bun run build:skyrizz-solana`, builds
+> clean). ILI9341 240×320 TFT (direct SPI), TCA9534 6-button D-pad+OK+Back,
+> auto-detecting FT6336U/TSC2007 touch, SE050C2 (reuses E32 `se05x` nano-pkg via
+> direct GPIO8 enable). HW-verify pending. See ADR 0022 + feat skyrizz-solana-board.)
+> Prev: 2026-06-26 (**Simulator audio + app audio API** — `WasmSpeaker`
 > streams **raw PCM** to Forge Web Audio (dumb-DAC, no re-synthesis); `nema:media`
 > `audio-output` now exposes `setVolume`/`playTone`/`playPcm` to custom apps (first
 > binary IDL input param via `jsToBytes`); `IAudioOutput::writePcm` added; removed
@@ -45,6 +51,7 @@ Palanu = platform handheld bergaya Flipper Zero, **1-bit retro/pixel UI**, denga
 | App Registry (AppManifest, AppRegistry — built-in/custom apps + services; menggantikan Plugin Runtime) | ✅ HW | install/list/launch |
 | UI Runtime retro (Canvas 1-bit, font 5×8, ViewDispatcher) | ✅ HW | semua screen render |
 | Palanu Dev Board (ESP32-S3 + e-ink GxEPD2 + 6 tombol TCA9534) | ✅ HW | build + flash + jalan |
+| **SkyRizz Solana** board ("Lanyard v2": ESP32-S3-N16R8 + ILI9341 TFT + TCA9534 6-btn D-pad + FT6336U/TSC2007 auto touch + SE050C2) | ✅ build | `bun run build:skyrizz-solana` (HW-verify pending); ADR 0022, feat skyrizz-solana-board |
 | **Async display** (e-ink flush di task terpisah, dirty-rect, latest-wins) | ✅ HW | tombol tak freeze saat refresh |
 | **Nema kernel** (`nema::Thread`, `MessageQueue`, `TaskRunner`) | ✅ HW | F0–1 + TaskRunner di board |
 | **Input thread** (TCA9534 poll di thread sendiri → InputService) | ✅ HW | fix "pencet hilang/loncat" |

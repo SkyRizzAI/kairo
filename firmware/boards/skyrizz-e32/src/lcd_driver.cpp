@@ -78,10 +78,11 @@ void LcdDriver::start() {
     }
     std::memset(framebuf_, 0x00, fbSize);  // start black (on=false = background)
 
-    // Previous-frame buffer for partial flush (row diff). PSRAM is fine —
-    // accessed sequentially (memcmp/memcpy), cache-friendly.
-    prevBuf_ = (uint8_t*)heap_caps_malloc((size_t)width_ * height_, MALLOC_CAP_SPIRAM);
-    if (!prevBuf_) prevBuf_ = (uint8_t*)heap_caps_malloc((size_t)width_ * height_, MALLOC_CAP_8BIT);
+    // Previous-frame buffer for partial flush (row diff). Plan 97 P3b: the app
+    // buffer handed to flushBuffer() is now 1-bit packed, so prevBuf_ matches
+    // (same fbSize). PSRAM is fine — accessed sequentially (memcmp/memcpy).
+    prevBuf_ = (uint8_t*)heap_caps_malloc(fbSize, MALLOC_CAP_SPIRAM);
+    if (!prevBuf_) prevBuf_ = (uint8_t*)heap_caps_malloc(fbSize, MALLOC_CAP_8BIT);
     fullFlush_ = true;
 
     // SPI bus
@@ -270,21 +271,27 @@ void LcdDriver::flush() {
     }
 }
 
-// ── Fast mono blit: 1-byte/px buffer → RGB565 → SPI, single pass ─────────
+// ── Fast mono blit: 1-bit packed buffer → RGB565 → SPI, single pass ──────
 // AppHost uses this for fullscreen apps to skip 76,800 per-pixel drawPixel
 // calls + the 1-bit framebuffer entirely (the dominant cost: ~128ms → ~50ms).
+// Plan 97 P3b: `buf` is now 1-bit PACKED (nema::mono1: contiguous bit idx
+// y*width_+x, MSB-first) — the SAME layout as framebuf_, so the row diff and
+// expansion just read bits. Rows are byte-aligned when width_ is a multiple of 8
+// (240/320 on this panel); otherwise we fall back to a full repaint.
 void LcdDriver::flushBuffer(const uint8_t* buf, uint16_t w, uint16_t h) {
     if (!buf || !spiHandle_) return;
     if (w != width_ || h != height_) return;   // full-screen only for now
 
-    const bool full = fullFlush_ || !prevBuf_;
+    const bool   byteAligned = (width_ % 8) == 0;
+    const size_t rowBytes    = (size_t)width_ / 8;          // valid when byteAligned
+    const bool   full        = fullFlush_ || !prevBuf_ || !byteAligned;
     fullFlush_ = false;
 
     auto rowChanged = [&](uint16_t y) -> bool {
         if (full || !prevBuf_) return true;
-        const uint8_t* a = buf + (size_t)y * width_;
-        const uint8_t* b = prevBuf_ + (size_t)y * width_;
-        return std::memcmp(a, b, width_) != 0;
+        const uint8_t* a = buf      + (size_t)y * rowBytes;
+        const uint8_t* b = prevBuf_ + (size_t)y * rowBytes;
+        return std::memcmp(a, b, rowBytes) != 0;
     };
 
     uint16_t y = 0;
@@ -298,10 +305,13 @@ void LcdDriver::flushBuffer(const uint8_t* buf, uint16_t w, uint16_t h) {
 
         size_t n = 0;
         for (uint16_t ry = y0; ry < y0 + rows; ry++) {
-            const uint8_t* r = buf + (size_t)ry * width_;
-            for (uint16_t x = 0; x < width_; x++)
-                chunkbuf_[n++] = r[x] ? fgColor_ : bgColor_;
-            if (prevBuf_) std::memcpy(prevBuf_ + (size_t)ry * width_, r, width_);
+            for (uint16_t x = 0; x < width_; x++) {
+                size_t idx = (size_t)ry * width_ + x;
+                bool   on  = (buf[idx >> 3] >> (7 - (idx & 7))) & 1;
+                chunkbuf_[n++] = on ? fgColor_ : bgColor_;
+            }
+            if (prevBuf_ && byteAligned)
+                std::memcpy(prevBuf_ + (size_t)ry * rowBytes, buf + (size_t)ry * rowBytes, rowBytes);
         }
         setWindow(0, y0, (uint16_t)(width_ - 1), (uint16_t)(y0 + rows - 1));
         spiWrite((uint8_t*)chunkbuf_, n * 2, true);
