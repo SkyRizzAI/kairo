@@ -1,5 +1,45 @@
 # Changelog
 
+## [1.4.0](https://github.com/SkyRizzAI/kairo/compare/palanu-v1.3.0...palanu-v1.4.0) (2026-06-29)
+
+
+### Features
+
+* **app-platform:** Plan 89 — resource lease, async storage, SD card info (Fase 2–4) ([2a6f7e8](https://github.com/SkyRizzAI/kairo/commit/2a6f7e829f38e331912c3aadbeda0cec087d7049))
+* init ble for esp32-s3 ([35622f4](https://github.com/SkyRizzAI/kairo/commit/35622f4642cc07bb1e84c8b97070246650872b66))
+* initialize secure element & wallet ([85c4c06](https://github.com/SkyRizzAI/kairo/commit/85c4c06318effb16efd05a6d0d54f78eb71d8b65))
+* more consistency ui and ux ([cf2a928](https://github.com/SkyRizzAI/kairo/commit/cf2a9284aa872456e14a336ee7a91853fb0bb927))
+* **sim:** default simulator panel to 320×240 @ 2× UI scale ([f66f86b](https://github.com/SkyRizzAI/kairo/commit/f66f86b5a895452cff24cea04155c37ba8d843fe))
+* skyrizz-solana board, web3 test app, full control request api ([cb8bc03](https://github.com/SkyRizzAI/kairo/commit/cb8bc0339be594214993420d66cb9c10b5e1be95))
+* sub folder apps support ([62b37a3](https://github.com/SkyRizzAI/kairo/commit/62b37a33da3220c087355cc5998f3008c9d5745f))
+* **ui:** display rotation, colour themes, Mission Control, splash + radio WIP ([214d487](https://github.com/SkyRizzAI/kairo/commit/214d48796cb2c51f5220b8c2e3204016936335a6))
+* **ui:** Plan 90 F4.1/F4.2 — screen transitions + AnimatedValue ([62790d3](https://github.com/SkyRizzAI/kairo/commit/62790d35c9d2a2cbe51696f9287d6c86442d666e))
+* **ui:** Plan 90 F6.05 — FileBrowserScreen VirtualList migration ([5da062a](https://github.com/SkyRizzAI/kairo/commit/5da062a309885123c5ea71b7e0badf12a2d1bacc))
+* **ui:** Plan 90 F6.08/F6.11 — BadUSB VirtualList + storage capacity bars ([aa624d2](https://github.com/SkyRizzAI/kairo/commit/aa624d2c728ec540a23e07a495be74899abc4e32))
+* **ui:** Plan 90 F6.15 + VirtualList selfHighlight + plan audit ([501d5a7](https://github.com/SkyRizzAI/kairo/commit/501d5a7001df9a8358c0c11414380441aae4a318))
+* **ui:** Plan 90 F6.16/F6.29 — dynamic footer hints in Dolphin screens ([bdfafd6](https://github.com/SkyRizzAI/kairo/commit/bdfafd6a29ffcb1f71be89d89fca21eee069b6f1))
+* **ui:** Plan 90 F6.27/F6.28 — TextViewer line count + HelloApp modernize ([5f4e7f5](https://github.com/SkyRizzAI/kairo/commit/5f4e7f5a22d5d4a10865f8bdd17ff01e12cf5c90))
+* **ui:** Plan 90 F6.B4 — FileBrowserScreen breadcrumb header ([6a2a5f6](https://github.com/SkyRizzAI/kairo/commit/6a2a5f6b0bc218d5a4b2da80f7b3445cfe844bb3))
+* **ui:** Plan 90 Fase 1+2+3 — Aether UI maturity ([7b4cdbf](https://github.com/SkyRizzAI/kairo/commit/7b4cdbfeff339976d7b69fd1df7668b3c12c2790))
+* **ui:** Plan 90 Fase 5+6 — Context API, NodeRef, VirtualList, dialog polish ([0779900](https://github.com/SkyRizzAI/kairo/commit/0779900939d9b608fc1fd7fdbdf9c86575dd5bc4))
+* **wasm:** wire PermissionService::request() into all WiFi bindings ([4ea93ac](https://github.com/SkyRizzAI/kairo/commit/4ea93ac1db139047aa8dc465335ab66974d82d14))
+* **wifi-marauder:** add probe flood, sniff modes, signal monitor, rickroll ([6f4929d](https://github.com/SkyRizzAI/kairo/commit/6f4929dd4fabb781faf926a964b391f1bf024df3))
+
+
+### Bug Fixes
+
+* **esp32:** add aether as cmake component dependency ([6c5b821](https://github.com/SkyRizzAI/kairo/commit/6c5b821dcfbe77ca184b79b254afbdce96d97dac))
+* **misc:** WiFi radio driver, WASM storage isolation, cp path fix ([05dfc40](https://github.com/SkyRizzAI/kairo/commit/05dfc40b8ca3d9ba8bfa102e266c5ee9cd095f35))
+* **permission:** Back=skip-not-deny, two-way toggle, net.wifi.scan in cap list ([d7a0eb5](https://github.com/SkyRizzAI/kairo/commit/d7a0eb512c4825f1c317fe03fc238c57987a79fc))
+* **radio:** auto-stop monitor/inject mode on app exit (WiFi lifecycle gap) ([e9914cb](https://github.com/SkyRizzAI/kairo/commit/e9914cb8c31441ef5d87c7265a378b7d3aecf784))
+* secure element in skyrizz-e32 ([4d2d611](https://github.com/SkyRizzAI/kairo/commit/4d2d611fec68782cd573a78c7174da4121a34b3a))
+* **ui:** 3 bugs — breadcrumb overflow, BadUSB in app list, /sd/apps not scanned ([558670c](https://github.com/SkyRizzAI/kairo/commit/558670c559ec0cf913b49b36ae2cd0252637b591))
+* **ui:** dangling ptr in AppDetailScreen + stale render + WASM button width ([a40323e](https://github.com/SkyRizzAI/kairo/commit/a40323e1a70df871b78e587e06f16fbe76cc24c8))
+* **ui:** permission modal layout + WiFi toggle crash after monitor-mode app ([b02d7b5](https://github.com/SkyRizzAI/kairo/commit/b02d7b57dffc64193d6b6c32804465b79bee0d1a))
+* **ui:** restore apps list + fix VirtualList full-width highlight + CLI size formatter ([d0c1fdc](https://github.com/SkyRizzAI/kairo/commit/d0c1fdc9a57b7b1ebc9bea97bff8c2324230f033))
+* **ui:** VirtualList marquee + Left/Right nav parity with settings ([741543a](https://github.com/SkyRizzAI/kairo/commit/741543a683737aa35030607a05ddf880236534a6))
+* wallet se first, fallback to software key mode ([4879473](https://github.com/SkyRizzAI/kairo/commit/48794738b28d8999d9e805d8b644b0461e434184))
+
 ## [1.3.0](https://github.com/SkyRizzAI/kairo/compare/palanu-v1.2.0...palanu-v1.3.0) (2026-06-23)
 
 
