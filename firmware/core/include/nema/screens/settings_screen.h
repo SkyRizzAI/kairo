@@ -7,13 +7,7 @@
 #include "nema/screens/bluetooth_settings_screen.h"
 #include "nema/screens/remote_settings_screen.h"
 #include "nema/screens/controls_screen.h"
-#include "nema/screens/touch_settings_screen.h"
-#include "nema/screens/sounds_settings_screen.h"
-#include "nema/screens/camera_settings_screen.h"
-#include "nema/screens/led_settings_screen.h"
-#include "nema/screens/sensors_settings_screen.h"
-#include "nema/screens/battery_settings_screen.h"
-#include "nema/screens/secure_settings_screen.h"
+#include "nema/screens/device_hardware_screen.h"
 #include "nema/screens/developer_screen.h"
 #include "nema/screens/profile_settings_screen.h"
 #include "nema/screens/storage_settings_screen.h"
@@ -26,8 +20,8 @@ namespace nema {
 
 class Runtime;
 
-// Settings — Plan 60 ListView. Capability-gated, scrollable menu.
-// WiFi/Bluetooth entries removed (apps migrated to .bak — Plan 60 cleanup).
+// Settings — Plan 60 ListView. Capability-gated, scrollable menu. Per-peripheral
+// screens live under the "Device & Hardware" sub-menu (DeviceHardwareScreen).
 class SettingsScreen : public ComponentScreen {
 public:
     explicit SettingsScreen(Runtime& rt);
@@ -35,7 +29,7 @@ public:
     aether::ui::UiNode* build(aether::ui::NodeArena& a, Runtime& rt) override;
 
 private:
-    enum Kind { Display, Appearances, Controls, Wifi, Bluetooth, Remote, Touch, Sounds, Camera, Led, Sensors, Battery, Secure, Developer, About, Profile, Storage, Apps };
+    enum Kind { Display, Appearances, Controls, Wifi, Bluetooth, Remote, DeviceHw, Developer, About, Profile, Storage, Apps };
     struct Item { SettingsScreen* self; Kind kind; const char* label; };
 
     AboutScreen          about_;
@@ -45,13 +39,7 @@ private:
     BluetoothSettingsScreen btSettings_;
     RemoteSettingsScreen remoteSettings_;
     ControlsScreen       controls_;
-    TouchSettingsScreen  touchSettings_;
-    SoundsSettingsScreen sounds_;
-    CameraSettingsScreen  cameraSettings_;
-    LedSettingsScreen     ledSettings_;
-    SensorsSettingsScreen sensorsSettings_;
-    BatterySettingsScreen batterySettings_;
-    SecureSettingsScreen  secureSettings_;
+    DeviceHardwareScreen deviceHw_;
     DeveloperScreen      developer_;
     ProfileSettingsScreen profileSettings_;
     StorageSettingsScreen storageSettings_;
