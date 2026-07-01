@@ -249,38 +249,20 @@ void LcdDriver::invertRect(uint16_t x, uint16_t y, uint16_t w, uint16_t h) {
         }
 }
 
-// ── Flush: expand 1-bit framebuf → RGB565, send in 32-row chunks ─────────
-void LcdDriver::flush() {
-    if (!framebuf_ || !spiHandle_) return;
-    fullFlush_ = true;   // this path wrote the panel → invalidate flushBuffer diff
-
-    setWindow(0, 0, (uint16_t)(width_ - 1), (uint16_t)(height_ - 1));
-
-    for (uint16_t y0 = 0; y0 < height_; y0 += CHUNK_ROWS) {
-        uint16_t rows = (uint16_t)((y0 + CHUNK_ROWS <= height_)
-                                       ? CHUNK_ROWS : (height_ - y0));
-        size_t n = 0;
-        for (uint16_t y = y0; y < y0 + rows; y++) {
-            for (uint16_t x = 0; x < width_; x++) {
-                size_t idx = (size_t)y * width_ + x;
-                bool   on  = (framebuf_[idx / 8] >> (7 - (idx % 8))) & 1;
-                chunkbuf_[n++] = on ? fgColor_ : bgColor_;
-            }
-        }
-        spiWrite((uint8_t*)chunkbuf_, n * 2, true);   // one transaction per chunk
-    }
-}
-
-// ── Fast mono blit: 1-bit packed buffer → RGB565 → SPI, single pass ──────
-// AppHost uses this for fullscreen apps to skip 76,800 per-pixel drawPixel
-// calls + the 1-bit framebuffer entirely (the dominant cost: ~128ms → ~50ms).
-// Plan 97 P3b: `buf` is now 1-bit PACKED (nema::mono1: contiguous bit idx
-// y*width_+x, MSB-first) — the SAME layout as framebuf_, so the row diff and
-// expansion just read bits. Rows are byte-aligned when width_ is a multiple of 8
-// (240/320 on this panel); otherwise we fall back to a full repaint.
-void LcdDriver::flushBuffer(const uint8_t* buf, uint16_t w, uint16_t h) {
+// ── Unified diffing push: 1-bit packed frame → RGB565 → SPI, changed rows only ──
+// Plan 98 (P4): the row-diff used to live only in flushBuffer() (app fast path),
+// so component screens — which draw into framebuf_ then call flush() — paid a full
+// ~48ms panel push EVERY frame even when a single character changed. pushMono() is
+// the shared engine: both flush() (framebuf_) and flushBuffer() (an app buffer)
+// diff a 1-bit packed frame against prevBuf_ (the panel's last content) and send
+// only the rows that actually changed. prevBuf_ is the single "what's on the glass"
+// state, valid across both callers (only one runs per frame). `buf` layout is
+// nema::mono1: contiguous bit idx y*width_+x, MSB-first — same as framebuf_.
+// Rows are byte-aligned when width_ is a multiple of 8 (240/320 here); otherwise
+// we fall back to a full repaint. fullFlush_ forces a full send after any path that
+// touched the panel outside this diff (init, rotation, palette change, blitRgb565).
+void LcdDriver::pushMono(const uint8_t* buf) {
     if (!buf || !spiHandle_) return;
-    if (w != width_ || h != height_) return;   // full-screen only for now
 
     const bool   byteAligned = (width_ % 8) == 0;
     const size_t rowBytes    = (size_t)width_ / 8;          // valid when byteAligned
@@ -318,6 +300,46 @@ void LcdDriver::flushBuffer(const uint8_t* buf, uint16_t w, uint16_t h) {
     }
 }
 
+// Component-screen path: push the internal framebuffer (diffed).
+void LcdDriver::flush() { pushMono(framebuf_); }
+
+// App fast path (fullscreen, unscaled): push the app's buffer directly (diffed),
+// skipping the 76,800 per-pixel drawPixel calls + the internal framebuffer.
+void LcdDriver::flushBuffer(const uint8_t* buf, uint16_t w, uint16_t h) {
+    if (w != width_ || h != height_) return;   // full-screen only for now
+    pushMono(buf);
+}
+
+// Plan 98: scaled fast path — expand a LOGICAL 1-bit buffer (lw×lh, nema::mono1) by
+// integer `scale` to the physical panel, chunked by physical rows. Replaces the
+// ~92ms per-pixel canvas blit at UI scale 2× with a single scaled SPI push. No mono
+// diff (scaled apps are typically fullscreen-animating); invalidate the diff so the
+// next component flush() repaints cleanly. `lx` advances every `scale` columns to
+// avoid a per-pixel divide.
+bool LcdDriver::flushBufferScaled(const uint8_t* buf, uint16_t lw, uint16_t lh, uint8_t scale) {
+    if (!buf || !spiHandle_ || scale < 2) return false;
+    if ((uint32_t)lw * scale != width_ || (uint32_t)lh * scale != height_) return false;
+
+    setWindow(0, 0, (uint16_t)(width_ - 1), (uint16_t)(height_ - 1));
+    for (uint16_t py0 = 0; py0 < height_; py0 += CHUNK_ROWS) {
+        uint16_t rows = (uint16_t)((py0 + CHUNK_ROWS <= height_) ? CHUNK_ROWS : (height_ - py0));
+        size_t n = 0;
+        for (uint16_t py = py0; py < py0 + rows; py++) {
+            size_t   rowBase = (size_t)(py / scale) * lw;   // logical row for this phys row
+            uint16_t lx = 0; uint8_t sub = 0;
+            for (uint16_t px = 0; px < width_; px++) {
+                size_t idx = rowBase + lx;
+                bool   on  = (buf[idx >> 3] >> (7 - (idx & 7))) & 1;
+                chunkbuf_[n++] = on ? fgColor_ : bgColor_;
+                if (++sub == scale) { sub = 0; lx++; }
+            }
+        }
+        spiWrite((uint8_t*)chunkbuf_, n * 2, true);
+    }
+    fullFlush_ = true;   // prevBuf_ no longer matches the glass
+    return true;
+}
+
 // ── Direct RGB565 blit (camera viewfinder) ───────────────────────────────
 // GC2145 outputs standard RGB565. ILI9341 is in BGR mode (MADCTL=0x48, D3=1),
 // so R and B must be swapped. Panel inversion is handled by INVON (0x21).
@@ -347,6 +369,10 @@ void LcdDriver::blitRgb565(const uint8_t* buf,
         spiWrite((uint8_t*)chunkbuf_, pixels * 2, true);
         row = (uint16_t)(row + batch);
     }
+    // Plan 98: this path wrote RGB565 straight to the panel, bypassing the mono
+    // diff — prevBuf_ no longer matches the glass, so force a full mono repaint
+    // on the next pushMono() (else stale camera pixels linger under the UI).
+    fullFlush_ = true;
 }
 
 // ── Backlight + SPI ───────────────────────────────────────────────────────

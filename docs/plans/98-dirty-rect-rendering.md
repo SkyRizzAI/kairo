@@ -213,7 +213,89 @@ This turns "is P4 worth it?" from opinion into a number we already have.
 
 ---
 
-## 7. Open questions for implementation
+## 8. Measured results (skyrizz hardware, 2026-07-01) — PIVOT
+
+FPS overlay readings (`fps d<draw-ms>/f<flush-ms>`):
+
+| Screen | d | f | Bound |
+|---|---|---|---|
+| Settings (static) | 14 | **48** | flush |
+| Settings/Display (marquee anim) | 16 | **48** | flush |
+| Desktop dolphin live-wallpaper | **97** | 48 | draw (+flush) |
+| Launcher (2 animated icons) | 14 | **48** | flush |
+| canvas-demo (anim) | 92–99 | 48–50 | draw (+flush) |
+| web3-test (anim) | 92–100 | 48–51 | draw (+flush) |
+
+**Key finding — flush dominates, and P3b's row-diff does not reach it.** `f≈48 ms`
+is flat across *all* screens. Component screens (Settings/launcher/desktop) push the
+**whole** panel every frame via `LcdDriver::flush()` (the full-frame path,
+`lcd_driver.cpp:252`), which does **no** diffing — the row-diff added in Plan 97 P3b
+lives in `LcdDriver::flushBuffer` and is used **only by fullscreen apps**. So a
+component screen pays the full ~48 ms flush even when a single character changed.
+
+**Draw (`d`) is only a bottleneck for heavy fullscreen animation** (dolphin d97,
+canvas/web3 d92–100). Those redraw most of the screen every frame, so dirty-rect can't
+help them; the app d≈92–100 is likely the slow-blit-at-scale path (2× UI scale skips
+the `flushBuffer` fast path) — a **separate** lever, not P4.
+
+`d≈14 ms` on component screens is comfortably inside the 33 ms budget, so the
+**tree-diff (Option B) is NOT the priority** — it optimizes draw, which isn't the
+bottleneck. The measurement re-ranks the plan.
+
+### Implementation status (2026-07-01)
+
+- [~] **P4-flush (Langkah 1) — DONE (code), awaiting hardware visual-check.**
+  Unified `LcdDriver::flush()` and `flushBuffer()` into one diffing engine
+  `pushMono()` (`lcd_driver.cpp`): both diff a 1-bit frame vs `prevBuf_` (the panel's
+  last content) and send only changed rows. Component screens now pay ~0 flush when
+  pixels are unchanged (was ~48 ms every frame). Coordination for correctness:
+  `setPalette` forces a full repaint on colour change (diff sees no bit change);
+  `blitRgb565` (camera) sets `fullFlush_` (wrote panel outside the diff). See ADR 0020.
+- [~] **P4-scaled (Langkah 2) — DONE (code), awaiting hardware visual-check.**
+  New `IDisplayDriver::flushBufferScaled(buf, lw, lh, scale)` (default false →
+  fall back to canvas blit). `AppHost::draw` calls it for a fullscreen app whose
+  logical buffer tiles the panel by an integer `scale` (the skyrizz 2× case), and
+  `suppressCanvasFlush()` now returns a per-frame `directFlushed_` flag. skyrizz
+  `LcdDriver::flushBufferScaled` expands the logical 1-bit buffer straight to the
+  panel in one pass — targets the measured `d≈92 ms` slow blit. Also fixed a latent
+  P3b bug: the **default** `flushBuffer` still read 1 byte/pixel; now reads 1bpp
+  (`mono1`) so non-overriding boards (async/dev-board) don't corrupt.
+  **Validated:** host + 27/27 tests + WASM. **Not yet:** ESP32 compile of the skyrizz
+  driver (blocked upstream by the parallel http WIP) + on-glass visual check.
+
+### Hardware validation checklist (when the ESP32 build is unblocked)
+- Component screens (Settings/launcher/menus): re-read `d/f` — expect `f` to collapse
+  from ~48 to ~0–few ms on static/small-change; watch for **stale rows/ghosting** on
+  scroll, focus move, value change.
+- **Theme switch** (Flipper orange/black ↔ default): whole screen must recolour (the
+  `setPalette` full-repaint guard). No half-recoloured rows.
+- **Camera app** then back to UI: no leftover camera pixels (the `blitRgb565`
+  `fullFlush_`).
+- Fullscreen apps at 2× (canvas-demo, hbd, web3): expect `d` to drop sharply (scaled
+  push replaces the blit); verify the image is correct (no shear/offset — the
+  `lx`-advance scaling), and no ghosting when returning to a component screen.
+
+### Revised recommendation (superseded by the implementation above)
+
+**P4-flush FIRST — unify `LcdDriver::flush()` to row-diff like `flushBuffer`.**
+Component screens redraw fully into `framebuf_`, but if the resulting pixels equal the
+last pushed frame, a row diff sends **0 rows** → `f 48 ms → ~0`. Automatic,
+**pixel-exact (no ghosting risk)**, no per-screen annotation, no `ComponentState`
+changes. Expected: static/small-change component screens jump to ~30 fps.
+- Mechanism: `flush()` diffs `framebuf_` vs `prevBuf_` (the panel's last content) per
+  row, pushes only changed rows, updates `prevBuf_` — exactly what `flushBuffer`
+  already does. Both paths then share `prevBuf_` as "current panel state."
+- Risk to manage: the `fullFlush_` / path-switch bookkeeping and any non-diff panel
+  writer (`blitRgb565` camera) must invalidate the diff. Contained to `LcdDriver`.
+- Also apply the same to `EinkDisplay` if desired (it already dirty-bboxes in
+  `flushBuffer`; the standalone `flush()` there is init-only).
+
+**Then (optional):** investigate the app slow-blit-at-scale `d≈92` (restore the
+`flushBuffer` fast path under 2× scale, or scale in the driver) — bigger app win than
+dirty-rect. Tree-diff (Option B) drops to "only if a specific component screen shows
+high `d` after flush is fixed."
+
+## 9. Open questions for implementation
 - Cheapest correct per-node content hash (position + size + text/value + style id?).
 - Where the previous-frame signature lives (extend `ComponentState`) and its memory cost.
 - How focus-ring / scrollbar / modal-dither overdraw is folded into each node's bbox.

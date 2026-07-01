@@ -134,6 +134,9 @@ private:
     input::Action            pendingAction_ = input::Action::None;
     uint32_t                 dbgPresent_ = 0;  // diagnostic: count first presents
     uint32_t                 dbgDraw_    = 0;  // diagnostic: count first draws
+    // Plan 98 — set by draw() each frame: true if we pushed straight to the panel
+    // (unscaled or scaled fast path), so GuiService skips the redundant canvas flush.
+    bool                     directFlushed_ = false;
 
     // Plan 97 — opt-in input→pixel latency instrumentation (config aether/applatency).
     // Proves the P0+P1 event-driven win and exposes app-thread core-0 jitter (P0b).

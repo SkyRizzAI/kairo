@@ -18,4 +18,9 @@ void render(const UiNode& root, Canvas& c, const UiNode* focused = nullptr);
 void setRenderTick(uint32_t ms);
 uint32_t renderTick();
 
+// True if the last rendered frame painted a live (scrolling) marquee — a focused
+// label that overflows. An app loop should keep animating only while this is true,
+// not merely whenever something is focused.
+bool marqueeActive();
+
 } // namespace aether::ui

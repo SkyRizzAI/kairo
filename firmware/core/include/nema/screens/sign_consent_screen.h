@@ -27,8 +27,10 @@ public:
 
 private:
     std::shared_ptr<wallet::WalletConsentService::SignRequest> req_;
+    aether::ui::ScrollState scroll_;   // list scroll (all preview rows, WYSIWYS)
     static void onApprove(void* ctx);
     static void onReject(void* ctx);
+    static void onFocusRow(void* ctx);  // no-op: makes a preview row focusable so it marquees
 };
 
 }  // namespace nema

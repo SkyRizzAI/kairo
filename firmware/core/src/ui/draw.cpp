@@ -222,8 +222,11 @@ void marquee(Canvas& c, uint16_t x, uint16_t y, uint16_t w,
 
     const uint16_t GAP = 20;
     uint32_t cycle    = (uint32_t)textW + GAP;
-    // ~40px/sec: divide ms tick by 25.  scrollPx always increases → no stutter.
-    uint32_t scrollPx = (tick / 25) % cycle;
+    // Scroll speed: 1px every MARQUEE_MS_PER_PX ms. 40ms → ~25px/sec (slowed from
+    // ~40px/sec so long labels are easier to read). scrollPx always increases → no
+    // stutter. Higher = slower.
+    constexpr uint32_t MARQUEE_MS_PER_PX = 40;
+    uint32_t scrollPx = (tick / MARQUEE_MS_PER_PX) % cycle;
 
     // Walk actual per-character widths to find the first visible character.
     uint32_t cum = 0;

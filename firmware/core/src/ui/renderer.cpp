@@ -15,8 +15,14 @@ using namespace nema;  // Plan 80: nema core symbols (Canvas/Key/input/anim/font
 
 // Plan 52 — global tick for marquee animation (set by GuiService each frame).
 static uint32_t s_renderTick = 0;
-void setRenderTick(uint32_t ms) { s_renderTick = ms; }
+// Set true whenever a frame actually paints a scrolling marquee (a focused label
+// that overflows). Reset at the start of each frame (setRenderTick). Lets an app
+// loop keep animating ONLY while something is really scrolling, instead of
+// redrawing forever whenever anything is merely focused (which floods AppHost).
+static bool s_marqueeActive = false;
+void setRenderTick(uint32_t ms) { s_renderTick = ms; s_marqueeActive = false; }
 uint32_t renderTick() { return s_renderTick; }
+bool marqueeActive() { return s_marqueeActive; }
 
 namespace {
 
@@ -105,6 +111,7 @@ static void paint(const UiNode* n, Canvas& c, const UiNode* focused,
                     c.drawText(tx, ty, n->text, on);
                 }
             } else if (inFocused) {
+                s_marqueeActive = true;   // a real overflowing label is scrolling this frame
                 aether::ui::draw::marquee(c, tx, ty, availW, n->text, s_renderTick);
             } else {
                 aether::ui::draw::ellipsis(c, tx, ty, availW, n->text);

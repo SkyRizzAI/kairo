@@ -92,7 +92,9 @@ void AppListScreen::loadInstalledPapps() {
     auto pushFolder = [&](const std::string& folder) {
         names_.push_back(folder);
         ids_.push_back("");                       // folders aren't launchable
-        icons_.push_back(findIcon("feature.apps"));
+        // Distinct folder icon (matches the file browser) so a category folder is
+        // visually different from an app that falls back to the generic apps icon.
+        icons_.push_back(findIcon("file.folder"));
         customIcons_.push_back({nullptr, 0, 0});
         isFolder_.push_back(true);
         isBack_.push_back(false);

@@ -128,14 +128,18 @@ static bool installFromDir(Runtime& rt, IFileSystem* fs,
 
     const bool isWasm = (rtStr == "wasm");
 
-    // Launchpad folders. A .papp installed in a SUBFOLDER under an app
-    // root (e.g. "/sd/apps/Web3/Foo.papp") is grouped into a navigable "Web3"
-    // folder in the Apps list; one directly under a root stays top-level. The
-    // group is carried as the app's category (AppListScreen reads m.category).
+    // Launchpad folders — a pure FILESYSTEM model (macOS-style): a .papp's folder
+    // in the Apps list is decided ONLY by where it lives on disk, never by the
+    // manifest. Installed in a SUBFOLDER under an app root (e.g.
+    // "/sd/apps/Web3/Foo.papp") → grouped into a navigable "Web3" folder; installed
+    // directly under a root → top-level (standalone). The group is carried as the
+    // app's category (AppListScreen reads m.category).
     //   parent      = dir without the trailing "/Foo.papp"
     //   parent==root → top-level (group "")
     //   else          group = basename(parent)  (the subfolder name)
-    // Falls back to the manifest's optional "category" when there is no subfolder.
+    // The manifest's optional "category" is NOT consulted here — it stays pure
+    // metadata (for the system/webstore), so e.g. an app at root with
+    // "category":"Fun" still shows standalone, not inside a "Fun" folder.
     std::string group;
     {
         auto slash = dir.rfind('/');
@@ -148,7 +152,7 @@ static bool installFromDir(Runtime& rt, IFileSystem* fs,
             group = (ps == std::string::npos) ? parent : parent.substr(ps + 1);
         }
     }
-    std::string category = !group.empty() ? group : mj.value("category", "");
+    std::string category = group;   // filesystem folder only; manifest category ignored for foldering
 
     // Plan 86 — default argv injected when launched from icon (analogous to
     // Exec= args in a Linux .desktop shortcut). "mode" field is ignored.

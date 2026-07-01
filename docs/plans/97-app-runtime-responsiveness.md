@@ -190,8 +190,16 @@ avoid watchdog-starving busy-spin (`message_queue.h:42`).
 
 ### 🎯 Throughput / bandwidth
 
-- [ ] **P4 — Dirty-rect / partial redraw.** Deep research done → see
-      **[Plan 98](98-dirty-rect-rendering.md)**. Key findings: the dirty-rect
+- [~] **P4 — Dirty-rect / partial redraw (code done 2026-07-01 → [Plan 98](98-dirty-rect-rendering.md), ADR 0020).**
+      Hardware measurement re-ranked this: the bottleneck was **flush** (`f≈48ms` flat,
+      because component screens used the undiffed `flush()` while only apps got P3b's
+      row-diff), plus the **`d≈92ms` slow blit** for apps at skyrizz's 2× scale.
+      Shipped: (1) unified `flush()`+`flushBuffer()` into one diffing `pushMono` so
+      component screens flush only changed rows; (2) a scaled fast-path
+      (`flushBufferScaled`) so 2× apps push straight to the panel. Host+WASM+27 tests
+      green; ESP32/on-glass validation pending (parallel http WIP blocks the build).
+      Below = the original research (kept for context).
+- [ ] ~~**P4 — Dirty-rect end-to-end.**~~ Superseded by the above. Original research: the dirty-rect
       machinery already exists but is dormant (full `requestRedraw()` = 118 sites,
       partial = ~2); compositing is *not* the blocker (clip recomposites correctly);
       skyrizz SPI is already row-diffed by the driver, so P4's win is CPU-bound and

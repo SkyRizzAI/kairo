@@ -1,5 +1,6 @@
 #pragma once
 #include "nema/hal/driver.h"
+#include "nema/hal/mono1.h"
 #include <cstdint>
 
 namespace nema {
@@ -26,14 +27,23 @@ struct IDisplayDriver : IDriver {
                              uint16_t /*w*/, uint16_t /*h*/) {}
 
     // Raw buffer flush — primary hook for AsyncDisplayDriver's display task.
-    // buf: row-major pixel data, 1 byte per pixel (1=ink, 0=bg), w×h bytes.
-    // Default: slow-path via drawPixel + flush() — override for efficiency.
+    // buf: 1-bit PACKED (nema::mono1 layout — contiguous bit idx y*w+x, MSB-first),
+    // ceil(w*h/8) bytes (Plan 97 P3b). Default: slow-path via drawPixel + flush() —
+    // override for efficiency.
     virtual void flushBuffer(const uint8_t* buf, uint16_t w, uint16_t h) {
         for (uint16_t y = 0; y < h; y++)
             for (uint16_t x = 0; x < w; x++)
-                drawPixel(x, y, buf[y * w + x] != 0);
+                drawPixel(x, y, nema::mono1::get(buf, w, x, y));
         flush();
     }
+
+    // Scaled buffer flush (Plan 98) — expand a LOGICAL 1-bit buffer (lw×lh) to the
+    // physical panel by an integer `scale` (each logical pixel → scale×scale). Lets a
+    // fullscreen app at UI scale >1 push directly, skipping the per-pixel canvas blit.
+    // Default: not supported → caller falls back to the canvas blit. Return true if
+    // handled.
+    virtual bool flushBufferScaled(const uint8_t* /*buf*/, uint16_t /*lw*/,
+                                   uint16_t /*lh*/, uint8_t /*scale*/) { return false; }
 
     // Screen power signals — called by DisplayPowerManager.
     // sleep(): display just received a blank frame; signal frontend / hardware.

@@ -1,8 +1,9 @@
 // HelloApp — canonical example of a ComponentApp using the Aether UI system.
-// Plan 60 original; Plan 90 F6.28 updated to modern widget API.
+// Plan 60 original; Plan 90 F6.28 modern widget API; now matches the current list
+// language (ListSection subheader instead of a TitleBar banner, Switch instead of the
+// old Toggle) so it's an accurate reference for new apps.
 //
-// Demonstrates: ListContainer, ListSection, ListItemRow, Toggle, TitleBar.
-// Use this as the reference when building a new app with the component system.
+// Demonstrates: ListContainer, ListSection, ListItemRow, SwitchRow.
 #include "nema/apps/hello_app.h"
 #include "nema/ui/widgets.h"
 #include "nema/app/app_context.h"
@@ -22,13 +23,13 @@ aether::ui::UiNode* HelloApp::build(NodeArena& a, AppContext&) {
     ListEntry settings; settings.label = "Settings"; settings.chevron = true;
     ListEntry about;    about.label    = "About";    about.value = "v1";
 
+    // No TitleBar banner — the first ListSection names the screen, like Settings.
     return View(a, root, {
-        TitleBar(a, "HELLO PALANU"),
         ListContainer(a, scroll_, {
-            ListSection(a, "Menu"),
+            ListSection(a, "Hello Palanu"),
             ListItemRow(a, settings),
             ListItemRow(a, about),
-            Toggle(a, "Dark mode", toggleOn_, onToggle, this),
+            SwitchRow(a, "Dark mode", toggleOn_, onToggle, this),
         }),
     });
 }

@@ -166,6 +166,7 @@ void AppHost::draw(Canvas& c) {
                                            {"hasFrame", hasFrame_ ? "1" : "0"}});
         dbgDraw_++;
     }
+    directFlushed_ = false;   // Plan 98: assume canvas blit until a fast path fires
     if (!hasFrame_) return;
     drawnSeq_ = frameSeq_.load(std::memory_order_acquire);   // this frame is being drawn
 
@@ -193,7 +194,24 @@ void AppHost::draw(Canvas& c) {
     if (rt_.view().active() == this && app_.fullscreen() && display_ &&
         w_ == display_->width() && h_ == display_->height()) {
         display_->flushBuffer(readyBuf_, w_, h_);
+        directFlushed_ = true;
         return;
+    }
+
+    // Scaled fullscreen fast path (Plan 98): at UI scale ≥2 the app buffer is
+    // LOGICAL (w_ = physical/scale), so the unscaled flushBuffer above no-ops. Ask
+    // the driver to expand the logical 1-bit buffer straight to the panel during the
+    // SPI push — skipping the ~19,200 canvas drawPixel calls + framebuffer round-trip
+    // (the d~92 slow blit measured on skyrizz @ 2×). Falls through if the driver
+    // can't scale (returns false) or a modal is above us (not topmost).
+    if (rt_.view().active() == this && app_.fullscreen() && display_ && w_ > 0 &&
+        display_->width() % w_ == 0) {
+        uint8_t s = (uint8_t)(display_->width() / w_);
+        if (s >= 2 && (uint16_t)(h_ * s) == display_->height() &&
+            display_->flushBufferScaled(readyBuf_, w_, h_, s)) {
+            directFlushed_ = true;
+            return;
+        }
     }
 
     // Scaled fullscreen or normal mode: blit via canvas drawPixel.
@@ -207,12 +225,13 @@ void AppHost::draw(Canvas& c) {
 }
 
 bool AppHost::suppressCanvasFlush() const {
-    // Suppress only when we actually took the flushBuffer fast path (physical
-    // dimensions match) AND we're topmost. With a modal above us we render into the
-    // canvas (see draw()), so GuiService must flush the canvas normally — otherwise
-    // the modal would never reach the panel.
-    return rt_.view().active() == this && app_.fullscreen() && display_ != nullptr &&
-           w_ == display_->width() && h_ == display_->height();
+    // Plan 98: draw() sets directFlushed_ when it pushed straight to the panel
+    // (unscaled OR scaled fast path). Only then do we skip the canvas flush. With a
+    // modal above us, or when the driver couldn't scale, draw() fell back to the
+    // canvas blit (directFlushed_ = false) → GuiService must flush the canvas so the
+    // composited frame (incl. any modal) reaches the panel. Runs right after draw()
+    // on the GUI thread, so the flag is current.
+    return directFlushed_;
 }
 
 void AppHost::tick(uint64_t) {

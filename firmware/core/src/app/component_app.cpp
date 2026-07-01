@@ -102,9 +102,12 @@ void ComponentApp::run(AppContext& ctx) {
 
         uint32_t tick = tickIntervalMs();
         bool gliding = ast.dragScroll && ast.dragScroll->velocity != 0.0f;
-        // A focused, possibly-overflowing label wants ~15fps to scroll its marquee.
-        bool focusPresent = ast.focus.count > 0;
-        uint32_t timeout = gliding ? 16 : (focusPresent ? 66 : (tick ? tick : 80));
+        // Keep the ~15fps marquee cadence ONLY while a focused label is actually
+        // overflowing/scrolling (set during the last render). When nothing is
+        // scrolling we idle and wait for input — otherwise a focused list would
+        // repaint forever and flood the AppHost frame stream (input lag).
+        bool marqueeLive = aether::ui::marqueeActive();
+        uint32_t timeout = gliding ? 16 : (marqueeLive ? 66 : (tick ? tick : 80));
 
         // Process one input event (updates dirty/ast by reference).
         auto processEvent = [&](const InputEvent& ev) {
@@ -145,7 +148,7 @@ void ComponentApp::run(AppContext& ctx) {
         } else {
             // Timed out (no input) — advance whatever needs animating this frame.
             if (gliding && aether::ui::tickMomentum(ast)) dirty = true;   // flick inertia
-            if (focusPresent) { marqueeMs += 66; repaint = true; }        // marquee: repaint only
+            if (marqueeLive) { marqueeMs += 66; repaint = true; }         // marquee: repaint only
             if (tick && onTick(ctx)) dirty = true;                        // app periodic wake
         }
     }

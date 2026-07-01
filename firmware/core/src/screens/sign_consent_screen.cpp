@@ -30,49 +30,42 @@ void SignConsentScreen::onReject(void* ctx) {
     self->rt_.view().goBack();
 }
 
+// A preview row's onPress does nothing — it exists only so the row is a focus stop,
+// which lets a long value (e.g. a full destination address) marquee-scroll when
+// focused, so WYSIWYS never hides part of what's being signed behind an ellipsis.
+void SignConsentScreen::onFocusRow(void*) {}
+
 aether::ui::UiNode* SignConsentScreen::build(aether::ui::NodeArena& a, Runtime&) {
     using namespace aether::ui;
-    uint8_t gap = aether::theme().space.sm;
-    uint8_t pad = aether::theme().space.md;
 
-    Style col; col.dir = FlexDir::Col; col.align = Align::Stretch;
-    col.padding = pad; col.gap = gap;
-
-    // Buttons
-    Style bs; bs.dir = FlexDir::Row; bs.border = true; bs.padding = gap;
-    bs.align = Align::Center; bs.justify = Justify::Center;
-    UiNode* reject  = Pressable(a, onReject,  this, bs, {Text(a, "Reject",  TextRole::Body)});
-    UiNode* approve = Pressable(a, onApprove, this, bs, {Text(a, "Approve", TextRole::Body)});
-    Style rowS; rowS.dir = FlexDir::Row; rowS.gap = gap;
-    rowS.align = Align::Center; rowS.justify = Justify::Center;
-    UiNode* btnRow = View(a, rowS, {});
-    if (reject && approve) { btnRow->firstChild = reject; reject->nextSibling = approve; }
-
-    UiNode* root = View(a, col, {});
-    UiNode* prev = nullptr;
-    auto add = [&](UiNode* n) {
-        if (!n) return;
-        if (!root->firstChild) root->firstChild = n;
-        else prev->nextSibling = n;
-        prev = n;
-    };
-
-    add(Text(a, "Sign request", TextRole::Caption));
+    // Same list language as every settings screen: a ListSection subheader + rows in a
+    // scrolling ListContainer. All preview rows are shown (no cap) and the whole list
+    // scrolls, so a richer decode (BTC To/Amount/Fee, EVM ERC-20) is fully visible.
+    MenuBuilder m(a, scroll_, this);
+    m.section("Sign request");
     if (req_) {
-        if (!req_->origin.empty()) add(Text(a, req_->origin.c_str(), TextRole::Body));
-        add(Text(a, req_->backend == wallet::BackendKind::SecureElement ? "Secure Element" : "Software key",
-                 TextRole::Caption));
-        int shown = 0;
-        for (auto& r : req_->preview.rows) {       // strings live in req_ while the screen is up
-            if (shown++ >= 3) break;
-            Style lr; lr.dir = FlexDir::Row; lr.gap = gap; lr.justify = Justify::SpaceBetween;
-            add(View(a, lr, {Text(a, r.label.c_str(), TextRole::Caption),
-                             Text(a, r.value.c_str(), TextRole::Body)}));
+        if (!req_->origin.empty()) m.info("From", req_->origin.c_str());
+        m.info("Key", req_->backend == wallet::BackendKind::SecureElement
+                          ? "Secure Element" : "Software key");
+        if (req_->preview.blindSign)
+            m.info("Warning", "Blind sign - not decoded!");
+        // Every decoded row, focusable so long values marquee (strings live in req_).
+        for (auto& r : req_->preview.rows) {
+            ListEntry e;
+            e.label = r.label.c_str();
+            e.value = r.value.c_str();
+            e.onPress = onFocusRow;   // focusable display row (marquee), no action
+            e.user = this;
+            m.add(ListItemRow(a, e));
         }
-        if (req_->preview.blindSign) add(Text(a, "Blind sign - not decoded!", TextRole::Body));
     }
-    add(btnRow);
-    return root;
+    // Actions — Reject before Approve so the safer choice is the first action reached.
+    m.section("Confirm");
+    ListEntry rej; rej.label = "Reject";  rej.onPress = onReject;  rej.user = this;
+    ListEntry apr; apr.label = "Approve"; apr.onPress = onApprove; apr.user = this;
+    m.add(ListItemRow(a, rej));
+    m.add(ListItemRow(a, apr));
+    return m.build();
 }
 
 }  // namespace nema

@@ -53,7 +53,11 @@ public:
     // (white 0xFFFF / black 0x0000) are swap-invariant and unaffected.
     void setPalette(uint16_t fg, uint16_t bg) override {
         auto bswap = [](uint16_t c) -> uint16_t { return (uint16_t)((c >> 8) | (c << 8)); };
-        setColors(bswap(fg), bswap(bg));
+        uint16_t nf = bswap(fg), nb = bswap(bg);
+        // Plan 98: the diffing pushMono() compares 1-bit content only. A palette
+        // change recolours the SAME bits, so force one full repaint or the theme
+        // switch would leave stale colours on unchanged rows.
+        if (nf != fgColor_ || nb != bgColor_) { setColors(nf, nb); fullFlush_ = true; }
     }
     // ILI9341 is an RGB565 panel → colour themes are available.
     bool supportsColor() const override { return true; }
@@ -62,11 +66,17 @@ public:
     void    setBrightness(uint8_t level) override;
     uint8_t brightness() const override { return brightness_; }
 
-    // Fast full-screen blit of a 1-byte-per-pixel mono buffer (1=ink, 0=bg)
-    // straight to the panel in one pass — skips the per-pixel drawPixel loop
-    // AND the 1-bit framebuffer. Used by AppHost for fullscreen apps. Assumes
-    // w==width_, h==height_.
+    // Fast full-screen blit of a 1-bit packed mono buffer (nema::mono1) straight to
+    // the panel in one diffed pass — skips the per-pixel drawPixel loop AND the 1-bit
+    // framebuffer. Used by AppHost for unscaled fullscreen apps. Assumes w==width_.
     void flushBuffer(const uint8_t* buf, uint16_t w, uint16_t h) override;
+
+    // Plan 98: scaled fast path — expand a LOGICAL 1-bit buffer (lw×lh) by an integer
+    // `scale` to fill the panel, in one pass. Used by AppHost for fullscreen apps at
+    // UI scale >1 (where the buffer is logical, so flushBuffer would no-op). Returns
+    // true (handled). Full push (no diff) → forces the next mono flush to full.
+    bool flushBufferScaled(const uint8_t* buf, uint16_t lw, uint16_t lh,
+                           uint8_t scale) override;
 
     // IService
     const char* name() const override { return "LcdDriver"; }
@@ -85,6 +95,7 @@ private:
     void applyMadctl();   // send CMD_MADCTL for the current rotation_ (panel must be up)
     void setWindow(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1);
     void spiWrite(uint8_t* data, size_t len, bool isData);
+    void pushMono(const uint8_t* buf);   // Plan 98: shared diffing push (flush + flushBuffer)
 
     Runtime* rt_       = nullptr;
     Xl9535*  expander_ = nullptr;

@@ -5,24 +5,76 @@
 #include "nema/service/service_container.h"
 #include "nema/system/capabilities.h"
 #include "nema/system/capability_registry.h"
-#include "nema/fs/app_storage.h"
+#include "nema/config/config_store.h"
 
+#include <cstdio>
+#include <string>
 #include <utility>
 
 namespace nema::wallet {
 
 namespace {
-// Multi-key blob store backed by a fixed system bundle's internal-flash storage.
-class AppStorageKvStore : public IKvStore {
+// Wallet blob store backed by NVS (ADR 0022). Chosen over the LittleFS /system
+// partition because that partition is re-flashed by a full `idf.py flash` (it also
+// carries the read-only asset image), which used to wipe the wallet on every
+// firmware update. The `nvs` partition is NOT in the flash image, so wallets now
+// survive firmware updates and a LittleFS reformat. NvsConfigStore commits on every
+// setString, so writes are durable across a restart immediately.
+//
+// IConfigStore is string-only, so binary blobs are hex-encoded. NVS keys are capped
+// at 15 chars, so every key is hashed to 8 hex chars (djb2) — collisions across the
+// handful of wallet keys are astronomically unlikely.
+class ConfigKvStore : public IKvStore {
 public:
-    explicit AppStorageKvStore(AppStorage st) : st_(std::move(st)) {}
-    bool put(const char* key, const uint8_t* d, size_t n) override { return st_.write(key, d, n); }
-    bool get(const char* key, std::vector<uint8_t>& o) override { return st_.read(key, o); }
-    bool has(const char* key) const override { return const_cast<AppStorage&>(st_).exists(key); }
-    void del(const char* key) override { st_.remove(key); }
+    explicit ConfigKvStore(IConfigStore& cfg) : cfg_(cfg) {}
+
+    bool put(const char* key, const uint8_t* d, size_t n) override {
+        cfg_.setString(kNs, k(key).c_str(), toHex(d, n));
+        return true;
+    }
+    bool get(const char* key, std::vector<uint8_t>& o) override {
+        std::string hex;
+        if (!cfg_.getString(kNs, k(key).c_str(), hex)) return false;
+        return fromHex(hex, o);
+    }
+    bool has(const char* key) const override {
+        std::string hex;
+        return cfg_.getString(kNs, k(key).c_str(), hex);
+    }
+    void del(const char* key) override { cfg_.remove(kNs, k(key).c_str()); }
 
 private:
-    AppStorage st_;
+    static constexpr const char* kNs = "wallet";
+    IConfigStore& cfg_;
+
+    static std::string k(const char* key) {                 // → 8-hex NVS key (≤15)
+        uint32_t h = 5381;
+        for (const char* p = key; *p; ++p) h = ((h << 5) + h) + (uint8_t)*p;
+        char b[9]; std::snprintf(b, sizeof(b), "%08x", (unsigned)h);
+        return b;
+    }
+    static std::string toHex(const uint8_t* d, size_t n) {
+        static const char* hx = "0123456789abcdef";
+        std::string s; s.reserve(n * 2);
+        for (size_t i = 0; i < n; i++) { s.push_back(hx[d[i] >> 4]); s.push_back(hx[d[i] & 15]); }
+        return s;
+    }
+    static bool fromHex(const std::string& s, std::vector<uint8_t>& o) {
+        if (s.size() & 1) return false;
+        auto nib = [](char c) -> int {
+            if (c >= '0' && c <= '9') return c - '0';
+            if (c >= 'a' && c <= 'f') return c - 'a' + 10;
+            if (c >= 'A' && c <= 'F') return c - 'A' + 10;
+            return -1;
+        };
+        o.clear(); o.reserve(s.size() / 2);
+        for (size_t i = 0; i < s.size(); i += 2) {
+            int hi = nib(s[i]), lo = nib(s[i + 1]);
+            if (hi < 0 || lo < 0) return false;
+            o.push_back((uint8_t)((hi << 4) | lo));
+        }
+        return true;
+    }
 };
 }  // namespace
 
@@ -40,8 +92,10 @@ void WalletSystem::registerInto(Runtime& rt) {
 }
 
 WalletSystem& bootWalletSystem(Runtime& rt) {
-    // Seeds live under a dedicated system bundle, internal flash only (never SD).
-    static AppStorageKvStore kv(AppStorage("com.palanu.wallet", rt.fs(), rt.config(), /*critical*/ true));
+    // Encrypted seeds + index live in NVS (survives `idf.py flash` + LittleFS reformat;
+    // see ADR 0022). The seed is still PIN-encrypted and, with a secure element,
+    // additionally device-bound — NVS just holds the ciphertext.
+    static ConfigKvStore kv(rt.config());
 
     // Smart backend selection: if the board registered a secure element that can do
     // device-bound sealing (SeFeature::SecureStore), use it to wrap the seed (mode B,
