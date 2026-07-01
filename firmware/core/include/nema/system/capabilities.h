@@ -32,7 +32,9 @@ inline constexpr const char* InputTouch    = "input.touch";
 inline constexpr const char* Camera        = "camera";
 inline constexpr const char* AudioInput    = "audio.input";
 inline constexpr const char* AudioOutput   = "audio.output";
-inline constexpr const char* Rgb           = "rgb";
+inline constexpr const char* Rgb           = "rgb";          // legacy alias of Led (kept for compat)
+inline constexpr const char* Led           = "led";          // has ≥1 controllable indicator LED
+inline constexpr const char* LedRgb        = "led.rgb";      // at least one LED is full-colour RGB
 
 // Sensors
 inline constexpr const char* SensorsEnv    = "sensors.environment";

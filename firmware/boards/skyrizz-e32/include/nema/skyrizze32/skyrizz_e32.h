@@ -9,6 +9,7 @@
 #include "nema/skyrizze32/i2s_speaker.h"
 #include "nema/skyrizze32/gc2145_camera.h"
 #include "nema/skyrizze32/se050_driver.h"
+#include "nema/esp32/esp32_ws2812.h"
 
 namespace nema::skyrizze32 {
 
@@ -30,6 +31,7 @@ private:
     I2sSpeaker      speaker_;
     Gc2145Camera    camera_;
     Se050Driver     secure_;
+    Esp32Ws2812     rgb_{PIN_RGB, 2};
 };
 
 } // namespace nema::skyrizze32

@@ -14,6 +14,7 @@ idf_component_register(
         "src/sd_fat_filesystem.cpp"
         "src/esp32_wifi_radio.cpp"
         "src/esp32_net_sockets.cpp"
+        "src/esp32_ws2812.cpp"
     INCLUDE_DIRS "include"
     REQUIRES
         core
@@ -37,4 +38,5 @@ idf_component_register(
         app_update
         bt
         espressif__tinyusb
+        esp_driver_rmt          # WS2812 LED driver (esp32_ws2812.cpp)
 )

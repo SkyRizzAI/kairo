@@ -12,8 +12,8 @@ using namespace aether::ui;
 SettingsScreen::SettingsScreen(Runtime& rt)
     : ComponentScreen(rt, 160), about_(rt), sleepSettings_(rt), appearances_(rt), wifiSettings_(rt),
       btSettings_(rt), remoteSettings_(rt), controls_(rt), touchSettings_(rt), sounds_(rt),
-      cameraSettings_(rt), developer_(rt), profileSettings_(rt), storageSettings_(rt),
-      appDetail_(rt), appsSettings_(rt)
+      cameraSettings_(rt), ledSettings_(rt), developer_(rt), profileSettings_(rt),
+      storageSettings_(rt), appDetail_(rt), appsSettings_(rt)
 {
     appsSettings_.setDetailScreen(&appDetail_);
 }
@@ -39,6 +39,7 @@ void SettingsScreen::launch(Kind k) {
         case Touch:      rt_.view().navigate(touchSettings_);  break;
         case Sounds:     rt_.view().navigate(sounds_);         break;
         case Camera:     rt_.view().navigate(cameraSettings_);    break;
+        case Led:        rt_.view().navigate(ledSettings_);       break;
         case Developer:  rt_.view().navigate(developer_);        break;
         case Profile:    rt_.view().navigate(profileSettings_);   break;
         case Storage:    rt_.view().navigate(storageSettings_);  break;
@@ -63,6 +64,8 @@ UiNode* SettingsScreen::build(NodeArena& a, Runtime& rt) {
         items_.push_back({this, Sounds,   "Sounds"});
     if (caps.has(caps::Camera))
         items_.push_back({this, Camera,   "Camera"});
+    if (caps.has(caps::Led) || caps.has(caps::Rgb))
+        items_.push_back({this, Led,      "LEDs"});
     if (caps.has(caps::Profile))
         items_.push_back({this, Profile,  "Profile"});
     items_.push_back({this, Apps,      "Apps"});

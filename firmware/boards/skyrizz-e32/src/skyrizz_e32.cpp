@@ -81,9 +81,13 @@ void SkyRizzE32::describeHardware(Runtime& rt) {
     rt.hardware().add({"touch", DriverKind::Other, "FT6336U capacitive @0x38"});
     rt.capabilities().add(caps::InputTouch);
 
-    // RGB LEDs
+    // RGB LEDs — WS2812 ×2 on GPIO46, driven via the LED HAL (rt.led()).
+    rgb_.begin();
+    rt.led().addLed(&rgb_, "rgb0", "WS2812 x2 (GPIO46)");
     rt.hardware().add({"rgb", DriverKind::Other, "WS2812 x2 GPIO46"});
     rt.capabilities().add(caps::Rgb);
+    rt.capabilities().add(caps::Led);
+    rt.capabilities().add(caps::LedRgb);
 
     // Sensors (init-only; data via events or service in future plans)
     rt.hardware().add({"sensors", DriverKind::Other, "AHT20, LTR-303ALS, SC7A20"});

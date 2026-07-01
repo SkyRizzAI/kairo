@@ -5,6 +5,7 @@
 #include "nema/services/input_service.h"
 #include "nema/services/audio_service.h"
 #include "nema/services/camera_service.h"
+#include "nema/services/led_service.h"
 #include "nema/task_runner.h"
 #include "nema/waker.h"
 #include "nema/proc/process_manager.h"
@@ -142,6 +143,7 @@ public:
     bool applyPendingServer();   // GUI thread: pending→active; true if swapped
     AudioService&        audio();
     CameraService&       camera();
+    LedService&          led();      // RGB/mono LED registry + effect engine
 
     // Wire up the platform's CliService so FbconServer can execute commands
     // from the on-device console. Called by each platform after CLI setup.
@@ -203,6 +205,7 @@ private:
     CliService*                        cli_           = nullptr;
     IFileSystem*                       fs_            = nullptr;
     CameraService                      cameraService_; // value member — always alive
+    LedService                         ledService_;    // value member — always alive
     std::unique_ptr<DummyBatteryDriver> dummyBattery_;
     std::unique_ptr<NtpService>        ntp_;
 

@@ -148,6 +148,11 @@ void Runtime::registerServices() {
         adoptService(dummyBattery_.get());
     }
 
+    // LED effect engine — adopt so the non-blocking blink/notify loop ticks on
+    // boards that declare an LED (registry may be empty → tick is a no-op).
+    if (capabilities_->has(caps::Rgb) || capabilities_->has(caps::Led))
+        adoptService(&ledService_);
+
     // Plan 62 — NTP time sync (on platforms with networking).
     if (capabilities_->has(caps::NetWifi)) {
         ntp_ = std::make_unique<NtpService>(*this);
@@ -197,6 +202,7 @@ Waker&            Runtime::guiWaker()    { return guiWaker_; }
 nema::TaskRunner& Runtime::tasks()       { return taskRunner_; }
 AudioService&     Runtime::audio()       { return audioService_; }
 CameraService&    Runtime::camera()      { return cameraService_; }
+LedService&       Runtime::led()         { return ledService_; }
 
 void Runtime::step() {
     uint64_t now = clock().millis();

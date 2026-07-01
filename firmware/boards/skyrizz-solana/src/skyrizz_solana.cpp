@@ -82,9 +82,13 @@ void SkyRizzSolana::describeHardware(Runtime& rt) {
     rt.hardware().add({"touch", DriverKind::Other, "FT6336U @0x38 / TSC2007 @0x4A (auto)"});
     rt.capabilities().add(caps::InputTouch);
 
-    // RGB LEDs (WS2812 ×2 on GPIO2) — capability only; no app driver yet.
+    // RGB LEDs — WS2812 ×2 on GPIO2, driven via the LED HAL (rt.led()).
+    rgb_.begin();
+    rt.led().addLed(&rgb_, "rgb0", "WS2812 x2 (GPIO2)");
     rt.hardware().add({"rgb", DriverKind::Other, "WS2812 x2 GPIO2"});
     rt.capabilities().add(caps::Rgb);
+    rt.capabilities().add(caps::Led);
+    rt.capabilities().add(caps::LedRgb);
 
     // Secure element — NXP SE050C2 (@0x48, enable via GPIO8). Only claim the
     // capability if the chip ACKed and the wrap/unwrap self-test passed; otherwise

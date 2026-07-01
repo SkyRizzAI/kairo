@@ -10,6 +10,7 @@
 #include "nema/screens/touch_settings_screen.h"
 #include "nema/screens/sounds_settings_screen.h"
 #include "nema/screens/camera_settings_screen.h"
+#include "nema/screens/led_settings_screen.h"
 #include "nema/screens/developer_screen.h"
 #include "nema/screens/profile_settings_screen.h"
 #include "nema/screens/storage_settings_screen.h"
@@ -31,7 +32,7 @@ public:
     aether::ui::UiNode* build(aether::ui::NodeArena& a, Runtime& rt) override;
 
 private:
-    enum Kind { Display, Appearances, Controls, Wifi, Bluetooth, Remote, Touch, Sounds, Camera, Developer, About, Profile, Storage, Apps };
+    enum Kind { Display, Appearances, Controls, Wifi, Bluetooth, Remote, Touch, Sounds, Camera, Led, Developer, About, Profile, Storage, Apps };
     struct Item { SettingsScreen* self; Kind kind; const char* label; };
 
     AboutScreen          about_;
@@ -44,6 +45,7 @@ private:
     TouchSettingsScreen  touchSettings_;
     SoundsSettingsScreen sounds_;
     CameraSettingsScreen  cameraSettings_;
+    LedSettingsScreen     ledSettings_;
     DeveloperScreen      developer_;
     ProfileSettingsScreen profileSettings_;
     StorageSettingsScreen storageSettings_;
