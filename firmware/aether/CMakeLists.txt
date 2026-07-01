@@ -51,6 +51,7 @@ set(AETHER_SRCS
     ${CMAKE_CURRENT_SOURCE_DIR}/../core/src/apps/wasm_app_store.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../core/src/apps/bad_usb_app.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../core/src/apps/badusb_parser.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../core/src/apps/touch_test_app.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../core/src/apps/dolphin_app.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../core/src/js/js_engine.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../core/src/js/js_api.cpp
