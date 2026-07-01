@@ -154,8 +154,10 @@ void Runtime::registerServices() {
 
     // LED effect engine — adopt so the non-blocking blink/notify loop ticks on
     // boards that declare an LED (registry may be empty → tick is a no-op).
-    if (capabilities_->has(caps::Rgb) || capabilities_->has(caps::Led))
+    if (capabilities_->has(caps::Rgb) || capabilities_->has(caps::Led)) {
+        ledService_.setLogger(logger_.get());
         adoptService(&ledService_);
+    }
 
     // Plan 62 — NTP time sync (on platforms with networking).
     if (capabilities_->has(caps::NetWifi)) {

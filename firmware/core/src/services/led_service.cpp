@@ -1,6 +1,15 @@
 #include "nema/services/led_service.h"
+#include "nema/log/logger.h"
+#include <cstdio>
 
 namespace nema {
+
+// Small helper: "r,g,b" for logs.
+static std::string rgbStr(uint8_t r, uint8_t g, uint8_t b) {
+    char buf[16];
+    std::snprintf(buf, sizeof(buf), "%u,%u,%u", (unsigned)r, (unsigned)g, (unsigned)b);
+    return buf;
+}
 
 void LedService::addLed(ILed* led, const char* id, const char* desc) {
     if (!led) return;
@@ -16,6 +25,8 @@ static void forEach(int count, int ledIdx, Fn fn) {
 }
 
 void LedService::solid(int ledIdx, uint8_t r, uint8_t g, uint8_t b) {
+    if (log_) log_->info("LedService", "solid",
+        {{"idx", std::to_string(ledIdx)}, {"rgb", rgbStr(r, g, b)}, {"leds", std::to_string(count())}});
     forEach(count(), ledIdx, [&](size_t i) {
         fx_[i] = Fx{r, g, b, 0, 0, -1, 0, true, true};
     });
@@ -25,6 +36,9 @@ void LedService::off(int ledIdx) { solid(ledIdx, 0, 0, 0); }
 
 void LedService::blink(int ledIdx, uint8_t r, uint8_t g, uint8_t b,
                        uint16_t onMs, uint16_t offMs, int cycles) {
+    if (log_) log_->info("LedService", "blink",
+        {{"idx", std::to_string(ledIdx)}, {"rgb", rgbStr(r, g, b)},
+         {"on", std::to_string(onMs)}, {"off", std::to_string(offMs)}});
     forEach(count(), ledIdx, [&](size_t i) {
         Fx f;
         f.r = r; f.g = g; f.b = b;
@@ -38,6 +52,7 @@ void LedService::blink(int ledIdx, uint8_t r, uint8_t g, uint8_t b,
 }
 
 void LedService::notify(Notify n, int ledIdx) {
+    if (log_) log_->info("LedService", "notify", {{"intent", std::to_string((int)n)}});
     switch (n) {
         case Notify::Off:      off(ledIdx);                                   break;
         case Notify::Working:  blink(ledIdx,   0,   0, 255, 200, 200, -1);    break; // blue pulse

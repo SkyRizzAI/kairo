@@ -7,6 +7,8 @@
 
 namespace nema {
 
+class Logger;
+
 // LedService — the runtime LED registry + effect engine (`rt.led()`).
 //
 // Multi-instance like AudioService: a board registers each physical LED / strip
@@ -37,6 +39,9 @@ public:
     enum class Notify : uint8_t { Off, Working, Success, Error, Charging };
     void notify(Notify n, int ledIdx = -1);
 
+    // Optional logger so effect calls are observable (set by Runtime at adopt).
+    void setLogger(Logger* lg) { log_ = lg; }
+
     // ── IService ──
     const char* name() const override { return "LedService"; }
     void start() override {}
@@ -57,6 +62,7 @@ private:
 
     std::vector<Entry> leds_;
     std::vector<Fx>    fx_;             // parallel to leds_
+    Logger*            log_ = nullptr;
 };
 
 } // namespace nema
