@@ -304,6 +304,7 @@
 					on={simStore.palette?.fg ?? THEMES[theme].fg}
 					off={simStore.palette?.bg ?? THEMES[theme].bg}
 					reserve={250}
+					led={simStore.led}
 					onkey={(k) => simStore.sendKey(k)}
 				>
 					{#snippet overlay()}

@@ -36,6 +36,7 @@
 	let logs = $state<{ c: string; m: string }[]>([]);
 	let frame = $state<ScreenFrame | null>(null);
 	let profile = $state<BoardProfile | null>(null);
+	let led = $state<string | null>(null);   // live LED colour "r,g,b" (LedChanged)
 	let showLogs = $state(true);
 	let showCli = $state(false);
 	let showFiles = $state(false);
@@ -51,6 +52,9 @@
 		const offProfile = session.on('profile', (p) => (profile = p));
 		const offScreen = session.on('screen', (f) => (frame = f));
 		const offLog = session.on('log', (l) => (logs = [...logs.slice(-200), { c: l.component, m: l.message }]));
+		const offEvent = session.on('event', (e) => {
+			if (e.name === 'LedChanged' && e.fields.rgb) led = e.fields.rgb;
+		});
 		const offAuth = session.on('auth', () => {
 			authNeeded = true;
 		});
@@ -102,6 +106,7 @@
 			offProfile();
 			offScreen();
 			offLog();
+			offEvent();
 			offAuth();
 			offAuthd();
 			offAuthFail();
@@ -202,7 +207,7 @@
 	<div class="flex flex-1 overflow-hidden">
 		<div class="flex flex-1 flex-col overflow-hidden">
 			<div class="flex flex-1 flex-col items-center justify-center gap-3 overflow-auto p-6">
-				<BoardVisual {profile} {frame} onkey={(k) => session.sendKey(k)} />
+				<BoardVisual {profile} {frame} {led} onkey={(k) => session.sendKey(k)} />
 				{#if profile}
 					<p class="text-muted-foreground text-xs">{profile.id} — layout mirrors the device</p>
 				{/if}

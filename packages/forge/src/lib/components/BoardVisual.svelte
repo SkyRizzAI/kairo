@@ -15,6 +15,7 @@
 		off: offColor = [11, 14, 11],
 		maxWidth = 920,
 		reserve = 230, // vertical px reserved for header/controls when height-capping
+		led = null,
 		onkey,
 		overlay
 	}: {
@@ -24,9 +25,19 @@
 		off?: [number, number, number];
 		maxWidth?: number;
 		reserve?: number;
+		led?: string | null; // live LED colour "r,g,b" (from LedChanged); null = neutral
 		onkey: (key: number) => void;
 		overlay?: Snippet;
 	} = $props();
+
+	// LED lens style: lit (with glow) when a colour is set + non-black, else neutral.
+	const ledStyle = $derived.by(() => {
+		const rgb = (led ?? '').split(',').map((n) => parseInt(n, 10));
+		const lit = rgb.length === 3 && rgb.some((v) => v > 0) && rgb.every((v) => !isNaN(v));
+		if (!lit) return 'background:#71717a;'; // zinc-500 (off/neutral)
+		const c = `rgb(${rgb[0]},${rgb[1]},${rgb[2]})`;
+		return `background:${c}; box-shadow:0 0 8px 2px ${c};`;
+	});
 
 	let canvas = $state<HTMLCanvasElement>();
 	const SCALE = 2;
@@ -99,8 +110,8 @@
 				     needs LED-state telemetry (not wired yet), so shown neutral. -->
 				<div class="absolute flex items-center justify-center" style={box} title="{c.label} (LED)">
 					<span
-						class="rounded-full bg-zinc-500 ring-1 ring-zinc-300/40 shadow-[0_0_6px_1px_rgba(255,255,255,0.18)]"
-						style="width:min(100%,100%); height:auto; aspect-ratio:1;"
+						class="rounded-full ring-1 ring-zinc-300/40 transition-colors"
+						style="width:100%; aspect-ratio:1; {ledStyle}"
 					></span>
 				</div>
 			{:else}

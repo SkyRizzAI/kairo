@@ -16,6 +16,7 @@ namespace events {
     inline constexpr const char* ServiceStopped       = "ServiceStopped";
     inline constexpr const char* ServiceFailed        = "ServiceFailed";
     inline constexpr const char* BatteryChanged       = "BatteryChanged";
+    inline constexpr const char* LedChanged           = "LedChanged";        // {"rgb":"r,g,b"}
     inline constexpr const char* NetworkConnected     = "NetworkConnected";
     inline constexpr const char* NetworkDisconnected  = "NetworkDisconnected";
     // Resource liveness (Plan 42): a single uniform event for every resource.

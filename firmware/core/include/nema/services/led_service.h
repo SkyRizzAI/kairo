@@ -8,6 +8,7 @@
 namespace nema {
 
 class Logger;
+class EventBus;
 
 // LedService — the runtime LED registry + effect engine (`rt.led()`).
 //
@@ -39,8 +40,10 @@ public:
     enum class Notify : uint8_t { Off, Working, Success, Error, Charging };
     void notify(Notify n, int ledIdx = -1);
 
-    // Optional logger so effect calls are observable (set by Runtime at adopt).
+    // Optional logger + event bus (set by Runtime at adopt). The event bus lets
+    // effect changes stream to a host (Forge) so the board LED lights up.
     void setLogger(Logger* lg) { log_ = lg; }
+    void setEventBus(EventBus* b) { bus_ = b; }
 
     // ── IService ──
     const char* name() const override { return "LedService"; }
@@ -60,9 +63,12 @@ private:
     };
     void applyOne(size_t i, bool lit);
 
+    void publishState(uint8_t r, uint8_t g, uint8_t b);   // stream colour to host
+
     std::vector<Entry> leds_;
     std::vector<Fx>    fx_;             // parallel to leds_
     Logger*            log_ = nullptr;
+    EventBus*          bus_ = nullptr;
 };
 
 } // namespace nema

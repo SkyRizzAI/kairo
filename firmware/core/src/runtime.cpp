@@ -156,6 +156,7 @@ void Runtime::registerServices() {
     // boards that declare an LED (registry may be empty → tick is a no-op).
     if (capabilities_->has(caps::Rgb) || capabilities_->has(caps::Led)) {
         ledService_.setLogger(logger_.get());
+        ledService_.setEventBus(eventBus_.get());
         adoptService(&ledService_);
     }
 

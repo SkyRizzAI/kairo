@@ -1,5 +1,7 @@
 #include "nema/services/led_service.h"
 #include "nema/log/logger.h"
+#include "nema/event/event.h"
+#include "nema/event/event_bus.h"
 #include <cstdio>
 
 namespace nema {
@@ -9,6 +11,12 @@ static std::string rgbStr(uint8_t r, uint8_t g, uint8_t b) {
     char buf[16];
     std::snprintf(buf, sizeof(buf), "%u,%u,%u", (unsigned)r, (unsigned)g, (unsigned)b);
     return buf;
+}
+
+// Stream the current colour to any host (Forge) via the event bus, so the on-screen
+// board LED lights up. v1: one colour for all LEDs (matches the index=-1 usage).
+void LedService::publishState(uint8_t r, uint8_t g, uint8_t b) {
+    if (bus_) bus_->publish({events::LedChanged, {{"rgb", rgbStr(r, g, b)}}});
 }
 
 void LedService::addLed(ILed* led, const char* id, const char* desc) {
@@ -30,6 +38,7 @@ void LedService::solid(int ledIdx, uint8_t r, uint8_t g, uint8_t b) {
     forEach(count(), ledIdx, [&](size_t i) {
         fx_[i] = Fx{r, g, b, 0, 0, -1, 0, true, true};
     });
+    publishState(r, g, b);
 }
 
 void LedService::off(int ledIdx) { solid(ledIdx, 0, 0, 0); }
@@ -49,6 +58,7 @@ void LedService::blink(int ledIdx, uint8_t r, uint8_t g, uint8_t b,
         f.dirty = true;
         fx_[i] = f;
     });
+    publishState(r, g, b);   // lens shows the blink colour (static v1)
 }
 
 void LedService::notify(Notify n, int ledIdx) {

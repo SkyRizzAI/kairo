@@ -14,6 +14,7 @@ class SimStore {
 	logs = $state<LogEntry[]>([]);
 	events = $state<EventEntry[]>([]);
 	services = $state<Record<string, string>>({});
+	led = $state<string | null>(null);   // last LED colour "r,g,b" (from LedChanged)
 	connected = $state(false);
 	// Power state — the device starts OFF. The WASM firmware is NOT loaded until
 	// boot() is called (no auto-boot on page open). 'booting' covers WASM fetch +
@@ -40,6 +41,7 @@ class SimStore {
 		this.#s.on('log', (l) => (this.logs = [...this.logs.slice(-300), l]));
 		this.#s.on('event', (e) => {
 			this.events = [...this.events.slice(-300), e];
+			if (e.name === 'LedChanged' && e.fields.rgb) this.led = e.fields.rgb;
 			// Derive a service list from Service* events (best-effort).
 			if (e.name.startsWith('Service')) {
 				const n = e.fields.name || e.fields.service || e.fields.svc;
