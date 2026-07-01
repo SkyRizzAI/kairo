@@ -45,10 +45,21 @@ Capabilities stay granular: `caps::SensorsLight`, `caps::SensorsMotion`,
 shows every channel's live value + unit, sampling over I²C at ~2 Hz (via `tick()`,
 not every frame).
 
+## App API (`nema:sensors`)
+
+Apps read sensors via the generated binding (`api/sensors.pidl` → `nema.sensors.*`),
+gated on `caps::Sensors`:
+```js
+const names = nema.sensors.list();        // ["LTR-303ALS", "SC7A20"]
+const chans = nema.sensors.read(0);       // ["Light=120.00 lx"] (formatted per channel)
+```
+Host impl: `nema_host_impl.cpp` (`sensors_*`). WASM-app bindings not wired yet —
+QuickJS/`.papp` apps have full access.
+
 ## Not yet
 
-App-facing PIDL/JS (`nema:sensors`) isn't wired yet — sensors are reachable from
-C++ (`rt.sensors()`) and the settings UI. Driver register sequences + scaling
-follow datasheet defaults but are HW-unverified; LTR-303 lux is an approximation
-(CH0 raw) pending the CH0/CH1 ratio formula. See ADR
+WASM-app sensor bindings; a structured (record) read shape (current API returns
+`"name=value unit"` strings). Driver sequences + scaling follow datasheet defaults
+but are HW-unverified; LTR-303 lux is an approximation (CH0 raw) pending the
+CH0/CH1 ratio formula. See ADR
 [0024](../decisions/0024-hardware-hal-and-settings-test-coverage.md).

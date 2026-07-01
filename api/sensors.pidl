@@ -1,0 +1,13 @@
+// nema:sensors — read on-board sensors (environment / light / motion / …).
+// Source: services/sensor_service.h (rt.sensors()).
+package nema:sensors@1.0
+
+@capability("sensors")
+interface sensors {
+    /// List sensor labels (one per registered sensor).
+    list: func() -> list<string>
+
+    /// Read one sensor's channels, each formatted "name=value unit"
+    /// (e.g. "Temp=24.30 C", "X=0.01 g"). `index` is the position in list().
+    read: func(index: u32) -> list<string>
+}

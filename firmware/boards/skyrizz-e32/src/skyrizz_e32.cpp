@@ -101,6 +101,8 @@ void SkyRizzE32::describeHardware(Runtime& rt) {
         rt.sensors().addSensor(&motion_, "motion0", "SC7A20 @0x19");
         rt.capabilities().add(caps::SensorsMotion);
     }
+    if (light_.present() || motion_.present())
+        rt.capabilities().add(caps::Sensors);   // umbrella for the nema:sensors app API
     rt.hardware().add({"sensors", DriverKind::Other, "LTR-303ALS, SC7A20"});
 
     // Audio input — ES7243E mic ADC

@@ -5,7 +5,7 @@
 
 ## Coverage
 
-**Total functions:** 68
+**Total functions:** 76
 
 | Interface | Function | Cap | Tier | Host C++ | QuickJS | WASM .h | JS .d.ts | Docs | Impl |
 |---|---|---|---|---|---|---|---|---|---|
@@ -21,6 +21,12 @@
 | `nema:bt/ble` | `is-enabled` | `bt.ble` | — | — | — | — | — | ✅ | — |
 | `nema:input/input` | `hint` | `input` | — | — | — | — | — | ✅ | — |
 | `nema:input/input` | `actions` | `input` | — | — | — | — | — | ✅ | — |
+| `nema:led/led` | `list` | `led` | — | — | — | — | — | ✅ | — |
+| `nema:led/led` | `solid` | `led` | — | — | — | — | — | ✅ | — |
+| `nema:led/led` | `blink` | `led` | — | — | — | — | — | ✅ | — |
+| `nema:led/led` | `off` | `led` | — | — | — | — | — | ✅ | — |
+| `nema:led/led` | `notify` | `led` | — | — | — | — | — | ✅ | — |
+| `nema:led/led` | `brightness` | `led` | — | — | — | — | — | ✅ | — |
 | `nema:media/audio-input` | `list` | `audio.input` | — | — | — | — | — | ✅ | — |
 | `nema:media/audio-output` | `list` | `audio.output` | — | — | — | — | — | ✅ | — |
 | `nema:media/audio-output` | `set-volume` | `audio.output` | — | — | — | — | — | ✅ | — |
@@ -41,6 +47,8 @@
 | `nema:profile/profile` | `device-name` | `profile` | — | — | — | — | — | ✅ | — |
 | `nema:profile/profile` | `has-password` | `profile` | — | — | — | — | — | ✅ | — |
 | `nema:profile/profile` | `verify-password` | `profile` | — | — | — | — | — | ✅ | — |
+| `nema:sensors/sensors` | `list` | `sensors` | — | — | — | — | — | ✅ | — |
+| `nema:sensors/sensors` | `read` | `sensors` | — | — | — | — | — | ✅ | — |
 | `nema:storage/kv` | `get` | — | — | — | — | — | — | ✅ | — |
 | `nema:storage/kv` | `set` | — | — | — | — | — | — | ✅ | — |
 | `nema:storage/kv` | `get-int` | — | — | — | — | — | — | ✅ | — |

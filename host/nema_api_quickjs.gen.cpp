@@ -272,6 +272,87 @@ static JSValue nema_input_actions(JSContext* ctx, JSValueConst, int argc, JSValu
     return marshalList(ctx, __ret, [ctx](JSContext* c, auto& v) { (void)c; return JS_NewString(ctx, v.c_str()); });
 }
 
+// led.list
+static JSValue nema_led_list(JSContext* ctx, JSValueConst, int argc, JSValueConst* argv) {
+    (void)argc; (void)argv;
+    auto* e = engineOf(ctx);
+    auto* host = e->hostApi();
+    if (!host) return JS_UNDEFINED;
+
+    auto __ret = host->led_list();
+    return marshalList(ctx, __ret, [ctx](JSContext* c, auto& v) { (void)c; return JS_NewString(ctx, v.c_str()); });
+}
+
+// led.solid
+static JSValue nema_led_solid(JSContext* ctx, JSValueConst, int argc, JSValueConst* argv) {
+    (void)argc; (void)argv;
+    auto* e = engineOf(ctx);
+    auto* host = e->hostApi();
+    if (!host) return JS_UNDEFINED;
+
+    auto index = jsToI32(ctx, argv[0]);
+    auto r = jsToU32(ctx, argv[1]);
+    auto g = jsToU32(ctx, argv[2]);
+    auto b = jsToU32(ctx, argv[3]);
+    host->led_solid(index, r, g, b);
+    return JS_UNDEFINED;
+}
+
+// led.blink
+static JSValue nema_led_blink(JSContext* ctx, JSValueConst, int argc, JSValueConst* argv) {
+    (void)argc; (void)argv;
+    auto* e = engineOf(ctx);
+    auto* host = e->hostApi();
+    if (!host) return JS_UNDEFINED;
+
+    auto index = jsToI32(ctx, argv[0]);
+    auto r = jsToU32(ctx, argv[1]);
+    auto g = jsToU32(ctx, argv[2]);
+    auto b = jsToU32(ctx, argv[3]);
+    auto on_ms = jsToU32(ctx, argv[4]);
+    auto off_ms = jsToU32(ctx, argv[5]);
+    auto cycles = jsToI32(ctx, argv[6]);
+    host->led_blink(index, r, g, b, on_ms, off_ms, cycles);
+    return JS_UNDEFINED;
+}
+
+// led.off
+static JSValue nema_led_off(JSContext* ctx, JSValueConst, int argc, JSValueConst* argv) {
+    (void)argc; (void)argv;
+    auto* e = engineOf(ctx);
+    auto* host = e->hostApi();
+    if (!host) return JS_UNDEFINED;
+
+    auto index = jsToI32(ctx, argv[0]);
+    host->led_off(index);
+    return JS_UNDEFINED;
+}
+
+// led.notify
+static JSValue nema_led_notify(JSContext* ctx, JSValueConst, int argc, JSValueConst* argv) {
+    (void)argc; (void)argv;
+    auto* e = engineOf(ctx);
+    auto* host = e->hostApi();
+    if (!host) return JS_UNDEFINED;
+
+    auto intent = jsToU32(ctx, argv[0]);
+    host->led_notify(intent);
+    return JS_UNDEFINED;
+}
+
+// led.brightness
+static JSValue nema_led_brightness(JSContext* ctx, JSValueConst, int argc, JSValueConst* argv) {
+    (void)argc; (void)argv;
+    auto* e = engineOf(ctx);
+    auto* host = e->hostApi();
+    if (!host) return JS_UNDEFINED;
+
+    auto index = jsToI32(ctx, argv[0]);
+    auto level = jsToU32(ctx, argv[1]);
+    host->led_brightness(index, level);
+    return JS_UNDEFINED;
+}
+
 // audio-input.list
 static JSValue nema_audio_input_list(JSContext* ctx, JSValueConst, int argc, JSValueConst* argv) {
     (void)argc; (void)argv;
@@ -512,6 +593,29 @@ static JSValue nema_profile_verify_password(JSContext* ctx, JSValueConst, int ar
     std::string input = jsToString(ctx, argv[0]);
     auto __ret = host->profile_verify_password(input);
     return JS_NewBool(ctx, __ret);
+}
+
+// sensors.list
+static JSValue nema_sensors_list(JSContext* ctx, JSValueConst, int argc, JSValueConst* argv) {
+    (void)argc; (void)argv;
+    auto* e = engineOf(ctx);
+    auto* host = e->hostApi();
+    if (!host) return JS_UNDEFINED;
+
+    auto __ret = host->sensors_list();
+    return marshalList(ctx, __ret, [ctx](JSContext* c, auto& v) { (void)c; return JS_NewString(ctx, v.c_str()); });
+}
+
+// sensors.read
+static JSValue nema_sensors_read(JSContext* ctx, JSValueConst, int argc, JSValueConst* argv) {
+    (void)argc; (void)argv;
+    auto* e = engineOf(ctx);
+    auto* host = e->hostApi();
+    if (!host) return JS_UNDEFINED;
+
+    auto index = jsToU32(ctx, argv[0]);
+    auto __ret = host->sensors_read(index);
+    return marshalList(ctx, __ret, [ctx](JSContext* c, auto& v) { (void)c; return JS_NewString(ctx, v.c_str()); });
 }
 
 // kv.get
@@ -1012,6 +1116,17 @@ void installNemaApi(JSContext* ctx, HostApi* host, nema::CapabilityRegistry& cap
     setFn(ctx, bt_ble, "disable", nema_ble_disable, 0);
     setFn(ctx, bt_ble, "isEnabled", nema_ble_is_enabled, 0);
 
+    JSValue led = JS_NewObject(ctx);
+    if (caps.has(nema::caps::Led)) {
+        JS_SetPropertyStr(ctx, nema, "led", led);
+    }
+    setFn(ctx, led, "list", nema_led_list, 0);
+    setFn(ctx, led, "solid", nema_led_solid, 4);
+    setFn(ctx, led, "blink", nema_led_blink, 7);
+    setFn(ctx, led, "off", nema_led_off, 1);
+    setFn(ctx, led, "notify", nema_led_notify, 1);
+    setFn(ctx, led, "brightness", nema_led_brightness, 2);
+
     JSValue media = JS_NewObject(ctx);
     JS_SetPropertyStr(ctx, nema, "media", media);
     JSValue media_audio_input = JS_NewObject(ctx);
@@ -1056,6 +1171,13 @@ void installNemaApi(JSContext* ctx, HostApi* host, nema::CapabilityRegistry& cap
     setFn(ctx, net_wifi, "scan", nema_wifi_scan, 0);
     setFn(ctx, net_wifi, "connect", nema_wifi_connect, 2);
     setFn(ctx, net_wifi, "disconnect", nema_wifi_disconnect, 0);
+
+    JSValue sensors = JS_NewObject(ctx);
+    if (caps.has(nema::caps::Sensors)) {
+        JS_SetPropertyStr(ctx, nema, "sensors", sensors);
+    }
+    setFn(ctx, sensors, "list", nema_sensors_list, 0);
+    setFn(ctx, sensors, "read", nema_sensors_read, 1);
 
     JSValue storage = JS_NewObject(ctx);
     JS_SetPropertyStr(ctx, nema, "storage", storage);

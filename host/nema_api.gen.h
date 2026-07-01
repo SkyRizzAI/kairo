@@ -116,6 +116,26 @@ struct HostApi {
     // List all supported actions on this device.
     virtual std::vector<std::string> input_actions() = 0;
 
+    // ── nema:led ───────────────────────────────────────
+    // led/led.list
+    // List LED labels (one per registered LED / strip).
+    virtual std::vector<std::string> led_list() = 0;
+    // led/led.solid
+    // Set a solid colour. index -1 = all LEDs. r/g/b are 0..255.
+    virtual void led_solid(int32_t index, uint8_t r, uint8_t g, uint8_t b) = 0;
+    // led/led.blink
+    // Blink a colour. index -1 = all. on-ms/off-ms per phase; cycles -1 = forever.
+    virtual void led_blink(int32_t index, uint8_t r, uint8_t g, uint8_t b, uint16_t on_ms, uint16_t off_ms, int32_t cycles) = 0;
+    // led/led.off
+    // Turn LED(s) off. index -1 = all.
+    virtual void led_off(int32_t index) = 0;
+    // led/led.notify
+    // Notification intent (maps to colour+blink; degrades on mono; no-op with no LED): 0=off 1=working 2=success 3=error 4=charging.
+    virtual void led_notify(uint8_t intent) = 0;
+    // led/led.brightness
+    // Global brightness 0..255. index -1 = all.
+    virtual void led_brightness(int32_t index, uint8_t level) = 0;
+
     // ── nema:media ───────────────────────────────────────
     // media/audio-input.list
     // List available audio input devices.
@@ -181,6 +201,14 @@ struct HostApi {
     // profile/profile.verify-password
     // Verify a password/PIN candidate. Uses constant-time comparison. Returns false if no password is set.
     virtual bool profile_verify_password(std::string_view input) = 0;
+
+    // ── nema:sensors ───────────────────────────────────────
+    // sensors/sensors.list
+    // List sensor labels (one per registered sensor).
+    virtual std::vector<std::string> sensors_list() = 0;
+    // sensors/sensors.read
+    // Read one sensor's channels, each formatted "name=value unit" (e.g. "Temp=24.30 C", "X=0.01 g"). `index` is the position in list().
+    virtual std::vector<std::string> sensors_read(uint32_t index) = 0;
 
     // ── nema:storage ───────────────────────────────────────
     // storage/kv.get

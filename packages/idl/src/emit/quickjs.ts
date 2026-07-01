@@ -191,6 +191,8 @@ function emitRegistration(ast: PidlAst): string {
     "wifi":         { parent: "nema",      var: "wifi" },        // Plan 87: WiFi radio HAL
     "wifi.radio":   { parent: "wifi",      var: "wifi_radio" }, // func-level gating only
     "wallet.wallet":{ parent: "nema",      var: "wallet" },     // Plan 94: nema.wallet.* (perm-gated per call)
+    "led.led":      { parent: "nema",      var: "led",     gated: "led" },      // nema.led.*
+    "sensors.sensors": { parent: "nema",   var: "sensors", gated: "sensors" },  // nema.sensors.*
   };
 
   // Build namespace objects (only those present in the AST)

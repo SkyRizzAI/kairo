@@ -1,0 +1,25 @@
+// nema:led — RGB/mono LED control + board-agnostic notification intents.
+// Source: services/led_service.h (rt.led()).
+package nema:led@1.0
+
+@capability("led")
+interface led {
+    /// List LED labels (one per registered LED / strip).
+    list: func() -> list<string>
+
+    /// Set a solid colour. index -1 = all LEDs. r/g/b are 0..255.
+    solid: func(index: s32, r: u8, g: u8, b: u8)
+
+    /// Blink a colour. index -1 = all. on-ms/off-ms per phase; cycles -1 = forever.
+    blink: func(index: s32, r: u8, g: u8, b: u8, on-ms: u16, off-ms: u16, cycles: s32)
+
+    /// Turn LED(s) off. index -1 = all.
+    off: func(index: s32)
+
+    /// Notification intent (maps to colour+blink; degrades on mono; no-op with no
+    /// LED): 0=off 1=working 2=success 3=error 4=charging.
+    notify: func(intent: u8)
+
+    /// Global brightness 0..255. index -1 = all.
+    brightness: func(index: s32, level: u8)
+}

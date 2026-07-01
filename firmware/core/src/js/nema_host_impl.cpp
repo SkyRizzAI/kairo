@@ -431,8 +431,67 @@ public:
         o->writePcm(reinterpret_cast<const int16_t*>(data.data()),
                     data.size() / sizeof(int16_t), sample_rate);
     }
-    std::vector<std::string> camera_list() override { return {}; }
+    std::vector<std::string> camera_list() override {
+        auto& c = rt_.camera();
+        std::vector<std::string> v;
+        for (int i = 0; i < c.count(); i++) v.push_back(c.desc(i) ? c.desc(i) : "");
+        return v;
+    }
     NemaResult<std::string, std::string> camera_capture() override { return {false, {}, "camera not implemented"}; }
+
+    // ── nema:led/* ─────────────────────────────────────────────────────
+
+    std::vector<std::string> led_list() override {
+        auto& l = rt_.led();
+        std::vector<std::string> v;
+        for (int i = 0; i < l.count(); i++) v.push_back(l.led(i) ? l.led(i)->label() : "");
+        return v;
+    }
+    void led_solid(int32_t index, uint8_t r, uint8_t g, uint8_t b) override {
+        rt_.led().solid(index, r, g, b);
+    }
+    void led_blink(int32_t index, uint8_t r, uint8_t g, uint8_t b,
+                   uint16_t on_ms, uint16_t off_ms, int32_t cycles) override {
+        rt_.led().blink(index, r, g, b, on_ms, off_ms, cycles);
+    }
+    void led_off(int32_t index) override { rt_.led().off(index); }
+    void led_notify(uint8_t intent) override {
+        using N = nema::LedService::Notify;
+        N n = intent == 1 ? N::Working : intent == 2 ? N::Success
+            : intent == 3 ? N::Error   : intent == 4 ? N::Charging : N::Off;
+        rt_.led().notify(n);
+    }
+    void led_brightness(int32_t index, uint8_t level) override {
+        auto& l = rt_.led();
+        if (index < 0) {
+            for (int i = 0; i < l.count(); i++) if (l.led(i)) l.led(i)->setBrightness(level);
+        } else if (index < l.count() && l.led(index)) {
+            l.led(index)->setBrightness(level);
+        }
+    }
+
+    // ── nema:sensors/* ─────────────────────────────────────────────────
+
+    std::vector<std::string> sensors_list() override {
+        auto& s = rt_.sensors();
+        std::vector<std::string> v;
+        for (int i = 0; i < s.count(); i++) v.push_back(s.sensor(i) ? s.sensor(i)->label() : "");
+        return v;
+    }
+    std::vector<std::string> sensors_read(uint32_t index) override {
+        std::vector<std::string> out;
+        auto& s = rt_.sensors();
+        if ((int)index >= s.count()) return out;
+        nema::ISensor* dev = s.sensor((int)index);
+        if (!dev || !dev->read()) return out;
+        for (int c = 0; c < dev->channelCount(); c++) {
+            char buf[40];
+            std::snprintf(buf, sizeof(buf), "%s=%.2f %s",
+                          dev->channelName(c), (double)dev->value(c), dev->channelUnit(c));
+            out.push_back(buf);
+        }
+        return out;
+    }
 
     // ── nema:input ────────────────────────────────────────────────────
     // @future — stubs

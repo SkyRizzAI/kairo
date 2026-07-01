@@ -81,6 +81,35 @@ declare namespace nema {
 
   }
 
+  namespace led {
+      // gated: led
+    /**
+     * List LED labels (one per registered LED / strip).
+     */
+    list(): string[];
+    /**
+     * Set a solid colour. index -1 = all LEDs. r/g/b are 0..255.
+     */
+    solid(index: number, r: number, g: number, b: number): void;
+    /**
+     * Blink a colour. index -1 = all. on-ms/off-ms per phase; cycles -1 = forever.
+     */
+    blink(index: number, r: number, g: number, b: number, onMs: number, offMs: number, cycles: number): void;
+    /**
+     * Turn LED(s) off. index -1 = all.
+     */
+    off(index: number): void;
+    /**
+     * Notification intent (maps to colour+blink; degrades on mono; no-op with no LED): 0=off 1=working 2=success 3=error 4=charging.
+     */
+    notify(intent: number): void;
+    /**
+     * Global brightness 0..255. index -1 = all.
+     */
+    brightness(index: number, level: number): void;
+
+  }
+
   namespace media {
       // gated: audio.input
     namespace audio-input {
@@ -189,6 +218,19 @@ declare namespace nema {
      * Verify a password/PIN candidate. Uses constant-time comparison. Returns false if no password is set.
      */
     verifyPassword(input: string): boolean;
+
+  }
+
+  namespace sensors {
+      // gated: sensors
+    /**
+     * List sensor labels (one per registered sensor).
+     */
+    list(): string[];
+    /**
+     * Read one sensor's channels, each formatted "name=value unit" (e.g. "Temp=24.30 C", "X=0.01 g"). `index` is the position in list().
+     */
+    read(index: number): string[];
 
   }
 

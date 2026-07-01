@@ -45,6 +45,20 @@ extern const char* nema_input__input_hint(const char* action);
 /* List all supported actions on this device. */
 extern int32_t nema_input__input_actions(void);
 
+/* ── nema:led ──────────────────────────────────────────── */
+/* List LED labels (one per registered LED / strip). */
+extern int32_t nema_led__led_list(void);
+/* Set a solid colour. index -1 = all LEDs. r/g/b are 0..255. */
+extern void nema_led__led_solid(int32_t index, uint32_t r, uint32_t g, uint32_t b);
+/* Blink a colour. index -1 = all. on-ms/off-ms per phase; cycles -1 = forever. */
+extern void nema_led__led_blink(int32_t index, uint32_t r, uint32_t g, uint32_t b, uint32_t on_ms, uint32_t off_ms, int32_t cycles);
+/* Turn LED(s) off. index -1 = all. */
+extern void nema_led__led_off(int32_t index);
+/* Notification intent (maps to colour+blink; degrades on mono; no-op with no LED): 0=off 1=working 2=success 3=error 4=charging. */
+extern void nema_led__led_notify(uint32_t intent);
+/* Global brightness 0..255. index -1 = all. */
+extern void nema_led__led_brightness(int32_t index, uint32_t level);
+
 /* ── nema:media ────────────────────────────────────────── */
 /* List available audio input devices. */
 extern int32_t nema_media__audio_input_list(void);
@@ -90,6 +104,12 @@ extern const char* nema_profile__profile_device_name(void);
 extern uint32_t nema_profile__profile_has_password(void);
 /* Verify a password/PIN candidate. Uses constant-time comparison. Returns false if no password is set. */
 extern uint32_t nema_profile__profile_verify_password(const char* input);
+
+/* ── nema:sensors ──────────────────────────────────────── */
+/* List sensor labels (one per registered sensor). */
+extern int32_t nema_sensors__sensors_list(void);
+/* Read one sensor's channels, each formatted "name=value unit" (e.g. "Temp=24.30 C", "X=0.01 g"). `index` is the position in list(). */
+extern int32_t nema_sensors__sensors_read(uint32_t index);
 
 /* ── nema:storage ──────────────────────────────────────── */
 /* Read a string value. Absent key → none. */

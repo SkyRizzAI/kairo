@@ -37,6 +37,7 @@ inline constexpr const char* Led           = "led";          // has ≥1 control
 inline constexpr const char* LedRgb        = "led.rgb";      // at least one LED is full-colour RGB
 
 // Sensors
+inline constexpr const char* Sensors       = "sensors";       // umbrella: ≥1 sensor present
 inline constexpr const char* SensorsEnv    = "sensors.environment";
 inline constexpr const char* SensorsLight  = "sensors.light";
 inline constexpr const char* SensorsMotion = "sensors.motion";

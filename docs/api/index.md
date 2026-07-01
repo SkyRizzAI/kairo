@@ -13,12 +13,14 @@
 | [`aether:ui/scroll`](./aether_ui_scroll.md) | `aether:ui@1.0` | `null` | 2 |
 | [`nema:bt/ble`](./nema_bt_ble.md) | `nema:bt@1.0` | `bt.ble` | 3 |
 | [`nema:input/input`](./nema_input_input.md) | `nema:input@1.0` | `input` | 2 |
+| [`nema:led/led`](./nema_led_led.md) | `nema:led@1.0` | `led` | 6 |
 | [`nema:media/audio-input`](./nema_media_audio-input.md) | `nema:media@1.0` | `audio.input` | 1 |
 | [`nema:media/audio-output`](./nema_media_audio-output.md) | `nema:media@1.0` | `audio.output` | 4 |
 | [`nema:media/camera`](./nema_media_camera.md) | `nema:media@1.0` | `camera` | 2 |
 | [`nema:net/http`](./nema_net_http.md) | `nema:net@1.0` | `net.http` | 3 |
 | [`nema:net/wifi`](./nema_net_wifi.md) | `nema:net@1.0` | `net.wifi` | 6 |
 | [`nema:profile/profile`](./nema_profile_profile.md) | `nema:profile@1.0` | `profile` | 4 |
+| [`nema:sensors/sensors`](./nema_sensors_sensors.md) | `nema:sensors@1.0` | `sensors` | 2 |
 | [`nema:storage/kv`](./nema_storage_kv.md) | `nema:storage@1.0` | core | 5 |
 | [`nema:storage/fs`](./nema_storage_fs.md) | `nema:storage@1.0` | core | 5 |
 | [`nema:sys/log`](./nema_sys_log.md) | `nema:sys@1.0` | core | 1 |

@@ -51,8 +51,23 @@ Capabilities: `caps::Led` (has an LED), `caps::LedRgb` (at least one is full RGB
 count + RGB/mono) and offers: solid Red/Green/Blue/White, Blink, Off, the three
 notification intents, and a Brightness stepper. Multi-instance like Sounds.
 
+## App API (`nema:led`)
+
+Apps drive LEDs via the generated binding (`api/led.pidl` → `nema.led.*`), gated on
+`caps::Led`:
+```js
+nema.led.solid(-1, 0, 255, 0);            // all green (-1 = all)
+nema.led.blink(0, 255, 0, 0, 100, 100, 6);
+nema.led.notify(1);                        // 1=working 2=success 3=error 4=charging
+nema.led.off(-1);
+nema.led.brightness(-1, 128);
+const labels = nema.led.list();
+```
+Host impl: `nema_host_impl.cpp` (`led_*`). WASM-app bindings (`wasm_nema.cpp`) are
+not wired yet — QuickJS/`.papp` apps have full access.
+
 ## Not yet
 
-App-facing PIDL/JS bindings (`nema:led`) aren't wired yet — LED is reachable from
-C++ (`rt.led()`) and the settings UI. WS2812 RMT timings are datasheet-correct but
-HW-unverified. See ADR [0024](../decisions/0024-hardware-hal-and-settings-test-coverage.md).
+WASM-app LED bindings; per-pixel app control (current API sets whole LEDs). WS2812
+RMT timings are datasheet-correct but HW-unverified. See ADR
+[0024](../decisions/0024-hardware-hal-and-settings-test-coverage.md).
