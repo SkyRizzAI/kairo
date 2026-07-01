@@ -89,11 +89,19 @@ void SkyRizzE32::describeHardware(Runtime& rt) {
     rt.capabilities().add(caps::Led);
     rt.capabilities().add(caps::LedRgb);
 
-    // Sensors (init-only; data via events or service in future plans)
-    rt.hardware().add({"sensors", DriverKind::Other, "AHT20, LTR-303ALS, SC7A20"});
-    rt.capabilities().add(caps::SensorsEnv);
-    rt.capabilities().add(caps::SensorsLight);
-    rt.capabilities().add(caps::SensorsMotion);
+    // Sensors — probe each on the shared I²C bus; register only what ACKs into
+    // rt.sensors() (multi-instance, read on demand by the Sensors settings screen
+    // + apps). AHT20 (environment) is intentionally omitted: its 0x38 address
+    // clashes with the FT6336U touch controller on this board.
+    if (light_.begin()) {
+        rt.sensors().addSensor(&light_, "light0", "LTR-303ALS @0x29");
+        rt.capabilities().add(caps::SensorsLight);
+    }
+    if (motion_.begin()) {
+        rt.sensors().addSensor(&motion_, "motion0", "SC7A20 @0x19");
+        rt.capabilities().add(caps::SensorsMotion);
+    }
+    rt.hardware().add({"sensors", DriverKind::Other, "LTR-303ALS, SC7A20"});
 
     // Audio input — ES7243E mic ADC
     mic_.init(rt, expander_);

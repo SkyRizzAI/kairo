@@ -6,6 +6,7 @@
 #include "nema/services/audio_service.h"
 #include "nema/services/camera_service.h"
 #include "nema/services/led_service.h"
+#include "nema/services/sensor_service.h"
 #include "nema/task_runner.h"
 #include "nema/waker.h"
 #include "nema/proc/process_manager.h"
@@ -144,6 +145,7 @@ public:
     AudioService&        audio();
     CameraService&       camera();
     LedService&          led();      // RGB/mono LED registry + effect engine
+    SensorService&       sensors();  // env/light/motion/… sensor registry
 
     // Wire up the platform's CliService so FbconServer can execute commands
     // from the on-device console. Called by each platform after CLI setup.
@@ -206,6 +208,7 @@ private:
     IFileSystem*                       fs_            = nullptr;
     CameraService                      cameraService_; // value member — always alive
     LedService                         ledService_;    // value member — always alive
+    SensorService                      sensorService_; // value member — always alive
     std::unique_ptr<DummyBatteryDriver> dummyBattery_;
     std::unique_ptr<NtpService>        ntp_;
 

@@ -203,6 +203,7 @@ nema::TaskRunner& Runtime::tasks()       { return taskRunner_; }
 AudioService&     Runtime::audio()       { return audioService_; }
 CameraService&    Runtime::camera()      { return cameraService_; }
 LedService&       Runtime::led()         { return ledService_; }
+SensorService&    Runtime::sensors()     { return sensorService_; }
 
 void Runtime::step() {
     uint64_t now = clock().millis();

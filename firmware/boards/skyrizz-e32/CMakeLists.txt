@@ -9,6 +9,7 @@ idf_component_register(
         "src/i2s_speaker.cpp"
         "src/gc2145_camera.cpp"
         "src/se050_driver.cpp"
+        "src/e32_sensors.cpp"
     INCLUDE_DIRS "include"
     REQUIRES
         core

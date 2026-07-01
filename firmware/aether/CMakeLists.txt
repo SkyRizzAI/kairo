@@ -94,6 +94,7 @@ set(AETHER_SRCS
     ${CMAKE_CURRENT_SOURCE_DIR}/../core/src/screens/sounds_settings_screen.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../core/src/screens/camera_settings_screen.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../core/src/screens/led_settings_screen.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../core/src/screens/sensors_settings_screen.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../core/src/screens/developer_screen.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../core/src/screens/profile_settings_screen.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../core/src/screens/storage_settings_screen.cpp

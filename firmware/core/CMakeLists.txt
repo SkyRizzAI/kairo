@@ -88,6 +88,7 @@ src/input/gesture.cpp
     src/services/audio_service.cpp
     src/services/camera_service.cpp
     src/services/led_service.cpp
+    src/services/sensor_service.cpp
     src/proc/stream.cpp
     src/proc/process_host.cpp
     src/proc/process_manager.cpp
