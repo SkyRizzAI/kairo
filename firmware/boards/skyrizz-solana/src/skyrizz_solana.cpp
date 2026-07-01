@@ -39,6 +39,13 @@ void SkyRizzSolana::describeHardware(Runtime& rt) {
         if (cfg->getIntOr("aether", "scale", 0) == 0)
             cfg->setInt("aether", "scale", 200);
 
+    // First-boot default display rotation. The Solana's natural orientation is 270°
+    // relative to the E32 (large display bezel on the left). Seed once; the user can
+    // change it in Settings → Display. Must run before keyMap_/lcd_ read it below.
+    if (auto* cfg = rt.container().resolve<IConfigStore>())
+        if (cfg->getIntOr("display", "rotation", -1) < 0)
+            cfg->setInt("display", "rotation", 3);
+
     // Gesture timing from config (or defaults).
     uint32_t longMs = 500;
     if (auto* cfg = rt.container().resolve<IConfigStore>())

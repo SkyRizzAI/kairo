@@ -11,6 +11,11 @@ void SimulatorBoard::describeHardware(Runtime& rt) {
     // Board can augment or override here. For now just log the summary.
     rt.log().info("SimulatorBoard", "Hardware described");
 
+    // Virtual RGB LEDs so rt.led() + the LEDs settings screen work in the sim.
+    rt.led().addLed(&rgb_, "rgb0", "Virtual RGB x2");
+    rt.capabilities().add(caps::Led);
+    rt.capabilities().add(caps::LedRgb);
+
     // Demo: capability-driven pattern check
     if (rt.capabilities().has(caps::NetWifi)) {
         rt.log().debug("SimulatorBoard", "wifi capability confirmed");

@@ -1,5 +1,6 @@
 #pragma once
 #include "nema/board.h"
+#include "nema/services/virtual_led.h"
 
 namespace nema {
 
@@ -11,12 +12,14 @@ constexpr ComponentDef kSimComponents[] = {
     { 5, "Select",  ComponentType::Button,  0.70f, 0.78f, 0.10f, 0.07f, Key::Select },
     { 6, "Cancel",  ComponentType::Button,  0.83f, 0.90f, 0.10f, 0.07f, Key::Cancel },
     { 7, "LCD",     ComponentType::Display, 0.04f, 0.04f, 0.92f, 0.66f },
+    { 8, "RGB1",    ComponentType::Led,     0.86f, 0.74f, 0.05f, 0.08f },
+    { 9, "RGB2",    ComponentType::Led,     0.93f, 0.74f, 0.05f, 0.08f },
 };
 
 constexpr BoardProfile kSimProfile = {
     "simulator", "Palanu Simulator",
     90.0f, 55.0f,
-    kSimComponents, 7
+    kSimComponents, 9
 };
 
 class SimulatorBoard : public IBoard {
@@ -24,6 +27,9 @@ public:
     const char* name() const override { return "simulator"; }
     void describeHardware(Runtime& rt) override;
     const BoardProfile& profile() const override { return kSimProfile; }
+
+private:
+    VirtualLed rgb_{"Virtual RGB x2", 2};   // software LEDs so rt.led() works in sim
 };
 
 } // namespace nema

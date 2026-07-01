@@ -129,12 +129,15 @@ constexpr ComponentDef kE32Components[] = {
     { 4, "Up",      ComponentType::Button,  0.90f, 0.22f, 0.08f, 0.14f, Key::Up     },
     { 5, "Down",    ComponentType::Button,  0.90f, 0.52f, 0.08f, 0.14f, Key::Down   },
     { 6, "LCD",     ComponentType::Display, 0.04f, 0.04f, 0.82f, 0.72f },
+    // WS2812 chain: rgb1 next to SW3 (Right), rgb2 far left of SW1 (Left).
+    { 7, "RGB1",    ComponentType::Led,     0.905f, 0.83f, 0.06f, 0.11f },
+    { 8, "RGB2",    ComponentType::Led,     0.02f,  0.83f, 0.06f, 0.11f },
 };
 
 constexpr BoardProfile kE32Profile = {
     "skyrizz-e32", "SkyRizz E32",
     80.0f, 55.0f,
-    kE32Components, 6
+    kE32Components, 8
 };
 
 } // namespace nema::skyrizze32

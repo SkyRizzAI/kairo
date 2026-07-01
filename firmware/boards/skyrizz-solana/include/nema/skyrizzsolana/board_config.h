@@ -83,32 +83,35 @@ constexpr int PIN_MIC_CLK = 19;   // MICSCK (also USB D−)
 constexpr int PIN_MIC_DAT = 20;   // MICSDI (also USB D+)
 
 // ── Board Profile (physical layout) ─────────────────────────────────────────
-// SkyRizz Solana lanyard: TFT LCD up top, D-pad + OK + Back below.
+// SkyRizz Solana lanyard: TFT LCD top-left with two WS2812 LEDs to its right
+// (D4 top, D3 bottom); below, a D-pad cluster on the left + Cancel/Select stacked
+// on the right. Matches the physical device:
 //
-// ┌────────────────────────┐
-// │                        │
-// │          LCD           │
-// │                        │
-// └────────────────────────┘
-//          [ Up ]
-//   [Left] [ OK ] [Right]
-//         [Down] [Back]
+// ┌───────────────┐  [] ← D4 (rgb1)
+// │      LCD      │
+// │               │  [] ← D3 (rgb2)
+// └───────────────┘
+//     [Up]              [Back]
+//  [Left][Right]
+//    [Down]             [OK]
 
 constexpr ComponentDef kSolanaComponents[] = {
-    // id  label    type                    x      y      w      h      remote key
-    { 1, "LCD",    ComponentType::Display, 0.10f, 0.04f, 0.80f, 0.50f },
-    { 2, "Up",     ComponentType::Button,  0.41f, 0.60f, 0.18f, 0.10f, Key::Up     },
-    { 3, "Left",   ComponentType::Button,  0.16f, 0.72f, 0.18f, 0.10f, Key::Left   },
-    { 4, "OK",     ComponentType::Button,  0.41f, 0.72f, 0.18f, 0.10f, Key::Select },
-    { 5, "Right",  ComponentType::Button,  0.66f, 0.72f, 0.18f, 0.10f, Key::Right  },
-    { 6, "Down",   ComponentType::Button,  0.41f, 0.84f, 0.18f, 0.10f, Key::Down   },
-    { 7, "Back",   ComponentType::Button,  0.66f, 0.84f, 0.18f, 0.10f, Key::Cancel },
+    // id  label    type                    x       y      w      h      remote key
+    { 1, "LCD",    ComponentType::Display, 0.06f,  0.05f, 0.74f, 0.44f },
+    { 2, "RGB1",   ComponentType::Led,     0.86f,  0.10f, 0.09f, 0.10f },   // D4 (top)
+    { 3, "RGB2",   ComponentType::Led,     0.86f,  0.33f, 0.09f, 0.10f },   // D3 (bottom)
+    { 4, "Up",     ComponentType::Button,  0.15f,  0.58f, 0.13f, 0.10f, Key::Up     },
+    { 5, "Left",   ComponentType::Button,  0.02f,  0.71f, 0.13f, 0.10f, Key::Left   },
+    { 6, "Right",  ComponentType::Button,  0.28f,  0.71f, 0.13f, 0.10f, Key::Right  },
+    { 7, "Down",   ComponentType::Button,  0.15f,  0.84f, 0.13f, 0.10f, Key::Down   },
+    { 8, "Back",   ComponentType::Button,  0.78f,  0.60f, 0.16f, 0.10f, Key::Cancel },
+    { 9, "OK",     ComponentType::Button,  0.78f,  0.82f, 0.16f, 0.10f, Key::Select },
 };
 
 constexpr BoardProfile kSolanaProfile = {
     "skyrizz-solana", "SkyRizz Solana",
     40.0f, 80.0f,
-    kSolanaComponents, 7
+    kSolanaComponents, 9
 };
 
 } // namespace nema::skyrizzsolana
