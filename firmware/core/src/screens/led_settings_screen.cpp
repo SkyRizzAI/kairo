@@ -64,7 +64,7 @@ UiNode* LedSettingsScreen::build(NodeArena& a, Runtime& rt) {
         if (s->brightness_ < 0)   s->brightness_ = 0;
         if (s->brightness_ > 255) s->brightness_ = 255;
         auto& led = s->rt_.led();
-        for (int i = 0; i < led.count(); i++) led.led(i)->setBrightness((uint8_t)s->brightness_);
+        led.setBrightness(-1, (uint8_t)s->brightness_);
         led.solid(-1, 255, 255, 255);   // reapply white so the change is visible
     });
 

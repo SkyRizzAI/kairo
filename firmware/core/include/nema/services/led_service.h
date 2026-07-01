@@ -35,6 +35,7 @@ public:
     void off  (int ledIdx);
     void blink(int ledIdx, uint8_t r, uint8_t g, uint8_t b,
                uint16_t onMs, uint16_t offMs, int cycles = -1);   // -1 = forever
+    void setBrightness(int ledIdx, uint8_t level);                // 0..255 (host + hw)
 
     // ── Notification intents (board-agnostic) ──
     enum class Notify : uint8_t { Off, Working, Success, Error, Charging };
@@ -69,6 +70,8 @@ private:
     std::vector<Fx>    fx_;             // parallel to leds_
     Logger*            log_ = nullptr;
     EventBus*          bus_ = nullptr;
+    uint8_t            brightness_ = 255;     // global brightness (v1)
+    int                pubR_ = -1, pubG_ = -1, pubB_ = -1;   // last host-published colour
 };
 
 } // namespace nema

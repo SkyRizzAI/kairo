@@ -38,10 +38,22 @@ void LedService::solid(int ledIdx, uint8_t r, uint8_t g, uint8_t b) {
     forEach(count(), ledIdx, [&](size_t i) {
         fx_[i] = Fx{r, g, b, 0, 0, -1, 0, true, true};
     });
-    publishState(r, g, b);
+    // Publishing is driven from tick() (change-detected, brightness-scaled) so
+    // blink toggles + brightness all reflect on the host.
 }
 
 void LedService::off(int ledIdx) { solid(ledIdx, 0, 0, 0); }
+
+void LedService::setBrightness(int ledIdx, uint8_t level) {
+    if (log_) log_->info("LedService", "brightness", {{"level", std::to_string((int)level)}});
+    brightness_ = level;   // v1: single global level (drives the host-published colour)
+    forEach(count(), ledIdx, [&](size_t i) {
+        if (leds_[i].led) leds_[i].led->setBrightness(level);
+        fx_[i].dirty = true;   // re-apply to hardware at the new brightness
+    });
+    // tick() re-publishes the scaled colour (pubR_ reset forces it even if unchanged).
+    pubR_ = -1;
+}
 
 void LedService::blink(int ledIdx, uint8_t r, uint8_t g, uint8_t b,
                        uint16_t onMs, uint16_t offMs, int cycles) {
@@ -58,7 +70,7 @@ void LedService::blink(int ledIdx, uint8_t r, uint8_t g, uint8_t b,
         f.dirty = true;
         fx_[i] = f;
     });
-    publishState(r, g, b);   // lens shows the blink colour (static v1)
+    // tick() publishes each on/off toggle → the host lens actually blinks.
 }
 
 void LedService::notify(Notify n, int ledIdx) {
@@ -102,6 +114,7 @@ void LedService::tick(uint64_t nowMs) {
             // finished an ON phase; count a cycle if bounded.
             if (f.cycles > 0 && --f.cycles == 0) {
                 f.lit = false; f.onMs = f.offMs = 0;   // done → settle off (solid black)
+                f.r = f.g = f.b = 0;
                 applyOne(i, false);
                 continue;
             }
@@ -111,6 +124,20 @@ void LedService::tick(uint64_t nowMs) {
         }
         f.phaseStart = nowMs;
         applyOne(i, f.lit);
+    }
+
+    // Publish LED 0's currently-displayed colour (scaled by brightness) to the
+    // host, change-detected so blink toggles stream but a steady LED doesn't spam.
+    if (!fx_.empty()) {
+        const Fx& f = fx_[0];
+        const bool blinking = (f.onMs || f.offMs);
+        const bool lit = blinking ? f.lit : true;
+        auto sc = [&](uint8_t c) -> int { return lit ? (int)((uint16_t)c * brightness_ / 255) : 0; };
+        int r = sc(f.r), g = sc(f.g), b = sc(f.b);
+        if (r != pubR_ || g != pubG_ || b != pubB_) {
+            pubR_ = r; pubG_ = g; pubB_ = b;
+            publishState((uint8_t)r, (uint8_t)g, (uint8_t)b);
+        }
     }
 }
 
