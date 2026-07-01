@@ -54,15 +54,15 @@ constexpr uint8_t P_PB6 = 1 << 5;   // P5
 constexpr uint8_t PB_MASK = P_PB1 | P_PB2 | P_PB3 | P_PB4 | P_PB5 | P_PB6;
 
 // ── Button IDs for IKeyMap (0-indexed) — D-pad + OK + Back ──────────────────
-// The HTML schematic does not label the physical arrangement of PB1..PB6, so we
-// adopt the canonical TCA9534-@0x20 bit order documented in ui/key.h (the same
-// chip + address this board uses): bit0=Left, bit1=Down, bit2=Up, bit3=Right,
-// bit4=Select(OK), bit5=Cancel(Back). If a button reads "wrong" at bring-up,
-// swap the PB_* mask wired to each id in tca9534.cpp::feedButtons().
-constexpr uint8_t BTN_LEFT  = 0;   // PB1 (P0) — AdjustDown
-constexpr uint8_t BTN_DOWN  = 1;   // PB2 (P1) — Next
-constexpr uint8_t BTN_UP    = 2;   // PB3 (P2) — Prev
-constexpr uint8_t BTN_RIGHT = 3;   // PB4 (P3) — AdjustUp
+// Physical PB→function layout (confirmed by hardware):
+//   PB1 (P0) = Up · PB2 (P1) = Left · PB3 (P2) = Right · PB4 (P3) = Down ·
+//   PB5 (P4) = OK/Select · PB6 (P5) = Cancel/Back.
+// The PB_* mask wired to each id lives in tca9534.cpp::feedButtons() — swap there
+// if a panel revision moves a switch.
+constexpr uint8_t BTN_UP    = 0;   // PB1 (P0) — Prev
+constexpr uint8_t BTN_LEFT  = 1;   // PB2 (P1) — AdjustDown
+constexpr uint8_t BTN_RIGHT = 2;   // PB3 (P2) — AdjustUp
+constexpr uint8_t BTN_DOWN  = 3;   // PB4 (P3) — Next
 constexpr uint8_t BTN_OK    = 4;   // PB5 (P4) — Activate (tap) / Menu (hold)
 constexpr uint8_t BTN_BACK  = 5;   // PB6 (P5) — Back
 

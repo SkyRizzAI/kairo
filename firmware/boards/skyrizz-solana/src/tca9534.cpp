@@ -71,10 +71,11 @@ void Tca9534::tick(uint64_t nowMs) {
             auto feedBtn = [&](uint8_t btnId, uint8_t mask) {
                 if (changed & mask) keyMap_->feedEdge(btnId, (inputs & mask) != 0, nowMs);
             };
-            feedBtn(BTN_LEFT,  P_PB1);
-            feedBtn(BTN_DOWN,  P_PB2);
-            feedBtn(BTN_UP,    P_PB3);
-            feedBtn(BTN_RIGHT, P_PB4);
+            // Physical layout: PB1=Up PB2=Left PB3=Right PB4=Down PB5=OK PB6=Back.
+            feedBtn(BTN_UP,    P_PB1);
+            feedBtn(BTN_LEFT,  P_PB2);
+            feedBtn(BTN_RIGHT, P_PB3);
+            feedBtn(BTN_DOWN,  P_PB4);
             feedBtn(BTN_OK,    P_PB5);
             feedBtn(BTN_BACK,  P_PB6);
         }
