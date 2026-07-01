@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.6.0](https://github.com/SkyRizzAI/kairo/compare/palanu-v1.5.0...palanu-v1.6.0) (2026-07-01)
+
+
+### Features
+
+* **forge:** render LED components in the board visual ([6c2e35c](https://github.com/SkyRizzAI/kairo/commit/6c2e35c1fc23501a11d880a4011efcc8c408cc92))
+* **led:** live LED colour in Forge (sim + remote) ([00d30fc](https://github.com/SkyRizzAI/kairo/commit/00d30fc2b3d3291bf2b886689ebf9ebdf5549a07))
+* **led:** log LED effect calls so they're observable in the Logs panel ([e45eb89](https://github.com/SkyRizzAI/kairo/commit/e45eb8981ca3590cebc046c0794957cc53d7ea37))
+
+
+### Bug Fixes
+
+* **led:** blink now toggles on host + brightness scales the colour ([f5c73f5](https://github.com/SkyRizzAI/kairo/commit/f5c73f5ea71f800e0de58f99eed17384a521cd11))
+
 ## [1.5.0](https://github.com/SkyRizzAI/kairo/compare/palanu-v1.4.0...palanu-v1.5.0) (2026-07-01)
 
 
