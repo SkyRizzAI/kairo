@@ -146,6 +146,8 @@ void Runtime::registerServices() {
         dummyBattery_ = std::make_unique<DummyBatteryDriver>();
         dummyBattery_->onRegister(*this);
         adoptService(dummyBattery_.get());
+        container_->registerAs<IBatteryDriver>(dummyBattery_.get());   // reachable via rt.container()
+        capabilities_->add(caps::Battery);
     }
 
     // LED effect engine — adopt so the non-blocking blink/notify loop ticks on

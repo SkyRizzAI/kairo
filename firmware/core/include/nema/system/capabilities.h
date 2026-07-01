@@ -49,6 +49,7 @@ inline constexpr const char* NetHttp       = "net.http";
     inline constexpr const char* UsbHid         = "usb.hid";          // Plan 66 — BLE scanner
 
 // System
+inline constexpr const char* Battery       = "battery";       // has a battery gauge driver
 inline constexpr const char* Storage       = "storage";
 inline constexpr const char* RemoteUsb     = "remote.usb";
 inline constexpr const char* RemoteNet     = "remote.net";   // Plan 75 — PLP over WebSocket
