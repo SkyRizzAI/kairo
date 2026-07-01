@@ -1,5 +1,29 @@
 # Changelog
 
+## [1.5.0](https://github.com/SkyRizzAI/kairo/compare/palanu-v1.4.0...palanu-v1.5.0) (2026-07-01)
+
+
+### Features
+
+* **api:** expose LED + Sensors to apps (nema:led / nema:sensors) ([cad3fb6](https://github.com/SkyRizzAI/kairo/commit/cad3fb6e554ee37049b609f4d84044ac62e0c6c4))
+* app runtime dirty rect rendering plan ([02db9ef](https://github.com/SkyRizzAI/kairo/commit/02db9efcba09c0fd05ab37cc8583535a028adbdb))
+* **board:** LEDs in board profiles + Solana layout/rotation + sim LEDs ([1f9d09b](https://github.com/SkyRizzAI/kairo/commit/1f9d09baf11ac0127fec6acce6db2168ec0e3346))
+* **led:** LED HAL + rt.led() registry + WS2812 driver + settings test ([90d0dd6](https://github.com/SkyRizzAI/kairo/commit/90d0dd6be629846b702c4789bdd0d8cad2cbdfba))
+* **release:** factory + OTA firmware artifacts with matrix CI ([01c338e](https://github.com/SkyRizzAI/kairo/commit/01c338eaa05001d13eb2885f056142ac43819806))
+* **sensors:** ISensor HAL + rt.sensors() registry + Sensors settings ([36bc9c4](https://github.com/SkyRizzAI/kairo/commit/36bc9c46f69ef2a633a5410ad2c9a172d1a7181e))
+* **settings:** add acquire-on-use Capture test to Camera settings ([59ec41f](https://github.com/SkyRizzAI/kairo/commit/59ec41fb5a20ae7406a9e16457f936f6dadc38a2))
+* **settings:** Battery + Secure Element settings screens ([d2ad6e8](https://github.com/SkyRizzAI/kairo/commit/d2ad6e8f6eccfbecd772ab5cc8663920cfb2079c))
+* **settings:** group peripherals under a "Device & Hardware" submenu ([4da5673](https://github.com/SkyRizzAI/kairo/commit/4da56737cd8ddbf41d391157a8fa784b5bf9bb3e))
+* **settings:** restore Touch Test diagnostic in Touch settings ([271b771](https://github.com/SkyRizzAI/kairo/commit/271b7718d2f85e19c2d6f1b5875e09f777b40bac))
+* skrizz-solana drivers ([1aa1095](https://github.com/SkyRizzAI/kairo/commit/1aa1095faf337e3110ba6103c0bd9541ed4ead86))
+* **solana:** real ADC battery gauge; touch-test text cleanup ([293640c](https://github.com/SkyRizzAI/kairo/commit/293640c1c98b03ba18b139b65170da856f73f34a))
+
+
+### Bug Fixes
+
+* **skyrizz-solana:** correct D-pad button mapping to physical layout ([3998707](https://github.com/SkyRizzAI/kairo/commit/399870710cf210407d0f8e7c07b40183d44e602a))
+* **ui:** realtime screens update without input; touch scale; camera open ([21a77b1](https://github.com/SkyRizzAI/kairo/commit/21a77b1ae3bcde6adceb8c8930190543a6ace54c))
+
 ## [1.4.0](https://github.com/SkyRizzAI/kairo/compare/palanu-v1.3.0...palanu-v1.4.0) (2026-06-29)
 
 
