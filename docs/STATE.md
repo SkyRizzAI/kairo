@@ -4,7 +4,16 @@
 > Detail per-stage ada di [`plans/`](plans/00-overview.md). Master plan: [`concept_plan.md`](concept_plan.md).
 > Reference arsitektur per-subsistem: [`architecture/`](architecture/README.md).
 >
-> **Last updated:** 2026-06-29 (**New board: SkyRizz Solana** ("Lanyard v2") — second
+> **Last updated:** 2026-07-01 (**Hardware HAL + settings-test coverage** — every
+> peripheral now has a board-agnostic HAL, a Runtime registry, and a settings test.
+> NEW: LED subsystem (`ILed` + `rt.led()` multi-instance + non-blocking blink engine
+> + notification intents; WS2812 RMT driver on both boards; Settings → LEDs test) and
+> Sensor subsystem (`ISensor` typed-channel HAL + `rt.sensors()`; E32 LTR-303 light +
+> SC7A20 motion drivers; Settings → Sensors live). Restored the lost **Touch Test**
+> diagnostic; added Battery, Secure Element, and Camera capture-test settings screens.
+> `caps::Led`/`LedRgb`/`Battery` added. Builds green host + both ESP-IDF targets;
+> HW-verify pending. See ADR 0024, feats led/sensors.) Prev: 2026-06-29 (**New board:
+> SkyRizz Solana** ("Lanyard v2") — second
 > ESP32-S3-WROOM-1-N16R8 variant. New board layer `firmware/boards/skyrizz-solana/`
 > + target `firmware/targets/skyrizz-solana/` (`bun run build:skyrizz-solana`, builds
 > clean). ILI9341 240×320 TFT (direct SPI), TCA9534 6-button D-pad+OK+Back,
