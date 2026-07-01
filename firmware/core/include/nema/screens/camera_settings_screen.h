@@ -18,6 +18,7 @@ public:
 private:
     aether::ui::ScrollState          scroll_;
     std::vector<std::string> rows_;
+    std::string              testResult_;   // last "Capture test" outcome
 };
 
 } // namespace nema
