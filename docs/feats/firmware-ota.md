@@ -45,13 +45,26 @@ Forge RemoteSession.otaUpdate(bin)        Device RemoteService.handleOta + IOtaU
    (the tRPC `firmware.list` reads it).
 2. In Forge, connect to the device (Remote) → **Firmware** panel → pick a build → update.
 3. OTA `.bin` downloads from GitHub releases go through `/api/firmware-proxy` (the cross-origin
-   isolated page can't fetch them directly).
+   isolated page can't fetch them directly). The Firmware panel lists **only** `-ota.bin`
+   assets and refuses any image larger than the A/B slot (`0x500000`) — a full-flash
+   `-factory.bin` can never be pushed over OTA (it would overflow the slot). See ADR 0023.
+
+## Release artifacts (which file for what)
+
+Each release ships two clearly-named images per board (ADR 0023, [`FLASHING.md`](../FLASHING.md)):
+
+- `palanu-<board>-<ver>-**factory**.bin` — full image → **cable-flash to `0x0`** (blank board / recover).
+- `palanu-<board>-<ver>-**ota**.bin` — app-only → **OTA** (this feature) or app-slot reflash.
+
+Both are produced by `firmware/tools/package-firmware.sh <board>`; offsets come from the
+build's `flasher_args.json`, never hard-coded.
 
 ## Related: client-side flashing
 
-A full erase/flash (not OTA) is available at Forge **/flash** via esptool-js over Web Serial
-(bootloader `0x0`, partition table `0x8000`, app `0x10000`). Use this for the first flash or to
-recover; OTA is for in-field updates.
+A full erase/flash (not OTA) is available at Forge **/flash** via esptool-js over Web Serial.
+It flashes every part at the offsets from the firmware manifest (bootloader `0x0`, partition
+table `0x8000`, app `0x20000`, otadata, spiffs) — staged by `publish-firmware.sh`. Use this for
+the first flash or to recover; OTA is for in-field updates.
 
 ## Gotchas
 

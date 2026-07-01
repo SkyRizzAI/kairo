@@ -255,6 +255,7 @@
 
 	<p class="text-muted-foreground text-[10px] leading-relaxed">
 		Tip: hold BOOT then tap RESET to enter download mode if auto-reset fails. Flashing writes
-		bootloader (0x0), partition table (0x8000), and app (0x10000).
+		every part at the offsets from the firmware manifest (bootloader 0x0, partition table
+		0x8000, app 0x20000, …).
 	</p>
 </div>

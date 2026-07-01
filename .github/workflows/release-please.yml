@@ -69,12 +69,20 @@ jobs:
           tag_name: ${{ needs.release-please.outputs.tag_name }}
           files: dist/palanu-simulator-*.zip
 
-  # ── 3. Build + attach skyrizz-e32 firmware ────────────────────────────────────
-  release-esp32-skyrizz:
-    name: Release — ESP32 skyrizz-e32
+  # ── 3. Build + attach ESP32 firmware (matrix: one leg per board) ──────────────
+  # package-firmware.sh emits two clearly-named artifacts per board:
+  #   palanu-<board>-<tag>-factory.bin  → cable flash to 0x0 (blank board / recovery)
+  #   palanu-<board>-<tag>-ota.bin      → OTA update (app-only → A/B slot)
+  # plus .sha256 sidecars. Both are attached to the GitHub release.
+  release-esp32:
+    name: Release — ESP32 (${{ matrix.board }})
     needs: release-please
     if: needs.release-please.outputs.release_created == 'true'
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        board: [skyrizz-e32, skyrizz-solana]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -102,63 +110,29 @@ jobs:
           fi
           ~/esp-idf/install.sh esp32s3
 
-      - name: Build skyrizz-e32
+      - name: Build + package (factory + ota)
         env:
-          TAG: ${{ needs.release-please.outputs.tag_name }}
+          FW_VERSION: ${{ needs.release-please.outputs.tag_name }}
         run: |
           source ~/esp-idf/export.sh
-          cd firmware/targets/skyrizz-e32
-          idf.py build
+          bash firmware/tools/package-firmware.sh ${{ matrix.board }}
 
       - name: Attach to release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ needs.release-please.outputs.tag_name }}
-          files: firmware/targets/skyrizz-e32/build/palanu-skyrizz-e32.bin
+          files: firmware/targets/${{ matrix.board }}/build/dist/*
 
-  # ── 4. Build + attach skyrizz-solana firmware ─────────────────────────────────
-  release-esp32-skyrizz-solana:
-    name: Release — ESP32 skyrizz-solana
+  # ── 4. Attach the flashing guide (once) ───────────────────────────────────────
+  release-flashing-guide:
+    name: Release — flashing guide
     needs: release-please
     if: needs.release-please.outputs.release_created == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          submodules: true
-
-      - name: Cache ESP-IDF tools
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.espressif
-            ~/esp-idf
-          key: esp-idf-v5.5.4-${{ runner.os }}
-
-      - name: Install system deps
-        run: |
-          sudo apt-get update -q
-          sudo apt-get install -y --no-install-recommends \
-            git wget flex bison gperf python3 python3-pip python3-venv \
-            cmake ninja-build ccache libffi-dev libssl-dev dfu-util libusb-1.0-0
-
-      - name: Install ESP-IDF v5.5.4
-        run: |
-          if [ ! -f ~/esp-idf/export.sh ]; then
-            git clone --depth 1 --branch v5.5.4 https://github.com/espressif/esp-idf.git ~/esp-idf
-          fi
-          ~/esp-idf/install.sh esp32s3
-
-      - name: Build skyrizz-solana
-        env:
-          TAG: ${{ needs.release-please.outputs.tag_name }}
-        run: |
-          source ~/esp-idf/export.sh
-          cd firmware/targets/skyrizz-solana
-          idf.py build
-
-      - name: Attach to release
+      - name: Attach FLASHING.md
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ needs.release-please.outputs.tag_name }}
-          files: firmware/targets/skyrizz-solana/build/palanu-skyrizz-solana.bin
+          files: docs/FLASHING.md

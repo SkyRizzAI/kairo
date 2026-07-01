@@ -19,9 +19,13 @@
 	}
 
 	const DEFAULT_REPO = env.PUBLIC_FIRMWARE_REPO || 'SkyRizzAI/kairo';
-	// Firmware assets are named palanu-<target>.bin or palanu-<target>.wasm
+	// OTA streams a single app image to the inactive A/B slot, so ONLY app-only
+	// (`-ota.bin`) builds belong here. A `-factory.bin` is a full-flash image (→ 0x0,
+	// far larger than an OTA slot) — it must never appear as an OTA option, or picking
+	// it would overflow the slot / brick the device. (.wasm = simulator build.)
+	const OTA_SLOT_BYTES = 0x500000; // ota_0/ota_1 size in partitions.csv (5 MB)
 	const isFwAsset = (a: GhAsset) =>
-		a.name.startsWith('palanu-') && (a.name.endsWith('.bin') || a.name.endsWith('.wasm'));
+		a.name.startsWith('palanu-') && (a.name.endsWith('-ota.bin') || a.name.endsWith('.wasm'));
 
 	let {
 		update,
@@ -126,6 +130,14 @@
 	}
 
 	async function flash(image: Uint8Array) {
+		if (image.length > OTA_SLOT_BYTES) {
+			log = [
+				`refusing: image is ${(image.length / 1048576).toFixed(1)} MB — larger than the ` +
+					`${(OTA_SLOT_BYTES / 1048576).toFixed(0)} MB OTA slot. This looks like a ` +
+					`-factory.bin (cable-flash to 0x0), not an OTA image.`
+			];
+			return;
+		}
 		busy = true;
 		sent = 0;
 		total = image.length;
@@ -147,6 +159,12 @@
 			const res = await fetch(`/api/firmware-proxy?url=${encodeURIComponent(selectedAsset.browser_download_url)}`);
 			if (!res.ok) throw new Error(`download failed: HTTP ${res.status}`);
 			const image = new Uint8Array(await res.arrayBuffer());
+			if (image.length > OTA_SLOT_BYTES) {
+				throw new Error(
+					`${selectedAsset.name} is ${(image.length / 1048576).toFixed(1)} MB — larger than the ` +
+						`OTA slot; that's a factory image for cable flashing (0x0), not OTA.`
+				);
+			}
 			log = [...log, 'download complete — flashing…'];
 			total = image.length;
 			sent = 0;
