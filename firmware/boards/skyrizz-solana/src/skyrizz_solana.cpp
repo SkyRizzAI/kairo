@@ -15,6 +15,17 @@
 #include <cstring>
 #include <cstdlib>
 
+// Bring-up switch: when 1, only the essentials are brought up (I²C + buttons +
+// LCD). Touch, LED, secure element and the battery ADC are skipped, to isolate a
+// boot hang / blank screen on the SkyRizz Solana to one of those drivers.
+//
+// TEMPORARY: default is 1 (MINIMAL) so CI/GitHub Actions ships a minimal solana
+// build for the supplier to test on real hardware. Flip back to 0 (full board)
+// once the board is confirmed booting.
+#ifndef SOLANA_MINIMAL_BRINGUP
+#define SOLANA_MINIMAL_BRINGUP 1
+#endif
+
 namespace nema::skyrizzsolana {
 
 void SkyRizzSolana::describeHardware(Runtime& rt) {
@@ -78,6 +89,7 @@ void SkyRizzSolana::describeHardware(Runtime& rt) {
     rt.capabilities().add(caps::InputAdjust);
     rt.capabilities().add(caps::Input2D);
 
+#if !SOLANA_MINIMAL_BRINGUP
     // Touch — auto-detect FT6336U (cap) or TSC2007 (resistive). Only claim the
     // capability if a controller actually ACKed (honest reporting).
     touch_.init(rt);
@@ -112,6 +124,9 @@ void SkyRizzSolana::describeHardware(Runtime& rt) {
     rt.container().registerAs<IBatteryDriver>(&battery_);
     rt.hardware().add({"battery", DriverKind::Battery, "ADC gauge (GPIO1 divider)"});
     rt.capabilities().add(caps::Battery);
+#else
+    rt.log().warn("SkyRizzSolana", "MINIMAL bring-up: touch/LED/secure/battery DISABLED");
+#endif  // !SOLANA_MINIMAL_BRINGUP
 
     rt.capabilities().add(nema::caps::UiExtended);  // 8MB PSRAM → 512 nodes OK
     rt.capabilities().add(nema::caps::UiMomentum);  // 240 MHz → flick scroll OK
