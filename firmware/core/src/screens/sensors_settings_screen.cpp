@@ -24,7 +24,7 @@ void SensorsSettingsScreen::tick(uint64_t nowMs) {
     auto& s = rt_.sensors();
     for (int i = 0; i < s.count(); i++)
         if (s.sensor(i)) s.sensor(i)->read();
-    rt_.view().requestRedraw();
+    markDirty();   // rebuild the tree so build() re-reads fresh values (not just re-render)
 }
 
 UiNode* SensorsSettingsScreen::build(NodeArena& a, Runtime& rt) {

@@ -17,7 +17,7 @@ void SoundsSettingsScreen::onResume() {
 }
 
 void SoundsSettingsScreen::tick(uint64_t) {
-    rt_.view().requestRedraw();
+    markDirty();   // rebuild each tick so the meters re-read peakLevel() (live)
 }
 
 static void formatMeterVal(char* buf, size_t sz, float level) {

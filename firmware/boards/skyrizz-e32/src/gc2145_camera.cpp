@@ -283,6 +283,11 @@ void Gc2145Camera::stop() {
 }
 
 bool Gc2145Camera::open() {
+    // Acquire-on-use (Plan 93): the camera is lazy — its DVP controller + PSRAM
+    // frame buffer are NOT allocated at boot (start() is never auto-called). Do the
+    // heavy setup on first open() so a consumer (camera test, a future viewfinder)
+    // only needs open()/captureFrame()/close().
+    if (!camHandle_ || !frameBuf_) start();
     if (!camHandle_ || !frameBuf_) return false;
     if (open_) return true;
 

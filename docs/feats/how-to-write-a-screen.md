@@ -319,3 +319,54 @@ Key observations from HelloApp:
 - No coordinate math, no manual Canvas calls — the layout engine handles everything.
 - The root `View` sets `flexGrow = 1` and `align = Stretch` so the tree fills the
   available area left by the status bar.
+
+---
+
+## Realtime / live-updating screens (the #1 gotcha)
+
+The component UI is **retained + dirty-flagged** (Plan 70): `ComponentScreen::draw()`
+only calls your `build()` (which re-reads your state) **when `dirty_` is set**.
+Interactions (key/touch/scroll) set it automatically. But `requestRedraw()` on its
+own just **re-renders the cached tree** — it does *not* rebuild it. So a value read
+inside `build()` (a sensor reading, a level meter, a clock) will appear **frozen and
+only refresh when you press a button** (which happens to mark dirty).
+
+To update **without user input**, mark the tree dirty on a timer:
+
+```cpp
+class SensorsSettingsScreen : public ComponentScreen {
+    void tick(uint64_t now) override {          // GuiService ticks the active screen ~30 fps
+        if (now - last_ < 500) return;          // throttle the expensive I2C read
+        last_ = now;
+        for (int i = 0; i < rt_.sensors().count(); i++) rt_.sensors().sensor(i)->read();
+        markDirty();                            // ← sets dirty_ AND requestRedraw(); build() re-runs
+    }
+    uint64_t last_ = 0;
+};
+```
+
+- Use **`markDirty()`** (protected on `ComponentScreen`), **not**
+  `rt_.view().requestRedraw()`. `markDirty()` = `dirty_ = true; requestRedraw();`.
+- Throttle the actual work in `tick()` (don't hammer I2C/HTTP at 30 fps); `markDirty()`
+  at your data rate. A cheap in-memory value (e.g. an audio `peakLevel()`) can mark
+  dirty every tick.
+- `onResume()` should reset the throttle timer (`last_ = 0`) so the screen samples
+  immediately on entry.
+
+### Apps (`ComponentApp`) — the equivalent
+
+Apps don't get a screen `tick()`. Instead:
+
+- Override **`tickIntervalMs()`** to return a non-zero interval (ms).
+- Override **`onTick(ctx)`** and **return `true` when the displayed state changed** —
+  returning true forces a rebuild; returning `false` just re-renders (same frozen
+  trap). Don't return true unconditionally (busy rebuild).
+
+```cpp
+uint32_t tickIntervalMs() const override { return 500; }
+bool onTick(AppContext& ctx) override { value_ = read(); return true; }  // true ⇒ rebuild
+```
+
+Rule of thumb: **if a value on screen changes on its own, something must mark the
+tree dirty on a timer.** (Root cause: `component_screen.cpp` `draw()` rebuilds only
+when `dirty_`; `component_app.cpp` rebuilds only when `dirty`/`onTick`→true.)

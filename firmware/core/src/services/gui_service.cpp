@@ -157,7 +157,15 @@ void GuiService::loop() {
             if (ie.kind == InputEvent::Kind::Pointer) {
                 // Touch: forward to active screen (apps relay to their mailbox).
                 // v1: touch bypasses DPM sleep/lock (TODO: count touch as activity).
-                vd.handlePointer(input::PointerEvent{ie.pphase, ie.px, ie.py});
+                // Touch drivers emit PHYSICAL panel pixels, but the whole UI (layout,
+                // node hit-testing, drawRaw) works in LOGICAL canvas pixels
+                // (physical / scale). Convert here so every consumer gets logical
+                // coords — otherwise at scale=2 the pointer is 2× off (missed taps,
+                // marker drift). No-op at scale=1.
+                float sc = rt_.canvas().scale();
+                uint16_t px = sc > 1.0f ? (uint16_t)(ie.px / sc) : ie.px;
+                uint16_t py = sc > 1.0f ? (uint16_t)(ie.py / sc) : ie.py;
+                vd.handlePointer(input::PointerEvent{ie.pphase, px, py});
                 continue;
             }
             if (ie.type == InputEvent::Type::Press || ie.type == InputEvent::Type::Repeat) {

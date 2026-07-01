@@ -133,6 +133,37 @@ Anywhere else, raw stdio for logging is a bug.
 - Resolution-independent: draw from `canvas.width()`/`canvas.height()`, never
   hardcode screen dimensions. (Plan 25 — Adaptive UI.)
 
+## Realtime / live-updating UI (MANDATORY — the #1 gotcha)
+
+The UI is **retained + dirty-flagged** (Plan 70): `build()` runs (and re-reads your
+state) **only when the tree is marked dirty**. `requestRedraw()` alone just
+re-renders the *cached* tree — so a live value read inside `build()` will **look
+frozen and only update on the next key/touch** (which marks dirty as a side effect).
+This is why "realtime" screens/apps built without knowing this appear stuck until
+you press something.
+
+To update the screen **without user input** (sensor readings, meters, clocks,
+progress, polled state):
+
+- **`ComponentScreen`** (settings/system screens): override `tick(uint64_t)` and
+  call **`markDirty()`** (NOT `rt_.view().requestRedraw()`), throttling I/O as
+  needed. `markDirty()` sets `dirty_` *and* requests the redraw, so `build()`
+  re-runs. `GuiService` ticks the active screen ~30 fps.
+  ```cpp
+  void tick(uint64_t now) override {
+      if (now - last_ < 500) return;   // throttle expensive reads
+      last_ = now; sensor_->read();
+      markDirty();                     // ← re-reads values on next frame
+  }
+  ```
+- **`ComponentApp`** (apps, incl. `.papp`/JS): override **`tickIntervalMs()` > 0**
+  and **`onTick()` returning `true`** when state changed — returning true forces a
+  rebuild (returning false just re-renders, same trap). Do not busy-return true if
+  nothing changed.
+
+Rule of thumb: *if a value on screen changes on its own, something must mark the
+tree dirty on a timer.* See `docs/feats/how-to-write-a-screen.md` (Realtime).
+
 ## App UX (MANDATORY — applies to every app)
 
 - **An app ALWAYS opens to its home/menu screen — NEVER jump straight into a
@@ -195,13 +226,31 @@ rm -rf firmware/targets/skyrizz-e32/build && bun run build:skyrizz-e32
 ```
 
 ### Flashing
+
+> ⚠️ **`flash` wipes user data (wallets!).** A full `idf.py flash` re-writes the
+> `spiffs` LittleFS image (`firmware/assets/`, `FLASH_IN_PROJECT`) onto the `/system`
+> partition — and **user data lives in that same partition** (`/system/data/…`, e.g.
+> the wallet vault at `/system/data/com.palanu.wallet/`). So every full flash **erases
+> the on-device wallet** and the launcher shows "Create new wallet" again. This is NOT
+> the Secure Element failing — a plain power-off/restart keeps the wallet; only a full
+> flash clobbers it. For **iterative dev, flash the app partition only** (preserves
+> `/system` + NVS, and it's faster):
+
 ```bash
-# JTAG/Serial mode — direct, no button dance:
+# Iterative dev — app partition ONLY, keeps /system (wallet) + NVS intact:
+idf.py -p /dev/cu.usbmodem* -B firmware/targets/skyrizz-e32/build app-flash monitor
+
+# Full flash (bootloader + partition table + app + assets) — ONLY on first install,
+# a partition-table change, or when firmware/assets changed. ERASES /system user data:
 idf.py -p /dev/cu.usbmodem* -B firmware/targets/skyrizz-e32/build flash monitor
 
 # USB HID/CDC mode — enter download mode first (power off, hold BOOT, power on,
-# release BOOT), then the same flash command.
+# release BOOT), then the same command.
 ```
+
+> Durable fix (follow-up, not yet done): give user data its own partition (or store
+> the wallet vault in the `nvs` partition, which `flash` does not touch) so a full
+> flash can refresh assets without erasing wallets.
 
 ### ‡ Preprocessor gotcha (root cause of the JTAG-mode remote regression)
 

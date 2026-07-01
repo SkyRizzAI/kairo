@@ -21,7 +21,7 @@ void BatterySettingsScreen::onResume() {
 void BatterySettingsScreen::tick(uint64_t nowMs) {
     if (nowMs - lastRedraw_ < 1000) return;   // battery changes slowly
     lastRedraw_ = nowMs;
-    rt_.view().requestRedraw();
+    markDirty();   // rebuild so build() re-reads level()/isCharging()
 }
 
 UiNode* BatterySettingsScreen::build(NodeArena& a, Runtime& rt) {
