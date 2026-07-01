@@ -6,6 +6,7 @@
 #include "nema/skyrizzsolana/solana_key_map.h"
 #include "nema/skyrizzsolana/touch_panel.h"
 #include "nema/skyrizzsolana/se050_driver.h"
+#include "nema/skyrizzsolana/battery.h"
 #include "nema/esp32/esp32_ws2812.h"
 
 namespace nema::skyrizzsolana {
@@ -26,6 +27,7 @@ private:
     TouchPanel   touch_;
     Se050Driver  secure_;
     Esp32Ws2812  rgb_{PIN_RGB, RGB_COUNT};
+    SolanaBattery battery_;
 };
 
 } // namespace nema::skyrizzsolana

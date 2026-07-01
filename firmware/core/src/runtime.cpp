@@ -141,8 +141,10 @@ void Runtime::registerServices() {
     // Plan 64 — crash recovery subscriptions.
     appHosts_->initCrashRecovery();
 
-    // Plan 65 — dummy battery driver (on platforms with display).
-    if (capabilities_->has(caps::Display)) {
+    // Plan 65 — dummy battery driver (on display platforms that have NO real
+    // battery gauge). A board that registered its own IBatteryDriver in
+    // describeHardware() (e.g. an ADC gauge) wins — we don't clobber it.
+    if (capabilities_->has(caps::Display) && !container_->resolve<IBatteryDriver>()) {
         dummyBattery_ = std::make_unique<DummyBatteryDriver>();
         dummyBattery_->onRegister(*this);
         adoptService(dummyBattery_.get());

@@ -105,6 +105,14 @@ void SkyRizzSolana::describeHardware(Runtime& rt) {
     rt.hardware().add({"secure", DriverKind::Other, "NXP SE050C2 @0x48"});
     if (secure_.present()) rt.capabilities().add(caps::Secure);
 
+    // Battery — real ADC gauge on GPIO1 (R18/R19 divider). Registered before the
+    // runtime's dummy-battery fallback so this one wins (see Runtime::registerServices).
+    battery_.init(rt);
+    rt.container().registerService(&battery_);
+    rt.container().registerAs<IBatteryDriver>(&battery_);
+    rt.hardware().add({"battery", DriverKind::Battery, "ADC gauge (GPIO1 divider)"});
+    rt.capabilities().add(caps::Battery);
+
     rt.capabilities().add(nema::caps::UiExtended);  // 8MB PSRAM → 512 nodes OK
     rt.capabilities().add(nema::caps::UiMomentum);  // 240 MHz → flick scroll OK
 

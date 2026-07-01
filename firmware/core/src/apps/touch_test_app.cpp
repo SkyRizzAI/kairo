@@ -54,9 +54,7 @@ bool TouchTestApp::drawRaw(Canvas& c, AppContext& ctx) {
     c.drawText(W - 18, 36, "TR", true);
     c.drawText(2, H - 11, "BL", true);
     c.drawText(W - 18, H - 11, "BR", true);
-
-    c.drawText(4, H - 22, "Hold OK = exit", true);
-    return true;   // we painted the whole frame
+    return true;   // we painted the whole frame (Back exits — handled by the input HAL)
 }
 
 } // namespace nema

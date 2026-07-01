@@ -21,8 +21,6 @@ UiNode* TouchSettingsScreen::build(NodeArena& a, Runtime&) {
     MenuBuilder m(a, scroll_, this);
     m.section("Touch");
     m.nav("Touch Test", [](void* u){ S(u)->rt_.appHost().launch(S(u)->touchApp_); });
-    m.info("Marker follows your finger;", nullptr);
-    m.info("hold OK to exit the test.", nullptr);
     return m.build();
 }
 
