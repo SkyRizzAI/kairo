@@ -94,6 +94,15 @@
 				>
 					{c.label}
 				</button>
+			{:else if c.type === 'led'}
+				<!-- Addressable/indicator LED. Rendered as a small lens; live colour
+				     needs LED-state telemetry (not wired yet), so shown neutral. -->
+				<div class="absolute flex items-center justify-center" style={box} title="{c.label} (LED)">
+					<span
+						class="rounded-full bg-zinc-500 ring-1 ring-zinc-300/40 shadow-[0_0_6px_1px_rgba(255,255,255,0.18)]"
+						style="width:min(100%,100%); height:auto; aspect-ratio:1;"
+					></span>
+				</div>
 			{:else}
 				<div
 					class="absolute flex items-center justify-center rounded bg-zinc-900/60 text-[8px] text-zinc-500 ring-1 ring-zinc-700/60"
