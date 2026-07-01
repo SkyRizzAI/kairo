@@ -190,14 +190,15 @@ avoid watchdog-starving busy-spin (`message_queue.h:42`).
 
 ### 🎯 Throughput / bandwidth
 
-- [ ] **P4 — Dirty-rect end-to-end.** We already compute `getDirtyBounds`
-      (`view_dispatcher.cpp:144`) but only use it to clip the canvas. Extend it to
-      narrow the present() memcpy **and** the `flushBuffer`/SPI-DMA to the dirty
-      region (AkiraOS/LVGL pattern). Cuts per-frame memcpy + SPI traffic, raising
-      throughput headroom. ⚠️ **Needs device validation** (same reason as P3b):
-      `BufferDisplay`/`Canvas` have no dirty tracking today, so this adds a dirty
-      bounding box to the app canvas + a `flushRegion` path on the LCD drivers — all
-      rendering-visible, not covered by the logic-only tests.
+- [ ] **P4 — Dirty-rect / partial redraw.** Deep research done → see
+      **[Plan 98](98-dirty-rect-rendering.md)**. Key findings: the dirty-rect
+      machinery already exists but is dormant (full `requestRedraw()` = 118 sites,
+      partial = ~2); compositing is *not* the blocker (clip recomposites correctly);
+      skyrizz SPI is already row-diffed by the driver, so P4's win is CPU-bound and
+      concentrated in component screens + the slow-blit path. Recommended route is
+      **automatic tree-diff** (our UI rebuilds a UiNode tree each frame) to avoid the
+      manual-annotation ghosting risk. **Gated on measuring draw-ms via the FPS
+      overlay first** (Plan 98 §5).
 
 ### Effort / risk
 
